@@ -4,7 +4,7 @@
 CC = g++
 CPPFLAGS = -Wall -Werror -O2 -g -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -I.
 LDFLAGS = -lpthread
-TARGETS = mer_counter dump_stats dump_stats_compacted
+TARGETS = mer_counter dump_stats dump_stats_compacted hash_merge
 SOURCES = $(patsubst %,%.cc,$(TARGETS)) mer_count_thread.cc
 
 .SECONDARY:
