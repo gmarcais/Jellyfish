@@ -1,0 +1,65 @@
+#! /usr/bin/perl
+
+use strict;
+use warnings;
+use POSIX qw(_exit);
+use Getopt::Long;
+use GenomeUtils::FDProgress;
+
+my ($help, $debug);
+
+my $usage = <<EOS
+$0 [options] dump1 dump2
+
+  --debug               Show progress.
+  --help                This message.
+EOS
+    ;
+
+GetOptions("debug"              => \$debug,
+           "help"               => \$help) or die($usage);
+
+if($help) { print($usage); exit(0); }
+if(@ARGV != 2) { die("Missing arguments\n", $usage); }
+
+my $d = GenomeUtils::FDProgress->debug($debug);
+
+my ($dump1, $dump2) = @ARGV;
+
+my %h1;
+my ($common, $equal) = (0, 0);
+
+my $io1 = $d->open_read($dump1);
+my $count;
+while(<$io1>) {
+  if(/^>(\d+)/) {
+    $count = $1;
+  } else {
+    chomp;
+    $h1{$_} = $count;
+  }
+}
+$d->close($io1);
+my $size1 = scalar(keys %h1);
+
+my $io2 = $d->open_read($dump2);
+my $size2 = 0;
+while(<$io2>) {
+  if(/^>(\d+)/) {
+    $count = $1;
+  } else {
+    chomp;
+    $size2++;
+    my $c1 = $h1{$_};
+    if(defined($c1)) {
+      $common++;
+      $equal++ if $c1 == $count;
+    }
+  }
+}
+$d->close($io2);
+
+print("Sizes $size1 $size2\n");
+print("Common $common Equal $equal\n");
+
+_exit(0);
