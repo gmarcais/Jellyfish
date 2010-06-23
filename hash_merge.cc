@@ -23,16 +23,17 @@ struct heap_item {
    mer_counters::iterator *it;
    uint64_t key;
    uint64_t val;
+   uint64_t hash;
 
-   heap_item() : it(0), key(0), val(0) {}
+   heap_item() : it(0), key(0), val(0), hash(0) {}
 
    heap_item(mer_counters::iterator * iter) :
-     it(iter), key(iter->key), val(iter->val) {}
+     it(iter), key(iter->key), val(iter->val), hash(iter->get_hash()) {}
 
    bool operator<(const heap_item & other) {
-      if(key == other.key)
-        return val < other.val;
-      return key < other.key;
+      if(hash == other.hash)
+        return key < other.key;
+      return hash < other.hash;
    }
 };
 
@@ -120,28 +121,18 @@ int main(int argc, char *argv[]) {
  
   // create an iterator for each hash file
   for(i = arg_st; i < argc; i++) {
-    char *db_file, *map;
-    int fd;
-    struct stat finfo;
+    char *db_file;
 
-
+    // open the hash database
     db_file = argv[i];
-    fd = open(db_file, O_RDONLY);
-    if(fd < 0)
-      die("Can't open '%s'\n", db_file);
+    tables[i-arg_st] = new mer_counters();
+    try {
+      tables[i-arg_st]->open(db_file, true);
+    } catch(exception *e) {
+      die("Can't open k-mer database: %s\n", e->what());
+    }
+    iters[i-arg_st] = new mer_counters::iterator(tables[i-arg_st]->iterator_all());
 
-    if(fstat(fd, &finfo) < 0)
-      die("Can't stat '%s'\n", db_file);
-
-    map = (char *)mmap(NULL, finfo.st_size, PROT_READ, MAP_SHARED, fd, 0);
-    if(map == MAP_FAILED)
-      die("Can't mmap '%s'\n", db_file);
-    int adv = madvise(map, finfo.st_size, MADV_SEQUENTIAL);
-    if (adv != 0)
-      die("Can't set memory parameters correctly\n");
-    close(fd);
-
-    tables[i-arg_st] = new mer_counters(map, finfo.st_size);
     unsigned int len = tables[i-arg_st]->get_key_len();
     if(rklen != 0 && len != rklen)
        die("Can't merge hashes of different key lengths\n");
@@ -152,8 +143,6 @@ int main(int argc, char *argv[]) {
     if(max_reprobe != 0 && rep != max_reprobe)
        die("Can't merge hashes with different reprobing stratgies\n");
     max_reprobe = rep;
-
-    iters[i-arg_st] = new mer_counters::iterator(tables[i-arg_st]->iterator_all());
   }
 
   if(max_reprobe == 0 || rklen == 0)
@@ -235,4 +224,21 @@ int main(int argc, char *argv[]) {
      delete tables[i];
   }
 }
+/*
+    fd = open(db_file, O_RDONLY);
+    if(fd < 0)
+      die("Can't open '%s'\n", db_file);
 
+    if(fstat(fd, &finfo) < 0)
+      die("Can't stat '%s'\n", db_file);
+
+    map = (char *)mmap(NULL, finfo.st_size, PROT_READ, MAP_SHARED, fd, 0);
+    if(map == MAP_FAILED)
+      die("Can't mmap '%s'\n", db_file);
+    int adv = madvise(map, finfo.st_size, MADV_SEQUENTIAL);
+    if (adv != 0)
+      die("Can't set memory parameters correctly\n");
+    close(fd);
+
+    tables[i-arg_st] = new mer_counters(map, finfo.st_size);
+*/

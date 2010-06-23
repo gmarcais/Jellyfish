@@ -88,7 +88,7 @@ namespace jellyfish {
       uint_t get_val_len() { return offsets.get_val_len(); }
       
       size_t get_max_reprobe_offset() { 
-        return reprobes[reprobe_limit-1]; 
+        return reprobes[reprobe_limit]; 
       }
 
       // Iterator
