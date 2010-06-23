@@ -68,7 +68,7 @@ namespace jellyfish {
         size_mask = size - 1;
         offsets.init(header->klen, header->clen, header->reprobe_limit);
         map += sizeof(struct header);
-        reprobes = new size_t[header->reprobe_limit];
+        reprobes = new size_t[header->reprobe_limit + 1];
         memcpy(reprobes, map, sizeof(size_t) * header->reprobe_limit);
         map += sizeof(size_t) * header->reprobe_limit;
         reprobe_limit = header->reprobe_limit; //clk
@@ -446,7 +446,7 @@ namespace jellyfish {
       void write_raw(std::ostream &out) {
         struct header header = { size, offsets.get_key_len(), offsets.get_val_len(), reprobe_limit };
         out.write((char *)&header, sizeof(header));
-        out.write((char *)reprobes, sizeof(size_t) * reprobe_limit);
+        out.write((char *)reprobes, sizeof(size_t) * (reprobe_limit + 1));
         if(out.tellp() & 0xf) { // Make sure aligned
           string padding(0x10 - (out.tellp() & 0xf), '\0');
           out.write(padding.c_str(), padding.size());

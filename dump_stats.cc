@@ -57,15 +57,12 @@ break;
 static struct argp argp = { options, parse_opt, args_doc, doc };
 
 int main(int argc, char *argv[]) {
-  struct arguments arguments;
-  int arg_st;
-  int            fd;
-  struct stat    stat;
-  struct header *header;
-  char          *db_file, *map;
-  uint64_t       unique_mers = 0;
-  uint64_t       total_mers  = 0;
-  uint64_t       distinct_mers = 0;
+  struct arguments  arguments;
+  int               arg_st;
+  const char       *db_file;
+  uint64_t          unique_mers   = 0;
+  uint64_t          total_mers    = 0;
+  uint64_t          distinct_mers = 0;
   //  off_t expect_size;
 
   arguments.fasta = false;
@@ -78,42 +75,21 @@ int main(int argc, char *argv[]) {
   }
 
   db_file = argv[arg_st];
-  fd = open(db_file, O_RDONLY);
-  if(fd < 0)
-    die("Can't open '%s'\n", db_file);
-
-  if(fstat(fd, &stat) < 0)
-    die("Can't stat '%s'\n", db_file);
-
-  map = (char *)mmap(NULL, stat.st_size, PROT_READ, MAP_SHARED, fd, 0);
-  if(map == MAP_FAILED)
-    die("Can't mmap '%s'\n", db_file);
-  close(fd);
-  header = (struct header *)map;
-
-  //  fprintf(stderr, "%ld %ld\n", header->klen, header->size);
-//   expect_size = sizeof(struct header) + 
-//     (sizeof(uint64_t) + sizeof(uint32_t)) * header->size;
-//   if(stat.st_size != expect_size)
-//     die("Size of '%s' is wrong. Expect %ld, got %ld\n", db_file, expect_size,
-//         stat.st_size);
-
-  mer_counters hash_table(map, stat.st_size);
+  mer_counters hash_table;
+  try {
+    hash_table.open(db_file, true);
+  } catch(exception *e) {
+    die("Can't open k-mer database: %s\n", e->what());
+  }
   mer_counters::iterator it = hash_table.iterator_all();
 
-  char table[4] = { 'A', 'C', 'G', 'T' };
   unsigned int rklen = hash_table.get_key_len();
   char kmer[rklen+1];
   kmer[rklen] = '\0';
-  uint64_t key;
 
   while(it.next()) {
     if(arguments.fasta) {
-      key = it.key;
-      for(unsigned int i = 0; i < rklen; i++) {
-        kmer[rklen - 1 - i] = table[key & UINT64_C(0x3)];
-        key >>= 2;
-      }
+      it.get_string(kmer);
       std::cout << ">" << it.val << std::endl << kmer << std::endl;
     }
     
@@ -121,8 +97,6 @@ int main(int argc, char *argv[]) {
     if(it.val == 1)
       unique_mers++;
     total_mers += it.val;
-
-    
   }
 
   std::cout << std::dec << unique_mers << " " << distinct_mers << " " << total_mers << std::endl;

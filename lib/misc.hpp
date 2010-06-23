@@ -9,11 +9,12 @@
 #endif
 
 #include <stdio.h>
+#include <string.h>
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdarg.h>
 #include <stdlib.h>
-
+#include <exception>
 
 #define bsizeof(v)      (8 * sizeof(v))
 #define PRINTVAR(v) {std::cout << __LINE__ << " " #v ": " << v << std::endl; }
@@ -52,5 +53,37 @@ uint_t bitsize(T n) {
 /* Like Perl's die function
  */
 void die(const char *msg, ...) __attribute__ ((noreturn, format(printf, 1, 2)));
+
+class StandardError : public std::exception {
+  char msg[4096];
+public:
+  // __attribute__ ((format(printf, 1, 2)))
+  StandardError(const char *fmt, ...) {
+    va_list ap;
+    
+    va_start(ap, fmt);
+    vsnprintf(msg, sizeof(msg) - 1, fmt, ap);
+    msg[sizeof(msg)-1] = '\0';
+    va_end(ap);
+  }
+
+  // find proper __attribute__ ((format(printf, 1, 2)))
+  StandardError(int errnum, const char *fmt, ...) {
+    va_list ap;
+    int len;
+    
+    va_start(ap, fmt);
+    len = vsnprintf(msg, sizeof(msg) - 1, fmt, ap);
+    if(len < (int)(sizeof(msg)-1))
+      snprintf(msg + len, sizeof(msg) - len - 1,
+               ": %s", strerror(errnum));
+    msg[sizeof(msg)-1] = '\0';
+    va_end(ap);
+  }
+
+  virtual const char* what() const throw() {
+    return msg;
+  }
+};
 
 #endif // __MISC_HPP__
