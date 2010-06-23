@@ -15,6 +15,10 @@
 #include "lib/misc.hpp"
 
 
+/**
+ * Structure holds the items in the heap as we are processing
+ * the hashes
+ **/
 struct heap_item {
    mer_counters::iterator *it;
    uint64_t key;
@@ -32,11 +36,53 @@ struct heap_item {
    }
 };
 
-//const char *argp_program_version = "hash_merge 1.0";
-//const char *argp_program_bug_address = "<guillaume@marcais.net>";
-//static char doc[] = "Merge dumped hash tables";
+/**
+ * Command line processing
+ **/
+const char *argp_program_version = "hash_merge 1.0";
+const char *argp_program_bug_address = "<guillaume@marcais.net>";
+static char doc[] = "Merge dumped hash tables";
+static char args_doc[] = "";
 
-// Convert a bit-packed key to a char* string
+static struct argp_option options[] = {
+  {"fasta",     'f',    0,  0,  "Print k-mers in fasta format (false)"},
+  {0}
+};
+
+struct arguments {
+  bool fasta;
+};
+
+
+/**
+ * Parse the command line arguments
+ **/
+static error_t parse_opt(int key, char *arg, struct argp_state *state)
+{
+  struct arguments *arguments = (struct arguments *)state->input;
+
+#define ULONGP(field) errno = 0; \
+arguments->field = (typeof(arguments->field))strtoul(arg,NULL,0);     \
+if(errno) return errno; \
+break;
+
+#define FLAG(field) arguments->field = true; break;
+
+  switch(key) {
+  case 'f': FLAG(fasta);
+
+  default:
+    return ARGP_ERR_UNKNOWN;
+  }
+  return 0;
+}
+
+static struct argp argp = { options, parse_opt, args_doc, doc };
+
+
+/**
+ * Convert a bit-packed key to a char* string
+ **/
 inline void tostring(uint64_t key, unsigned int rklen, char * out) {
   char table[4] = { 'A', 'C', 'G', 'T' };
 
@@ -50,16 +96,21 @@ inline void tostring(uint64_t key, unsigned int rklen, char * out) {
 
 int main(int argc, char *argv[]) {
 
-  // XXX: include the argument parsing here
+  // Process the command line
+  struct arguments cmdargs;
   int arg_st = 1;
-  int i, j;
+  cmdargs.fasta = false;
+  argp_parse(&argp, argc, argv, 0, &arg_st, &cmdargs);
+
+  int i;
   unsigned int rklen = 0;
-  int max_reprob = 10;
+  size_t max_reprobe = 0;
 
   // compute the number of hashes we're going to read
   int num_hashes = argc - arg_st;
   if (num_hashes <= 0) {
     fprintf(stderr, "No hash files given\n");
+    argp_help(&argp, stderr, ARGP_HELP_SEE, argv[0]);
     exit(1);
   }
 
@@ -67,11 +118,12 @@ int main(int argc, char *argv[]) {
   mer_counters *tables[num_hashes];
   mer_counters::iterator *iters[num_hashes];
  
+  // create an iterator for each hash file
   for(i = arg_st; i < argc; i++) {
     char *db_file, *map;
     int fd;
     struct stat finfo;
-    //struct header *fheader;
+
 
     db_file = argv[i];
     fd = open(db_file, O_RDONLY);
@@ -84,6 +136,9 @@ int main(int argc, char *argv[]) {
     map = (char *)mmap(NULL, finfo.st_size, PROT_READ, MAP_SHARED, fd, 0);
     if(map == MAP_FAILED)
       die("Can't mmap '%s'\n", db_file);
+    int adv = madvise(map, finfo.st_size, MADV_SEQUENTIAL);
+    if (adv != 0)
+      die("Can't set memory parameters correctly\n");
     close(fd);
 
     tables[i-arg_st] = new mer_counters(map, finfo.st_size);
@@ -91,15 +146,26 @@ int main(int argc, char *argv[]) {
     if(rklen != 0 && len != rklen)
        die("Can't merge hashes of different key lengths\n");
     rklen = len;
+    fprintf(stderr, "reading: %s\n", db_file);
+
+    size_t rep = tables[i-arg_st]->get_max_reprobe_offset();
+    if(max_reprobe != 0 && rep != max_reprobe)
+       die("Can't merge hashes with different reprobing stratgies\n");
+    max_reprobe = rep;
+
     iters[i-arg_st] = new mer_counters::iterator(tables[i-arg_st]->iterator_all());
   }
+
+  if(max_reprobe == 0 || rklen == 0)
+    die("No valid hash tables found.\n");
 
   rklen /= 2;
   fprintf(stderr, "key length = %d\n", rklen);
   fprintf(stderr, "num hashes = %d\n", num_hashes);
+  fprintf(stderr, "max reprobe = %ld\n", max_reprobe);
 
   // create the heap storage
-  int heap_size = num_hashes * max_reprob;
+  int heap_size = num_hashes * max_reprobe;
   heap_item heap[heap_size];  
 
   fprintf(stderr, "heap size = %d\n", heap_size);
@@ -107,7 +173,7 @@ int main(int argc, char *argv[]) {
   // populate the initial heap
   int h = 0;
   for (i = 0; i < num_hashes; i++) {
-    for(j = 0; j < max_reprob && iters[i]->next(); j++) {
+    for(size_t r = 0; r < max_reprobe && iters[i]->next(); r++) {
       heap[h++] = heap_item(iters[i]);
       assert(h <= heap_size);
     }
@@ -130,7 +196,7 @@ int main(int argc, char *argv[]) {
     uint64_t key = heap[starth-1].key;
 
     // pop elements off that have the same key
-    // all the popped elements will be at the end of the heap
+    // all the popped elements will be at the end of the heap array
     while(h > 0 && heap[0].key == key)
       pop_heap(heap, heap + h--);
 
@@ -161,6 +227,12 @@ int main(int argc, char *argv[]) {
     // for debugging, just write out the counts
     tostring(key, rklen, out);
     std::cout << out << " " << sum << endl; 
+  }
+
+  // free the hashes and iterators
+  for(i = 0; i < num_hashes; i++) {
+     delete iters[i];
+     delete tables[i];
   }
 }
 

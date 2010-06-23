@@ -71,6 +71,7 @@ namespace jellyfish {
         reprobes = new size_t[header->reprobe_limit];
         memcpy(reprobes, map, sizeof(size_t) * header->reprobe_limit);
         map += sizeof(size_t) * header->reprobe_limit;
+        reprobe_limit = header->reprobe_limit; //clk
         if((size_t)map & 0xf)
           map += 0x10 - ((size_t)map & 0xf); // Make sure aligned for 64bits word.
         zero_count = *(uint64_t *)map;
@@ -86,6 +87,9 @@ namespace jellyfish {
       uint_t get_key_len() { return offsets.get_key_len(); }
       uint_t get_val_len() { return offsets.get_val_len(); }
       
+      size_t get_max_reprobe_offset() { 
+        return reprobes[reprobe_limit-1]; 
+      }
 
       // Iterator
       class iterator {

@@ -30,6 +30,7 @@ namespace jellyfish {
     uint_t get_key_len() { return ary->get_key_len(); }
     uint_t get_val_len() { return ary->get_val_len(); }
 
+    size_t get_max_reprobe_offset() { return ary->get_max_reprobe_offset(); }
 
     void write_raw(std::ostream &out) { ary->write_raw(out); }
 
