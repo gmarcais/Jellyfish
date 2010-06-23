@@ -69,11 +69,11 @@ namespace jellyfish {
         offsets.init(header->klen, header->clen, header->reprobe_limit);
         map += sizeof(struct header);
         reprobes = new size_t[header->reprobe_limit + 1];
-        memcpy(reprobes, map, sizeof(size_t) * header->reprobe_limit);
-        map += sizeof(size_t) * header->reprobe_limit;
+        memcpy(reprobes, map, sizeof(size_t) * (header->reprobe_limit + 1));
+        map += sizeof(size_t) * (header->reprobe_limit + 1);
         reprobe_limit = header->reprobe_limit; //clk
-        if((size_t)map & 0xf)
-          map += 0x10 - ((size_t)map & 0xf); // Make sure aligned for 64bits word.
+        if((size_t)map & 0x7)
+          map += 0x8 - ((size_t)map & 0x7); // Make sure aligned for 64bits word. TODO: use alignof?
         zero_count = *(uint64_t *)map;
         map += sizeof(uint64_t);
         data = (word *)map;
@@ -447,8 +447,8 @@ namespace jellyfish {
         struct header header = { size, offsets.get_key_len(), offsets.get_val_len(), reprobe_limit };
         out.write((char *)&header, sizeof(header));
         out.write((char *)reprobes, sizeof(size_t) * (reprobe_limit + 1));
-        if(out.tellp() & 0xf) { // Make sure aligned
-          string padding(0x10 - (out.tellp() & 0xf), '\0');
+        if(out.tellp() & 0x7) { // Make sure aligned TODO: use alignof?
+          string padding(0x8 - (out.tellp() & 0x7), '\0');
           out.write(padding.c_str(), padding.size());
         }
         out.write((char *)&zero_count, sizeof(word));

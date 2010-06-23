@@ -226,7 +226,6 @@ void *start_worker(void *worker) {
     }
   } else { // dump raw
     if(!pthread_mutex_trylock(info->write_lock)) {
-      std::cerr << std::hex << "hash size " << info->qc->counters->get_size() << std::endl;
       info->qc->counters->write_raw(*info->out);
       pthread_mutex_unlock(info->write_lock);
     }
