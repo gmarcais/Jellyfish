@@ -17,6 +17,7 @@
 #include "compacted_hash.hpp"
 #include "lib/misc.hpp"
 
+#define MAX_KMER_SIZE 32
 
 /**
  * Structure holds the items in the heap as we are processing
@@ -27,11 +28,16 @@ struct heap_item {
   uint64_t key;
   uint64_t val;
   uint64_t hash;
+  char kmer[MAX_KMER_SIZE + 1];
 
-  heap_item() : it(0), key(0), val(0), hash(0) {}
+  heap_item() : it(0), key(0), val(0), hash(0) {
+    memset(kmer, 0, MAX_KMER_SIZE + 1);
+  }
 
   heap_item(mer_counters::iterator * iter) :
-    it(iter), key(iter->key), val(iter->val), hash(iter->get_hash()) {}
+    it(iter), key(iter->key), val(iter->val), hash(iter->get_hash()) {
+    iter->get_string(kmer);
+  }
 
   bool operator<(const heap_item & other) {
      if(hash == other.hash)
@@ -95,18 +101,6 @@ break;
 static struct argp argp = { options, parse_opt, args_doc, doc };
 
 
-/**
- * Convert a bit-packed key to a char* string
- **/
-inline void tostring(uint64_t key, unsigned int rklen, char * out) {
-  char table[4] = { 'A', 'C', 'G', 'T' };
-
-  for(unsigned int i = 0 ; i < rklen; i++) {
-    out[rklen-1-i] = table[key & UINT64_C(0x3)];
-    key >>= 2;
-  }
-  out[rklen] = '\0';
-}
 
 class ErrorWriting : public std::exception {
    std::string msg;
@@ -153,12 +147,12 @@ class serial_writer {
     /**
      * Write the top of the hash table
      **/
-    void write_header(uint64_t size) {
+    void write_header() {
         jellyfish::compacted_hash::header head;
         memset(&head, '\0', sizeof(head));
         head.mer_len = mer_len_bases;
         head.val_len = val_len_bits;
-        head.size = size;
+        head.size = 0; // field is unused
         out.write((char *)&head, sizeof(head));
     }
 
@@ -193,7 +187,6 @@ int main(int argc, char *argv[]) {
   int i;
   unsigned int rklen = 0;
   size_t max_reprobe = 0;
-  uint64_t size = 0;
 
   // compute the number of hashes we're going to read
   int num_hashes = argc - arg_st;
@@ -231,9 +224,6 @@ int main(int argc, char *argv[]) {
     if(max_reprobe != 0 && rep != max_reprobe)
        die("Can't merge hashes with different reprobing stratgies\n");
     max_reprobe = rep;
-
-    uint64_t si = tables[i-arg_st]->get_size();
-    fprintf(stderr, "size = %ld\n", si);
   }
 
   if(max_reprobe == 0 || rklen == 0)
@@ -246,7 +236,7 @@ int main(int argc, char *argv[]) {
 
   // create the heap storage
   int heap_size = num_hashes * max_reprobe;
-  heap_item heap[heap_size];  
+  heap_item heap[heap_size];
 
   fprintf(stderr, "heap size = %d\n", heap_size);
 
@@ -264,7 +254,7 @@ int main(int argc, char *argv[]) {
 
   // open the output file
   serial_writer writer(cmdargs.output, rklen, cmdargs.out_counter_len);
-  writer.write_header(size);
+  writer.write_header();
 
   fprintf(stderr, "out kmer len = %ld bytes\n", writer.get_key_len_bytes());
   fprintf(stderr, "out val len = %ld bytes\n", writer.get_val_len_bytes());
@@ -324,4 +314,17 @@ int main(int argc, char *argv[]) {
   }
 
   writer.close();
+}
+
+/**
+ * Convert a bit-packed key to a char* string
+ **/
+inline void tostring(uint64_t key, unsigned int rklen, char * out) {
+  char table[4] = { 'A', 'C', 'G', 'T' };
+
+  for(unsigned int i = 0 ; i < rklen; i++) {
+    out[rklen-1-i] = table[key & UINT64_C(0x3)];
+    key >>= 2;
+  }
+  out[rklen] = '\0';
 }
