@@ -114,6 +114,9 @@ namespace jellyfish {
       uint_t get_key_len() { return key_len; }
       uint_t get_val_len() { return offsets.get_val_len(); }
       
+      size_t get_max_reprobe_offset() { 
+        return reprobes[reprobe_limit]; 
+      }
 
       // Iterator
       class iterator {
@@ -131,7 +134,7 @@ namespace jellyfish {
         void get_string(char *out) {
           tostring(key, ary->get_key_len() / 2, out);
         }
-        void get_hash() { return hash; }
+        uint64_t get_hash() { return hash; }
 
         bool next() {
           while((id = nid++) < end_id) {

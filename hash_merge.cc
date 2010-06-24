@@ -66,8 +66,8 @@ static struct argp_option options[] = {
 };
 
 struct arguments {
-  bool fasta;
-  char * output;
+  bool         fasta;
+  const char * output;
   unsigned int out_counter_len;
 };
 
@@ -319,12 +319,12 @@ int main(int argc, char *argv[]) {
 /**
  * Convert a bit-packed key to a char* string
  **/
-inline void tostring(uint64_t key, unsigned int rklen, char * out) {
-  char table[4] = { 'A', 'C', 'G', 'T' };
+// inline void tostring(uint64_t key, unsigned int rklen, char * out) {
+//   char table[4] = { 'A', 'C', 'G', 'T' };
 
-  for(unsigned int i = 0 ; i < rklen; i++) {
-    out[rklen-1-i] = table[key & UINT64_C(0x3)];
-    key >>= 2;
-  }
-  out[rklen] = '\0';
-}
+//   for(unsigned int i = 0 ; i < rklen; i++) {
+//     out[rklen-1-i] = table[key & UINT64_C(0x3)];
+//     key >>= 2;
+//   }
+//   out[rklen] = '\0';
+// }
