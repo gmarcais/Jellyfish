@@ -21,7 +21,7 @@ SquareBinaryMatrix SquareBinaryMatrix::init_random_inverse() {
     init_random();
     try {
       return inverse();
-    } catch(singular_matrix_ex) { }
+    } catch(SquareBinaryMatrix::SingularMatrix e) { }
   }
 }
 
@@ -107,8 +107,30 @@ std::string SquareBinaryMatrix::str() const {
   return os.str();
 }
 
-void SquareBinaryMatrix::dump(std::ostringstream &os) const {
-  os.write(columns, sizeof(uint64_t) * size);
+void SquareBinaryMatrix::dump(std::ostream &os) const {
+  os.write((char *)&size, sizeof(size));
+  os.write((char *)columns, sizeof(uint64_t) * size);
+}
+
+void SquareBinaryMatrix::load(std::istream &is) {
+  if(columns) {
+    delete[] columns;
+    columns = NULL;
+  }
+  is.read((char *)&size, sizeof(size));
+  columns = new uint64_t[size];
+  is.read((char *)columns, sizeof(uint64_t) * size);
+}
+
+size_t SquareBinaryMatrix::read(const char *map) {
+  if(columns) {
+    delete[] columns;
+    columns = NULL;
+  }
+  memcpy(&size, map, sizeof(size));
+  columns = new uint64_t[size];
+  memcpy(columns, map + sizeof(size), sizeof(uint64_t) * size);
+  return sizeof(size) + sizeof(uint64_t) * size;
 }
 
 void SquareBinaryMatrix::print_vector(std::ostream &os, uint64_t v, bool vertical) const {

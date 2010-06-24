@@ -16,8 +16,16 @@
 #include "hash.hpp"
 #include "compacted_hash.hpp"
 
+#if defined(PACKED_KEY_VALUE)
 #include "packed_key_value_array.hpp"
 typedef jellyfish::packed_key_value::array<uint64_t,atomic::gcc<uint64_t>,allocators::mmap> storage_t;
+#elif defined(INVERTIBLE_HASH)
+#include "invertible_hash_array.hpp"
+typedef jellyfish::invertible_hash::array<uint64_t,atomic::gcc<uint64_t>,allocators::mmap> storage_t;
+#else
+#error No constant specifying the type of storage class
+#endif
+
 typedef jellyfish::hash< uint64_t,uint64_t,storage_t,atomic::gcc<uint64_t> > mer_counters;
 typedef mer_counters::iterator mer_iterator_t;
 typedef jellyfish::compacted_hash::writer<mer_iterator_t,uint64_t > compacter_t;

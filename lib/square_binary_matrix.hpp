@@ -9,6 +9,7 @@
 #include <assert.h>
 #include "misc.hpp"
 
+#ifdef SSE
 typedef long long int i64_t;
 typedef i64_t v2di __attribute__ ((vector_size(16)));
 union vector2di {
@@ -22,7 +23,7 @@ static const vector2di smear1[4] = {
 static const v2di smear[4] = { smear1[0].v, smear1[1].v, smear1[2].v, smear1[3].v };
 static const vector2di zero1 = { {0, 0} };
 static const v2di zero = zero1.v;
-
+#endif
 
 class SquareBinaryMatrix {
   uint64_t *columns;
@@ -78,7 +79,7 @@ public:
     if(this == &rhs)
       return *this;
     if(columns)
-      delete columns;
+      delete[] columns;
     columns = new uint64_t[rhs.get_size()];
     size = rhs.get_size();
     uint64_t _mask = mask();
@@ -143,7 +144,7 @@ public:
     return columns[i];
   }
 
-  uint64_t times(uint64_t v) const {
+  uint64_t times_loop(uint64_t v) const {
     uint64_t res = 0, *c = columns+(size-1);
     
     for ( ; v; v >>= 1)
@@ -151,7 +152,8 @@ public:
     return res;
   }
 
-  uint64_t operator*(uint64_t v) const {
+#ifdef SSE
+  uint64_t times_sse(uint64_t v) const {
     v2di *c = (v2di *)(columns + (size - 1));
     v2di res = zero;
     vector2di res1;
@@ -169,7 +171,9 @@ public:
     res1.v = res;
     return res1.i[0] ^ res1.i[1];
   }
+#endif
 
+  inline uint64_t times(uint64_t v) const { return times_loop(v); }
 
   SquareBinaryMatrix transpose() const;
   SquareBinaryMatrix operator*(const SquareBinaryMatrix &other) const;
@@ -185,6 +189,8 @@ public:
   void print(std::ostream &os) const;
   std::string str() const;
   void dump(std::ostream &os) const;
+  void load(std::istream &is);
+  size_t read(const char *map);
   void print_vector(std::ostream &os, uint64_t v, bool vertical = false) const;
   std::string str_vector(uint64_t v, bool vertical = false) const;
 };

@@ -107,15 +107,8 @@ namespace jellyfish {
         inline uint64_t get_hash() {
           return MurmurHash64A(&key, sizeof(key), 0x818c4070) & ary->size_mask;
         }
-        inline void get_string(char *out) {
-          static char table[4] = { 'A', 'C', 'G', 'T' };
-          uint_t rklen = ary->get_key_len() / 2;
-
-          for(unsigned int i = 0 ; i < rklen; i++) {
-            out[rklen-1-i] = table[key & UINT64_C(0x3)];
-            key >>= 2;
-          }
-          out[rklen] = '\0';
+        void get_string(char *out) {
+          tostring(key, ary->get_key_len() / 2, out);
         }
 
         bool next() {

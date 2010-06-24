@@ -86,4 +86,16 @@ public:
   }
 };
 
+/**
+ * Convert a bit-packed key to a char* string
+ **/
+inline void tostring(uint64_t key, unsigned int rklen, char * out) {
+  static const char table[4] = { 'A', 'C', 'G', 'T' };
+
+  for(unsigned int i = 0 ; i < rklen; i++) {
+    out[rklen-1-i] = table[key & UINT64_C(0x3)];
+    key >>= 2;
+  }
+  out[rklen] = '\0';
+}
 #endif // __MISC_HPP__

@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
   }
   mer_counters::iterator it = hash_table.iterator_all();
 
-  unsigned int rklen = hash_table.get_key_len();
+  unsigned int rklen = hash_table.get_key_len() / 2;
   char kmer[rklen+1];
   kmer[rklen] = '\0';
 
