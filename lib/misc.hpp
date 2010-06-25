@@ -98,4 +98,6 @@ inline void tostring(uint64_t key, unsigned int rklen, char * out) {
   }
   out[rklen] = '\0';
 }
+
+uint64_t bogus_sum(void *data, size_t len);
 #endif // __MISC_HPP__

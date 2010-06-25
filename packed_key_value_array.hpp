@@ -49,7 +49,8 @@ namespace jellyfish {
     public:
       array(size_t _size, uint_t _key_len, uint_t _val_len,
             uint_t _reprobe_limit, size_t *_reprobes) :
-        size(((size_t)1) << ceilLog2(_size)), size_mask(size - 1), reprobe_limit(_reprobe_limit), 
+        size(((size_t)1) << ceilLog2(_size)), size_mask(size - 1),
+        reprobe_limit(_reprobe_limit), 
         offsets(_key_len, _val_len, _reprobe_limit),
         mem_block(div_ceil(size, (size_t)offsets.get_block_len()) * offsets.get_block_word_len() * sizeof(word)),
         data((word *)mem_block.get_ptr()), zero_count(0), reprobes(_reprobes) {
@@ -66,12 +67,12 @@ namespace jellyfish {
         // TODO: Should make more consistency check on the map...
         size = header->size;
         size_mask = size - 1;
+        reprobe_limit = header->reprobe_limit;
         offsets.init(header->klen, header->clen, header->reprobe_limit);
         map += sizeof(struct header);
         reprobes = new size_t[header->reprobe_limit + 1];
         memcpy(reprobes, map, sizeof(size_t) * (header->reprobe_limit + 1));
         map += sizeof(size_t) * (header->reprobe_limit + 1);
-        reprobe_limit = header->reprobe_limit; //clk
         if((size_t)map & 0x7)
           map += 0x8 - ((size_t)map & 0x7); // Make sure aligned for 64bits word. TODO: use alignof?
         zero_count = *(uint64_t *)map;
@@ -445,7 +446,7 @@ namespace jellyfish {
           out.write(padding.c_str(), padding.size());
         }
         out.write((char *)&zero_count, sizeof(word));
-        out.write((char *)mem_block.get_ptr(), mem_block.get_size());
+        out.write((char *)mem_block.get_ptr(), mem_block.get_size());        
       }
 
     private:

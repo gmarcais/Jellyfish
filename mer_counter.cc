@@ -226,8 +226,11 @@ void *start_worker(void *worker) {
     }
   } else { // dump raw
     if(!pthread_mutex_trylock(info->write_lock)) {
-      info->qc->counters->write_raw(*info->out);
-      pthread_mutex_unlock(info->write_lock);
+      if(!*info->header_written) {
+        *info->header_written = true;
+        info->qc->counters->write_raw(*info->out);
+        pthread_mutex_unlock(info->write_lock);
+      }
     }
   }
   

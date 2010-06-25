@@ -59,20 +59,18 @@ namespace jellyfish {
   
     Offsets() {}
 
-    Offsets(uint_t _key_len, uint_t _val_len, uint_t _reprobe_limit) :
-      key_len(_key_len), val_len(_val_len), reprobe_limit(_reprobe_limit),
-      reprobe_len(bitsize(_reprobe_limit)), 
-      lval_len(key_len + val_len - reprobe_len) 
-    {
-      compute_offsets();
+    Offsets(uint_t _key_len, uint_t _val_len, uint_t _reprobe_limit) {
+      init(_key_len, _val_len, _reprobe_limit);
     }
 
     ~Offsets() {}
 
     void init(uint_t _key_len, uint_t _val_len, uint_t _reprobe_limit) {
-      key_len = _key_len;
-      val_len = _val_len;
+      key_len       = _key_len;
+      val_len       = _val_len;
       reprobe_limit = _reprobe_limit;
+      reprobe_len   = bitsize(_reprobe_limit);
+      lval_len      = key_len + val_len - reprobe_len;
       compute_offsets();
     }
     uint_t get_block_len() { return block_len; }
@@ -127,6 +125,7 @@ namespace jellyfish {
     uint_t         lcboff;
     uint_t         ocboff;
 
+    memset(offsets, '\0', sizeof(offsets));
     do {
       offset->normal.key.woff    = offset->large.key.woff = lcword = cword;
       ocboff                     = lcboff = cboff;
