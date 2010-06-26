@@ -8,6 +8,7 @@
 #include <iostream>
 #include <utility>
 #include <exception>
+#include <string>
 #include <assert.h>
 #include "lib/misc.hpp"
 #include "lib/hash_function.hpp"
@@ -442,7 +443,7 @@ namespace jellyfish {
         out.write((char *)&header, sizeof(header));
         out.write((char *)reprobes, sizeof(size_t) * (reprobe_limit + 1));
         if(out.tellp() & 0x7) { // Make sure aligned TODO: use alignof?
-          string padding(0x8 - (out.tellp() & 0x7), '\0');
+          std::string padding(0x8 - (out.tellp() & 0x7), '\0');
           out.write(padding.c_str(), padding.size());
         }
         out.write((char *)&zero_count, sizeof(word));
