@@ -58,6 +58,7 @@ static struct argp_option options[] = {
   {"buffers",           'b',		"NB",   0, "Nb of buffers per thread"},
   {"buffer-size",       OPT_BUF_SIZE,	"SIZE", 0, "Size of a buffer"},
   {"hash-size",         's',		"SIZE", 0, "Initial hash size"},
+  {"reprobes",          'p',    "NB",   0, "Maximum number of reprobing"},
   {"no-write",          'w',		0,      0, "Don't write hash to disk"},
   {"raw",               'r',		0,      0, "Dump raw database"},
   {"timing",            OPT_TIMING,	"FILE", 0, "Print timing information to FILE"},
@@ -71,11 +72,12 @@ struct arguments {
   unsigned int	 mer_len;
   unsigned int	 counter_len;
   unsigned int	 out_counter_len;
+  unsigned int   reprobes;
   unsigned long	 size;
-  bool		 no_write;
-  bool		 raw;
-  char		*timing;
-  char		*output;
+  bool           no_write;
+  bool           raw;
+  char          *timing;
+  char          *output;
 };
 
 static error_t parse_opt (int key, char *arg, struct argp_state *state)
@@ -97,6 +99,7 @@ break;
   case 'b': ULONGP(nb_buffers);
   case 'm': ULONGP(mer_len);
   case 'c': ULONGP(counter_len);
+  case 'p': ULONGP(reprobes);
   case 'w': FLAG(no_write);
   case 'r': FLAG(raw);
   case 'o': STRING(output);
@@ -121,8 +124,11 @@ void initialize(int arg_st, int argc, char *argv[],
 
   qc->rq = new seq_queue(nb_buffers);
   qc->wq = new seq_queue(nb_buffers);
-  qc->counters = new mer_counters(new storage_t(arguments->size, 2*arguments->mer_len, 
-                                                arguments->counter_len, 50, jellyfish::quadratic_reprobes)); 
+  qc->counters = new mer_counters(new storage_t(arguments->size, 
+                                                2*arguments->mer_len, 
+                                                arguments->counter_len, 
+                                                arguments->reprobes,
+                                                jellyfish::quadratic_reprobes)); 
 
   buffers = new seq[nb_buffers];
   memset(buffers, '\0', sizeof(seq) * nb_buffers);
@@ -280,8 +286,8 @@ void do_it(struct arguments *arguments, struct qc *qc, struct io *io, ostream *o
 
   pthread_barrier_destroy(&worker_barrier);
 
-  printf("empry rq: %u new reader: %u\n", thread_stats.empty_rq,
-         thread_stats.new_reader);
+  //  printf("empry rq: %u new reader: %u\n", thread_stats.empty_rq,
+  //         thread_stats.new_reader);
 }
 
 int main(int argc, char *argv[]) {
@@ -295,6 +301,7 @@ int main(int argc, char *argv[]) {
   arguments.counter_len = 32;
   arguments.out_counter_len = 4;
   arguments.size = 1000000;
+  arguments.reprobes = 50;
   arguments.nb_buffers = 100;
   arguments.buffer_size = 4096;
   arguments.no_write = false;

@@ -83,12 +83,12 @@ TEST(SquareBinaryMatrix, Initialization) {
   }
   ASSERT_EQ(10, regular + singular);
 
-  std::cout << "rand_m " << rand_m.str() << std::endl;
+  //  std::cout << "rand_m " << rand_m.str() << std::endl;
   for(i = 0; i < 100; i++) {
     v = random_vector(VECLEN);
-    std::cout << "v " << rand_m.str_vector(v) << std::endl;
-    std::cout << "rand_m.times(v) " << rand_m.str_vector(rand_m.times(v)) << std::endl;
-    std::cout << "rand_m * v " << rand_m.str_vector(rand_m * v) << std::endl;
-    ASSERT_EQ(rand_m.times(v), rand_m * v);
+//     std::cout << "v " << rand_m.str_vector(v) << std::endl;
+//     std::cout << "rand_m.times(v) " << rand_m.str_vector(rand_m.times(v)) << std::endl;
+//     std::cout << "rand_m * v " << rand_m.str_vector(rand_m * v) << std::endl;
+    ASSERT_EQ(rand_m.times_loop(v), rand_m.times_unrolled(v));
   }
 }

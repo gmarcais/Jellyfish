@@ -257,10 +257,10 @@ namespace jellyfish {
                 nval <<= offsets.get_lval_len() * overflows;
               val += nval;
           
-              //           overflows++;
-              //           reprobe = 0;
-              //           id = (cid + reprobes[0]) & size_mask;
-              return true;
+              overflows++;
+              reprobe = 0;
+              cid = id = (cid + reprobes[0]) & size_mask;
+              continue;
             }
           } else {
             if(o->key.mask2) {

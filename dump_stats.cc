@@ -99,7 +99,9 @@ int main(int argc, char *argv[]) {
     total_mers += it.val;
   }
 
-  std::cout << std::dec << unique_mers << " " << distinct_mers << " " << total_mers << std::endl;
+  if(!arguments.fasta)
+    std::cout << std::dec << unique_mers << " " << distinct_mers << 
+      " " << total_mers << std::endl;
   
   exit(0);
 }

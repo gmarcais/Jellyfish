@@ -71,6 +71,7 @@ namespace jellyfish {
       reprobe_limit = _reprobe_limit;
       reprobe_len   = bitsize(_reprobe_limit);
       lval_len      = key_len + val_len - reprobe_len;
+
       compute_offsets();
     }
     uint_t get_block_len() { return block_len; }

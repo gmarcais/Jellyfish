@@ -67,8 +67,8 @@ namespace jellyfish {
         reprobe_limit(_reprobe_limit), key_len(_key_len),
         offsets(key_len + bitsize(_reprobe_limit + 1) - lsize, _val_len,
                 _reprobe_limit),
-        key_mask((((word)1) << (key_len - lsize)) - 1),
-        key_off(key_len - lsize),
+        key_mask(key_len <= lsize ? 0 : (((word)1) << (key_len - lsize)) - 1),
+        key_off(key_len <= lsize ? 0 : key_len - lsize),
         mem_block(div_ceil(size, (size_t)offsets.get_block_len()) * offsets.get_block_word_len() * sizeof(word)),
         data((word *)mem_block.get_ptr()), reprobes(_reprobes),
         hash_matrix(key_len), 
@@ -78,10 +78,6 @@ namespace jellyfish {
           // TODO: should throw an error
           std::cerr << "allocation failed";
         }
-        std::cerr << "normal constructor size " << size << " klen " << key_len << " clen " << 
-          offsets.get_val_len() << " reprobe_limit " << 
-          reprobe_limit << std::endl;
-        std::cerr << "offset sum " << bogus_sum(&offsets, sizeof(offsets)) << std::endl;
       }
       
       array(char *map, size_t length) :
@@ -108,9 +104,6 @@ namespace jellyfish {
         if((size_t)map & 0x7)
           map += 0x8 - ((size_t)map & 0x7); // Make sure aligned for 64bits word. TODO: use alignof?
         data = (word *)map;
-        std::cerr << "size " << size << " klen " << header->klen << " clen " << header->clen <<
-          " reprobe_limit " << reprobe_limit << std::endl;
-        std::cerr << "offset sum " << bogus_sum(&offsets, sizeof(offsets)) << std::endl;
       }
 
       ~array() { }
@@ -143,8 +136,6 @@ namespace jellyfish {
 
         bool next() {
           while((id = nid++) < end_id) {
-            if(id % 100000 == 0)
-              printf("\r%10ld %10ld", id, end_id);
             if(ary->get_key_val_full(id, key, val)) {
               hash = (key & ary->key_mask) << ary->lsize;
               uint_t reprobep = (key >> ary->key_off) - 1;
@@ -153,7 +144,6 @@ namespace jellyfish {
               return true;
             }
           }
-          printf("\n");
           return false;
         }
       };
@@ -225,13 +215,12 @@ namespace jellyfish {
       }
 
       /*
-       * Return the (high bits) of a key and value at position id. If
-       * the slot at id is empty or has the large bit set, returns
-       * false. Otherwise, returns the key and the value is the sum of
-       * all the entries in the hash table for that key. I.e., the
-       * table is search forward for entries with large bit set
-       * pointing back to the key at id, and all those values are
-       * summed up.
+       * Return the key and value at position id. If the slot at id is
+       * empty or has the large bit set, returns false. Otherwise,
+       * returns the key and the value is the sum of all the entries
+       * in the hash table for that key. I.e., the table is search
+       * forward for entries with large bit set pointing back to the
+       * key at id, and all those values are summed up.
        */
       bool get_key_val_full(size_t id, word &key, word &val) {
         word     *w, *kvw, nkey, nval;
@@ -255,7 +244,6 @@ namespace jellyfish {
             return false;
         }
 
-        key &= key_mask;
         kvw = w + o->val.woff;
         val = ((*kvw) & o->val.mask1) >> o->val.boff;
         if(o->val.mask2)
@@ -284,16 +272,13 @@ namespace jellyfish {
               if(lo->val.mask2)
                 nval |= ((*(kvw+1)) & lo->val.mask2) << lo->val.shift;
               nval <<= offsets.get_val_len();
-              if(overflows > 0)
-                nval <<= offsets.get_lval_len() * overflows;
+              nval <<= offsets.get_lval_len() * overflows;
               val += nval;
 
               overflows++;
-              //              printf("key %12ld overflow %ld\n", key, overflows);
               reprobe = 0;
-              cid = id = (id + reprobes[0]) & size_mask;
+              cid = id = (cid + reprobes[0]) & size_mask;
               continue;
-              //              return true;
             }
           } else {
             if(o->key.mask2) {
