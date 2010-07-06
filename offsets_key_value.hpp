@@ -21,11 +21,11 @@ namespace jellyfish {
    * A key is prefixed with a "large" bit. If this bit is 0, the key
    * field is length key_len (not counting the possible set bits) and
    * the value field has length val_len. If the large bit has value 1,
-   * the key field has length ceil(log_2(reproble_limit)) and represents
-   * the number of reprobing hops minus 1 to go backward to find the actual
-   * key. The remainder bits is used for the value field. In this
-   * scheme, we assume the length needed to encode the number of
-   * reprobes is much less than the length needed to encode the key.
+   * the key field is just long enough to encode the number of
+   * reprobing hops to go backward to find the actual key. The
+   * remainder bits is used for the value field. In this scheme, we
+   * assume the length needed to encode the number of reprobes is much
+   * less than the length needed to encode the key.
    */
 
   /* Offsets holds all the possible offset for a given combination of
@@ -74,14 +74,22 @@ namespace jellyfish {
 
       compute_offsets();
     }
-    uint_t get_block_len() { return block_len; }
-    uint_t get_block_word_len() { return block_word_len; }
-    uint_t get_reprobe_len() { return reprobe_len; }
-    uint_t get_key_len() { return key_len; }
-    uint_t get_val_len() { return val_len; }
-    uint_t get_lval_len() { return lval_len; }
+    uint_t get_block_len() const { return block_len; }
+    uint_t get_block_word_len() const { return block_word_len; }
+    uint_t get_reprobe_len() const { return reprobe_len; }
+    uint_t get_key_len() const { return key_len; }
+    uint_t get_val_len() const { return val_len; }
+    uint_t get_lval_len() const { return lval_len; }
 
-    word *get_word_offset(size_t id, offset_t **o, offset_t **lo, word *base) {
+    // Discretize and round down number of entries according to length
+    // of a block. Return in blocks the number of blocks.
+    size_t floor_block(size_t entries, size_t &blocks) const {
+      blocks = entries / block_len;
+      return block_len * blocks;
+    }
+
+    word *get_word_offset(size_t id, const offset_t **o, const offset_t **lo,
+			  word * const base) const {
       size_t in_block_id = id % block_len;
       *o = &offsets[in_block_id].normal;
       *lo = &offsets[in_block_id].large;

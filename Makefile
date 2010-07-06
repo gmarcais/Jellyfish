@@ -2,7 +2,7 @@
 # name start with a '_' by convention and contain a config.h.
 
 CC = g++
-CPPFLAGS = -Wall -Werror -O2 -g -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -I.
+CPPFLAGS = -Wall -Werror -g -O2 -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -I.
 # Uncomment following to use SSE
 # CPPFLAGS += -msse -msse2 -DSSE
 LDFLAGS = -lpthread
@@ -20,7 +20,7 @@ VPATH=..:../lib
 all: $(TARGETS)
 
 compare_dump3: compare_dump3.o
-dump_stats_compacted: dump_stats_compacted.o
+dump_stats_compacted: dump_stats_compacted.o square_binary_matrix.o
 total_mers_single_fasta: total_mers_single_fasta.o
 mer_counter_C: mer_counter_C.o
 

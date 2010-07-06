@@ -47,7 +47,8 @@ static char args_doc[] = "fasta ...";
 enum {
   OPT_VAL_LEN = 1024,
   OPT_BUF_SIZE,
-  OPT_TIMING
+  OPT_TIMING,
+  OPT_OBUF_SIZE
 };
 static struct argp_option options[] = {
   {"threads",		't',		"NB",   0, "Nb of threads"},
@@ -57,6 +58,7 @@ static struct argp_option options[] = {
   {"out-counter-len",   OPT_VAL_LEN,	"LEN",  0, "Length (in bytes) of counting field in output"},
   {"buffers",           'b',		"NB",   0, "Nb of buffers per thread"},
   {"buffer-size",       OPT_BUF_SIZE,	"SIZE", 0, "Size of a buffer"},
+  {"out-buffer-size",   OPT_OBUF_SIZE,  "SIZE", 0, "Size of output buffer per thread"},
   {"hash-size",         's',		"SIZE", 0, "Initial hash size"},
   {"reprobes",          'p',    "NB",   0, "Maximum number of reprobing"},
   {"no-write",          'w',		0,      0, "Don't write hash to disk"},
@@ -74,6 +76,7 @@ struct arguments {
   unsigned int	 out_counter_len;
   unsigned int   reprobes;
   unsigned long	 size;
+  unsigned long	 out_buffer_size;
   bool           no_write;
   bool           raw;
   char          *timing;
@@ -106,6 +109,7 @@ break;
   case OPT_VAL_LEN: ULONGP(out_counter_len);
   case OPT_BUF_SIZE: ULONGP(buffer_size);
   case OPT_TIMING: STRING(timing);
+  case OPT_OBUF_SIZE: ULONGP(out_buffer_size);
 
   default:
     return ARGP_ERR_UNKNOWN;
@@ -174,21 +178,22 @@ struct trailer {
 };
 
 struct worker_info {
-  pthread_barrier_t *barrier;
-  thread_worker     *worker;
-  pthread_t          thread;
-  pthread_mutex_t   *write_lock;
-  unsigned int       id;
-  ostream           *out;
-  struct qc         *qc;
-  struct arguments  *arguments;
-  struct timeval    *after_hashing;
-  volatile bool     *header_written;
-  struct trailer    *trailer;
+  pthread_barrier_t		*barrier;
+  thread_worker			*worker;
+  pthread_t			 thread;
+  pthread_mutex_t		*write_lock;
+  unsigned int			 id;
+  ostream			*out;
+  struct qc			*qc;
+  struct arguments		*arguments;
+  struct timeval		*after_hashing;
+  mer_counters::dump_zero	*dumper;
+  struct trailer		*trailer;
 };
 
 void *start_worker(void *worker) {
   struct worker_info *info = (struct worker_info *)worker;
+  bool is_serial;
 
   pthread_barrier_wait(info->barrier);
   try {
@@ -197,60 +202,43 @@ void *start_worker(void *worker) {
     std::cerr << e.what() << std::endl;
   }
 
-  if(pthread_barrier_wait(info->barrier) == PTHREAD_BARRIER_SERIAL_THREAD) {
+  is_serial = pthread_barrier_wait(info->barrier) == PTHREAD_BARRIER_SERIAL_THREAD;
+  if(is_serial)
     gettimeofday(info->after_hashing, NULL);
-  }
 
   if(info->arguments->no_write)
     return NULL;
 
   if(!info->arguments->raw) {
-    compacter_t compacter(10000000UL, info->arguments->mer_len,
-                          info->arguments->out_counter_len);
-    // Write header    
-    if(!pthread_mutex_trylock(info->write_lock)) {
-      if(!*info->header_written) {
-        compacter.write_header(info->out, 
-                               info->qc->counters->get_size());
-        *info->header_written = true;
-      }
-      pthread_mutex_unlock(info->write_lock);
+    if(is_serial) {
+      *info->dumper = info->qc->counters->new_dumper(info->out, 
+						     info->arguments->nb_threads,
+						     info->arguments->out_buffer_size,
+						     info->arguments->mer_len,
+						     8 * info->arguments->out_counter_len);
     }
 
-    mer_iterator_t it = 
-      info->qc->counters->iterator_slice(info->id, info->arguments->nb_threads);
-    compacter.dump(info->out, it, info->write_lock);
-    __sync_add_and_fetch(&info->trailer->unique, compacter.get_unique());
-    __sync_add_and_fetch(&info->trailer->distinct, compacter.get_distinct());
-    __sync_add_and_fetch(&info->trailer->total, compacter.get_total());
-
-    if(pthread_barrier_wait(info->barrier) == PTHREAD_BARRIER_SERIAL_THREAD) {
-      compacter.update_stats(info->out, info->trailer->unique,
-                             info->trailer->distinct,
-                             info->trailer->total);
-      std::cout << info->trailer->unique << " " << info->trailer->distinct << " " << info->trailer->total << " " << std::endl;
-    }
+    pthread_barrier_wait(info->barrier);
+    info->dumper->dump(info->id);
+    pthread_barrier_wait(info->barrier);
+    if(is_serial)
+      info->dumper->update_stats();
   } else { // dump raw
-    if(!pthread_mutex_trylock(info->write_lock)) {
-      if(!*info->header_written) {
-        *info->header_written = true;
-        info->qc->counters->write_raw(*info->out);
-        pthread_mutex_unlock(info->write_lock);
-      }
-    }
+    if(is_serial)
+      info->qc->counters->write_raw(*info->out);
   }
   
   return NULL;
 }
 
 void do_it(struct arguments *arguments, struct qc *qc, struct io *io, ostream *out, struct timeval *after_hashing) {
-  unsigned int        i;
-  struct worker_info  workers[arguments->nb_threads];
-  struct thread_stats thread_stats;
-  pthread_barrier_t   worker_barrier;
-  pthread_mutex_t     write_lock;
-  volatile bool       header_written;
-  struct trailer      trailer;
+  unsigned int			i;
+  struct worker_info		workers[arguments->nb_threads];
+  struct thread_stats		thread_stats;
+  pthread_barrier_t		worker_barrier;
+  pthread_mutex_t		write_lock;
+  struct trailer		trailer;
+  mer_counters::dump_zero	worker_dumper;
 
   memset(&thread_stats, '\0', sizeof(thread_stats));
   memset(&workers, '\0', sizeof(workers));
@@ -268,8 +256,8 @@ void do_it(struct arguments *arguments, struct qc *qc, struct io *io, ostream *o
     workers[i].out = out;
     workers[i].arguments = arguments;
     workers[i].after_hashing = after_hashing;
-    workers[i].header_written = &header_written;
     workers[i].trailer = &trailer;
+    workers[i].dumper = &worker_dumper;
     if(pthread_create(&workers[i].thread, NULL, start_worker, &workers[i])) {
       perror("Can't create thread");
       exit(1);
@@ -300,10 +288,11 @@ int main(int argc, char *argv[]) {
   arguments.mer_len = 12;
   arguments.counter_len = 32;
   arguments.out_counter_len = 4;
-  arguments.size = 1000000;
+  arguments.size = 1000000UL;
   arguments.reprobes = 50;
   arguments.nb_buffers = 100;
   arguments.buffer_size = 4096;
+  arguments.out_buffer_size = 20000000UL;
   arguments.no_write = false;
   arguments.raw = false;
   arguments.timing = NULL;
@@ -324,7 +313,6 @@ int main(int argc, char *argv[]) {
   gettimeofday(&after_init, NULL);
 
   do_it(&arguments, &qc, &io, &output, &after_hashing);
-  gettimeofday(&after_writing, NULL);
   
   output.close();
   gettimeofday(&after_writing, NULL);

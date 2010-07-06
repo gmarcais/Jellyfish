@@ -4,6 +4,7 @@
 #include <argp.h>
 #include <iostream>
 #include <fstream>
+#include "mer_counting.hpp"
 #include "compacted_hash.hpp"
 
 /*
@@ -53,18 +54,6 @@ break;
 }
 static struct argp argp = { options, parse_opt, args_doc, doc };
 
-struct header {
-  uint64_t klen;
-  uint64_t clen;
-  uint64_t size;
-};
-
-struct trailer {
-  uint64_t unique;
-  uint64_t distinct;
-  uint64_t total;
-};
-
 int main(int argc, char *argv[])
 {
   struct arguments arguments;
@@ -81,8 +70,7 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  jellyfish::compacted_hash::reader hash(argv[arg_st]);
-
+  hash_reader_t hash(argv[arg_st]);
   if(arguments.verbose) {
     std::cout << "k-mer length:          " <<
       hash.get_mer_len() << std::endl;
@@ -90,64 +78,32 @@ int main(int argc, char *argv[])
       hash.get_val_len() << std::endl;
   }
 
-  std::cout << 
-    "Unique:   " << hash.get_unique() << std::endl <<
-    "Distinct: " << hash.get_distinct() << std::endl <<
-    "Total:    " << hash.get_total() << std::endl;
+  if(!arguments.fasta && !arguments.recompute) {
+    std::cout << 
+      "Unique:   " << hash.get_unique() << std::endl <<
+      "Distinct: " << hash.get_distinct() << std::endl <<
+      "Total:    " << hash.get_total() << std::endl;
+    return 0;
+  }
 
-
-  // Reimplement as an iterator in compacted_hash class.
-//   if(arguments.fasta || arguments.recompute) {
-//     char *buffer = new char[buffer_len];
-//     char *buffer_end, *ptr;
-//     uint64_t key, count, distinct = 0, unique = 0, total = 0;
-//     char kmer[header.klen+1];
-//     char table[4] = { 'A', 'C', 'G', 'T' };
-//     kmer[header.klen] = '\0';
-    
-//     hash_c.seekg(-(sizeof(trailer) + record_len), std::ios_base::end);
-//     std::streampos length = hash_c.tellg();
-//     std::streampos cur = sizeof(header);
-
-//     hash_c.seekg(sizeof(header), std::ios_base::beg);
-//     while(hash_c.good()) {
-//       hash_c.read(buffer, buffer_len);
-//       //    std::cerr << "Read " << hash_c.gcount() << "\n";
-//       buffer_end = buffer + hash_c.gcount();
-//       ptr = buffer;
-      
-//       while(ptr + record_len <= buffer_end && cur <= length) {
-//         key = 0;
-//         memcpy(&key, ptr, klen);
-//         ptr += klen;
-//         count = 0;
-//         memcpy(&count, ptr, header.clen);
-//         ptr += header.clen;
-//         cur += klen + header.clen;
-        
-//         if(arguments.fasta) {
-//           for(unsigned int i = 0; i < header.klen; i++) {
-//             kmer[header.klen - 1 - i] = table[key & 0x3];
-//             key >>= 2;
-//           }
-//           std::cout << ">" << count << std::endl << kmer << std::endl;
-//         }
-        
-//         if(count == 1)
-//           unique++;
-//         distinct++;
-//         total += count;
-//       }
-//     }
-//     hash_c.close();
-
-//     if(arguments.recompute) {
-//       std::cout << "Stats recomputed:" << std::endl <<
-//         "Unique:   " << unique << std::endl <<
-//         "Distinct: " << distinct << std::endl <<
-//         "Total:    " << total << std::endl;
-//     }
-//   }
+  if(arguments.fasta) {
+    char key[hash.get_mer_len() + 1];
+    while(hash.next()) {
+      hash.get_string(key);
+      std::cout << ">" << hash.val << std::endl << key << std::endl;
+    }
+  } else {
+    uint64_t unique = 0, distinct = 0, total = 0;
+    while(hash.next()) {
+      unique += hash.val == 1;
+      distinct++;
+      total += hash.val;
+    }
+    std::cout << 
+      "Unique:   " << unique << std::endl <<
+      "Distinct: " << distinct << std::endl <<
+      "Total:    " << total << std::endl;
+  }
 
   return 0;
 }

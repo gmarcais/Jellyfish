@@ -108,35 +108,62 @@ namespace jellyfish {
 
       ~array() { }
 
-      size_t get_size() { return size; }
-      uint_t get_key_len() { return key_len; }
-      uint_t get_val_len() { return offsets.get_val_len(); }
+      size_t get_size() const { return size; }
+      uint_t get_key_len() const { return key_len; }
+      uint_t get_val_len() const { return offsets.get_val_len(); }
       
-      size_t get_max_reprobe_offset() { 
+      size_t get_max_reprobe_offset() const { 
         return reprobes[reprobe_limit]; 
+      }
+
+      size_t floor_block(size_t entries, size_t &blocks) const {
+	return offsets.floor_block(entries, blocks);
+      }
+
+      /**
+       * Zero out blocks in [start, start+length), where start and
+       * length are given in number of blocks.
+       **/
+      void zero_blocks(size_t start, size_t length) {
+	char *start_ptr = (char *)(data + start * offsets.get_block_word_len());
+	char *end_ptr = (char *)mem_block.get_ptr() + mem_block.get_size();
+
+	if(start_ptr >= end_ptr)
+	  return;
+	length *= offsets.get_block_word_len() * sizeof(word);
+	if(start_ptr + length >= end_ptr)
+	  length = end_ptr - start_ptr;
+
+	memset(start_ptr, '\0', length);
       }
 
       // Iterator
       class iterator {
-        array  *ary;
-        size_t  nid, end_id;
+        const array  *ary;
+        size_t  start_id, nid, end_id;
+        word   *ow;
       public:
         word     key;
         word     val;
         size_t   id;
         uint64_t hash;
 
-        iterator(array *_ary, size_t start, size_t end) :
-          ary(_ary), nid(start), end_id(end) {}
+        iterator(const array *_ary, size_t start, size_t end) :
+          ary(_ary), start_id(start), nid(start), 
+	  end_id(end > ary->get_size() ? ary->get_size() : end), ow(ary->data) {}
         
-        void get_string(char *out) {
+        void get_string(char *out) const {
           tostring(key, ary->get_key_len() / 2, out);
         }
-        uint64_t get_hash() { return hash; }
+        uint64_t get_hash() const { return hash; }
+	uint64_t get_start() const { return start_id; }
+	uint64_t get_end() const { return end_id; }
 
         bool next() {
+          bool success;
           while((id = nid++) < end_id) {
-            if(ary->get_key_val_full(id, key, val)) {
+            success = ary->get_key_val_full(id, key, val);
+            if(success) {
               hash = (key & ary->key_mask) << ary->lsize;
               uint_t reprobep = (key >> ary->key_off) - 1;
               hash |= (id - (reprobep > 0 ? ary->reprobes[reprobep] : 0)) & ary->size_mask;
@@ -148,8 +175,8 @@ namespace jellyfish {
         }
       };
       friend class iterator;
-      iterator iterator_all() { return iterator(this, 0, get_size()); }
-      iterator iterator_slice(size_t slice_number, size_t number_of_slice) {
+      iterator iterator_all() const { return iterator(this, 0, get_size()); }
+      iterator iterator_slice(size_t slice_number, size_t number_of_slice) const {
         size_t slice_size = get_size() / number_of_slice;
         return iterator(this, slice_number * slice_size, (slice_number + 1) * slice_size);
       }
@@ -222,11 +249,11 @@ namespace jellyfish {
        * forward for entries with large bit set pointing back to the
        * key at id, and all those values are summed up.
        */
-      bool get_key_val_full(size_t id, word &key, word &val) {
-        word     *w, *kvw, nkey, nval;
-        offset_t *o, *lo;
-        uint_t    reprobe = 0, overflows = 0;
-        size_t    cid;
+      bool get_key_val_full(size_t id, word &key, word &val) const {
+        const offset_t	*o, *lo;
+        word		*w, *kvw, nkey, nval;
+        uint_t		 reprobe = 0, overflows = 0;
+        size_t		 cid;
 
         w   = offsets.get_word_offset(id, &o, &lo, data);
         kvw = w + o->key.woff;
@@ -296,7 +323,7 @@ namespace jellyfish {
         return true;
       }
 
-      bool get_val(size_t id, word key, word &val, bool full = false) {
+      bool get_val(size_t id, word key, word &val, bool full = false) const {
         word     *w, *kvw, nkey, nval;
         offset_t *o, *lo;
         uint_t    reprobe = 0;
@@ -370,13 +397,13 @@ namespace jellyfish {
       }
 
       bool add_rec(size_t id, word key, word val, bool large) {
-        uint_t    reprobe     = 0;
-        offset_t *o, *lo, *ao;
-        word     *w, *kw, *vw, nkey;
-        bool      key_claimed = false;
-        size_t    cid         = id;
-        word      cary;
-        word      akey        = large ? 0 : (key | (1 << key_off));
+        uint_t		 reprobe     = 0;
+        const offset_t	*o, *lo, *ao;
+        word		*w, *kw, *vw, nkey;
+        bool		 key_claimed = false;
+        size_t		 cid         = id;
+        word		 cary;
+        word		 akey        = large ? 0 : (key | (1 << key_off));
 
         // Claim key
         do {
@@ -448,13 +475,17 @@ namespace jellyfish {
         return true;
       }
 
-      void write_raw(std::ostream &out) {
+      void write_hash_matrices(std::ostream &out) const {
+        hash_matrix.dump(out);
+        hash_inverse_matrix.dump(out);
+      }
+
+      void write_raw(std::ostream &out) const {
         struct header header = { size, key_len, offsets.get_val_len(),
                                  reprobe_limit };
         out.write((char *)&header, sizeof(header));
         out.write((char *)reprobes, sizeof(size_t) * (reprobe_limit + 1));
-        hash_matrix.dump(out);
-        hash_inverse_matrix.dump(out);
+	write_hash_matrices(out);
         if(out.tellp() & 0x7) { // Make sure aligned
           string padding(0x8 - (out.tellp() & 0x7), '\0');
           out.write(padding.c_str(), padding.size());

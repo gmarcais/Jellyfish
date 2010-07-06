@@ -12,13 +12,13 @@ namespace locks {
       
     public:
       cond() { 
-	pthread_mutex_init(&_mutex, NULL);
-	pthread_cond_init(&_cond, NULL);
+        pthread_mutex_init(&_mutex, NULL);
+        pthread_cond_init(&_cond, NULL);
       }
       
       ~cond() {
-	pthread_cond_destroy(&_cond);
-	pthread_mutex_destroy(&_mutex);
+        pthread_cond_destroy(&_cond);
+        pthread_mutex_destroy(&_mutex);
       }
       
       inline void lock() { pthread_mutex_lock(&_mutex); }
@@ -33,11 +33,11 @@ namespace locks {
     
     public:
       mutex() {
-	pthread_mutex_init(&_mutex, NULL);
+        pthread_mutex_init(&_mutex, NULL);
       }
     
       ~mutex() {
-	pthread_mutex_destroy(&_mutex);
+        pthread_mutex_destroy(&_mutex);
       }
     
       inline void lock() { pthread_mutex_lock(&_mutex); }

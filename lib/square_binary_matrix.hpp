@@ -30,11 +30,12 @@ class SquareBinaryMatrix {
   int       size;
 
 private:
-  SquareBinaryMatrix() : columns(NULL), size(-1) { }
   uint64_t mask() const { return (((uint64_t)1) << size) - 1; }
   uint64_t msb() const { return ((uint64_t)1) << (size - 1); }
 
 public:
+  SquareBinaryMatrix() : columns(NULL), size(-1) { }
+
   SquareBinaryMatrix(int _size) {
     columns = new uint64_t[_size];
     size = _size;
