@@ -128,11 +128,13 @@ void initialize(int arg_st, int argc, char *argv[],
 
   qc->rq = new seq_queue(nb_buffers);
   qc->wq = new seq_queue(nb_buffers);
-  qc->counters = new mer_counters(new storage_t(arguments->size, 
+  qc->counters = new mer_counters(arguments->nb_threads,
+				  new storage_t(arguments->size, 
                                                 2*arguments->mer_len, 
                                                 arguments->counter_len, 
                                                 arguments->reprobes,
                                                 jellyfish::quadratic_reprobes)); 
+  qc->counters->set_file_prefix(arguments->output);
 
   buffers = new seq[nb_buffers];
   memset(buffers, '\0', sizeof(seq) * nb_buffers);
@@ -167,7 +169,7 @@ void initialize(int arg_st, int argc, char *argv[],
   io->ns	   = false;
 }
 
-/* This data structure to pass arguments to the threads has become way
+/* TODO: This data structure to pass arguments to the threads has become way
  * to big! And the do_it function is a mess. Refactor!!
  */
 
@@ -183,11 +185,9 @@ struct worker_info {
   pthread_t			 thread;
   pthread_mutex_t		*write_lock;
   unsigned int			 id;
-  ostream			*out;
   struct qc			*qc;
   struct arguments		*arguments;
   struct timeval		*after_hashing;
-  mer_counters::dump_zero	*dumper;
   struct trailer		*trailer;
 };
 
@@ -209,36 +209,19 @@ void *start_worker(void *worker) {
   if(info->arguments->no_write)
     return NULL;
 
-  if(!info->arguments->raw) {
-    if(is_serial) {
-      *info->dumper = info->qc->counters->new_dumper(info->out, 
-						     info->arguments->nb_threads,
-						     info->arguments->out_buffer_size,
-						     info->arguments->mer_len,
-						     8 * info->arguments->out_counter_len);
-    }
+  if(is_serial)
+    info->qc->counters->dump_to_file();
 
-    pthread_barrier_wait(info->barrier);
-    info->dumper->dump(info->id);
-    pthread_barrier_wait(info->barrier);
-    if(is_serial)
-      info->dumper->update_stats();
-  } else { // dump raw
-    if(is_serial)
-      info->qc->counters->write_raw(*info->out);
-  }
-  
   return NULL;
 }
 
-void do_it(struct arguments *arguments, struct qc *qc, struct io *io, ostream *out, struct timeval *after_hashing) {
+void do_it(struct arguments *arguments, struct qc *qc, struct io *io, struct timeval *after_hashing) {
   unsigned int			i;
   struct worker_info		workers[arguments->nb_threads];
   struct thread_stats		thread_stats;
   pthread_barrier_t		worker_barrier;
   pthread_mutex_t		write_lock;
   struct trailer		trailer;
-  mer_counters::dump_zero	worker_dumper;
 
   memset(&thread_stats, '\0', sizeof(thread_stats));
   memset(&workers, '\0', sizeof(workers));
@@ -253,11 +236,9 @@ void do_it(struct arguments *arguments, struct qc *qc, struct io *io, ostream *o
     workers[i].write_lock = &write_lock;
     workers[i].id = i;
     workers[i].qc = qc;
-    workers[i].out = out;
     workers[i].arguments = arguments;
     workers[i].after_hashing = after_hashing;
     workers[i].trailer = &trailer;
-    workers[i].dumper = &worker_dumper;
     if(pthread_create(&workers[i].thread, NULL, start_worker, &workers[i])) {
       perror("Can't create thread");
       exit(1);
@@ -303,18 +284,16 @@ int main(int argc, char *argv[]) {
     argp_help(&argp, stderr, ARGP_HELP_SEE, argv[0]);
     exit(1);
   }
+  if(arguments.raw)
+    die("--raw switch not supported anymore. Fix me!");
 
   struct timeval start, after_init, after_hashing, after_writing;
 
   gettimeofday(&start, NULL);
-  ofstream output(arguments.output);
  
   initialize(arg_st, argc, argv, &arguments, &qc, &io);
   gettimeofday(&after_init, NULL);
-
-  do_it(&arguments, &qc, &io, &output, &after_hashing);
-  
-  output.close();
+  do_it(&arguments, &qc, &io, &after_hashing);
   gettimeofday(&after_writing, NULL);
 
   if(arguments.timing) {

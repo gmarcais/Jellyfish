@@ -475,7 +475,7 @@ namespace jellyfish {
         return true;
       }
 
-      void write_hash_matrices(std::ostream &out) const {
+      void write_ary_header(std::ostream &out) const {
         hash_matrix.dump(out);
         hash_inverse_matrix.dump(out);
       }
@@ -485,7 +485,7 @@ namespace jellyfish {
                                  reprobe_limit };
         out.write((char *)&header, sizeof(header));
         out.write((char *)reprobes, sizeof(size_t) * (reprobe_limit + 1));
-	write_hash_matrices(out);
+	write_ary_header(out);
         if(out.tellp() & 0x7) { // Make sure aligned
           string padding(0x8 - (out.tellp() & 0x7), '\0');
           out.write(padding.c_str(), padding.size());

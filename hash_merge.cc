@@ -5,6 +5,7 @@
 #include <argp.h>
 #include <iostream>
 #include <fstream>
+#include <vector>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdint.h>
@@ -24,25 +25,31 @@
  * the hashes
  **/
 struct heap_item {
-  mer_counters::iterator *it;
-  uint64_t key;
-  uint64_t val;
-  uint64_t hash;
-  char kmer[MAX_KMER_SIZE + 1];
+  hash_reader_t *it;
+  uint64_t	 key;
+  uint64_t	 val;
+  uint64_t	 pos;
+  char		 kmer[MAX_KMER_SIZE + 1];
 
-  heap_item() : it(0), key(0), val(0), hash(0) {
+  heap_item() : it(0), key(0), val(0), pos(0) {
     memset(kmer, 0, MAX_KMER_SIZE + 1);
   }
 
-  heap_item(mer_counters::iterator * iter) :
-    it(iter), key(iter->key), val(iter->val), hash(iter->get_hash()) {
-    iter->get_string(kmer);
+  heap_item(hash_reader_t *iter) :
+    it(iter), key(iter->key), val(iter->val), pos(iter->get_pos()) {
+    //    iter->get_string(kmer);
   }
 
+  // bool operator<(const heap_item & other) {
+  //   if(hash == other.hash)
+  //     return key < other.key;
+  //   return hash < other.hash;
+  // }
+  // Want a min heap: smaller element first
   bool operator<(const heap_item & other) {
-     if(hash == other.hash)
-       return key < other.key;
-     return hash < other.hash;
+    if(pos == other.pos)
+      return key > other.key;
+    return pos > other.pos;
   }
 };
 
@@ -55,7 +62,7 @@ static char doc[] = "Merge dumped hash tables";
 static char args_doc[] = "";
 
 enum {
-   OPT_VAL_LEN = 1024
+  OPT_VAL_LEN = 1024
 };
 
 static struct argp_option options[] = {
@@ -79,10 +86,10 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
 {
   struct arguments *arguments = (struct arguments *)state->input;
 
-#define ULONGP(field) errno = 0; \
-arguments->field = (typeof(arguments->field))strtoul(arg,NULL,0);     \
-if(errno) return errno; \
-break;
+#define ULONGP(field) errno = 0;					\
+  arguments->field = (typeof(arguments->field))strtoul(arg,NULL,0);     \
+  if(errno) return errno;						\
+  break;
 
 #define FLAG(field) arguments->field = true; break;
 #define STRING(field) arguments->field = arg; break;
@@ -103,74 +110,114 @@ static struct argp argp = { options, parse_opt, args_doc, doc };
 
 
 class ErrorWriting : public std::exception {
-   std::string msg;
-  public:
-   ErrorWriting(const std::string _msg) : msg(_msg) {}
-   virtual ~ErrorWriting() throw() {}
-   virtual const char* what() const throw() {
-     return msg.c_str();
-   }
+  std::string msg;
+public:
+  ErrorWriting(const std::string _msg) : msg(_msg) {}
+  virtual ~ErrorWriting() throw() {}
+  virtual const char* what() const throw() {
+    return msg.c_str();
+  }
 };
 
 
 class serial_writer {
-   uint64_t mer_len_bases;
-   uint64_t val_len_bits;
-   uint64_t key_len; // in BYTES
-   uint64_t val_len; // in BYTES
-   uint64_t max_count;
-   std::ofstream out;
-   char * buffer;
+  uint64_t key_len_bits;
+  uint64_t val_len_bits;
+  size_t   size;
+  uint64_t max_reprobes;
+  uint64_t key_len; // in BYTES
+  uint64_t val_len; // in BYTES
+  uint64_t max_count;
+  std::ofstream out;
+  char * buffer;
+  char * buffer_end;
+  char * current;
    
-   public:
-     // klen is in BASES; vlen is in BITs
-     serial_writer(std::string filename, uint_t klen, uint_t vlen) :
-        mer_len_bases(klen),
-        val_len_bits(vlen),
-        key_len((klen / 4) + (klen % 4 != 0)),
-        val_len((vlen / 8) + (vlen % 8 != 0)),
-        max_count((((uint64_t)1) << (8*val_len)) - 1)
-    {
-        out.open(filename.c_str(), std::ios::binary);
-        if(!out.good())
-           throw new ErrorWriting("Can't open file");
-        buffer = new char[key_len + val_len];
-    }
+public:
+  // klen is in BASES; vlen is in BITs
+  serial_writer(std::string filename, uint_t klen, uint_t vlen, size_t _size,
+		uint64_t _max_reprobes, size_t _buff_len = 20000000UL) :
+    key_len_bits(klen),
+    val_len_bits(vlen),
+    size(_size),
+    max_reprobes(_max_reprobes),
+    key_len((klen / 8) + (klen % 8 != 0)),
+    val_len((vlen / 8) + (vlen % 8 != 0)),
+    max_count((((uint64_t)1) << (8*val_len)) - 1),
+    out(filename.c_str())
+  {
+    if(!out.good())
+      throw new ErrorWriting("Can't open file");
+    size_t record_len = key_len + val_len;
+    size_t buffer_size = record_len * (_buff_len / record_len);
+    buffer = new char[buffer_size];
+    buffer_end = buffer + buffer_size;
+    current = buffer;
+  }
 
-    ~serial_writer() {
-        delete [] buffer;
-    }
+  ~serial_writer() {
+    close();
+    delete [] buffer;
+  }
 
-    uint64_t get_key_len_bytes() { return key_len; }
-    uint64_t get_val_len_bytes() { return val_len; }
+  uint64_t get_key_len_bytes() const { return key_len; }
+  uint64_t get_val_len_bytes() const { return val_len; }
+  uint64_t get_max_reprobes() const { return max_reprobes; }
 
-    /**
-     * Write the top of the hash table
-     **/
-    void write_header() {
-        jellyfish::compacted_hash::header head;
-        memset(&head, '\0', sizeof(head));
-        head.mer_len = mer_len_bases;
-        head.val_len = val_len_bits;
-        head.size = 0; // field is unused
-        out.write((char *)&head, sizeof(head));
-    }
+  /**
+   * Write the top of the hash table
+   **/
+  void write_header() {
+    jellyfish::compacted_hash::header head;
+    memset(&head, '\0', sizeof(head));
+    head.key_len = key_len_bits;
+    head.val_len = val_len_bits / 8;
+    head.size = size;
+    head.max_reprobes = max_reprobes;
+    head.size = 0; // field is unused
+    out.write((char *)&head, sizeof(head));
+  }
 
-    /**
-     * Write a single key, value entry
-     **/
-    void write_entry(uint64_t key, uint64_t val) {
-      char *ptr = buffer;
-      memcpy(ptr, &key, key_len);
-      ptr += key_len;
-      uint64_t count = (val > max_count) ? max_count : val;
-      memcpy(ptr, &count, val_len);
-      out.write(buffer, key_len + val_len);
-    }
+  void write_matrices(SquareBinaryMatrix &m1, SquareBinaryMatrix &m2) {
+    m1.dump(out);
+    m2.dump(out);
+  }
 
-    void close() {
-        // XXX: nop 
-    }
+  // /**
+  //  * Write a single key, value entry
+  //  **/
+  // void write_entry(uint64_t key, uint64_t val) {
+  //   char *ptr = buffer;
+  //   memcpy(ptr, &key, key_len);
+  //   ptr += key_len;
+  //   uint64_t count = (val > max_count) ? max_count : val;
+  //   memcpy(ptr, &count, val_len);
+  //   out.write(buffer, key_len + val_len);
+  // }
+  void write_entry(uint64_t key, uint64_t val) {
+    if(current >= buffer_end)
+      flush_buffer();
+
+    memcpy(current, &key, key_len);
+    current += key_len;
+    uint64_t count = (val > max_count) ? max_count : val;
+    memcpy(current, &count, val_len);
+    current += val_len;
+  }
+  
+  void close() {
+    // XXX: nop 
+    flush_buffer();
+    if(out.is_open())
+      out.close();
+  }
+
+private:
+  void flush_buffer() {
+    if(current > buffer)
+      out.write(buffer, current - buffer);
+    current = buffer;
+  }
 };
 
 
@@ -186,7 +233,10 @@ int main(int argc, char *argv[]) {
 
   int i;
   unsigned int rklen = 0;
-  size_t max_reprobe = 0;
+  size_t max_reprobes = 0;
+  size_t hash_size = 0;
+  SquareBinaryMatrix hash_matrix;
+  SquareBinaryMatrix hash_inverse_matrix;
 
   // compute the number of hashes we're going to read
   int num_hashes = argc - arg_st;
@@ -197,8 +247,7 @@ int main(int argc, char *argv[]) {
   }
 
   // this is our row of iterators
-  mer_counters *tables[num_hashes];
-  mer_counters::iterator *iters[num_hashes];
+  vector<hash_reader_t *> iters;
  
   // create an iterator for each hash file
   for(i = arg_st; i < argc; i++) {
@@ -206,36 +255,52 @@ int main(int argc, char *argv[]) {
 
     // open the hash database
     db_file = argv[i];
-    tables[i-arg_st] = new mer_counters();
     try {
-      tables[i-arg_st]->open(db_file, true);
+      iters.push_back(new hash_reader_t(db_file));
     } catch(exception *e) {
       die("Can't open k-mer database: %s\n", e->what());
     }
-    iters[i-arg_st] = new mer_counters::iterator(tables[i-arg_st]->iterator_all());
 
-    unsigned int len = tables[i-arg_st]->get_key_len();
+    unsigned int len = iters.back()->get_key_len();
     if(rklen != 0 && len != rklen)
-       die("Can't merge hashes of different key lengths\n");
+      die("Can't merge hashes of different key lengths\n");
     rklen = len;
     fprintf(stderr, "reading: %s\n", db_file);
 
-    size_t rep = tables[i-arg_st]->get_max_reprobe_offset();
-    if(max_reprobe != 0 && rep != max_reprobe)
-       die("Can't merge hashes with different reprobing stratgies\n");
-    max_reprobe = rep;
+    uint64_t rep = iters.back()->get_max_reprobes();
+    if(max_reprobes != 0 && rep != max_reprobes)
+      die("Can't merge hashes with different reprobing stratgies\n");
+    max_reprobes = rep;
+
+    size_t size = iters.back()->get_size();
+    if(hash_size != 0 && size != hash_size)
+      die("Can't merge hash with different size\n");
+    hash_size = size;
+
+    if(hash_matrix.get_size() < 0) {
+      hash_matrix = iters.back()->get_hash_matrix();
+      hash_inverse_matrix = iters.back()->get_hash_inverse_matrix();
+    } else {
+      SquareBinaryMatrix new_hash_matrix = iters.back()->get_hash_matrix();
+      SquareBinaryMatrix new_hash_inverse_matrix = 
+	iters.back()->get_hash_inverse_matrix();
+      if(new_hash_matrix != hash_matrix || 
+	 new_hash_inverse_matrix != hash_inverse_matrix)
+	die("Can't merge hash with different hash function\n");
+    }
   }
 
-  if(max_reprobe == 0 || rklen == 0)
+  if(rklen == 0)
     die("No valid hash tables found.\n");
 
-  rklen /= 2;
-  fprintf(stderr, "key length = %d\n", rklen);
-  fprintf(stderr, "num hashes = %d\n", num_hashes);
-  fprintf(stderr, "max reprobe = %ld\n", max_reprobe);
+  num_hashes = iters.size();
+  fprintf(stderr, "mer length  = %d\n", rklen / 2);
+  fprintf(stderr, "hash size   = %ld\n", hash_size);
+  fprintf(stderr, "num hashes  = %d\n", num_hashes);
+  fprintf(stderr, "max reprobe = %ld\n", max_reprobes);
 
   // create the heap storage
-  int heap_size = num_hashes * max_reprobe;
+  int heap_size = num_hashes * max_reprobes;
   heap_item heap[heap_size];
 
   fprintf(stderr, "heap size = %d\n", heap_size);
@@ -243,8 +308,8 @@ int main(int argc, char *argv[]) {
   // populate the initial heap
   int h = 0;
   for (i = 0; i < num_hashes; i++) {
-    for(size_t r = 0; r < max_reprobe && iters[i]->next(); r++) {
-      heap[h++] = heap_item(iters[i]);
+    for(size_t r = 0; r < max_reprobes && iters[i]->next(); r++) {
+	heap[h++] = heap_item(iters[i]);
       assert(h <= heap_size);
     }
   }
@@ -253,8 +318,10 @@ int main(int argc, char *argv[]) {
     die("Hashes contain no items.");
 
   // open the output file
-  serial_writer writer(cmdargs.output, rklen, cmdargs.out_counter_len);
+  serial_writer writer(cmdargs.output, rklen, 8 * cmdargs.out_counter_len,
+		       hash_size, max_reprobes);
   writer.write_header();
+  writer.write_matrices(hash_matrix, hash_inverse_matrix);
 
   fprintf(stderr, "out kmer len = %ld bytes\n", writer.get_key_len_bytes());
   fprintf(stderr, "out val len = %ld bytes\n", writer.get_val_len_bytes());
@@ -287,17 +354,19 @@ int main(int argc, char *argv[]) {
       // if there is more in this iterator, read the next entry, replace
       // this entry with the new values, and insert it back into the heap
       if(heap[i].it->next()) {
-          heap[i].key = heap[i].it->key;
-          heap[i].val = heap[i].it->val;
-          push_heap(heap, heap + i);
-          i++;
-          h++;
+	heap[i].key = heap[i].it->key;
+	heap[i].val = heap[i].it->val;
+	heap[i].pos = heap[i].it->get_pos();
+	//	head[i].it->get_string(head[i].kmer);
+	push_heap(heap, heap + i);
+	i++;
+	h++;
 
-      // if there is no more in this iterator, move the last popped element
-      // to this place, and don't advance i.
+	// if there is no more in this iterator, move the last popped element
+	// to this place, and don't advance i.
       } else {
-          heap[i] = heap[starth-1];
-          starth--;
+	heap[i] = heap[starth-1];
+	starth--;
       }
     }
 
@@ -308,23 +377,10 @@ int main(int argc, char *argv[]) {
   }
 
   // free the hashes and iterators
-  for(i = 0; i < num_hashes; i++) {
-     delete iters[i];
-     delete tables[i];
-  }
+  for(i = 0; i < num_hashes; i++)
+    delete iters[i];
+  //   delete tables[i];
+  // }
 
   writer.close();
 }
-
-/**
- * Convert a bit-packed key to a char* string
- **/
-// inline void tostring(uint64_t key, unsigned int rklen, char * out) {
-//   char table[4] = { 'A', 'C', 'G', 'T' };
-
-//   for(unsigned int i = 0 ; i < rklen; i++) {
-//     out[rklen-1-i] = table[key & UINT64_C(0x3)];
-//     key >>= 2;
-//   }
-//   out[rklen] = '\0';
-// }

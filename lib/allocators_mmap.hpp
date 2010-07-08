@@ -3,6 +3,7 @@
 
 #include <sys/types.h>
 #include <sys/mman.h>
+#include <pthread.h>
 
 namespace allocators {
   class mmap

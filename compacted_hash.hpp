@@ -10,9 +10,10 @@
 namespace jellyfish {
   namespace compacted_hash {
     struct header {
-      uint64_t  mer_len;
+      uint64_t  key_len;
       uint64_t  val_len; // In bytes
       uint64_t  size; // In bytes
+      uint64_t  max_reprobes;
       uint64_t  unique;
       uint64_t  distinct;
       uint64_t  total;
@@ -69,10 +70,11 @@ namespace jellyfish {
     template<typename key_t, typename val_t>
     class reader {
       struct header		 header;
-      std::ifstream		 io;
+      std::ifstream		 *io;
       uint_t			 key_len;
       SquareBinaryMatrix	 hash_matrix, hash_inverse_matrix;
       size_t			 record_len, buffer_len;
+      size_t		         size_mask;
       char			*buffer, *end_buffer, *ptr;
 
     public:
@@ -80,39 +82,45 @@ namespace jellyfish {
       val_t val;
 
       reader(std::string filename, size_t _buff_len = 10000000UL)
-      {
-        io.open(filename.c_str(), std::ios::binary);
-        if(!io.good())
-          throw new ErrorReading("Can't open file");
-        io.read((char *)&header, sizeof(header));
-        if(!io.good())
+      { 
+	io = new ifstream(filename.c_str());
+        io->read((char *)&header, sizeof(header));
+        if(!io->good())
           throw new ErrorReading("Error reading header");
-        key_len  = (header.mer_len / 4) + (header.mer_len % 4 != 0);
+        key_len  = (header.key_len / 8) + (header.key_len % 8 != 0);
 	record_len = key_len + header.val_len;
 	buffer_len = record_len * (_buff_len / record_len);
 	buffer = new char[buffer_len];
 	ptr = buffer;
 	end_buffer = NULL;
 
-	hash_matrix.load(io);
-	hash_inverse_matrix.load(io);
+	hash_matrix.load(*io);
+	hash_inverse_matrix.load(*io);
 	key = val = 0;
+	size_mask = header.size - 1; //TODO: check that header.size is a power of 2
       }
 
       ~reader() {
+	delete io;
 	delete[] buffer;
       }
 
-      uint_t get_mer_len() const { return header.mer_len; }
+      uint_t get_key_len() const { return header.key_len; }
+      uint_t get_mer_len() const { return header.key_len / 2; }
       uint_t get_val_len() const { return header.val_len; }
+      size_t get_size() const { return header.size; }
+      uint64_t get_max_reprobes() const { return header.max_reprobes; }
       uint64_t get_unique() const { return header.unique; }
       uint64_t get_distinct() const { return header.distinct; }
       uint64_t get_total() const { return header.total; }
+      SquareBinaryMatrix get_hash_matrix() const { return hash_matrix; }
+      SquareBinaryMatrix get_hash_inverse_matrix() const { return hash_inverse_matrix; }
 
       void get_string(char *out) const {
-	tostring(key, header.mer_len, out);
+	tostring(key, get_mer_len(), out);
       }
       uint64_t get_hash() const { return hash_matrix.times(key); }
+      uint64_t get_pos() const { return hash_matrix.times(key) & size_mask; }
 
       bool next() {
 	while(true) {
@@ -124,15 +132,15 @@ namespace jellyfish {
 	    return true;
 	  }
 
-	  if(io.fail())
+	  if(io->fail())
 	    return false;
-	  io.read(buffer, buffer_len);
-	  //	  if(record_len * (io.gcount() / record_len) != io.gcount())
+	  io->read(buffer, buffer_len);
+	  //	  if(record_len * (io->gcount() / record_len) != io->gcount())
 	  //	    return false;
 	  ptr = buffer;
 	  end_buffer = NULL;
-	  if((typeof record_len)io.gcount() >= record_len)
-	    end_buffer = ptr + (io.gcount() - record_len);
+	  if((typeof record_len)io->gcount() >= record_len)
+	    end_buffer = ptr + (io->gcount() - record_len);
 	}
       }
     };

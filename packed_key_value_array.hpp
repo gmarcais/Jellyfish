@@ -93,6 +93,27 @@ namespace jellyfish {
         return reprobes[reprobe_limit]; 
       }
 
+      size_t floor_block(size_t entries, size_t &blocks) const {
+	return offsets.floor_block(entries, blocks);
+      }
+      
+      /**
+       * Zero out blocks in [start, start+length), where start and
+       * length are given in number of blocks.
+       **/
+      void zero_blocks(size_t start, size_t length) {
+	char *start_ptr = (char *)(data + start * offsets.get_block_word_len());
+	char *end_ptr = (char *)mem_block.get_ptr() + mem_block.get_size();
+
+	if(start_ptr >= end_ptr)
+	  return;
+	length *= offsets.get_block_word_len() * sizeof(word);
+	if(start_ptr + length >= end_ptr)
+	  length = end_ptr - start_ptr;
+
+	memset(start_ptr, '\0', length);
+      }
+
       // Iterator
       class iterator {
         array  *ary;
@@ -205,10 +226,10 @@ namespace jellyfish {
        * values are summed up.
        */
       bool get_key_val_full(size_t id, word &key, word &val) {
-        word     *w, *kvw, nkey, nval;
-        offset_t *o, *lo;
-        uint_t    reprobe = 0, overflows = 0;
-        size_t    cid;
+        word		*w, *kvw, nkey, nval;
+        const offset_t	*o, *lo;
+        uint_t		 reprobe = 0, overflows = 0;
+        size_t		 cid;
 
         w   = offsets.get_word_offset(id, &o, &lo, data);
         kvw = w + o->key.woff;
@@ -352,13 +373,13 @@ namespace jellyfish {
       }
 
       bool add_rec(size_t id, word key, word val, bool large) {
-        uint_t    reprobe     = 0;
-        offset_t *o, *lo, *ao;
-        word     *w, *kw, *vw, nkey;
-        bool      key_claimed = false;
-        size_t    cid         = id;
-        word      cary;
-        word      akey        = large ? 0 : key;
+        uint_t		 reprobe     = 0;
+        const offset_t	*o, *lo, *ao;
+        word		*w, *kw, *vw, nkey;
+        bool		 key_claimed = false;
+        size_t		 cid         = id;
+        word		 cary;
+        word		 akey        = large ? 0 : key;
 
         if(key == 0) {
           word ncount = zero_count, count;
@@ -438,10 +459,15 @@ namespace jellyfish {
         return true;
       }
 
+      void write_ary_header(std::ostream &out) const {
+	// noop
+      }
+
       void write_raw(std::ostream &out) {
         struct header header = { size, offsets.get_key_len(), offsets.get_val_len(), reprobe_limit };
         out.write((char *)&header, sizeof(header));
         out.write((char *)reprobes, sizeof(size_t) * (reprobe_limit + 1));
+	write_ary_header(out);
         if(out.tellp() & 0x7) { // Make sure aligned TODO: use alignof?
           std::string padding(0x8 - (out.tellp() & 0x7), '\0');
           out.write(padding.c_str(), padding.size());

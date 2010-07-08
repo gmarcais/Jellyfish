@@ -42,6 +42,25 @@ namespace locks {
     
       inline void lock() { pthread_mutex_lock(&_mutex); }
       inline void unlock() { pthread_mutex_unlock(&_mutex); }
+      inline bool try_lock() { return !pthread_mutex_trylock(&_mutex); }
+    };
+    
+    class barrier
+    {
+      pthread_barrier_t _barrier;
+      
+    public:
+      barrier(unsigned count) {
+	pthread_barrier_init(&_barrier, NULL, count);
+      }
+      
+      ~barrier() {
+	pthread_barrier_destroy(&_barrier);
+      }
+      
+      inline int wait() {
+	return pthread_barrier_wait(&_barrier);
+      }
     };
   }
 }

@@ -7,6 +7,7 @@ namespace atomic
   class gcc
   {
   public:
+    typedef T type;
     inline T cas(T *ptr, T oval, T nval) {
       return __sync_val_compare_and_swap(ptr, oval, nval);
     }

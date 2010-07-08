@@ -75,12 +75,7 @@ int main(int argc, char *argv[]) {
   }
 
   db_file = argv[arg_st];
-  mer_counters hash_table;
-  try {
-    hash_table.open(db_file, true);
-  } catch(exception *e) {
-    die("Can't open k-mer database: %s\n", e->what());
-  }
+  mer_counters hash_table(db_file, true);
   mer_counters::iterator it = hash_table.iterator_all();
 
   unsigned int rklen = hash_table.get_key_len() / 2;

@@ -72,8 +72,8 @@ int main(int argc, char *argv[])
 
   hash_reader_t hash(argv[arg_st]);
   if(arguments.verbose) {
-    std::cout << "k-mer length:          " <<
-      hash.get_mer_len() << std::endl;
+    std::cout << "k-mer length (bases):          " <<
+      (hash.get_key_len() / 2) << std::endl;
     std::cout << "value length (bytes):  " <<
       hash.get_val_len() << std::endl;
   }

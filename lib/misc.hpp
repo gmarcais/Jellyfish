@@ -19,9 +19,9 @@
 #define bsizeof(v)      (8 * sizeof(v))
 #define PRINTVAR(v) {std::cout << __LINE__ << " " #v ": " << v << std::endl; }
 typedef uint_fast16_t uint_t;
-#define UINT_C(x)       UINT
-#define PRIUINTu PRIuMAX
-#define PRIUINTx PRIxMAX
+//#define UINT_C(x)       
+#define PRIUINTu PRIuFAST16
+#define PRIUINTx PRIxFAST16
 
 inline int leading_zeroes(unsigned int x) { return __builtin_clz(x); }
 inline int leading_zeroes(unsigned long x) { return __builtin_clzl(x); }
