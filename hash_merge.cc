@@ -53,6 +53,13 @@ struct heap_item {
   }
 };
 
+class heap_item_compare {
+public:
+  inline bool operator() (struct heap_item *item1, struct heap_item *item2) {
+    return *item1 < *item2;
+  }
+};
+
 /**
  * Command line processing
  **/
@@ -301,7 +308,9 @@ int main(int argc, char *argv[]) {
 
   // create the heap storage
   int heap_size = num_hashes * max_reprobes;
-  heap_item heap[heap_size];
+  heap_item heap_storage[heap_size];
+  heap_item *heap[heap_size];
+  heap_item_compare compare;
 
   fprintf(stderr, "heap size = %d\n", heap_size);
 
@@ -309,7 +318,9 @@ int main(int argc, char *argv[]) {
   int h = 0;
   for (i = 0; i < num_hashes; i++) {
     for(size_t r = 0; r < max_reprobes && iters[i]->next(); r++) {
-	heap[h++] = heap_item(iters[i]);
+      heap_storage[h] = heap_item(iters[i]);
+      heap[h] = &heap_storage[h];
+      h++;
       assert(h <= heap_size);
     }
   }
@@ -327,7 +338,7 @@ int main(int argc, char *argv[]) {
   fprintf(stderr, "out val len = %ld bytes\n", writer.get_val_len_bytes());
 
   // order the heap
-  make_heap(heap, heap + h);
+  make_heap(heap, heap + h, compare);
 
   // h is the current heap size
   while(h > 0) {
@@ -335,30 +346,30 @@ int main(int argc, char *argv[]) {
     int starth = h;
 
     // pop one element off
-    pop_heap(heap, heap + h--);
+    pop_heap(heap, heap + h--, compare);
 
-    uint64_t key = heap[starth-1].key;
+    uint64_t key = heap[starth-1]->key;
 
     // pop elements off that have the same key
     // all the popped elements will be at the end of the heap array
-    while(h > 0 && heap[0].key == key)
-      pop_heap(heap, heap + h--);
+    while(h > 0 && heap[0]->key == key)
+      pop_heap(heap, heap + h--, compare);
 
     // process the entries with the same keys
     uint64_t sum = 0;
     for(i = h; i < starth;) {
 
       // sum their values
-      sum += heap[i].val;
+      sum += heap[i]->val;
 
       // if there is more in this iterator, read the next entry, replace
       // this entry with the new values, and insert it back into the heap
-      if(heap[i].it->next()) {
-	heap[i].key = heap[i].it->key;
-	heap[i].val = heap[i].it->val;
-	heap[i].pos = heap[i].it->get_pos();
+      if(heap[i]->it->next()) {
+	heap[i]->key = heap[i]->it->key;
+	heap[i]->val = heap[i]->it->val;
+	heap[i]->pos = heap[i]->it->get_pos();
 	//	head[i].it->get_string(head[i].kmer);
-	push_heap(heap, heap + i);
+	push_heap(heap, heap + i, compare);
 	i++;
 	h++;
 
