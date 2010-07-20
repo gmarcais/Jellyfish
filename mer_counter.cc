@@ -118,6 +118,7 @@ break;
 }
 static struct argp argp = { options, parse_opt, args_doc, doc };
 
+// TODO: the following 3 functions should be part of a class.
 void initialize(int arg_st, int argc, char *argv[],
                 struct arguments *arguments, struct qc *qc, struct io *io) {
   unsigned int nb_buffers = arguments->nb_threads * arguments->nb_buffers;
@@ -125,16 +126,18 @@ void initialize(int arg_st, int argc, char *argv[],
   seq *buffers;
   int fd;
   struct stat stat;
+  storage_t *ary = new storage_t(arguments->size, 2*arguments->mer_len,
+                                 arguments->counter_len, arguments->reprobes,
+                                 jellyfish::quadratic_reprobes);
+  hash_writer_t *dumper = new hash_writer_t(arguments->nb_threads, arguments->output,
+                                            arguments->out_buffer_size,
+                                            8*arguments->out_counter_len,
+                                            ary);
 
   qc->rq = new seq_queue(nb_buffers);
   qc->wq = new seq_queue(nb_buffers);
-  qc->counters = new mer_counters(arguments->nb_threads,
-				  new storage_t(arguments->size, 
-                                                2*arguments->mer_len, 
-                                                arguments->counter_len, 
-                                                arguments->reprobes,
-                                                jellyfish::quadratic_reprobes)); 
-  qc->counters->set_file_prefix(arguments->output);
+  qc->counters = new mer_counters(ary);
+  qc->counters->set_dumper(dumper);
 
   buffers = new seq[nb_buffers];
   memset(buffers, '\0', sizeof(seq) * nb_buffers);
@@ -210,7 +213,7 @@ void *start_worker(void *worker) {
     return NULL;
 
   if(is_serial)
-    info->qc->counters->dump_to_file();
+    info->qc->counters->dump();
 
   return NULL;
 }

@@ -15,6 +15,7 @@
 #include "lib/allocators_mmap.hpp"
 #include "hash.hpp"
 #include "compacted_hash.hpp"
+#include "compacted_dumper.hpp"
 
 #if defined(PACKED_KEY_VALUE)
 #include "packed_key_value_array.hpp"
@@ -28,8 +29,8 @@ typedef jellyfish::invertible_hash::array<uint64_t,atomic::gcc<uint64_t>,allocat
 
 typedef jellyfish::hash< uint64_t,uint64_t,storage_t,atomic::gcc<uint64_t> > mer_counters;
 typedef mer_counters::iterator mer_iterator_t;
-//typedef jellyfish::compacted_hash::writer<mer_iterator_t,uint64_t > compacter_t;
 typedef jellyfish::compacted_hash::reader<uint64_t,uint64_t> hash_reader_t;
+typedef jellyfish::compacted_dumper< storage_t,atomic::gcc<uint64_t> > hash_writer_t;
 
 struct seq {
   char  *buffer;
