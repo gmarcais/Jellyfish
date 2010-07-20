@@ -11,7 +11,9 @@ namespace jellyfish {
   class dumper_t {
   public:
     virtual void dump() = 0;
+    virtual ~dumper_t() {};
   };
+  //dumper_t::~dumper_t() {}
 
   template <typename T>
   size_t bits_to_bytes(T bits) {
