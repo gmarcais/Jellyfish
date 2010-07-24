@@ -36,9 +36,7 @@ struct heap_item {
   }
 
   heap_item(hash_reader_t *iter) :
-    it(iter), key(iter->key), val(iter->val), pos(iter->get_pos()) {
-    //    iter->get_string(kmer);
-  }
+    it(iter), key(iter->key), val(iter->val), pos(iter->get_pos()) { }
 
   // bool operator<(const heap_item & other) {
   //   if(hash == other.hash)
@@ -190,17 +188,6 @@ public:
     m2.dump(out);
   }
 
-  // /**
-  //  * Write a single key, value entry
-  //  **/
-  // void write_entry(uint64_t key, uint64_t val) {
-  //   char *ptr = buffer;
-  //   memcpy(ptr, &key, key_len);
-  //   ptr += key_len;
-  //   uint64_t count = (val > max_count) ? max_count : val;
-  //   memcpy(ptr, &count, val_len);
-  //   out.write(buffer, key_len + val_len);
-  // }
   void write_entry(uint64_t key, uint64_t val) {
     if(current >= buffer_end)
       flush_buffer();
@@ -213,7 +200,6 @@ public:
   }
   
   void close() {
-    // XXX: nop 
     flush_buffer();
     if(out.is_open())
       out.close();
@@ -307,7 +293,8 @@ int main(int argc, char *argv[]) {
   fprintf(stderr, "max reprobe = %ld\n", max_reprobes);
 
   // create the heap storage
-  int heap_size = num_hashes * max_reprobes;
+  //  int heap_size = num_hashes * max_reprobes;
+  int heap_size = num_hashes;
   heap_item heap_storage[heap_size];
   heap_item *heap[heap_size];
   heap_item_compare compare;
@@ -317,12 +304,13 @@ int main(int argc, char *argv[]) {
   // populate the initial heap
   int h = 0;
   for (i = 0; i < num_hashes; i++) {
-    for(size_t r = 0; r < max_reprobes && iters[i]->next(); r++) {
-      heap_storage[h] = heap_item(iters[i]);
-      heap[h] = &heap_storage[h];
-      h++;
-      assert(h <= heap_size);
-    }
+    //    for(size_t r = 0; r < max_reprobes && iters[i]->next(); r++) {
+    iters[i]->next();
+    heap_storage[h] = heap_item(iters[i]);
+    heap[h] = &heap_storage[h];
+    h++;
+    assert(h <= heap_size);
+    //    }
   }
 
   if(h == 0) 
@@ -342,56 +330,25 @@ int main(int argc, char *argv[]) {
 
   // h is the current heap size
   while(h > 0) {
-    //char out[rklen+1];
-    int starth = h;
-
-    // pop one element off
-    pop_heap(heap, heap + h--, compare);
-
-    uint64_t key = heap[starth-1]->key;
-
-    // pop elements off that have the same key
-    // all the popped elements will be at the end of the heap array
-    while(h > 0 && heap[0]->key == key)
-      pop_heap(heap, heap + h--, compare);
-
-    // process the entries with the same keys
+    uint64_t key;
     uint64_t sum = 0;
-    for(i = h; i < starth;) {
-
-      // sum their values
-      sum += heap[i]->val;
-
-      // if there is more in this iterator, read the next entry, replace
-      // this entry with the new values, and insert it back into the heap
-      if(heap[i]->it->next()) {
-	heap[i]->key = heap[i]->it->key;
-	heap[i]->val = heap[i]->it->val;
-	heap[i]->pos = heap[i]->it->get_pos();
-	//	head[i].it->get_string(head[i].kmer);
-	push_heap(heap, heap + i, compare);
-	i++;
-	h++;
-
-	// if there is no more in this iterator, move the last popped element
-	// to this place, and don't advance i.
-      } else {
-	heap[i] = heap[starth-1];
-	starth--;
+    do {
+      pop_heap(heap, heap + h--, compare);
+      key  = heap[h]->key;
+      sum += heap[h]->val;
+      if(heap[h]->it->next()) {
+        heap[h]->key = heap[h]->it->key;
+        heap[h]->val = heap[h]->it->val;
+        heap[h]->pos = heap[h]->it->get_pos();
+        push_heap(heap, heap + ++h, compare);
       }
-    }
+    } while(h > 0 && heap[0]->key == key);
 
-    // for debugging, just write out the counts
-    //tostring(key, rklen, out);
-    //std::cout << out << " " << sum << endl; 
     writer.write_entry(key, sum);
   }
+  writer.close();
 
   // free the hashes and iterators
   for(i = 0; i < num_hashes; i++)
     delete iters[i];
-  //   delete tables[i];
-  // }
-
-  writer.close();
 }

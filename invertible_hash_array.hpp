@@ -61,6 +61,9 @@ namespace jellyfish {
       };
 
     public:
+      typedef word key_t;
+      typedef word val_t;
+
       array(size_t _size, uint_t _key_len, uint_t _val_len,
             uint_t _reprobe_limit, size_t *_reprobes) :
         lsize(ceilLog2(_size)), size(((size_t)1) << lsize), size_mask(size - 1),
@@ -131,7 +134,7 @@ namespace jellyfish {
 	if(start_ptr >= end_ptr)
 	  return;
 	length *= offsets.get_block_word_len() * sizeof(word);
-	if(start_ptr + length >= end_ptr)
+	if(start_ptr + length > end_ptr)
 	  length = end_ptr - start_ptr;
 
 	memset(start_ptr, '\0', length);
@@ -139,9 +142,10 @@ namespace jellyfish {
 
       // Iterator
       class iterator {
+      protected:
         const array  *ary;
         size_t  start_id, nid, end_id;
-        word   *ow;
+        uint64_t mask;
       public:
         word     key;
         word     val;
@@ -150,18 +154,22 @@ namespace jellyfish {
 
         iterator(const array *_ary, size_t start, size_t end) :
           ary(_ary), start_id(start), nid(start), 
-	  end_id(end > ary->get_size() ? ary->get_size() : end), ow(ary->data) {}
+	  end_id(end > ary->get_size() ? ary->get_size() : end),
+          mask(ary->get_size() - 1)
+        {}
         
         void get_string(char *out) const {
           tostring(key, ary->get_key_len() / 2, out);
         }
         uint64_t get_hash() const { return hash; }
+        uint64_t get_pos() const { return hash & mask; }
 	uint64_t get_start() const { return start_id; }
 	uint64_t get_end() const { return end_id; }
 
         bool next() {
           bool success;
-          while((id = nid++) < end_id) {
+          while((id = nid) < end_id) {
+            nid++;
             success = ary->get_key_val_full(id, key, val);
             if(success) {
               hash = (key & ary->key_mask) << ary->lsize;
@@ -180,6 +188,59 @@ namespace jellyfish {
         size_t slice_size = get_size() / number_of_slice;
         return iterator(this, slice_number * slice_size, (slice_number + 1) * slice_size);
       }
+
+      /* Why on earth doesn't inheritance with : public iterator work
+         here? Resort to copying code. Arrrgggg....
+       */
+      class overlap_iterator {
+      protected:
+        const array *ary;
+        uint64_t     mask;
+        size_t       start_id, end_id, start_oid;
+        size_t       moid, oid;
+      public:
+        word     key;
+        word     val;
+        size_t   id;
+        uint64_t hash;
+
+        overlap_iterator(const array *_ary, size_t start, size_t end) :
+          ary(_ary),
+          mask(ary->get_size() - 1),
+          start_id(start),
+          end_id(end > ary->get_size() ? ary->get_size() : end),
+          start_oid(start),
+          moid(end_id - start_id + ary->get_max_reprobe_offset()),
+          oid(0)
+        {}
+        
+        void get_string(char *out) const {
+          tostring(key, ary->get_key_len() / 2, out);
+        }
+        uint64_t get_hash() const { return hash; }
+        uint64_t get_pos() const { return hash & mask; }
+	uint64_t get_start() const { return start_id; }
+	uint64_t get_end() const { return end_id; }
+
+        bool next() {
+          bool success;
+          while(oid < moid) {
+            id = (start_oid + oid++) & mask;
+            success = ary->get_key_val_full(id, key, val);
+            if(success) {
+              hash = (key & ary->key_mask) << ary->lsize;
+              uint_t reprobep = (key >> ary->key_off) - 1;
+              hash |= (id - (reprobep > 0 ? ary->reprobes[reprobep] : 0)) & ary->size_mask;
+              if(get_pos() < start_id || get_pos() >= end_id)
+                continue;
+              key = ary->hash_inverse_matrix.times(hash);
+              return true;
+            }
+          }
+          return false;
+        }
+      };
+      friend class overlap_iterator;
 
       /*
        * Return the key and value at position id. If the slot at id is

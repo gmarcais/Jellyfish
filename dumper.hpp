@@ -13,11 +13,5 @@ namespace jellyfish {
     virtual void dump() = 0;
     virtual ~dumper_t() {};
   };
-  //dumper_t::~dumper_t() {}
-
-  template <typename T>
-  size_t bits_to_bytes(T bits) {
-    return (size_t)((bits / 8) + (bits % 8 != 0));
-  }
 }
 #endif // __DUMPER_HPP__

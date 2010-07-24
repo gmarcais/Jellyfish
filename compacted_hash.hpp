@@ -27,46 +27,89 @@ namespace jellyfish {
         return msg.c_str();
       }
     };
+
+    template<typename storage_t>
+    class writer {
+      uint64_t   unique, distinct, total;
+      size_t     nb_records;
+      uint_t     klen, vlen;
+      uint_t     key_len, val_len;
+      storage_t *ary;
+      char      *buffer, *end, *ptr;
+
+    public:
+      writer() : unique(0), distinct(0), total(0) { buffer = ptr = end = NULL; }
+
+      writer(size_t _nb_records, uint_t _klen, uint_t _vlen, storage_t *_ary)
+      { 
+        initialize(_nb_records, _klen, _vlen, _ary);
+      }
+
+      void initialize(size_t _nb_records, uint_t _klen, uint_t _vlen, storage_t *_ary) {
+        unique     = distinct = total = 0;
+        nb_records = _nb_records;
+        klen       = _klen;
+        vlen       = _vlen;
+        key_len    = bits_to_bytes(klen);
+        val_len    = bits_to_bytes(vlen);
+        ary        = _ary;
+        buffer     = new char[nb_records * (key_len + val_len)];
+        end        = buffer + (nb_records * (key_len + val_len));
+        ptr        = buffer;
+      }
+
+      ~writer() {
+        if(buffer)
+          delete buffer;
+      }
+
+      bool append(uint64_t key, uint64_t val) {
+        if(ptr >= end)
+          return false;
+        memcpy(ptr, &key, key_len);
+        ptr += key_len;
+        memcpy(ptr, &val, val_len);
+        ptr += val_len;
+        unique += val == 1;
+        distinct++;
+        total += val;
+        return true;
+      }
+
+      void dump(std::ostream *out) {
+        out->write(buffer, ptr - buffer);
+        ptr = buffer;
+      }
+
+      void write_header(std::ostream *out) const {
+        struct header head;
+        memset(&head, '\0', sizeof(head));
+        head.key_len = klen;
+        head.val_len = val_len;
+        head.size = ary->get_size();
+        head.max_reprobes = ary->get_max_reprobe_offset();
+        out->write((char *)&head, sizeof(head));
+        ary->write_ary_header(*out);
+      }
+
+      void update_stats(std::ostream *out, uint64_t unique, uint64_t distinct, uint64_t total) const {
+        struct header head;
+        head.key_len = klen;
+        head.val_len = val_len;
+        head.size = ary->get_size();
+        head.max_reprobes = ary->get_max_reprobe_offset();
+        head.unique = unique;
+        head.distinct = distinct;
+        head.total = total;
+        out->seekp(0);
+        out->write((char *)&head, sizeof(head));
+      }
+
+      uint64_t get_unique() const { return unique; }
+      uint64_t get_distinct() const { return distinct; }
+      uint64_t get_total() const { return total; }
+    };
     
-    // template <typename hash_iterator_t, typename word>
-    // class writer
-    // {
-    //   uint_t    mer_len, key_len, val_len;
-    //   size_t    record_len, nb_record, buffer_len;
-    //   word      max_count;
-    //   char     *buffer, *end_buffer;
-    //   uint64_t  unique, distinct, total;
-
-    // public:
-    //   // key_len and val_len are given in bytes.
-    //   // buffer_size is in bytes.
-    //   writer(size_t _buffer_size, uint_t _mer_len, uint_t _val_len) :
-    //     mer_len(_mer_len), 
-    //     key_len(_mer_len / 4 + (_mer_len % 4 != 0)),
-    //     val_len(_val_len), record_len(key_len + val_len), 
-    //     nb_record(_buffer_size / record_len),
-    //     buffer_len(nb_record * record_len), max_count((((word)1) << (8*val_len)) - 1),
-    //     unique(0), distinct(0), total(0)
-    //   {
-    //     buffer = new char[buffer_len];
-    //     end_buffer = buffer + buffer_len;
-    //   }
-
-    //   ~writer() { delete buffer; }
-      
-    //   bool write_header(std::ostream *out, size_t size);
-    //   bool dump(std::ostream *out, hash_iterator_t &it, pthread_mutex_t *lock);
-    //   bool update_stats(std::ostream *out, uint64_t unique,
-    //                   uint64_t distinct, uint64_t total);
-
-
-    //   uint_t get_mer_len() { return mer_len; }
-    //   uint_t get_val_len() { return val_len; }
-    //   uint64_t get_unique() { return unique; }
-    //   uint64_t get_distinct() { return distinct; }
-    //   uint64_t get_total() { return total; }
-    // };
-      
     template<typename key_t, typename val_t>
     class reader {
       struct header		 header;
@@ -110,11 +153,16 @@ namespace jellyfish {
       uint_t get_val_len() const { return header.val_len; }
       size_t get_size() const { return header.size; }
       uint64_t get_max_reprobes() const { return header.max_reprobes; }
+      uint64_t get_max_reprobes_offset() const { return header.max_reprobes; }
       uint64_t get_unique() const { return header.unique; }
       uint64_t get_distinct() const { return header.distinct; }
       uint64_t get_total() const { return header.total; }
       SquareBinaryMatrix get_hash_matrix() const { return hash_matrix; }
       SquareBinaryMatrix get_hash_inverse_matrix() const { return hash_inverse_matrix; }
+      void write_ary_header(std::ostream *out) const {
+        hash_matrix.dump(*out);
+        hash_inverse_matrix.dump(*out);
+      }
 
       void get_string(char *out) const {
 	tostring(key, get_mer_len(), out);

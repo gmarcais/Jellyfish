@@ -100,4 +100,9 @@ inline void tostring(uint64_t key, unsigned int rklen, char * out) {
 }
 
 uint64_t bogus_sum(void *data, size_t len);
+
+template <typename T>
+size_t bits_to_bytes(T bits) {
+  return (size_t)((bits / 8) + (bits % 8 != 0));
+}
 #endif // __MISC_HPP__

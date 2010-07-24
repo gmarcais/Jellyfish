@@ -1,9 +1,10 @@
 #include "dumper.hpp"
+#include <algorithm>
 
 namespace jellyfish {
   template<typename storage_t, typename atomic_t>
-  class compacted_dumper : public dumper_t {
-    typedef typename storage_t::iterator iterator;
+  class sorted_dumper : public dumper_t {
+    typedef typename storage_t::overlap_iterator iterator;
     typedef compacted_hash::writer<storage_t> writer_t;
     struct thread_info_t {
       pthread_t             thread_id;
@@ -11,7 +12,7 @@ namespace jellyfish {
       locks::pthread::cond  cond;
       volatile bool         token;
       writer_t              writer;
-      compacted_dumper     *self;
+      sorted_dumper     *self;
     };
 
     uint_t                threads;
@@ -27,10 +28,41 @@ namespace jellyfish {
     uint64_t volatile     unique, distinct, total;
     std::ofstream         out;
 
+    struct heap_item {
+      uint64_t       key;
+      uint64_t       val;
+      uint64_t       pos;
+
+      heap_item() : key(0), val(0), pos(0) { }
+
+      heap_item(iterator &iter) { 
+        initialize(iter);
+      }
+
+      void initialize(iterator &iter) {
+        key = iter.key;
+        val = iter.val;
+        pos = iter.get_pos();
+      }
+
+      bool operator<(const heap_item & other) {
+        if(pos == other.pos)
+          return key > other.key;
+        return pos > other.pos;
+      }
+    };
+
+    class heap_item_compare {
+    public:
+      inline bool operator() (struct heap_item *item1, struct heap_item *item2) {
+        return *item1 < *item2;
+      }
+    };
+
   public:
     // klen: key field length in bits in hash (i.e before rounding up to bytes)
     // vlen: value field length in bits
-    compacted_dumper(uint_t _threads, const char *_file_prefix, size_t _buffer_size, 
+    sorted_dumper(uint_t _threads, const char *_file_prefix, size_t _buffer_size, 
                      uint_t _vlen, storage_t *_ary) :
       threads(_threads), file_prefix(_file_prefix), buffer_size(_buffer_size),
       klen(_ary->get_key_len()), vlen(_vlen), ary(_ary), file_index(0)
@@ -40,18 +72,17 @@ namespace jellyfish {
       max_count  = (((uint64_t)1) << (8*val_len)) - 1;
       record_len = key_len + val_len;
       nb_records = ary->floor_block(_buffer_size / record_len, nb_blocks);
-
       thread_info = new struct thread_info_t[threads];
       for(uint_t i = 0; i < threads; i++) {
         thread_info[i].token = i == 0;
-        thread_info[i].writer.initialize(nb_records, ary->get_key_len(), vlen, ary);
+        thread_info[i].writer.initialize(nb_records, klen, vlen, ary);
         thread_info[i].id = i;
         thread_info[i].self = this;
       }
       unique = distinct = total = 0;
     }
 
-    ~compacted_dumper() {
+    ~sorted_dumper() {
       if(thread_info) {
         delete[] thread_info;
       }
@@ -72,7 +103,7 @@ namespace jellyfish {
   };
 
   template<typename storage_t, typename atomic_t>
-  void compacted_dumper<storage_t,atomic_t>::dump() {
+  void sorted_dumper<storage_t,atomic_t>::dump() {
     static const long file_len = pathconf("/", _PC_PATH_MAX);
 
     char file[file_len + 1];
@@ -87,6 +118,7 @@ namespace jellyfish {
     if(out.fail())
       return; // TODO: Should throw an error
 
+    unique = distinct = total = 0;
     for(uint_t i = 0; i < threads; i++)
       thread_info[i].token = i == 0;
     for(uint_t i = 0; i < threads; i++) {
@@ -96,25 +128,43 @@ namespace jellyfish {
 
     for(uint_t i = 0; i < threads; i++)
       pthread_join(thread_info[i].thread_id, NULL);
+    ary->zero_blocks(0, nb_blocks); // zero out last group of blocks
     update_stats();
     out.close();
   }
 
   template<typename storage_t, typename atomic_t>
-  void compacted_dumper<storage_t,atomic_t>::dump_to_file(struct thread_info_t *my_info) {
+  void sorted_dumper<storage_t,atomic_t>::dump_to_file(struct thread_info_t *my_info) {
     size_t                i;
     struct thread_info_t *next_info = &thread_info[(my_info->id + 1) % threads];
     atomic_t              atomic;
+    heap_item             heap_storage[ary->get_max_reprobe_offset()];
+    heap_item            *heap[ary->get_max_reprobe_offset()];
+    heap_item_compare     compare;
 
-    if(my_info->token)
+    if(my_info->token && my_info->id == 0)
       my_info->writer.write_header(&out);
 
     for(i = my_info->id; i * nb_records < ary->get_size(); i += threads) {
       // fill up buffer
       iterator it(ary, i * nb_records, (i + 1) * nb_records);
+      size_t h = 0;
+      for(h = 0; h < ary->get_max_reprobe_offset() && it.next(); h++) {
+        heap_storage[h].initialize(it);
+        heap[h] = &heap_storage[h];
+      }
+      make_heap(heap, heap + h, compare);
 
       while(it.next()) {
-        my_info->writer.append(it.key, it.val);
+        pop_heap(heap, heap + h--, compare);
+        my_info->writer.append(heap[h]->key, heap[h]->val);
+        heap[h]->initialize(it);
+        push_heap(heap, heap + ++h, compare);
+      }
+
+      while(h > 0) {
+        pop_heap(heap, heap + h--, compare);
+        my_info->writer.append(heap[h]->key, heap[h]->val);
       }
 
       // wait for token & write buffer
@@ -131,8 +181,10 @@ namespace jellyfish {
       next_info->cond.unlock();
 
       // zero out memory
-      ary->zero_blocks(i * nb_blocks, nb_blocks);
+      if(i > 0)
+        ary->zero_blocks(i * nb_blocks, nb_blocks);
     }
+
     atomic.add_fetch(&unique, my_info->writer.get_unique());
     atomic.add_fetch(&distinct, my_info->writer.get_distinct());
     atomic.add_fetch(&total, my_info->writer.get_total());
