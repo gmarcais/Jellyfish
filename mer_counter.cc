@@ -129,7 +129,7 @@ void initialize(int arg_st, int argc, char *argv[],
   storage_t *ary = new storage_t(arguments->size, 2*arguments->mer_len,
                                  arguments->counter_len, arguments->reprobes,
                                  jellyfish::quadratic_reprobes);
-  hash_writer_t *dumper = new hash_writer_t(arguments->nb_threads, arguments->output,
+  hash_dumper_t *dumper = new hash_dumper_t(arguments->nb_threads, arguments->output,
                                             arguments->out_buffer_size,
                                             8*arguments->out_counter_len,
                                             ary);

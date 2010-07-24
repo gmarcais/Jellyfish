@@ -1,18 +1,20 @@
 #include "dumper.hpp"
-#include <algorithm>
+#include "heap.hpp"
 
 namespace jellyfish {
   template<typename storage_t, typename atomic_t>
   class sorted_dumper : public dumper_t {
     typedef typename storage_t::overlap_iterator iterator;
     typedef compacted_hash::writer<storage_t> writer_t;
+    typedef heap_t<iterator> oheap_t;
     struct thread_info_t {
       pthread_t             thread_id;
       uint_t                id;
       locks::pthread::cond  cond;
       volatile bool         token;
       writer_t              writer;
-      sorted_dumper     *self;
+      oheap_t                heap;
+      sorted_dumper        *self;
     };
 
     uint_t                threads;
@@ -28,37 +30,6 @@ namespace jellyfish {
     uint64_t volatile     unique, distinct, total;
     std::ofstream         out;
 
-    struct heap_item {
-      uint64_t       key;
-      uint64_t       val;
-      uint64_t       pos;
-
-      heap_item() : key(0), val(0), pos(0) { }
-
-      heap_item(iterator &iter) { 
-        initialize(iter);
-      }
-
-      void initialize(iterator &iter) {
-        key = iter.key;
-        val = iter.val;
-        pos = iter.get_pos();
-      }
-
-      bool operator<(const heap_item & other) {
-        if(pos == other.pos)
-          return key > other.key;
-        return pos > other.pos;
-      }
-    };
-
-    class heap_item_compare {
-    public:
-      inline bool operator() (struct heap_item *item1, struct heap_item *item2) {
-        return *item1 < *item2;
-      }
-    };
-
   public:
     // klen: key field length in bits in hash (i.e before rounding up to bytes)
     // vlen: value field length in bits
@@ -72,10 +43,17 @@ namespace jellyfish {
       max_count  = (((uint64_t)1) << (8*val_len)) - 1;
       record_len = key_len + val_len;
       nb_records = ary->floor_block(_buffer_size / record_len, nb_blocks);
+
+      // TODO: it is implicitely assumed here that nb_records >
+      // ary->get_max_reprobe_offset(). If it is not verified, wrong
+      // result may occure. This only happen for (very) small
+      // input. But it is a pretty bad bug!
+
       thread_info = new struct thread_info_t[threads];
       for(uint_t i = 0; i < threads; i++) {
         thread_info[i].token = i == 0;
         thread_info[i].writer.initialize(nb_records, klen, vlen, ary);
+        thread_info[i].heap.initialize(ary->get_max_reprobe_offset());
         thread_info[i].id = i;
         thread_info[i].self = this;
       }
@@ -98,7 +76,7 @@ namespace jellyfish {
 
     virtual void dump();
     void update_stats() {
-      thread_info[0].writer.update_stats(&out, unique, distinct, total);
+      thread_info[0].writer.update_stats_with(&out, unique, distinct, total);
     }
   };
 
@@ -138,33 +116,29 @@ namespace jellyfish {
     size_t                i;
     struct thread_info_t *next_info = &thread_info[(my_info->id + 1) % threads];
     atomic_t              atomic;
-    heap_item             heap_storage[ary->get_max_reprobe_offset()];
-    heap_item            *heap[ary->get_max_reprobe_offset()];
-    heap_item_compare     compare;
 
     if(my_info->token && my_info->id == 0)
       my_info->writer.write_header(&out);
 
+    size_t append = 0;
     for(i = my_info->id; i * nb_records < ary->get_size(); i += threads) {
       // fill up buffer
       iterator it(ary, i * nb_records, (i + 1) * nb_records);
-      size_t h = 0;
-      for(h = 0; h < ary->get_max_reprobe_offset() && it.next(); h++) {
-        heap_storage[h].initialize(it);
-        heap[h] = &heap_storage[h];
-      }
-      make_heap(heap, heap + h, compare);
+      my_info->heap.fill(it);
 
       while(it.next()) {
-        pop_heap(heap, heap + h--, compare);
-        my_info->writer.append(heap[h]->key, heap[h]->val);
-        heap[h]->initialize(it);
-        push_heap(heap, heap + ++h, compare);
+        typename oheap_t::const_item_t item = my_info->heap.head();
+        my_info->writer.append(item->key, item->val);
+        append++;
+        my_info->heap.pop();
+        my_info->heap.push(it);
       }
 
-      while(h > 0) {
-        pop_heap(heap, heap + h--, compare);
-        my_info->writer.append(heap[h]->key, heap[h]->val);
+      while(my_info->heap.is_not_empty()) {
+        typename oheap_t::const_item_t item = my_info->heap.head();
+        my_info->writer.append(item->key, item->val);
+        append++;
+        my_info->heap.pop();
       }
 
       // wait for token & write buffer

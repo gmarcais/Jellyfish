@@ -13,7 +13,7 @@ namespace jellyfish {
       uint64_t  key_len;
       uint64_t  val_len; // In bytes
       uint64_t  size; // In bytes
-      uint64_t  max_reprobes;
+      uint64_t  max_reprobe;
       uint64_t  unique;
       uint64_t  distinct;
       uint64_t  total;
@@ -87,20 +87,25 @@ namespace jellyfish {
         head.key_len = klen;
         head.val_len = val_len;
         head.size = ary->get_size();
-        head.max_reprobes = ary->get_max_reprobe_offset();
+        head.max_reprobe = ary->get_max_reprobe_offset();
         out->write((char *)&head, sizeof(head));
-        ary->write_ary_header(*out);
+        ary->write_ary_header(out);
       }
 
-      void update_stats(std::ostream *out, uint64_t unique, uint64_t distinct, uint64_t total) const {
+      void update_stats(std::ostream *out) const {
+        update_stats_with(out, unique, distinct, total);
+      }
+
+      void update_stats_with(std::ostream *out, uint64_t _unique, uint64_t _distinct,
+                             uint64_t _total) const {
         struct header head;
         head.key_len = klen;
         head.val_len = val_len;
         head.size = ary->get_size();
-        head.max_reprobes = ary->get_max_reprobe_offset();
-        head.unique = unique;
-        head.distinct = distinct;
-        head.total = total;
+        head.max_reprobe = ary->get_max_reprobe_offset();
+        head.unique = _unique;
+        head.distinct = _distinct;
+        head.total = _total;
         out->seekp(0);
         out->write((char *)&head, sizeof(head));
       }
@@ -108,155 +113,98 @@ namespace jellyfish {
       uint64_t get_unique() const { return unique; }
       uint64_t get_distinct() const { return distinct; }
       uint64_t get_total() const { return total; }
+      uint_t   get_key_len_bytes() const { return key_len; }
+      uint_t   get_val_len_bytes() const { return val_len; }
     };
     
     template<typename key_t, typename val_t>
     class reader {
-      struct header		 header;
-      std::ifstream		 *io;
-      uint_t			 key_len;
-      SquareBinaryMatrix	 hash_matrix, hash_inverse_matrix;
-      size_t			 record_len, buffer_len;
-      size_t		         size_mask;
-      char			*buffer, *end_buffer, *ptr;
+      struct header              header;
+      std::ifstream             *io;
+      uint_t                     key_len;
+      SquareBinaryMatrix         hash_matrix, hash_inverse_matrix;
+      size_t                     record_len, buffer_len;
+      size_t                     size_mask;
+      char                      *buffer, *end_buffer, *ptr;
 
     public:
       key_t key;
       val_t val;
 
-      reader(std::string filename, size_t _buff_len = 10000000UL)
-      { 
-	io = new ifstream(filename.c_str());
+      reader() { io = 0; buffer = 0; }
+      reader(std::string filename, size_t _buff_len = 10000000UL) { 
+        initialize(filename, _buff_len);
+      }
+
+      void initialize(std::string filename, size_t _buff_len) {
+        io = new ifstream(filename.c_str());
         io->read((char *)&header, sizeof(header));
         if(!io->good())
           throw new ErrorReading("Error reading header");
         key_len  = (header.key_len / 8) + (header.key_len % 8 != 0);
-	record_len = key_len + header.val_len;
-	buffer_len = record_len * (_buff_len / record_len);
-	buffer = new char[buffer_len];
-	ptr = buffer;
-	end_buffer = NULL;
+        record_len = key_len + header.val_len;
+        buffer_len = record_len * (_buff_len / record_len);
+        buffer = new char[buffer_len];
+        ptr = buffer;
+        end_buffer = NULL;
 
-	hash_matrix.load(*io);
-	hash_inverse_matrix.load(*io);
-	key = val = 0;
-	size_mask = header.size - 1; //TODO: check that header.size is a power of 2
+        hash_matrix.load(io);
+        hash_inverse_matrix.load(io);
+        key = val = 0;
+        size_mask = header.size - 1; //TODO: check that header.size is a power of 2
       }
 
       ~reader() {
-	delete io;
-	delete[] buffer;
+        if(io)
+          delete io;
+        if(buffer)
+          delete[] buffer;
       }
 
       uint_t get_key_len() const { return header.key_len; }
       uint_t get_mer_len() const { return header.key_len / 2; }
       uint_t get_val_len() const { return header.val_len; }
       size_t get_size() const { return header.size; }
-      uint64_t get_max_reprobes() const { return header.max_reprobes; }
-      uint64_t get_max_reprobes_offset() const { return header.max_reprobes; }
+      uint64_t get_max_reprobe() const { return header.max_reprobe; }
+      uint64_t get_max_reprobe_offset() const { return header.max_reprobe; }
       uint64_t get_unique() const { return header.unique; }
       uint64_t get_distinct() const { return header.distinct; }
       uint64_t get_total() const { return header.total; }
       SquareBinaryMatrix get_hash_matrix() const { return hash_matrix; }
       SquareBinaryMatrix get_hash_inverse_matrix() const { return hash_inverse_matrix; }
       void write_ary_header(std::ostream *out) const {
-        hash_matrix.dump(*out);
-        hash_inverse_matrix.dump(*out);
+        hash_matrix.dump(out);
+        hash_inverse_matrix.dump(out);
       }
 
       void get_string(char *out) const {
-	tostring(key, get_mer_len(), out);
+        tostring(key, get_mer_len(), out);
       }
       uint64_t get_hash() const { return hash_matrix.times(key); }
       uint64_t get_pos() const { return hash_matrix.times(key) & size_mask; }
 
       bool next() {
-	while(true) {
-	  if(ptr <= end_buffer) {
-	    memcpy(&key, ptr, key_len);
-	    ptr += key_len;
-	    memcpy(&val, ptr, header.val_len);
-	    ptr += header.val_len;
-	    return true;
-	  }
+        while(true) {
+          if(ptr <= end_buffer) {
+            memcpy(&key, ptr, key_len);
+            ptr += key_len;
+            memcpy(&val, ptr, header.val_len);
+            ptr += header.val_len;
+            return true;
+          }
 
-	  if(io->fail())
-	    return false;
-	  io->read(buffer, buffer_len);
-	  //	  if(record_len * (io->gcount() / record_len) != io->gcount())
-	  //	    return false;
-	  ptr = buffer;
-	  end_buffer = NULL;
-	  if((typeof record_len)io->gcount() >= record_len)
-	    end_buffer = ptr + (io->gcount() - record_len);
-	}
+          if(io->fail())
+            return false;
+          io->read(buffer, buffer_len);
+          //      if(record_len * (io->gcount() / record_len) != io->gcount())
+          //        return false;
+          ptr = buffer;
+          end_buffer = NULL;
+          if((typeof record_len)io->gcount() >= record_len)
+            end_buffer = ptr + (io->gcount() - record_len);
+        }
       }
     };
-
-  //   template <typename hash_iterator_t, typename word>
-  //   bool writer<hash_iterator_t,word>::write_header(std::ostream *out,
-  //                                                                size_t size)
-  //   {
-  //     struct header header;
-    
-  //     memset(&header, '\0', sizeof(header));
-  //     header.mer_len = mer_len;
-  //     header.val_len = val_len;
-  //     header.size = size;
-  //     out->write((char *)&header, sizeof(header));
-  //     return !out->bad();
-  //   }
-  
-  //   template <typename hash_iterator_t, typename word>
-  //   bool writer<hash_iterator_t,word>::update_stats(std::ostream *out,
-  //                                                                uint64_t unique, uint64_t distinct, uint64_t total)
-  //   {
-  //     struct header header;
-  //     std::streampos pos = (char *)&header.unique - (char *)&header;
-  //     header.unique = unique;
-  //     header.distinct = distinct;
-  //     header.total = total;
-  //     out->seekp(pos);
-  //     out->write((char *)&header.unique, sizeof(header) - pos);
-  //     return !out->bad();
-  //   }
-  
-
-  //   template <typename hash_iterator_t, typename word>
-  //   bool writer<hash_iterator_t,word>::dump(std::ostream *out,
-  //                                                        hash_iterator_t &it,
-  //                                                        pthread_mutex_t *lock)
-  //   {
-  //     char *ptr;
-  //     word count;
-
-  //     while(true) {
-  //       ptr = buffer;
-  //       while(ptr < end_buffer) {
-  //         if(!it.next())
-  //           break;
-  //         memcpy(ptr, &it.key, key_len);
-  //         ptr += key_len;
-  //         count = (it.val > max_count) ? max_count : it.val;
-  //         memcpy(ptr, &count, val_len);
-  //         ptr += val_len;
-  //         if(it.val == 1)
-  //           unique++;
-  //         distinct++;
-  //         total += it.val;
-  //       }
-  //       if(ptr == buffer)
-  //         break;
-
-  //       pthread_mutex_lock(lock);
-  //       out->write(buffer, ptr - buffer);
-  //       pthread_mutex_unlock(lock);
-  //       if(out->bad())
-  //         return false;
-  //     }
-
-  //     return true;
-  //   }
   }
 }
 #endif /* __COMPACTED_HASH__ */

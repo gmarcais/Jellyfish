@@ -536,22 +536,22 @@ namespace jellyfish {
         return true;
       }
 
-      void write_ary_header(std::ostream &out) const {
+      void write_ary_header(std::ostream *out) const {
         hash_matrix.dump(out);
         hash_inverse_matrix.dump(out);
       }
 
-      void write_raw(std::ostream &out) const {
+      void write_raw(std::ostream *out) const {
         struct header header = { size, key_len, offsets.get_val_len(),
                                  reprobe_limit };
-        out.write((char *)&header, sizeof(header));
-        out.write((char *)reprobes, sizeof(size_t) * (reprobe_limit + 1));
+        out->write((char *)&header, sizeof(header));
+        out->write((char *)reprobes, sizeof(size_t) * (reprobe_limit + 1));
 	write_ary_header(out);
-        if(out.tellp() & 0x7) { // Make sure aligned
-          string padding(0x8 - (out.tellp() & 0x7), '\0');
-          out.write(padding.c_str(), padding.size());
+        if(out->tellp() & 0x7) { // Make sure aligned
+          string padding(0x8 - (out->tellp() & 0x7), '\0');
+          out->write(padding.c_str(), padding.size());
         }
-        out.write((char *)mem_block.get_ptr(), mem_block.get_size());
+        out->write((char *)mem_block.get_ptr(), mem_block.get_size());
       }
 
     private:

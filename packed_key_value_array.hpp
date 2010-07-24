@@ -459,21 +459,21 @@ namespace jellyfish {
         return true;
       }
 
-      void write_ary_header(std::ostream &out) const {
+      void write_ary_header(std::ostream *out) const {
 	// noop
       }
 
-      void write_raw(std::ostream &out) {
+      void write_raw(std::ostream *out) {
         struct header header = { size, offsets.get_key_len(), offsets.get_val_len(), reprobe_limit };
-        out.write((char *)&header, sizeof(header));
-        out.write((char *)reprobes, sizeof(size_t) * (reprobe_limit + 1));
+        out->write((char *)&header, sizeof(header));
+        out->write((char *)reprobes, sizeof(size_t) * (reprobe_limit + 1));
 	write_ary_header(out);
-        if(out.tellp() & 0x7) { // Make sure aligned TODO: use alignof?
-          std::string padding(0x8 - (out.tellp() & 0x7), '\0');
-          out.write(padding.c_str(), padding.size());
+        if(out->tellp() & 0x7) { // Make sure aligned TODO: use alignof?
+          std::string padding(0x8 - (out->tellp() & 0x7), '\0');
+          out->write(padding.c_str(), padding.size());
         }
-        out.write((char *)&zero_count, sizeof(word));
-        out.write((char *)mem_block.get_ptr(), mem_block.get_size());        
+        out->write((char *)&zero_count, sizeof(word));
+        out->write((char *)mem_block.get_ptr(), mem_block.get_size());        
       }
 
     private:

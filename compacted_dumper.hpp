@@ -67,7 +67,7 @@ namespace jellyfish {
 
     virtual void dump();
     void update_stats() {
-      thread_info[0].writer.update_stats(&out, unique, distinct, total);
+      thread_info[0].writer.update_stats_with(&out, unique, distinct, total);
     }
   };
 
