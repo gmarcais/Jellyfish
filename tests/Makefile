@@ -19,7 +19,7 @@ CPPFLAGS += -I$(GTEST_DIR) -I$(GTEST_DIR)/include $(patsubst %,-I%,$(USER_DIR)) 
 # Flags passed to the C++ compiler.
 # For profiling -fprofile-arcs -ftest-coverage -O0
 # TODO: remove lax-vector-conversions
-CXXFLAGS += -g -Wall -Wextra -Werror -march=native -msse -msse2 -flax-vector-conversions
+CXXFLAGS += -g -Wall -Wextra -Werror -march=native -msse -msse2 -DSSE
 
 LDFLAGS = -lpthread -lrt -lm
 

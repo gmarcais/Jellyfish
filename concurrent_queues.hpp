@@ -26,11 +26,12 @@ public:
   }
   ~concurrent_queue() { delete [] queue; }
 
-  void          enqueue(Val *v);
-  Val *         dequeue();
-  bool          is_closed() { return closed; }
-  void          close() { closed = true; }
-  bool          is_low() { 
+  void enqueue(Val *v);
+  Val *dequeue();
+  bool is_closed() { return closed; }
+  void close() { closed = true; }
+  bool has_space() { return head != tail; }
+  bool is_low() { 
     int len = head - tail;
     if(len < 0)
       len += size;

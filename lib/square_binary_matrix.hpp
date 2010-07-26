@@ -246,7 +246,7 @@ public:
   }
 #endif
 
-  inline uint64_t times(uint64_t v) const { return times_loop(v); }
+  inline uint64_t times(uint64_t v) const { return times_unrolled(v); }
 
   SquareBinaryMatrix transpose() const;
   SquareBinaryMatrix operator*(const SquareBinaryMatrix &other) const;
@@ -259,12 +259,12 @@ public:
     return res;
   }
 
-  void print(std::ostream &os) const;
+  void print(std::ostream *os) const;
   std::string str() const;
-  void dump(std::ostream &os) const;
-  void load(std::istream &is);
+  void dump(std::ostream *os) const;
+  void load(std::istream *is);
   size_t read(const char *map);
-  void print_vector(std::ostream &os, uint64_t v, bool vertical = false) const;
+  void print_vector(std::ostream *os, uint64_t v, bool vertical = false) const;
   std::string str_vector(uint64_t v, bool vertical = false) const;
 };
 

@@ -253,7 +253,7 @@ int main(int argc, char *argv[]) {
       head = heap.head();
     } while(heap.is_not_empty() && head->key == key);
 
-    while(__builtin_expect(!info.buffers[buf_id].writer.append(key, sum), 0)) {
+    while(!info.buffers[buf_id].writer.append(key, sum), 0) {
       info.cond.lock();
       while(info.buffers[buf_id].full) { waiting++; info.cond.wait(); }
       info.buffers[buf_id].full = true;

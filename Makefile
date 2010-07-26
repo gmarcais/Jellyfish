@@ -2,10 +2,15 @@
 # name start with a '_' by convention and contain a config.h.
 
 CC = g++
-CPPFLAGS = -Wall -Werror -g -O2 -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -I.
+CPPFLAGS = -Wall -Werror -march=native -msse -msse2 -O3 -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -I.
+LDFLAGS = -lpthread
+# For profiling
+#CPPFLAGS += -fprofile-arcs -ftest-coverage -O0 -pg
+#LDFLAGS +=  -fprofile-arcs -ftest-coverage -O0 -pg
+
 # Uncomment following to use SSE
 # CPPFLAGS += -msse -msse2 -DSSE
-LDFLAGS = -lpthread
+
 TARGETS = mer_counter dump_stats dump_stats_compacted hash_merge
 SOURCES = $(patsubst %,%.cc,$(TARGETS)) mer_count_thread.cc
 
@@ -30,7 +35,7 @@ mer_counter: mer_counter.o mer_count_thread.o storage.o misc.o
 dump_stats: dump_stats.o storage.o misc.o
 
 clean:
-	rm -f $(TARGETS) *.o *.d
+	rm -f $(TARGETS) *.o *.d *.gcno *.gcda
 
 # Is the following OK? Shouldn't we include more than that?
 include $(SOURCES:.cc=.d)

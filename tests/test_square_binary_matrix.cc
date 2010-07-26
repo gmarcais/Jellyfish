@@ -86,5 +86,8 @@ TEST(SquareBinaryMatrix, Initialization) {
   for(i = 0; i < 100; i++) {
     v = random_vector(VECLEN);
     ASSERT_EQ(rand_m.times_loop(v), rand_m.times_unrolled(v));
+#ifdef SSE
+    ASSERT_EQ(rand_m.times_loop(v), rand_m.times_sse(v));
+#endif
   }
 }

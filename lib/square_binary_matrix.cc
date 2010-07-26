@@ -89,37 +89,37 @@ SquareBinaryMatrix SquareBinaryMatrix::inverse() const {
   return res;
 }
 
-void SquareBinaryMatrix::print(std::ostream &os) const {
+void SquareBinaryMatrix::print(std::ostream *os) const {
   int i, j;
   uint64_t a, *v;
 
-  os << size << "x" << size << std::endl;
+  *os << size << "x" << size << std::endl;
   for(i = 0, a = msb(); i < size; i++, a >>= 1) {
     for(j = 0, v = columns; j < size; j++, v++)
-      os << ((*v & a) ? 1 : 0);
-    os << std::endl;
+      *os << ((*v & a) ? 1 : 0);
+    *os << std::endl;
   }
 }
 
 std::string SquareBinaryMatrix::str() const {
   std::ostringstream os;
-  print(os);
+  print(&os);
   return os.str();
 }
 
-void SquareBinaryMatrix::dump(std::ostream &os) const {
-  os.write((char *)&size, sizeof(size));
-  os.write((char *)columns, sizeof(uint64_t) * size);
+void SquareBinaryMatrix::dump(std::ostream *os) const {
+  os->write((char *)&size, sizeof(size));
+  os->write((char *)columns, sizeof(uint64_t) * size);
 }
 
-void SquareBinaryMatrix::load(std::istream &is) {
+void SquareBinaryMatrix::load(std::istream *is) {
   if(columns) {
     delete[] columns;
     columns = NULL;
   }
-  is.read((char *)&size, sizeof(size));
+  is->read((char *)&size, sizeof(size));
   columns = new uint64_t[size];
-  is.read((char *)columns, sizeof(uint64_t) * size);
+  is->read((char *)columns, sizeof(uint64_t) * size);
 }
 
 size_t SquareBinaryMatrix::read(const char *map) {
@@ -133,14 +133,14 @@ size_t SquareBinaryMatrix::read(const char *map) {
   return sizeof(size) + sizeof(uint64_t) * size;
 }
 
-void SquareBinaryMatrix::print_vector(std::ostream &os, uint64_t v, bool vertical) const {
+void SquareBinaryMatrix::print_vector(std::ostream *os, uint64_t v, bool vertical) const {
   uint64_t a;
   for(a = msb(); a; a >>= 1)
-    os << ((v & a) ? 1 : 0) << (vertical ? "\n" : "");
+    *os << ((v & a) ? 1 : 0) << (vertical ? "\n" : "");
 }
 
 std::string SquareBinaryMatrix::str_vector(uint64_t v, bool vertical) const {
   std::ostringstream os;
-  print_vector(os, v, vertical);
+  print_vector(&os, v, vertical);
   return os.str();
 }
