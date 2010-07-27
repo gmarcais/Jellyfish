@@ -13,6 +13,7 @@ main_func_t count_main;
 main_func_t stats_main;
 main_func_t merge_main;
 main_func_t sos;
+main_func_t version;
 
 struct cmd_func {
   std::string  cmd;
@@ -29,20 +30,35 @@ cmd_func cmd_list[] = {
   {"-help",             &sos},
   {"--help",            &sos},
   {"-?",                &sos},
-
+  {"--version",         &version},
+  {"-V",                &version},
   {"",                  0}
 };
 
-int sos(int argc, char *argv[])
+void __sos(std::ostream *os)
 {
-  std::cerr << "Usage: jellyfish <cmd> [options] arg..."  << std::endl <<
+  *os << "Usage: jellyfish <cmd> [options] arg..."  << std::endl <<
     "Where <cmd> is one of: ";
   bool comma = false;
   for(cmd_func *ccmd = cmd_list; ccmd->func != sos; ccmd++) {
-    std::cerr << (comma ? ", " : "") << ccmd->cmd;
+    *os << (comma ? ", " : "") << ccmd->cmd;
     comma = true;
   }
-  std::cerr << "." << std::endl;
+  *os << "." << std::endl;
+  *os << "Options:" << std::endl <<
+    "  --version        Display version" << std::endl <<
+    "  --help           Display this message" << std::endl;
+}
+
+int sos(int argc, char *argv[])
+{
+  __sos(&std::cout);
+  return 0;
+}
+
+int version(int argc, char *argv[])
+{
+  std::cout << argp_program_version << std::endl;
   return 0;
 }
 
@@ -68,6 +84,6 @@ int main(int argc, char *argv[])
   }
 
   std::cerr << error << std::endl;
-  sos(argc - 1, argv + 1);
+  __sos(&std::cerr);
   return 1;
 }
