@@ -17,31 +17,10 @@
 #include "mer_counting.hpp"
 #include "mer_count_thread.hpp"
 
-void thread_printf(char *fmt, ...) {
-//   va_list ap;
-//   pthread_t self = pthread_self();
-//   unsigned long i;
-  
-//   va_start(ap, fmt);
-
-//   flockfile(stdout);
-//   for(i = 0; i < sizeof(pthread_t); i++) {
-//     printf("%02x.", (unsigned char)*((char *)&self + i));
-//   }
-//   printf(" ");
-
-//   vprintf(fmt, ap);
-//   funlockfile(stdout);
-
-//   va_end(ap);
-}
-
 /*
  * Option parsing
  */
-const char *argp_program_version = "mer_counter 1.0";
-const char *argp_program_bug_address = "<guillaume@marcais.net>";
-static char doc[] = "Multi-threaded mer counter.";
+static char doc[] = "Count k-mers in a fasta files and write tables";
 static char args_doc[] = "fasta ...";
      
 enum {
@@ -262,7 +241,7 @@ void do_it(struct arguments *arguments, struct qc *qc, struct io *io, struct tim
   //         thread_stats.new_reader);
 }
 
-int main(int argc, char *argv[]) {
+int count_main(int argc, char *argv[]) {
   struct arguments arguments;
   int arg_st;
   struct qc qc;

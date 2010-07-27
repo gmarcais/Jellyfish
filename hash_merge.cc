@@ -23,10 +23,8 @@
 /**
  * Command line processing
  **/
-const char *argp_program_version = "hash_merge 1.0";
-const char *argp_program_bug_address = "<guillaume@marcais.net>";
-static char doc[] = "Merge dumped hash tables";
-static char args_doc[] = "";
+static char doc[] = "Merge tables created by 'jellyfish count'";
+static char args_doc[] = "table1 table2 ...";
 
 enum {
   OPT_VAL_LEN = 1024,
@@ -129,7 +127,7 @@ void *writer_function(void *_info) {
   }
 }
 
-int main(int argc, char *argv[]) {
+int merge_main(int argc, char *argv[]) {
 
   // Process the command line
   struct arguments cmdargs;
@@ -281,4 +279,5 @@ int main(int argc, char *argv[]) {
   }
   info.buffers[0].writer.update_stats_with(&out, unique, distinct, total);
   out.close();
+  return 0;
 }

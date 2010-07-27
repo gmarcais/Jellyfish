@@ -10,8 +10,6 @@
 /*
  * Option parsing
  */
-const char *argp_program_version = "dump_stats_compacted 1.0";
-const char *argp_program_bug_address = "<guillaume@marcais.net>";
 static char doc[] = "Dump k-mer statistics from a compacted database";
 static char args_doc[] = "database";
 
@@ -57,7 +55,7 @@ break;
 }
 static struct argp argp = { options, parse_opt, args_doc, doc };
 
-int main(int argc, char *argv[])
+int stats_main(int argc, char *argv[])
 {
   struct arguments arguments;
   int arg_st;
