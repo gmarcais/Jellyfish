@@ -267,10 +267,10 @@ int merge_main(int argc, char *argv[]) {
   info.cond.signal();
   info.cond.unlock();
 
-  uint64_t *writer_waiting;
-  pthread_join(writer_thread, (void **)&writer_waiting);
-  printf("main waiting %ld writer waiting %ld\n", waiting, *writer_waiting);
-  delete writer_waiting;
+  //uint64_t *writer_waiting;
+  pthread_join(writer_thread, NULL);
+  //printf("main waiting %ld writer waiting %ld\n", waiting, *writer_waiting);
+  //delete writer_waiting;
   uint64_t unique = 0, distinct = 0, total = 0;
   for(uint_t j = 0; j < info.nb_buffers; j++) {
     unique += info.buffers[j].writer.get_unique();
