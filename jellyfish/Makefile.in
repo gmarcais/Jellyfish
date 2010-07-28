@@ -47,10 +47,10 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-am_jellyfish_OBJECTS = dump_stats_compacted.$(OBJEXT) \
-	square_binary_matrix.$(OBJEXT) hash_merge.$(OBJEXT) \
-	storage.$(OBJEXT) misc.$(OBJEXT) mer_count_thread.$(OBJEXT) \
-	mer_counter.$(OBJEXT)
+am_jellyfish_OBJECTS = jellyfish.$(OBJEXT) \
+	dump_stats_compacted.$(OBJEXT) square_binary_matrix.$(OBJEXT) \
+	hash_merge.$(OBJEXT) storage.$(OBJEXT) misc.$(OBJEXT) \
+	mer_count_thread.$(OBJEXT) mer_counter.$(OBJEXT)
 jellyfish_OBJECTS = $(am_jellyfish_OBJECTS)
 jellyfish_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
@@ -135,7 +135,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-jellyfish_SOURCES = dump_stats_compacted.cc square_binary_matrix.cc hash_merge.cc storage.cc misc.cc mer_count_thread.cc mer_counter.cc
+jellyfish_SOURCES = jellyfish.cc dump_stats_compacted.cc square_binary_matrix.cc hash_merge.cc storage.cc misc.cc mer_count_thread.cc mer_counter.cc
 all: all-am
 
 .SUFFIXES:
@@ -204,6 +204,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dump_stats_compacted.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash_merge.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/jellyfish.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mer_count_thread.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mer_counter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/misc.Po@am__quote@
