@@ -5,7 +5,7 @@
 #include <fstream>
 #include <string.h>
 #include <pthread.h>
-#include "lib/square_binary_matrix.hpp"
+#include "square_binary_matrix.hpp"
 
 namespace jellyfish {
   namespace compacted_hash {

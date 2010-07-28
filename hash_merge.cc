@@ -15,7 +15,7 @@
 
 #include "mer_counting.hpp"
 #include "compacted_hash.hpp"
-#include "lib/misc.hpp"
+#include "misc.hpp"
 #include "heap.hpp"
 
 #define MAX_KMER_SIZE 32

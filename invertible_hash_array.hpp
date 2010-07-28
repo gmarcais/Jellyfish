@@ -9,8 +9,8 @@
 #include <utility>
 #include <exception>
 #include <assert.h>
-#include "lib/misc.hpp"
-#include "lib/square_binary_matrix.hpp"
+#include "misc.hpp"
+#include "square_binary_matrix.hpp"
 #include "storage.hpp"
 #include "offsets_key_value.hpp"
 

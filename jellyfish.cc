@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 #include <string.h>
-#include "lib/misc.hpp"
+#include "misc.hpp"
 
 const char *argp_program_version = "jellyfish 1.0rc1";
 const char *argp_program_bug_address = 

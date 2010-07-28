@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
-#include "lib/misc.hpp"
+#include "misc.hpp"
 
 namespace jellyfish {
 

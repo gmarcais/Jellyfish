@@ -8,9 +8,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/mman.h>
-#include "lib/misc.hpp"
-#include "lib/locks_pthread.hpp"
-#include "lib/square_binary_matrix.hpp"
+#include "misc.hpp"
+#include "locks_pthread.hpp"
+#include "square_binary_matrix.hpp"
 #include "dumper.hpp"
 
 

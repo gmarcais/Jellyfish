@@ -7,12 +7,12 @@
 #include <vector>
 #include <utility>
 
-#include <config.hpp>
+#include <invertible_hash_config.hpp>
 
-#include "lib/misc.hpp"
+#include "misc.hpp"
 #include "concurrent_queues.hpp"
-#include "lib/atomic_gcc.hpp"
-#include "lib/allocators_mmap.hpp"
+#include "atomic_gcc.hpp"
+#include "allocators_mmap.hpp"
 #include "hash.hpp"
 #include "compacted_hash.hpp"
 #include "compacted_dumper.hpp"

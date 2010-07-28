@@ -12,7 +12,7 @@ SOURCES = $(patsubst %,%.cc,$(TARGETS)) mer_count_thread.cc
 
 .SECONDARY:
 
-VPATH=..:../lib
+#VPATH=..:../lib
 
 %.d: %.cc
 	$(CC) -M -MM -MG -MP $(CPPFLAGS) $< > $@.tmp
