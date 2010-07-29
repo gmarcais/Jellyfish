@@ -73,7 +73,7 @@ struct io {
 };
 
 #define DIFF_SECONDS(e, s)                                      \
-    (e.tv_sec - s.tv_sec - ((e.tv_usec > s.tv_usec) ? 0 : 1))
+    (e.tv_sec - s.tv_sec - ((e.tv_usec > s.tv_usec) ? 0L : 1L))
 #define DIFF_MICRO(e, s)                                                \
-    (e.tv_usec - s.tv_usec + ((s.tv_usec > e.tv_usec) ? 1000000 : 0))
+    (e.tv_usec - s.tv_usec + ((s.tv_usec > e.tv_usec) ? 1000000L : 0L))
 #endif /* __MER_COUNTING__ */

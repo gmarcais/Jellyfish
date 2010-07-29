@@ -286,10 +286,11 @@ int count_main(int argc, char *argv[]) {
   gettimeofday(&after_writing, NULL);
 
   if(arguments.timing) {
-#define DIFF_SECONDS(e, s)                                      \
-    (e.tv_sec - s.tv_sec - ((e.tv_usec > s.tv_usec) ? 0 : 1))
+/* these were already defined in mer_counting.hpp
+ * #define DIFF_SECONDS(e, s)                                      \
+    (e.tv_sec - s.tv_sec - ((e.tv_usec > s.tv_usec) ? 0L : 1L))
 #define DIFF_MICRO(e, s)                                                \
-    (e.tv_usec - s.tv_usec + ((s.tv_usec > e.tv_usec) ? 1000000 : 0))
+    (e.tv_usec - s.tv_usec + ((s.tv_usec > e.tv_usec) ? 1000000L : 0L))*/
 
     FILE *timing_fd = fopen(arguments.timing, "w");
     if(!timing_fd) {
