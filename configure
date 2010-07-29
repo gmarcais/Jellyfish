@@ -655,6 +655,18 @@ LIBS
 build_alias
 host_alias
 target_alias
+build
+build_cpu
+build_vendor
+build_os
+host
+host_cpu
+host_vendor
+host_os
+target
+target_cpu
+target_vendor
+target_os
 INSTALL_PROGRAM
 INSTALL_SCRIPT
 INSTALL_DATA
@@ -695,14 +707,6 @@ CXXDEPMODE
 am__fastdepCXX_TRUE
 am__fastdepCXX_FALSE
 RANLIB
-build
-build_cpu
-build_vendor
-build_os
-host
-host_cpu
-host_vendor
-host_os
 CC
 CFLAGS
 ac_ct_CC
@@ -1134,6 +1138,8 @@ HAVE_WINT_T
 gltests_WITNESS
 LIBGNU_LIBDEPS
 LIBGNU_LTLIBDEPS
+MACOSX_TRUE
+MACOSX_FALSE
 LIBOBJS
 LTLIBOBJS
 gl_LIBOBJS
@@ -1720,6 +1726,7 @@ Program names:
 System types:
   --build=BUILD     configure for building on BUILD [guessed]
   --host=HOST       cross-compile to build programs to run on HOST [BUILD]
+  --target=TARGET   configure for building compilers for TARGET [HOST]
 _ACEOF
 fi
 
@@ -2202,8 +2209,6 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
-am__api_version='1.10'
-
 ac_aux_dir=
 for ac_dir in "$srcdir" "$srcdir/.." "$srcdir/../.."; do
   if test -f "$ac_dir/install-sh"; then
@@ -2234,6 +2239,134 @@ ac_config_guess="$SHELL $ac_aux_dir/config.guess"  # Please don't use this var.
 ac_config_sub="$SHELL $ac_aux_dir/config.sub"  # Please don't use this var.
 ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 
+
+# Make sure we can run config.sub.
+$SHELL "$ac_aux_dir/config.sub" sun4 >/dev/null 2>&1 ||
+  { { echo "$as_me:$LINENO: error: cannot run $SHELL $ac_aux_dir/config.sub" >&5
+echo "$as_me: error: cannot run $SHELL $ac_aux_dir/config.sub" >&2;}
+   { (exit 1); exit 1; }; }
+
+{ echo "$as_me:$LINENO: checking build system type" >&5
+echo $ECHO_N "checking build system type... $ECHO_C" >&6; }
+if test "${ac_cv_build+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_build_alias=$build_alias
+test "x$ac_build_alias" = x &&
+  ac_build_alias=`$SHELL "$ac_aux_dir/config.guess"`
+test "x$ac_build_alias" = x &&
+  { { echo "$as_me:$LINENO: error: cannot guess build type; you must specify one" >&5
+echo "$as_me: error: cannot guess build type; you must specify one" >&2;}
+   { (exit 1); exit 1; }; }
+ac_cv_build=`$SHELL "$ac_aux_dir/config.sub" $ac_build_alias` ||
+  { { echo "$as_me:$LINENO: error: $SHELL $ac_aux_dir/config.sub $ac_build_alias failed" >&5
+echo "$as_me: error: $SHELL $ac_aux_dir/config.sub $ac_build_alias failed" >&2;}
+   { (exit 1); exit 1; }; }
+
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_build" >&5
+echo "${ECHO_T}$ac_cv_build" >&6; }
+case $ac_cv_build in
+*-*-*) ;;
+*) { { echo "$as_me:$LINENO: error: invalid value of canonical build" >&5
+echo "$as_me: error: invalid value of canonical build" >&2;}
+   { (exit 1); exit 1; }; };;
+esac
+build=$ac_cv_build
+ac_save_IFS=$IFS; IFS='-'
+set x $ac_cv_build
+shift
+build_cpu=$1
+build_vendor=$2
+shift; shift
+# Remember, the first character of IFS is used to create $*,
+# except with old shells:
+build_os=$*
+IFS=$ac_save_IFS
+case $build_os in *\ *) build_os=`echo "$build_os" | sed 's/ /-/g'`;; esac
+
+
+{ echo "$as_me:$LINENO: checking host system type" >&5
+echo $ECHO_N "checking host system type... $ECHO_C" >&6; }
+if test "${ac_cv_host+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test "x$host_alias" = x; then
+  ac_cv_host=$ac_cv_build
+else
+  ac_cv_host=`$SHELL "$ac_aux_dir/config.sub" $host_alias` ||
+    { { echo "$as_me:$LINENO: error: $SHELL $ac_aux_dir/config.sub $host_alias failed" >&5
+echo "$as_me: error: $SHELL $ac_aux_dir/config.sub $host_alias failed" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_host" >&5
+echo "${ECHO_T}$ac_cv_host" >&6; }
+case $ac_cv_host in
+*-*-*) ;;
+*) { { echo "$as_me:$LINENO: error: invalid value of canonical host" >&5
+echo "$as_me: error: invalid value of canonical host" >&2;}
+   { (exit 1); exit 1; }; };;
+esac
+host=$ac_cv_host
+ac_save_IFS=$IFS; IFS='-'
+set x $ac_cv_host
+shift
+host_cpu=$1
+host_vendor=$2
+shift; shift
+# Remember, the first character of IFS is used to create $*,
+# except with old shells:
+host_os=$*
+IFS=$ac_save_IFS
+case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
+
+
+{ echo "$as_me:$LINENO: checking target system type" >&5
+echo $ECHO_N "checking target system type... $ECHO_C" >&6; }
+if test "${ac_cv_target+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test "x$target_alias" = x; then
+  ac_cv_target=$ac_cv_host
+else
+  ac_cv_target=`$SHELL "$ac_aux_dir/config.sub" $target_alias` ||
+    { { echo "$as_me:$LINENO: error: $SHELL $ac_aux_dir/config.sub $target_alias failed" >&5
+echo "$as_me: error: $SHELL $ac_aux_dir/config.sub $target_alias failed" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_target" >&5
+echo "${ECHO_T}$ac_cv_target" >&6; }
+case $ac_cv_target in
+*-*-*) ;;
+*) { { echo "$as_me:$LINENO: error: invalid value of canonical target" >&5
+echo "$as_me: error: invalid value of canonical target" >&2;}
+   { (exit 1); exit 1; }; };;
+esac
+target=$ac_cv_target
+ac_save_IFS=$IFS; IFS='-'
+set x $ac_cv_target
+shift
+target_cpu=$1
+target_vendor=$2
+shift; shift
+# Remember, the first character of IFS is used to create $*,
+# except with old shells:
+target_os=$*
+IFS=$ac_save_IFS
+case $target_os in *\ *) target_os=`echo "$target_os" | sed 's/ /-/g'`;; esac
+
+
+# The aliases save the names the user supplied, while $host etc.
+# will get canonicalized.
+test -n "$target_alias" &&
+  test "$program_prefix$program_suffix$program_transform_name" = \
+    NONENONEs,x,x, &&
+  program_prefix=${target_alias}-
+am__api_version='1.10'
 
 # Find a good install program.  We prefer a C program (faster),
 # so one script is as good as another.  But avoid the broken or
@@ -3563,89 +3696,6 @@ fi
 cat >>confdefs.h <<\_ACEOF
 #define _GNU_SOURCE 1
 _ACEOF
-
-
-# Make sure we can run config.sub.
-$SHELL "$ac_aux_dir/config.sub" sun4 >/dev/null 2>&1 ||
-  { { echo "$as_me:$LINENO: error: cannot run $SHELL $ac_aux_dir/config.sub" >&5
-echo "$as_me: error: cannot run $SHELL $ac_aux_dir/config.sub" >&2;}
-   { (exit 1); exit 1; }; }
-
-{ echo "$as_me:$LINENO: checking build system type" >&5
-echo $ECHO_N "checking build system type... $ECHO_C" >&6; }
-if test "${ac_cv_build+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_build_alias=$build_alias
-test "x$ac_build_alias" = x &&
-  ac_build_alias=`$SHELL "$ac_aux_dir/config.guess"`
-test "x$ac_build_alias" = x &&
-  { { echo "$as_me:$LINENO: error: cannot guess build type; you must specify one" >&5
-echo "$as_me: error: cannot guess build type; you must specify one" >&2;}
-   { (exit 1); exit 1; }; }
-ac_cv_build=`$SHELL "$ac_aux_dir/config.sub" $ac_build_alias` ||
-  { { echo "$as_me:$LINENO: error: $SHELL $ac_aux_dir/config.sub $ac_build_alias failed" >&5
-echo "$as_me: error: $SHELL $ac_aux_dir/config.sub $ac_build_alias failed" >&2;}
-   { (exit 1); exit 1; }; }
-
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_build" >&5
-echo "${ECHO_T}$ac_cv_build" >&6; }
-case $ac_cv_build in
-*-*-*) ;;
-*) { { echo "$as_me:$LINENO: error: invalid value of canonical build" >&5
-echo "$as_me: error: invalid value of canonical build" >&2;}
-   { (exit 1); exit 1; }; };;
-esac
-build=$ac_cv_build
-ac_save_IFS=$IFS; IFS='-'
-set x $ac_cv_build
-shift
-build_cpu=$1
-build_vendor=$2
-shift; shift
-# Remember, the first character of IFS is used to create $*,
-# except with old shells:
-build_os=$*
-IFS=$ac_save_IFS
-case $build_os in *\ *) build_os=`echo "$build_os" | sed 's/ /-/g'`;; esac
-
-
-{ echo "$as_me:$LINENO: checking host system type" >&5
-echo $ECHO_N "checking host system type... $ECHO_C" >&6; }
-if test "${ac_cv_host+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test "x$host_alias" = x; then
-  ac_cv_host=$ac_cv_build
-else
-  ac_cv_host=`$SHELL "$ac_aux_dir/config.sub" $host_alias` ||
-    { { echo "$as_me:$LINENO: error: $SHELL $ac_aux_dir/config.sub $host_alias failed" >&5
-echo "$as_me: error: $SHELL $ac_aux_dir/config.sub $host_alias failed" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_host" >&5
-echo "${ECHO_T}$ac_cv_host" >&6; }
-case $ac_cv_host in
-*-*-*) ;;
-*) { { echo "$as_me:$LINENO: error: invalid value of canonical host" >&5
-echo "$as_me: error: invalid value of canonical host" >&2;}
-   { (exit 1); exit 1; }; };;
-esac
-host=$ac_cv_host
-ac_save_IFS=$IFS; IFS='-'
-set x $ac_cv_host
-shift
-host_cpu=$1
-host_vendor=$2
-shift; shift
-# Remember, the first character of IFS is used to create $*,
-# except with old shells:
-host_os=$*
-IFS=$ac_save_IFS
-case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
 
 ac_ext=c
@@ -19171,6 +19221,14 @@ done
 
 ac_config_headers="$ac_config_headers config.h"
 
+ if test x$target_vendor = xapple; then
+  MACOSX_TRUE=
+  MACOSX_FALSE='#'
+else
+  MACOSX_TRUE='#'
+  MACOSX_FALSE=
+fi
+
 ac_config_files="$ac_config_files Makefile gnulib/Makefile jellyfish/Makefile"
 
 cat >confcache <<\_ACEOF
@@ -19329,6 +19387,13 @@ fi
     gltests_LTLIBOBJS=$gltests_ltlibobjs
 
 
+if test -z "${MACOSX_TRUE}" && test -z "${MACOSX_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"MACOSX\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"MACOSX\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
 
 : ${CONFIG_STATUS=./config.status}
 ac_clean_files_save=$ac_clean_files
@@ -19900,6 +19965,18 @@ LIBS!$LIBS$ac_delim
 build_alias!$build_alias$ac_delim
 host_alias!$host_alias$ac_delim
 target_alias!$target_alias$ac_delim
+build!$build$ac_delim
+build_cpu!$build_cpu$ac_delim
+build_vendor!$build_vendor$ac_delim
+build_os!$build_os$ac_delim
+host!$host$ac_delim
+host_cpu!$host_cpu$ac_delim
+host_vendor!$host_vendor$ac_delim
+host_os!$host_os$ac_delim
+target!$target$ac_delim
+target_cpu!$target_cpu$ac_delim
+target_vendor!$target_vendor$ac_delim
+target_os!$target_os$ac_delim
 INSTALL_PROGRAM!$INSTALL_PROGRAM$ac_delim
 INSTALL_SCRIPT!$INSTALL_SCRIPT$ac_delim
 INSTALL_DATA!$INSTALL_DATA$ac_delim
@@ -19940,14 +20017,6 @@ CXXDEPMODE!$CXXDEPMODE$ac_delim
 am__fastdepCXX_TRUE!$am__fastdepCXX_TRUE$ac_delim
 am__fastdepCXX_FALSE!$am__fastdepCXX_FALSE$ac_delim
 RANLIB!$RANLIB$ac_delim
-build!$build$ac_delim
-build_cpu!$build_cpu$ac_delim
-build_vendor!$build_vendor$ac_delim
-build_os!$build_os$ac_delim
-host!$host$ac_delim
-host_cpu!$host_cpu$ac_delim
-host_vendor!$host_vendor$ac_delim
-host_os!$host_os$ac_delim
 CC!$CC$ac_delim
 CFLAGS!$CFLAGS$ac_delim
 ac_ct_CC!$ac_ct_CC$ac_delim
@@ -19956,10 +20025,6 @@ am__fastdepCC_TRUE!$am__fastdepCC_TRUE$ac_delim
 am__fastdepCC_FALSE!$am__fastdepCC_FALSE$ac_delim
 CPP!$CPP$ac_delim
 GREP!$GREP$ac_delim
-EGREP!$EGREP$ac_delim
-GL_COND_LIBTOOL_TRUE!$GL_COND_LIBTOOL_TRUE$ac_delim
-GL_COND_LIBTOOL_FALSE!$GL_COND_LIBTOOL_FALSE$ac_delim
-ALLOCA!$ALLOCA$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -20001,6 +20066,10 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+EGREP!$EGREP$ac_delim
+GL_COND_LIBTOOL_TRUE!$GL_COND_LIBTOOL_TRUE$ac_delim
+GL_COND_LIBTOOL_FALSE!$GL_COND_LIBTOOL_FALSE$ac_delim
+ALLOCA!$ALLOCA$ac_delim
 ALLOCA_H!$ALLOCA_H$ac_delim
 GETOPT_H!$GETOPT_H$ac_delim
 INCLUDE_NEXT!$INCLUDE_NEXT$ac_delim
@@ -20094,10 +20163,6 @@ HAVE_DECL_GETUSERSHELL!$HAVE_DECL_GETUSERSHELL$ac_delim
 HAVE_OS_H!$HAVE_OS_H$ac_delim
 HAVE_SYS_PARAM_H!$HAVE_SYS_PARAM_H$ac_delim
 REPLACE_CHOWN!$REPLACE_CHOWN$ac_delim
-REPLACE_CLOSE!$REPLACE_CLOSE$ac_delim
-REPLACE_DUP!$REPLACE_DUP$ac_delim
-REPLACE_DUP2!$REPLACE_DUP2$ac_delim
-REPLACE_FCHOWNAT!$REPLACE_FCHOWNAT$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -20139,6 +20204,10 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+REPLACE_CLOSE!$REPLACE_CLOSE$ac_delim
+REPLACE_DUP!$REPLACE_DUP$ac_delim
+REPLACE_DUP2!$REPLACE_DUP2$ac_delim
+REPLACE_FCHOWNAT!$REPLACE_FCHOWNAT$ac_delim
 REPLACE_GETCWD!$REPLACE_GETCWD$ac_delim
 REPLACE_GETGROUPS!$REPLACE_GETGROUPS$ac_delim
 REPLACE_GETPAGESIZE!$REPLACE_GETPAGESIZE$ac_delim
@@ -20232,10 +20301,6 @@ GNULIB_STPNCPY!$GNULIB_STPNCPY$ac_delim
 GNULIB_STRCHRNUL!$GNULIB_STRCHRNUL$ac_delim
 GNULIB_STRDUP!$GNULIB_STRDUP$ac_delim
 GNULIB_STRNCAT!$GNULIB_STRNCAT$ac_delim
-GNULIB_STRNDUP!$GNULIB_STRNDUP$ac_delim
-GNULIB_STRNLEN!$GNULIB_STRNLEN$ac_delim
-GNULIB_STRPBRK!$GNULIB_STRPBRK$ac_delim
-GNULIB_STRSEP!$GNULIB_STRSEP$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -20277,6 +20342,10 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+GNULIB_STRNDUP!$GNULIB_STRNDUP$ac_delim
+GNULIB_STRNLEN!$GNULIB_STRNLEN$ac_delim
+GNULIB_STRPBRK!$GNULIB_STRPBRK$ac_delim
+GNULIB_STRSEP!$GNULIB_STRSEP$ac_delim
 GNULIB_STRSTR!$GNULIB_STRSTR$ac_delim
 GNULIB_STRCASESTR!$GNULIB_STRCASESTR$ac_delim
 GNULIB_STRTOK_R!$GNULIB_STRTOK_R$ac_delim
@@ -20370,10 +20439,6 @@ GNULIB_FPUTC!$GNULIB_FPUTC$ac_delim
 GNULIB_FPUTS!$GNULIB_FPUTS$ac_delim
 GNULIB_FREOPEN!$GNULIB_FREOPEN$ac_delim
 GNULIB_FSEEK!$GNULIB_FSEEK$ac_delim
-GNULIB_FSEEKO!$GNULIB_FSEEKO$ac_delim
-GNULIB_FTELL!$GNULIB_FTELL$ac_delim
-GNULIB_FTELLO!$GNULIB_FTELLO$ac_delim
-GNULIB_FWRITE!$GNULIB_FWRITE$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -20415,6 +20480,10 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+GNULIB_FSEEKO!$GNULIB_FSEEKO$ac_delim
+GNULIB_FTELL!$GNULIB_FTELL$ac_delim
+GNULIB_FTELLO!$GNULIB_FTELLO$ac_delim
+GNULIB_FWRITE!$GNULIB_FWRITE$ac_delim
 GNULIB_GETDELIM!$GNULIB_GETDELIM$ac_delim
 GNULIB_GETLINE!$GNULIB_GETLINE$ac_delim
 GNULIB_OBSTACK_PRINTF!$GNULIB_OBSTACK_PRINTF$ac_delim
@@ -20508,10 +20577,6 @@ GNULIB_MBSINIT!$GNULIB_MBSINIT$ac_delim
 GNULIB_MBRTOWC!$GNULIB_MBRTOWC$ac_delim
 GNULIB_MBRLEN!$GNULIB_MBRLEN$ac_delim
 GNULIB_MBSRTOWCS!$GNULIB_MBSRTOWCS$ac_delim
-GNULIB_MBSNRTOWCS!$GNULIB_MBSNRTOWCS$ac_delim
-GNULIB_WCRTOMB!$GNULIB_WCRTOMB$ac_delim
-GNULIB_WCSRTOMBS!$GNULIB_WCSRTOMBS$ac_delim
-GNULIB_WCSNRTOMBS!$GNULIB_WCSNRTOMBS$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -20553,6 +20618,10 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+GNULIB_MBSNRTOWCS!$GNULIB_MBSNRTOWCS$ac_delim
+GNULIB_WCRTOMB!$GNULIB_WCRTOMB$ac_delim
+GNULIB_WCSRTOMBS!$GNULIB_WCSRTOMBS$ac_delim
+GNULIB_WCSNRTOMBS!$GNULIB_WCSNRTOMBS$ac_delim
 GNULIB_WCWIDTH!$GNULIB_WCWIDTH$ac_delim
 HAVE_BTOWC!$HAVE_BTOWC$ac_delim
 HAVE_MBSINIT!$HAVE_MBSINIT$ac_delim
@@ -20584,6 +20653,8 @@ HAVE_WINT_T!$HAVE_WINT_T$ac_delim
 gltests_WITNESS!$gltests_WITNESS$ac_delim
 LIBGNU_LIBDEPS!$LIBGNU_LIBDEPS$ac_delim
 LIBGNU_LTLIBDEPS!$LIBGNU_LTLIBDEPS$ac_delim
+MACOSX_TRUE!$MACOSX_TRUE$ac_delim
+MACOSX_FALSE!$MACOSX_FALSE$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 gl_LIBOBJS!$gl_LIBOBJS$ac_delim
@@ -20592,7 +20663,7 @@ gltests_LIBOBJS!$gltests_LIBOBJS$ac_delim
 gltests_LTLIBOBJS!$gltests_LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 37; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 43; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

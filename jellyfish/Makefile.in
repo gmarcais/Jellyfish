@@ -32,6 +32,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+target_triplet = @target@
+@MACOSX_TRUE@am__append_1 = -arch x86_64
 bin_PROGRAMS = jellyfish$(EXEEXT)
 subdir = jellyfish
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
@@ -76,7 +78,7 @@ am_jellyfish_OBJECTS = jellyfish.$(OBJEXT) \
 	hash_merge.$(OBJEXT) storage.$(OBJEXT) misc.$(OBJEXT) \
 	mer_count_thread.$(OBJEXT) mer_counter.$(OBJEXT)
 jellyfish_OBJECTS = $(am_jellyfish_OBJECTS)
-jellyfish_DEPENDENCIES = ../gnulib/libgnu.a
+@MACOSX_TRUE@jellyfish_DEPENDENCIES = ../gnulib/libgnu.a
 DEFAULT_INCLUDES = -I. -I$(top_builddir)@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -109,7 +111,8 @@ CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 CPP = @CPP@
-CPPFLAGS = -Wall -Werror -g -O2 -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -I. -I../gnulib -arch x86_64
+CPPFLAGS = -Wall -Werror -g -O2 -D__STDC_CONSTANT_MACROS \
+	-D__STDC_FORMAT_MACROS -I. -I../gnulib $(am__append_1)
 CXX = @CXX@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
@@ -608,10 +611,14 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
 sysconfdir = @sysconfdir@
+target = @target@
 target_alias = @target_alias@
+target_cpu = @target_cpu@
+target_os = @target_os@
+target_vendor = @target_vendor@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-jellyfish_LDADD = ../gnulib/libgnu.a
+@MACOSX_TRUE@jellyfish_LDADD = ../gnulib/libgnu.a
 jellyfish_SOURCES = jellyfish.cc dump_stats_compacted.cc square_binary_matrix.cc hash_merge.cc storage.cc misc.cc mer_count_thread.cc mer_counter.cc
 all: all-am
 
