@@ -296,12 +296,12 @@ int count_main(int argc, char *argv[]) {
       fprintf(stderr, "Can't open timing file '%s': %s\n",
 	      arguments.timing, strerror(errno));
     } else {
-      fprintf(timing_fd, "Init:     %5ld.%06d seconds\n",
+      fprintf(timing_fd, "Init:     %5ld.%06ld seconds\n",
 	      DIFF_SECONDS(after_init, start), DIFF_MICRO(after_init, start));
-      fprintf(timing_fd, "Counting: %5ld.%06d seconds\n",
+      fprintf(timing_fd, "Counting: %5ld.%06ld seconds\n",
 	      DIFF_SECONDS(after_hashing, after_init), 
 	      DIFF_MICRO(after_hashing, after_init));
-      fprintf(timing_fd, "Writing:  %5ld.%06d seconds\n",
+      fprintf(timing_fd, "Writing:  %5ld.%06ld seconds\n",
 	      DIFF_SECONDS(after_writing, after_hashing),
 	      DIFF_MICRO(after_writing, after_hashing));
       fclose(timing_fd);

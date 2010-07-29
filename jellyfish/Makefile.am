@@ -1,10 +1,10 @@
 ## Process this file with automake to produce Makefile.in
 
 LDFLAGS = -lpthread
-CPPFLAGS = -Wall -Werror -g -O2 -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -I. -I../gnulib 
+CPPFLAGS = -Wall -Werror -g -O2 -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -I.
 
 if MACOSX
-CPPFLAGS += -arch x86_64
+CPPFLAGS += -arch x86_64 -I../gnulib
 endif
 
 bin_PROGRAMS = jellyfish
