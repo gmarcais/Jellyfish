@@ -1,0 +1,11 @@
+stripslash.o stripslash.o: stripslash.c ../config.h dirname.h \
+  /usr/lib/gcc/i686-apple-darwin10/4.2.1/include/stdbool.h \
+  /usr/lib/gcc/i686-apple-darwin10/4.2.1/include/stddef.h
+
+../config.h:
+
+dirname.h:
+
+/usr/lib/gcc/i686-apple-darwin10/4.2.1/include/stdbool.h:
+
+/usr/lib/gcc/i686-apple-darwin10/4.2.1/include/stddef.h:

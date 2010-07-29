@@ -25,14 +25,21 @@ namespace allocators {
     size_t get_size() const { return size; }
 
     void *realloc(size_t new_size) {
+// mac: doesn't support mremap
+#ifdef MREMAP_MAYMOVE
       size_t old_size = size;
-      void *new_ptr;
+#endif
+      void *new_ptr = MAP_FAILED;
       if(ptr == MAP_FAILED) {
         new_ptr = ::mmap(NULL, new_size, PROT_WRITE|PROT_READ, 
 			 MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-      } else {
+      } 
+// mac: doesn't support mremap
+#ifdef MREMAP_MAYMOVE
+      else {
         new_ptr = ::mremap(ptr, old_size, new_size, MREMAP_MAYMOVE);
       }
+#endif
       if(new_ptr == MAP_FAILED)
         return NULL;
       size = new_size;

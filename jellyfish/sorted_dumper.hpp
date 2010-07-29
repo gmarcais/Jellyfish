@@ -24,7 +24,7 @@ namespace jellyfish {
     uint_t                key_len, val_len;
     size_t                record_len, nb_records, nb_blocks;
     storage_t            *ary;
-    uint_t                file_index;
+    int                 file_index;
     struct thread_info_t *thread_info;
     uint64_t              max_count;
     uint64_t volatile     unique, distinct, total;
@@ -88,7 +88,8 @@ namespace jellyfish {
     file[file_len] = '\0';
     int off = snprintf(file, file_len, "%s", file_prefix.c_str());
     if(off > 0 && off < file_len)
-      off += snprintf(file + off, file_len - off, "_%" PRIUINTu, file_index++);
+      off += snprintf(file + off, file_len - off, "_%d", file_index++);
+      //off += snprintf(file + off, file_len - off, "_%" PRIUINTu, file_index++);
     if(off < 0 || off >= file_len)
       return; // TODO: Should throw an error
       

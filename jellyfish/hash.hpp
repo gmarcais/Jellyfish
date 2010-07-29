@@ -8,8 +8,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/mman.h>
-#include "misc.hpp"
 #include "locks_pthread.hpp"
+#include "misc.hpp"
 #include "square_binary_matrix.hpp"
 #include "dumper.hpp"
 

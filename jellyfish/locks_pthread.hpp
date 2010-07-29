@@ -45,12 +45,51 @@ namespace locks {
       inline bool try_lock() { return !pthread_mutex_trylock(&_mutex); }
     };
     
+    class Semaphore
+    {
+        int _value, _wakeups;
+        cond _cv;
+    public:
+        Semaphore(int value) :
+          _value(value),
+          _wakeups(0)
+        {
+            // nothing to do
+        }
+
+        ~Semaphore() {}
+
+        inline void wait() {
+           _cv.lock();
+           _value--;
+           if (_value < 0) {
+             do {
+               _cv.wait();
+             } while(_wakeups < 1);
+             _wakeups--;
+           }
+           _cv.unlock();
+        }
+
+        inline void signal() {
+           _cv.lock();
+           _value++;
+           if(_value <= 0) {
+             _wakeups++;
+             _cv.signal();
+           }
+           _cv.unlock();
+        }
+    };
+
+#if defined(_POSIX_BARRIERS) && (_POSIX_BARRIERS - 20012L) >= 0
     class barrier
     {
       pthread_barrier_t _barrier;
       
     public:
       barrier(unsigned count) {
+
 	pthread_barrier_init(&_barrier, NULL, count);
       }
       
@@ -62,6 +101,55 @@ namespace locks {
 	return pthread_barrier_wait(&_barrier);
       }
     };
+
+#else
+#  ifndef PTHREAD_BARRIER_SERIAL_THREAD
+#    define  PTHREAD_BARRIER_SERIAL_THREAD 1
+#  endif
+
+    class barrier
+    {
+      int count; // required # of threads
+      int current;    // current # of threads that have passed thru
+      mutex barlock;  // protect current
+      Semaphore barrier1; // implement the barrier
+      Semaphore barrier2;
+
+    public:
+      barrier(unsigned cnt) 
+        : count(cnt), current(0), barrier1(0), barrier2(0) {
+      }
+
+      ~barrier() {}
+
+      inline int wait() {
+        int ret = 0;
+        barlock.lock();
+        current += 1;
+        if(current == count) {
+          ret = PTHREAD_BARRIER_SERIAL_THREAD;
+          for(int i=0; i<count;i++) {
+            barrier1.signal();
+          }
+        }
+        barlock.unlock();
+        barrier1.wait(); // wait for n threads to arrive
+
+        barlock.lock();
+        current -= 1;
+        if(current == 0) {
+          for(int i=0;i<count;i++) {
+            barrier2.signal();
+          }
+        }
+        barlock.unlock();
+        barrier2.wait();
+        return ret;
+      }
+    };
+
+#endif
   }
 }
 #endif
+

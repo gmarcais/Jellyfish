@@ -1,3 +1,4 @@
+#include <config.h>
 #include "square_binary_matrix.hpp"
 #include <iostream>
 #include <sstream>

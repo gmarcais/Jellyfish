@@ -1,3 +1,4 @@
+#include <config.h>
 #include <pthread.h>
 #include <fstream>
 #include <exception>
@@ -16,6 +17,7 @@
 #include <sys/time.h>
 #include "mer_counting.hpp"
 #include "mer_count_thread.hpp"
+#include "locks_pthread.hpp"
 
 /*
  * Option parsing
@@ -162,7 +164,8 @@ struct trailer {
 };
 
 struct worker_info {
-  pthread_barrier_t		*barrier;
+  // CLKBAR: pthread_barrier_t		*barrier;
+  locks::pthread::barrier        *barrier;
   thread_worker			*worker;
   pthread_t			 thread;
   pthread_mutex_t		*write_lock;
@@ -177,16 +180,19 @@ void *start_worker(void *worker) {
   struct worker_info *info = (struct worker_info *)worker;
   bool is_serial;
 
-  pthread_barrier_wait(info->barrier);
+  // CLKBAR: pthread_barrier_wait(info->barrier);
+  info->barrier->wait();
   try {
     info->worker->start();
   } catch(exception &e) {
     std::cerr << e.what() << std::endl;
   }
 
-  is_serial = pthread_barrier_wait(info->barrier) == PTHREAD_BARRIER_SERIAL_THREAD;
+  //CLKBAR: is_serial = pthread_barrier_wait(info->barrier) == PTHREAD_BARRIER_SERIAL_THREAD;
+  is_serial = info->barrier->wait() == PTHREAD_BARRIER_SERIAL_THREAD;
   if(is_serial)
     gettimeofday(info->after_hashing, NULL);
+
 
   if(info->arguments->no_write)
     return NULL;
@@ -201,14 +207,15 @@ void do_it(struct arguments *arguments, struct qc *qc, struct io *io, struct tim
   unsigned int			i;
   struct worker_info		workers[arguments->nb_threads];
   struct thread_stats		thread_stats;
-  pthread_barrier_t		worker_barrier;
+  //CLKBAR: pthread_barrier_t		worker_barrier;
+  locks::pthread::barrier	worker_barrier(arguments->nb_threads);
   pthread_mutex_t		write_lock;
   struct trailer		trailer;
 
   memset(&thread_stats, '\0', sizeof(thread_stats));
   memset(&workers, '\0', sizeof(workers));
   memset(&trailer, '\0', sizeof(trailer));
-  pthread_barrier_init(&worker_barrier, NULL, arguments->nb_threads);
+  //CLKBAR: pthread_barrier_init(&worker_barrier, NULL, arguments->nb_threads);
   pthread_mutex_init(&write_lock, NULL);
   
   for(i = 0; i < arguments->nb_threads; i++) {
@@ -235,7 +242,7 @@ void do_it(struct arguments *arguments, struct qc *qc, struct io *io, struct tim
     delete workers[i].worker;
   }
 
-  pthread_barrier_destroy(&worker_barrier);
+  //CLKBAR pthread_barrier_destroy(&worker_barrier);
 
   //  printf("empry rq: %u new reader: %u\n", thread_stats.empty_rq,
   //         thread_stats.new_reader);
@@ -289,12 +296,12 @@ int count_main(int argc, char *argv[]) {
       fprintf(stderr, "Can't open timing file '%s': %s\n",
 	      arguments.timing, strerror(errno));
     } else {
-      fprintf(timing_fd, "Init:     %5ld.%06ld seconds\n",
+      fprintf(timing_fd, "Init:     %5ld.%06d seconds\n",
 	      DIFF_SECONDS(after_init, start), DIFF_MICRO(after_init, start));
-      fprintf(timing_fd, "Counting: %5ld.%06ld seconds\n",
+      fprintf(timing_fd, "Counting: %5ld.%06d seconds\n",
 	      DIFF_SECONDS(after_hashing, after_init), 
 	      DIFF_MICRO(after_hashing, after_init));
-      fprintf(timing_fd, "Writing:  %5ld.%06ld seconds\n",
+      fprintf(timing_fd, "Writing:  %5ld.%06d seconds\n",
 	      DIFF_SECONDS(after_writing, after_hashing),
 	      DIFF_MICRO(after_writing, after_hashing));
       fclose(timing_fd);

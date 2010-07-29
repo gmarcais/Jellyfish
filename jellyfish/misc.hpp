@@ -23,6 +23,7 @@ typedef uint_fast16_t uint_t;
 #define PRIUINTu PRIuFAST16
 #define PRIUINTx PRIxFAST16
 
+inline int leading_zeroes(int x) { return __builtin_clz(x); } // CLK
 inline int leading_zeroes(unsigned int x) { return __builtin_clz(x); }
 inline int leading_zeroes(unsigned long x) { return __builtin_clzl(x); }
 inline int leading_zeroes(unsigned long long x) { return __builtin_clzll(x); }

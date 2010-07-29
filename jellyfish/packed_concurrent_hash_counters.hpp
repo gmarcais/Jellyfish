@@ -220,7 +220,8 @@ class thread_hash_counter {
   arys_t                        *key_val_arys;
   unsigned int                  max_reprobe, emax_reprobe;
   pthread_mutex_t               *resize_lock;
-  pthread_barrier_t             *resize_barrier;
+  //CLKBAR: pthread_barrier_t             *resize_barrier;
+  barrier                       *resize_barrier;
   struct stats                  *stats;
 
   bool resize(arys_t *cary, bool lock);
@@ -238,7 +239,8 @@ public:
   thread_hash_counter(uint32_t _key_len, arys_t * volatile * _arys,
                       unsigned int _max_reprobe,
                       pthread_mutex_t *_resize_lock, 
-                      pthread_barrier_t *_resize_barrier,
+                      //pthread_barrier_t *_resize_barrier,
+                      barrier *_resize_barrier,
                       struct stats *_stats) : 
     key_len(_key_len), key_val_arys_ptr(_arys), max_reprobe(_max_reprobe), 
     emax_reprobe(_max_reprobe),
@@ -262,7 +264,8 @@ class concurrent_hash_counter {
   struct stats                  stats;
   unsigned int                  max_reprobe;
   pthread_mutex_t               resize_lock;
-  pthread_barrier_t             resize_barrier;
+  barrier                       resize_barrier;
+  //CLKBAR: pthread_barrier_t             resize_barrier;
 
 public:
   concurrent_hash_counter(uint32_t _key_len, unsigned long _size, 
@@ -302,11 +305,11 @@ typedef concurrent_hash_counter<uint64_t,uint32_t,arys_64_32_t> chc_64_32_t;
  */
 template <class Key, class Val, class arys_t>
 concurrent_hash_counter<Key,Val,arys_t>::concurrent_hash_counter(uint32_t _key_len, unsigned long _size, unsigned int _max_reprobe, unsigned int nb_threads) :
-  key_len(_key_len), max_reprobe(_max_reprobe) {
+  key_len(_key_len), max_reprobe(_max_reprobe), resize_barrier(nb_threads) { //CLKBAR: added call
   key_val_arys = new arys_t(key_len, _size, (arys_t *)NULL);
   key_val_arys->ref_inc();      // Head of arys
   pthread_mutex_init(&resize_lock, NULL);
-  pthread_barrier_init(&resize_barrier, NULL, nb_threads);
+  //CLKBAR: pthread_barrier_init(&resize_barrier, NULL, nb_threads);
   memset(&stats, 0, sizeof(stats));
 }
 
@@ -499,7 +502,8 @@ void thread_hash_counter<Key,Val,arys_t>::copy_over(arys_t *carys)
   Key ckey;
   Val cval;
 
-  pthread_barrier_wait(resize_barrier);
+  //CLKBAR: pthread_barrier_wait(resize_barrier);
+  resize_barrier->wait();
   while(carys->get_chunck(&start, &end)) {
     // Copy over and free old data
     for(i = start; i < end; i++) {

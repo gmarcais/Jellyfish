@@ -1,3 +1,4 @@
+#include <config.h>
 #include "misc.hpp"
 
 void die(const char *msg, ...)

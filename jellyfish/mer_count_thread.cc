@@ -1,3 +1,4 @@
+#include <config.h>
 #include "mer_count_thread.hpp"
 #include "mer_counting.hpp"
 #include <stdint.h>
