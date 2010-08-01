@@ -19,13 +19,14 @@ CPPFLAGS += -I$(GTEST_DIR) -I$(GTEST_DIR)/include $(patsubst %,-I%,$(USER_DIR)) 
 # Flags passed to the C++ compiler.
 # For profiling -fprofile-arcs -ftest-coverage -O0
 # TODO: remove lax-vector-conversions
-CXXFLAGS += -g -Wall -Wextra -Werror -march=native -msse -msse2 -DSSE
+CXXFLAGS += -g -Wall -Wextra -Werror -DSSE -march=native -msse -msse2 -O3
 
 LDFLAGS = -lpthread -lrt -lm
 
 # All tests produced by this Makefile.  Remember to add new tests you
 # created to the list.
-TESTS = test_large_block test_mutex test_cond test_packed_key_value_array test_square_binary_matrix test_misc test_offsets_key_value
+#TESTS = test_large_block test_mutex test_cond test_packed_key_value_array test_square_binary_matrix test_misc test_offsets_key_value
+TESTS = test_square_binary_matrix
 SOURCES = $(patsubst %,%.cc,$(TESTS))
 
 # All Google Test headers.  Usually you shouldn't change this

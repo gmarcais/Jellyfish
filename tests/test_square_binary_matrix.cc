@@ -13,7 +13,7 @@ class RandomEnvironment : public ::testing::Environment {
     srandom(seed);
   }
 };
-::testing::Environment* const foo_env = ::testing::AddGlobalTestEnvironment(new RandomEnvironment);
+//::testing::Environment* const foo_env = ::testing::AddGlobalTestEnvironment(new RandomEnvironment);
 
 uint64_t random_vector(int length) {
   uint64_t _mask = (((uint64_t)1) << length) - 1;
@@ -90,4 +90,42 @@ TEST(SquareBinaryMatrix, Initialization) {
     ASSERT_EQ(rand_m.times_loop(v), rand_m.times_sse(v));
 #endif
   }
+
+  // spee tests
+  uint64_t v1 = random_vector(VECLEN);
+  uint64_t v2 = random_vector(VECLEN);
+  uint64_t v3 = random_vector(VECLEN);
+  uint64_t v4 = random_vector(VECLEN);
+  uint64_t v5 = random_vector(VECLEN);
+  uint64_t v6 = random_vector(VECLEN);
+  uint64_t v7 = random_vector(VECLEN);
+  uint64_t v8 = random_vector(VECLEN);
+  uint64_t res_unrolled = 0, res_sse = 0;
+  Timing time1;
+  const int nb_loops = 2560000;
+  for(i = 0; i < nb_loops; i++) {
+    res_unrolled ^= rand_m.times_unrolled(v1);
+    res_unrolled ^= rand_m.times_unrolled(v2);
+    res_unrolled ^= rand_m.times_unrolled(v3);
+    res_unrolled ^= rand_m.times_unrolled(v4);
+    res_unrolled ^= rand_m.times_unrolled(v5);
+    res_unrolled ^= rand_m.times_unrolled(v6);
+    res_unrolled ^= rand_m.times_unrolled(v7);
+    res_unrolled ^= rand_m.times_unrolled(v8);
+  }
+  Timing time2;
+  for(i = 0; i < nb_loops; i++) {
+    res_sse ^= rand_m.times_sse(v1);
+    res_sse ^= rand_m.times_sse(v2);
+    res_sse ^= rand_m.times_sse(v3);
+    res_sse ^= rand_m.times_sse(v4);
+    res_sse ^= rand_m.times_sse(v5);
+    res_sse ^= rand_m.times_sse(v6);
+    res_sse ^= rand_m.times_sse(v7);
+    res_sse ^= rand_m.times_sse(v8);
+  }
+  Timing time3;
+  std::cout << "unrolled timing " << (time2 - time1).to_str() <<
+    " sse timing " << (time3 - time2).to_str() << std::endl;
+  ASSERT_EQ(res_unrolled, res_sse);
 }
