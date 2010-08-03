@@ -43,11 +43,9 @@ namespace jellyfish {
       max_count  = (((uint64_t)1) << (8*val_len)) - 1;
       record_len = key_len + val_len;
       nb_records = ary->floor_block(_buffer_size / record_len, nb_blocks);
-
-      // TODO: it is implicitely assumed here that nb_records >
-      // ary->get_max_reprobe_offset(). If it is not verified, wrong
-      // result may occure. This only happen for (very) small
-      // input. But it is a pretty bad bug!
+      while(nb_records < ary->get_max_reprobe_offset()) {
+        nb_records = ary->floor_block(2 * nb_records, nb_blocks);
+      }
 
       thread_info = new struct thread_info_t[threads];
       for(uint_t i = 0; i < threads; i++) {
