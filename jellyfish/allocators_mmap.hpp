@@ -16,7 +16,7 @@ namespace allocators {
     mmap() : ptr(MAP_FAILED), size(0) {}
     mmap(size_t _size) : ptr(MAP_FAILED), size(0) {
       realloc(_size);
-      //      fast_zero();
+      fast_zero();
     }
     ~mmap() {
       if(ptr != MAP_FAILED)

@@ -25,8 +25,7 @@ private:
   void alloc_columns() {
     if(columns)
       free(columns);
-    if(posix_memalign((void **)&columns, 16, sizeof(uint64_t) * size) < 0)
-      std::__throw_bad_alloc();
+    columns = calloc_align<uint64_t>((size_t)size, (size_t)16);
   }
 
 public:

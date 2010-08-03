@@ -15,6 +15,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <exception>
+#include <new>
 
 #define bsizeof(v)      (8 * sizeof(v))
 #define PRINTVAR(v) {std::cout << __LINE__ << " " #v ": " << v << std::endl; }
@@ -105,5 +106,18 @@ uint64_t bogus_sum(void *data, size_t len);
 template <typename T>
 size_t bits_to_bytes(T bits) {
   return (size_t)((bits / 8) + (bits % 8 != 0));
+}
+
+template <typename T>
+union Tptr {
+  void *v;
+  T    *t;
+};
+template <typename T>
+T *calloc_align(size_t nmemb, size_t alignment) {
+  Tptr<T> ptr;
+  if(posix_memalign(&ptr.v, alignment, sizeof(T) * nmemb) < 0)
+    throw std::bad_alloc();
+  return ptr.t;
 }
 #endif // __MISC_HPP__
