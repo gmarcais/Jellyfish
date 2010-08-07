@@ -1,5 +1,6 @@
 #include "dumper.hpp"
 #include "heap.hpp"
+#include "time.hpp"
 
 namespace jellyfish {
   template<typename storage_t, typename atomic_t>
@@ -24,7 +25,8 @@ namespace jellyfish {
     uint_t                key_len, val_len;
     size_t                record_len, nb_records, nb_blocks;
     storage_t            *ary;
-    int                 file_index;
+    int                   file_index;
+    Time                  writing_time;
     struct thread_info_t *thread_info;
     uint64_t              max_count;
     uint64_t volatile     unique, distinct, total;
@@ -36,7 +38,8 @@ namespace jellyfish {
     sorted_dumper(uint_t _threads, const char *_file_prefix, size_t _buffer_size, 
                      uint_t _vlen, storage_t *_ary) :
       threads(_threads), file_prefix(_file_prefix), buffer_size(_buffer_size),
-      klen(_ary->get_key_len()), vlen(_vlen), ary(_ary), file_index(0)
+      klen(_ary->get_key_len()), vlen(_vlen), ary(_ary), file_index(0),
+      writing_time(Time::zero)
     {
       key_len    = bits_to_bytes(klen);
       val_len    = bits_to_bytes(vlen);
@@ -64,6 +67,8 @@ namespace jellyfish {
       }
     }
 
+    Time get_writing_time() const { return writing_time; }
+
     static void *dump_to_file_thread(void *arg) {
       struct thread_info_t *info = (struct thread_info_t *)arg;
       info->self->dump_to_file(info);
@@ -82,6 +87,7 @@ namespace jellyfish {
   void sorted_dumper<storage_t,atomic_t>::dump() {
     static const long file_len = pathconf("/", _PC_PATH_MAX);
 
+    Time start_dump;
     char file[file_len + 1];
     file[file_len] = '\0';
     int off = snprintf(file, file_len, "%s", file_prefix.c_str());
@@ -108,6 +114,9 @@ namespace jellyfish {
     ary->zero_blocks(0, nb_blocks); // zero out last group of blocks
     update_stats();
     out.close();
+
+    Time end_dump;
+    writing_time += end_dump - start_dump;
   }
 
   template<typename storage_t, typename atomic_t>

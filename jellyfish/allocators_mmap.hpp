@@ -55,7 +55,7 @@ namespace allocators {
     void fast_zero() {
       tinfo info[nb_threads];
       size_t pgsize = (size_t)getpagesize();
-      size_t nb_pages = size / pgsize;
+      size_t nb_pages = size / pgsize + (size % pgsize != 0);
 
       for(int i = 0; i < nb_threads; i++) {
         info[i].start  = (char *)ptr + pgsize * ((i * nb_pages) / nb_threads);

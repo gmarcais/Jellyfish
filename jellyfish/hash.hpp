@@ -12,7 +12,7 @@
 #include "misc.hpp"
 #include "square_binary_matrix.hpp"
 #include "dumper.hpp"
-
+#include "time.hpp"
 
 namespace jellyfish {
   /* Wrapper around a "storage". The hash class manages threads. In
@@ -73,6 +73,11 @@ namespace jellyfish {
     size_t get_max_reprobe_offset() const { return ary->get_max_reprobe_offset(); }
     
     void set_dumper(dumper_t *new_dumper) { dumper = new_dumper; }
+    Time get_writing_time() const { 
+      if(!dumper)
+        return Time::zero;
+      return dumper->get_writing_time();
+    }
 
     void write_raw(std::ostream &out) { ary->write_raw(out); }
 

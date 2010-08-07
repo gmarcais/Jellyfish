@@ -13,11 +13,10 @@
 #include <sys/mman.h>
 #include <stdint.h>
 #include <inttypes.h>
-#include <time.h>
-#include <sys/time.h>
 #include "mer_counting.hpp"
 #include "mer_count_thread.hpp"
 #include "locks_pthread.hpp"
+#include "time.hpp"
 
 /*
  * Option parsing
@@ -110,10 +109,12 @@ void initialize(int arg_st, int argc, char *argv[],
   storage_t *ary = new storage_t(arguments->size, 2*arguments->mer_len,
                                  arguments->counter_len, arguments->reprobes,
                                  jellyfish::quadratic_reprobes);
-  hash_dumper_t *dumper = new hash_dumper_t(arguments->nb_threads, arguments->output,
-                                            arguments->out_buffer_size,
-                                            8*arguments->out_counter_len,
-                                            ary);
+  hash_dumper_t *dumper = NULL;
+  if(!arguments->no_write)
+    dumper = new hash_dumper_t(arguments->nb_threads, arguments->output,
+                               arguments->out_buffer_size,
+                               8*arguments->out_counter_len,
+                               ary);
 
   qc->rq = new seq_queue(nb_buffers);
   qc->wq = new seq_queue(nb_buffers);
@@ -156,31 +157,20 @@ void initialize(int arg_st, int argc, char *argv[],
 /* TODO: This data structure to pass arguments to the threads has become way
  * to big! And the do_it function is a mess. Refactor!!
  */
-
-struct trailer {
-  uint64_t unique;
-  uint64_t distinct;
-  uint64_t total;
-};
-
 struct worker_info {
-  // CLKBAR: pthread_barrier_t		*barrier;
-  locks::pthread::barrier        *barrier;
+  locks::pthread::barrier       *barrier;
   thread_worker			*worker;
   pthread_t			 thread;
   pthread_mutex_t		*write_lock;
   unsigned int			 id;
   struct qc			*qc;
   struct arguments		*arguments;
-  struct timeval		*after_hashing;
-  struct trailer		*trailer;
 };
 
 void *start_worker(void *worker) {
   struct worker_info *info = (struct worker_info *)worker;
   bool is_serial;
 
-  // CLKBAR: pthread_barrier_wait(info->barrier);
   info->barrier->wait();
   try {
     info->worker->start();
@@ -188,14 +178,7 @@ void *start_worker(void *worker) {
     std::cerr << e.what() << std::endl;
   }
 
-  //CLKBAR: is_serial = pthread_barrier_wait(info->barrier) == PTHREAD_BARRIER_SERIAL_THREAD;
   is_serial = info->barrier->wait() == PTHREAD_BARRIER_SERIAL_THREAD;
-  if(is_serial)
-    gettimeofday(info->after_hashing, NULL);
-
-
-  if(info->arguments->no_write)
-    return NULL;
 
   if(is_serial)
     info->qc->counters->dump();
@@ -203,19 +186,15 @@ void *start_worker(void *worker) {
   return NULL;
 }
 
-void do_it(struct arguments *arguments, struct qc *qc, struct io *io, struct timeval *after_hashing) {
+void do_it(struct arguments *arguments, struct qc *qc, struct io *io) {
   unsigned int			i;
   struct worker_info		workers[arguments->nb_threads];
   struct thread_stats		thread_stats;
-  //CLKBAR: pthread_barrier_t		worker_barrier;
   locks::pthread::barrier	worker_barrier(arguments->nb_threads);
   pthread_mutex_t		write_lock;
-  struct trailer		trailer;
 
   memset(&thread_stats, '\0', sizeof(thread_stats));
   memset(&workers, '\0', sizeof(workers));
-  memset(&trailer, '\0', sizeof(trailer));
-  //CLKBAR: pthread_barrier_init(&worker_barrier, NULL, arguments->nb_threads);
   pthread_mutex_init(&write_lock, NULL);
   
   for(i = 0; i < arguments->nb_threads; i++) {
@@ -226,8 +205,6 @@ void do_it(struct arguments *arguments, struct qc *qc, struct io *io, struct tim
     workers[i].id = i;
     workers[i].qc = qc;
     workers[i].arguments = arguments;
-    workers[i].after_hashing = after_hashing;
-    workers[i].trailer = &trailer;
     if(pthread_create(&workers[i].thread, NULL, start_worker, &workers[i])) {
       perror("Can't create thread");
       exit(1);
@@ -241,11 +218,6 @@ void do_it(struct arguments *arguments, struct qc *qc, struct io *io, struct tim
     }
     delete workers[i].worker;
   }
-
-  //CLKBAR pthread_barrier_destroy(&worker_barrier);
-
-  //  printf("empry rq: %u new reader: %u\n", thread_stats.empty_rq,
-  //         thread_stats.new_reader);
 }
 
 int count_main(int argc, char *argv[]) {
@@ -276,36 +248,27 @@ int count_main(int argc, char *argv[]) {
   if(arguments.raw)
     die("--raw switch not supported anymore. Fix me!");
 
-  struct timeval start, after_init, after_hashing, after_writing;
-
-  gettimeofday(&start, NULL);
+  Time start;
  
   initialize(arg_st, argc, argv, &arguments, &qc, &io);
-  gettimeofday(&after_init, NULL);
-  do_it(&arguments, &qc, &io, &after_hashing);
-  gettimeofday(&after_writing, NULL);
+
+  Time after_init;
+
+  do_it(&arguments, &qc, &io);
+
+  Time all_done;
 
   if(arguments.timing) {
-/* these were already defined in mer_counting.hpp
- * #define DIFF_SECONDS(e, s)                                      \
-    (e.tv_sec - s.tv_sec - ((e.tv_usec > s.tv_usec) ? 0L : 1L))
-#define DIFF_MICRO(e, s)                                                \
-    (e.tv_usec - s.tv_usec + ((s.tv_usec > e.tv_usec) ? 1000000L : 0L))*/
-
-    FILE *timing_fd = fopen(arguments.timing, "w");
-    if(!timing_fd) {
+    std::ofstream timing_fd(arguments.timing);
+    if(!timing_fd.good()) {
       fprintf(stderr, "Can't open timing file '%s': %s\n",
 	      arguments.timing, strerror(errno));
     } else {
-      fprintf(timing_fd, "Init:     %5ld.%06ld seconds\n",
-	      DIFF_SECONDS(after_init, start), DIFF_MICRO(after_init, start));
-      fprintf(timing_fd, "Counting: %5ld.%06ld seconds\n",
-	      DIFF_SECONDS(after_hashing, after_init), 
-	      DIFF_MICRO(after_hashing, after_init));
-      fprintf(timing_fd, "Writing:  %5ld.%06ld seconds\n",
-	      DIFF_SECONDS(after_writing, after_hashing),
-	      DIFF_MICRO(after_writing, after_hashing));
-      fclose(timing_fd);
+      Time writing = qc.counters->get_writing_time();
+      Time counting = (all_done - after_init) - writing;
+      timing_fd << "Init      " << (after_init - start).str() << std::endl;
+      timing_fd << "Counting  " << counting.str() << std::endl;
+      timing_fd << "Writing   " << writing.str() << std::endl;
     }
   }
 

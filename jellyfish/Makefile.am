@@ -11,4 +11,4 @@ bin_PROGRAMS = jellyfish
 if MACOSX
 jellyfish_LDADD = ../gnulib/libgnu.a
 endif
-jellyfish_SOURCES = jellyfish.cc dump_stats_compacted.cc square_binary_matrix.cc hash_merge.cc storage.cc misc.cc mer_count_thread.cc mer_counter.cc histogram.cc
+jellyfish_SOURCES = jellyfish.cc dump_stats_compacted.cc square_binary_matrix.cc hash_merge.cc storage.cc misc.cc mer_count_thread.cc mer_counter.cc histogram.cc time.cc
