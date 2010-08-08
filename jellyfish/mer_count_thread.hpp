@@ -9,16 +9,17 @@ struct thread_stats {
 };
 
 class thread_worker {
-  unsigned int			 id;
-  unsigned int			 klen;
-  struct qc			*qc;
-  seq_queue			*rq;
-  seq_queue			*wq;
-  mer_counters::thread_ptr_t	 counter;
-  struct io			*io;
-  unsigned int			 rshift;
-  struct thread_stats		*stats;
-  uint64_t			 masq;
+  unsigned int                id;
+  unsigned int                klen;
+  struct qc                  *qc;
+  seq_queue                  *rq;
+  seq_queue                  *wq;
+  mer_counters::thread_ptr_t  counter;
+  struct io                  *io;
+  unsigned int                rshift;
+  struct thread_stats        *stats;
+  uint64_t                    masq;
+  bool                        both_strands;
 
   void count_kmers(seq *sequence);
   void read_sequence();
@@ -36,6 +37,8 @@ public:
   }
   
   void start();
+  bool get_both_strands() const { return both_strands; }
+  void set_both_strands(bool bs) { both_strands = bs; }
 };
 
 #endif /* __MER_COUNT_THREAD__ */

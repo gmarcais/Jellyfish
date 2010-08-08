@@ -28,7 +28,8 @@ enum {
   OPT_VAL_LEN = 1024,
   OPT_BUF_SIZE,
   OPT_TIMING,
-  OPT_OBUF_SIZE
+  OPT_OBUF_SIZE,
+  OPT_BOTH
 };
 static struct argp_option options[] = {
   {"threads",		't',		"NB",   0, "Nb of threads"},
@@ -37,6 +38,7 @@ static struct argp_option options[] = {
   {"output",		'o',		"FILE", 0, "Output file"},
   {"out-counter-len",   OPT_VAL_LEN,	"LEN",  0, "Length (in bytes) of counting field in output"},
   {"buffers",           'b',		"NB",   0, "Nb of buffers per thread"},
+  {"both-strands",      OPT_BOTH,       0,      0, "Count both strands"},
   {"buffer-size",       OPT_BUF_SIZE,	"SIZE", 0, "Size of a buffer"},
   {"out-buffer-size",   OPT_OBUF_SIZE,  "SIZE", 0, "Size of output buffer per thread"},
   {"hash-size",         's',		"SIZE", 0, "Initial hash size"},
@@ -59,6 +61,7 @@ struct arguments {
   unsigned long	 out_buffer_size;
   bool           no_write;
   bool           raw;
+  bool           both_strands;
   char          *timing;
   char          *output;
 };
@@ -85,6 +88,7 @@ break;
   case 'p': ULONGP(reprobes);
   case 'w': FLAG(no_write);
   case 'r': FLAG(raw);
+  case OPT_BOTH: FLAG(both_strands);
   case 'o': STRING(output);
   case OPT_VAL_LEN: ULONGP(out_counter_len);
   case OPT_BUF_SIZE: ULONGP(buffer_size);
@@ -201,6 +205,7 @@ void do_it(struct arguments *arguments, struct qc *qc, struct io *io) {
     workers[i].barrier = &worker_barrier;
     workers[i].worker = new thread_worker(i+1, arguments->mer_len, qc, io, 
                                           &thread_stats);
+    workers[i].worker->set_both_strands(arguments->both_strands);
     workers[i].write_lock = &write_lock;
     workers[i].id = i;
     workers[i].qc = qc;
@@ -237,6 +242,7 @@ int count_main(int argc, char *argv[]) {
   arguments.out_buffer_size = 20000000UL;
   arguments.no_write = false;
   arguments.raw = false;
+  arguments.both_strands = false;
   arguments.timing = NULL;
   arguments.output = (char *)"mer_counts.hash";
   argp_parse(&argp, argc, argv, 0, &arg_st, &arguments);

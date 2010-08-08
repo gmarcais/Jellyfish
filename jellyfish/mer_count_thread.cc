@@ -73,8 +73,7 @@ void thread_worker::count_kmers(seq *sequence) {
       if(buf_ptr >= sequence->end) {
         if(letter == 0x5)
           return;
-        if(letter == 0x4)
-          space++;
+        space += letter == 0x4;
         if(!(buf_ptr < sequence->end + klen + space - 1))
           return;
       }
@@ -85,13 +84,15 @@ void thread_worker::count_kmers(seq *sequence) {
         continue;
 
       kmer = ((kmer << 2) | letter) & masq;
-      //    rkmer = (rkmer >> 2) | ((0x3 - letter) << rshift);
+      rkmer = (rkmer >> 2) | ((0x3 - letter) << rshift);
       if(i > 0) {
         i--;
         continue;
       }
-      counter->inc(kmer);
-      //      counters->inc(rkmer);
+      if(both_strands)
+        counter->inc(kmer < rkmer ? kmer : rkmer);
+      else
+        counter->inc(kmer);
     }
 
     while(buf_ptr < sequence->end) {
