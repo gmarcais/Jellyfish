@@ -212,7 +212,14 @@ namespace jellyfish {
           start_oid(start),
           moid(end_id - start_id + ary->get_max_reprobe_offset()),
           oid(0)
-        {}
+        {
+          // Adjust for very small arrays and it overlaps with itself
+          if(moid > ary->get_size() - start_id) {
+            size_t last_id = (start_id + moid) % mask;
+            if(last_id > start_id)
+              moid -= last_id - start_id - 1;
+          }
+        }
         
         void get_string(char *out) const {
           tostring(key, ary->get_key_len() / 2, out);

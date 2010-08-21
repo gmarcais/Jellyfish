@@ -34,42 +34,4 @@ typedef jellyfish::compacted_hash::reader<uint64_t,uint64_t> hash_reader_t;
 typedef jellyfish::compacted_hash::writer<hash_reader_t> hash_writer_t;
 typedef jellyfish::sorted_dumper< storage_t,atomic::gcc<uint64_t> > hash_dumper_t;
 
-struct seq {
-  char  *buffer;
-  char  *end;
-  char	*map_end;
-  bool   nl;			// Char before buffer start is a new line
-  bool   ns;			// Beginning of buffer is not sequence data
-};
-typedef struct seq seq;
-
-typedef concurrent_queue<seq> seq_queue;
-
-struct qc {
-  seq_queue     *rq;
-  seq_queue     *wq;
-  mer_counters  *counters;
-};
-
-struct mapped_file {
-  char *base, *end;
-  size_t length;
-
-  mapped_file(char *_base, size_t _length) :
-    base(_base), end(_base + _length), length(_length) {}
-};
-typedef vector<mapped_file> mapped_files_t;
-
-struct io {
-  unsigned int  volatile		 thread_id;
-  char					*map_base;
-  char					*map_end;
-  char					*current;
-  unsigned long				 buffer_size;
-  bool					 nl;
-  bool					 ns;
-  mapped_files_t			 mapped_files;
-  mapped_files_t::const_iterator	 current_file;
-};
-
 #endif /* __MER_COUNTING__ */

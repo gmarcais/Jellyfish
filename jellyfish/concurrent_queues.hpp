@@ -1,3 +1,6 @@
+#ifndef __CONCURRENT_QUEUES_HPP__
+#define __CONCURRENT_QUEUES_HPP__
+
 #include <sys/time.h>
 #include <sys/syscall.h>
 #include <unistd.h>
@@ -74,3 +77,4 @@ Val *concurrent_queue<Val>::dequeue() {
   return res;
 }
   
+#endif // __CONCURRENT_QUEUES_HPP__

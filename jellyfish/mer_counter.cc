@@ -14,9 +14,10 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include "mer_counting.hpp"
-#include "mer_count_thread.hpp"
 #include "locks_pthread.hpp"
 #include "time.hpp"
+#include "fasta_parser.hpp"
+#include "thread_exec.hpp"
 
 /*
  * Option parsing
@@ -102,134 +103,69 @@ break;
 }
 static struct argp argp = { options, parse_opt, args_doc, doc };
 
-// TODO: the following 3 functions should be part of a class.
-void initialize(int arg_st, int argc, char *argv[],
-                struct arguments *arguments, struct qc *qc, struct io *io) {
-  unsigned int nb_buffers = arguments->nb_threads * arguments->nb_buffers;
-  unsigned int i;
-  seq *buffers;
-  int fd;
-  struct stat stat;
-  storage_t *ary = new storage_t(arguments->size, 2*arguments->mer_len,
-                                 arguments->counter_len, arguments->reprobes,
-                                 jellyfish::quadratic_reprobes);
-  hash_dumper_t *dumper = NULL;
-  if(!arguments->no_write)
-    dumper = new hash_dumper_t(arguments->nb_threads, arguments->output,
-                               arguments->out_buffer_size,
-                               8*arguments->out_counter_len,
-                               ary);
+class mer_counting : public thread_exec {
+  struct arguments        arguments;
+  storage_t               ary;
+  mer_counters            counters;
+  jellyfish::fasta_parser parser;
+  locks::pthread::barrier sync_barrier;
 
-  qc->rq = new seq_queue(nb_buffers);
-  qc->wq = new seq_queue(nb_buffers);
-  qc->counters = new mer_counters(ary);
-  qc->counters->set_dumper(dumper);
-
-  buffers = new seq[nb_buffers];
-  memset(buffers, '\0', sizeof(seq) * nb_buffers);
-
-  for(i = 0; i < nb_buffers; i++)
-    qc->wq->enqueue(&buffers[i]);
-
-  // Init io. Mmap all input fast files.
-  for( ; arg_st < argc; arg_st++) {
-    fd = open(argv[arg_st], O_RDONLY);
-    if(fd < 0)
-      die((char *)"Can't open file '%s': %s\n", argv[arg_st], strerror(errno));
-
-    if(fstat(fd, &stat) < 0)
-      die((char *)"Can't stat file '%s': %s\n", argv[arg_st], strerror(errno));
-
-    char *map_base = (char *)mmap(NULL, stat.st_size, PROT_READ, MAP_SHARED, fd, 0);
-    if(map_base == MAP_FAILED)
-      die((char *)"Can't mmap file '%s': %s\n", argv[arg_st], strerror(errno));
-    close(fd);
-    madvise(map_base, stat.st_size, MADV_SEQUENTIAL);
-    io->mapped_files.push_back(mapped_file(map_base, stat.st_size));
+public:
+  mer_counting(int arg_st, int argc, char *argv[], struct arguments &_args) :
+    arguments(_args), 
+    ary(arguments.size, 2*arguments.mer_len, arguments.counter_len,
+        arguments.reprobes, jellyfish::quadratic_reprobes),
+    counters(&ary),
+    parser(argc - arg_st, argv + arg_st, arguments.mer_len, arguments.nb_buffers,
+           arguments.buffer_size),
+    sync_barrier(arguments.nb_threads)
+  {
+    hash_dumper_t *dumper = NULL;
+    if(!arguments.no_write)
+      dumper = new hash_dumper_t(arguments.nb_threads, arguments.output,
+                                 arguments.out_buffer_size,
+                                 8*arguments.out_counter_len,
+                                 &ary);
+    counters.set_dumper(dumper);
   }
-  io->current_file = io->mapped_files.begin();
-  madvise(io->current_file->base, io->current_file->length, MADV_WILLNEED);
-  io->map_base	   = io->current_file->base;
-  io->current	   = io->current_file->base;
-  io->map_end	   = io->current_file->end;
-  io->thread_id	   = 0;
-  io->buffer_size  = arguments->buffer_size;
-  io->nl	   = true;
-  io->ns	   = false;
-}
 
-/* TODO: This data structure to pass arguments to the threads has become way
- * to big! And the do_it function is a mess. Refactor!!
- */
-struct worker_info {
-  locks::pthread::barrier       *barrier;
-  thread_worker			*worker;
-  pthread_t			 thread;
-  pthread_mutex_t		*write_lock;
-  unsigned int			 id;
-  struct qc			*qc;
-  struct arguments		*arguments;
+  void start(int id) {
+    sync_barrier.wait(); // Is this needed?
+    try {
+      uint64_t kmer, rkmer;
+      jellyfish::fasta_parser::thread mer_stream(parser.new_thread());
+      mer_counters::thread_ptr_t counter(counters.new_hash_counter());
+
+      if(arguments.both_strands) {
+        while(mer_stream.next(kmer, rkmer))
+          counter->inc(kmer < rkmer ? kmer : rkmer);
+      } else {
+        while(mer_stream.next(kmer, rkmer))
+          counter->inc(kmer);
+      }
+    } catch(exception &e) {
+      std::cerr << e.what() << std::endl;
+    }
+
+    bool is_serial = sync_barrier.wait() == PTHREAD_BARRIER_SERIAL_THREAD;
+    if(is_serial)
+      counters.dump();
+  }
+
+  void count() {
+    try {
+      exec_join(arguments.nb_threads);
+    } catch(exception e) {
+      die(e.what());
+    }
+  }
+
+  Time get_writing_time() { return counters.get_writing_time(); }
 };
-
-void *start_worker(void *worker) {
-  struct worker_info *info = (struct worker_info *)worker;
-  bool is_serial;
-
-  info->barrier->wait();
-  try {
-    info->worker->start();
-  } catch(exception &e) {
-    std::cerr << e.what() << std::endl;
-  }
-
-  is_serial = info->barrier->wait() == PTHREAD_BARRIER_SERIAL_THREAD;
-
-  if(is_serial)
-    info->qc->counters->dump();
-
-  return NULL;
-}
-
-void do_it(struct arguments *arguments, struct qc *qc, struct io *io) {
-  unsigned int			i;
-  struct worker_info		workers[arguments->nb_threads];
-  struct thread_stats		thread_stats;
-  locks::pthread::barrier	worker_barrier(arguments->nb_threads);
-  pthread_mutex_t		write_lock;
-
-  memset(&thread_stats, '\0', sizeof(thread_stats));
-  memset(&workers, '\0', sizeof(workers));
-  pthread_mutex_init(&write_lock, NULL);
-  
-  for(i = 0; i < arguments->nb_threads; i++) {
-    workers[i].barrier = &worker_barrier;
-    workers[i].worker = new thread_worker(i+1, arguments->mer_len, qc, io, 
-                                          &thread_stats);
-    workers[i].worker->set_both_strands(arguments->both_strands);
-    workers[i].write_lock = &write_lock;
-    workers[i].id = i;
-    workers[i].qc = qc;
-    workers[i].arguments = arguments;
-    if(pthread_create(&workers[i].thread, NULL, start_worker, &workers[i])) {
-      perror("Can't create thread");
-      exit(1);
-    }
-  }
-
-  for(i = 0; i < arguments->nb_threads; i++) {
-    if(pthread_join(workers[i].thread, NULL)) {
-      perror("Join failed");
-      exit(1);
-    }
-    delete workers[i].worker;
-  }
-}
 
 int count_main(int argc, char *argv[]) {
   struct arguments arguments;
   int arg_st;
-  struct qc qc;
-  struct io io;
 
   arguments.nb_threads = 1;
   arguments.mer_len = 12;
@@ -256,11 +192,11 @@ int count_main(int argc, char *argv[]) {
 
   Time start;
  
-  initialize(arg_st, argc, argv, &arguments, &qc, &io);
+  mer_counting counter(arg_st, argc, argv, arguments);
 
   Time after_init;
 
-  do_it(&arguments, &qc, &io);
+  counter.count();
 
   Time all_done;
 
@@ -270,7 +206,7 @@ int count_main(int argc, char *argv[]) {
       fprintf(stderr, "Can't open timing file '%s': %s\n",
 	      arguments.timing, strerror(errno));
     } else {
-      Time writing = qc.counters->get_writing_time();
+      Time writing = counter.get_writing_time();
       Time counting = (all_done - after_init) - writing;
       timing_fd << "Init      " << (after_init - start).str() << std::endl;
       timing_fd << "Counting  " << counting.str() << std::endl;

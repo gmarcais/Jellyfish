@@ -138,7 +138,7 @@ namespace jellyfish {
       return res;
     }
 
-    void relase_hash_counter(thread_ptr_t &th) {
+    void release_hash_counter(thread_ptr_t &th) {
       user_thread_lock.lock();
       user_thread_list.erase(th);
       user_thread_lock.unlock();

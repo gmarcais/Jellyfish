@@ -128,6 +128,7 @@ namespace jellyfish {
     if(my_info->token && my_info->id == 0)
       my_info->writer.write_header(&out);
 
+
     size_t append = 0;
     for(i = my_info->id; i * nb_records < ary->get_size(); i += threads) {
       // fill up buffer
