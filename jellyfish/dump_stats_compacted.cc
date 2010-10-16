@@ -83,9 +83,10 @@ int stats_main(int argc, char *argv[])
 
   if(!(arguments.fasta || arguments.column) && !arguments.recompute) {
     std::cout << 
-      "Unique:   " << hash.get_unique() << std::endl <<
-      "Distinct: " << hash.get_distinct() << std::endl <<
-      "Total:    " << hash.get_total() << std::endl;
+      "Unique:    " << hash.get_unique() << "\n" <<
+      "Distinct:  " << hash.get_distinct() << "\n" <<
+      "Total:     " << hash.get_total() << "\n" <<
+      "Max Count: " << hash.get_max_count() << std::endl;
     return 0;
   }
 
@@ -93,25 +94,28 @@ int stats_main(int argc, char *argv[])
     char key[hash.get_mer_len() + 1];
     while(hash.next()) {
       hash.get_string(key);
-      std::cout << ">" << hash.val << std::endl << key << std::endl;
+      std::cout << ">" << hash.val << "\n" << key << "\n";
     }
   } else if(arguments.column) {
     char key[hash.get_mer_len() + 1];
     while(hash.next()) {
       hash.get_string(key);
-      std::cout << key << " " << hash.val << std::endl;
+      std::cout << key << " " << hash.val << "\n";
     }
   } else {
-    uint64_t unique = 0, distinct = 0, total = 0;
+    uint64_t unique = 0, distinct = 0, total = 0, max_count = 0;
     while(hash.next()) {
       unique += hash.val == 1;
       distinct++;
       total += hash.val;
+      if(hash.val > max_count)
+        max_count = hash.val;
     }
     std::cout << 
-      "Unique:   " << unique << std::endl <<
-      "Distinct: " << distinct << std::endl <<
-      "Total:    " << total << std::endl;
+      "Unique:    " << unique << "\n" <<
+      "Distinct:  " << distinct << "\n" <<
+      "Total:     " << total << "\n" <<
+      "Max_count: " << max_count << std::endl;
   }
 
   return 0;

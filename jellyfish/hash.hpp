@@ -35,12 +35,13 @@ namespace jellyfish {
     };
     class MappingError : public StandardError { };
     
-    hash() : ary(NULL) {}
-    hash(storage_t *_ary) : ary(_ary) {}
-    hash(char *map, size_t length) {
-      ary = new storage_t(map, length);
-    }
+    hash() : ary(NULL), dumper(NULL) {}
+    hash(storage_t *_ary) : ary(_ary), dumper(NULL) {}
+    hash(char *map, size_t length) : 
+      ary(new storage_t(map, length)),
+      dumper(NULL) { }
     hash(const char *filename, bool sequential) {
+      dumper = NULL;
       open(filename, sequential);
     }
 
@@ -123,6 +124,7 @@ namespace jellyfish {
       }
 
       inline void inc(key_t key) { return this->add(key, (val_t)1); }
+      inline void operator()(key_t key) { return this->add(key, (val_t)1); }
 
       friend class hash;
     };
@@ -226,12 +228,12 @@ namespace jellyfish {
 
   private:
     storage_t             *ary;
+    dumper_t              *dumper;
     thread_list_t          user_thread_list;
     locks::pthread::mutex  user_thread_lock;
     locks::pthread::mutex  event_lock;
     locks::pthread::cond   inuse_thread_cond;
     volatile uint_t        inuse_thread_count;
-    dumper_t              *dumper;
     atomic_t               atomic;
   };
 }

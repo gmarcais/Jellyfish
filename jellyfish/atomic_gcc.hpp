@@ -8,7 +8,7 @@ namespace atomic
   {
   public:
     typedef T type;
-    inline T cas(T *ptr, T oval, T nval) {
+    inline T cas(volatile T *ptr, T oval, T nval) {
       return __sync_val_compare_and_swap(ptr, oval, nval);
     }
 
@@ -23,6 +23,17 @@ namespace atomic
 	ncount = cas((T *)ptr, count, count + x);
       } while(ncount != count);
       return count + x;
+    }
+
+    inline T set_to_max(volatile T *ptr, T x) {
+      T count = *ptr;
+      while(x > count) {
+        T ncount = cas(ptr, count, x);
+        if(ncount == count)
+          return x;
+        count = ncount;
+      }
+      return count;
     }
   };
 }

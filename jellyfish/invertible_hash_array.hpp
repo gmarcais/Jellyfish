@@ -44,9 +44,9 @@ namespace jellyfish {
       uint_t             reprobe_limit;
       uint_t             lreprobe_limit;
       uint_t             key_len;  // original key len
-      Offsets<word>      offsets;  // key len reduced by size of hash array
       word               key_mask; // mask for high bits of hash(key)
       uint_t             key_off;  // offset in key field for reprobe value
+      Offsets<word>      offsets;  // key len reduced by size of hash array
       mem_block_t        mem_block;
       word              *data;
       atomic_t           atomic;
@@ -68,10 +68,10 @@ namespace jellyfish {
             uint_t _reprobe_limit, size_t *_reprobes) :
         lsize(ceilLog2(_size)), size(((size_t)1) << lsize), size_mask(size - 1),
         reprobe_limit(_reprobe_limit), key_len(_key_len),
-        offsets(key_len + bitsize(_reprobe_limit + 1) - lsize, _val_len,
-                _reprobe_limit),
         key_mask(key_len <= lsize ? 0 : (((word)1) << (key_len - lsize)) - 1),
         key_off(key_len <= lsize ? 0 : key_len - lsize),
+        offsets(key_off + bitsize(_reprobe_limit + 1), _val_len,
+                _reprobe_limit + 1),
         mem_block(div_ceil(size, (size_t)offsets.get_block_len()) * offsets.get_block_word_len() * sizeof(word)),
         data((word *)mem_block.get_ptr()), reprobes(_reprobes),
         hash_matrix(key_len), 

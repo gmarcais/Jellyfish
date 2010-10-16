@@ -52,6 +52,13 @@ public:
     for(i = 0; i < size; i++)
       columns[i] = _columns[i] & _mask;
   }
+  SquareBinaryMatrix(const char *map) : columns(NULL), size(0) {
+    read(map);
+  }
+  SquareBinaryMatrix(std::istream *is) : columns(NULL), size(0) {
+    load(is);
+  }
+
   ~SquareBinaryMatrix() {
     if(columns)
       free(columns);
@@ -272,6 +279,7 @@ public:
   void dump(std::ostream *os) const;
   void load(std::istream *is);
   size_t read(const char *map);
+  size_t dump_size() { return sizeof(size) + sizeof(uint64_t) * size; }
   void print_vector(std::ostream *os, uint64_t v, bool vertical = false) const;
   std::string str_vector(uint64_t v, bool vertical = false) const;
 };

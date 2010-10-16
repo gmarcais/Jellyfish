@@ -252,17 +252,17 @@ int merge_main(int argc, char *argv[]) {
       head = heap.head();
     } while(heap.is_not_empty() && head->key == key);
 
-    while(!info.buffers[buf_id].writer.append(key, sum), 0) {
+    while(!info.buffers[buf_id].writer.append(key, sum)) {
       info.cond.lock();
-      while(info.buffers[buf_id].full) { waiting++; info.cond.wait(); }
       info.buffers[buf_id].full = true;
+      buf_id = (buf_id + 1) % info.nb_buffers;
+      while(info.buffers[buf_id].full) { waiting++; info.cond.wait(); }
       info.cond.signal();
       info.cond.unlock();
-      buf_id = (buf_id + 1) % info.nb_buffers;
     }
   }
   info.cond.lock();
-  while(info.buffers[buf_id].full) { waiting++; info.cond.wait(); }
+  //  while(info.buffers[buf_id].full) { waiting++; info.cond.wait(); }
   info.buffers[buf_id].full = true;
   info.done = true;
   info.cond.signal();
@@ -272,13 +272,15 @@ int merge_main(int argc, char *argv[]) {
   pthread_join(writer_thread, NULL);
   //printf("main waiting %ld writer waiting %ld\n", waiting, *writer_waiting);
   //delete writer_waiting;
-  uint64_t unique = 0, distinct = 0, total = 0;
+  uint64_t unique = 0, distinct = 0, total = 0, max_count = 0;
   for(uint_t j = 0; j < info.nb_buffers; j++) {
     unique += info.buffers[j].writer.get_unique();
     distinct += info.buffers[j].writer.get_distinct();
     total += info.buffers[j].writer.get_total();
+    if(info.buffers[j].writer.get_max_count() > max_count)
+      max_count = info.buffers[j].writer.get_max_count();
   }
-  info.buffers[0].writer.update_stats_with(&out, unique, distinct, total);
+  info.buffers[0].writer.update_stats_with(&out, unique, distinct, total, max_count);
   out.close();
   return 0;
 }

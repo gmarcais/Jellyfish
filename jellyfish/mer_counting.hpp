@@ -31,7 +31,19 @@ typedef jellyfish::invertible_hash::array<uint64_t,atomic::gcc<uint64_t>,allocat
 typedef jellyfish::hash< uint64_t,uint64_t,storage_t,atomic::gcc<uint64_t> > mer_counters;
 typedef mer_counters::iterator mer_iterator_t;
 typedef jellyfish::compacted_hash::reader<uint64_t,uint64_t> hash_reader_t;
+typedef jellyfish::compacted_hash::query<uint64_t,uint64_t> hash_query_t;
 typedef jellyfish::compacted_hash::writer<hash_reader_t> hash_writer_t;
 typedef jellyfish::sorted_dumper< storage_t,atomic::gcc<uint64_t> > hash_dumper_t;
+
+struct seq {
+  char  *buffer;
+  char  *end;
+  char	*map_end;
+  bool   nl;			// Char before buffer start is a new line
+  bool   ns;			// Beginning of buffer is not sequence data
+};
+typedef struct seq seq;
+
+typedef concurrent_queue<seq> seq_queue;
 
 #endif /* __MER_COUNTING__ */

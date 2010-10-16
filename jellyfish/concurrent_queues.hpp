@@ -77,4 +77,4 @@ Val *concurrent_queue<Val>::dequeue() {
   return res;
 }
   
-#endif // __CONCURRENT_QUEUES_HPP__
+#endif

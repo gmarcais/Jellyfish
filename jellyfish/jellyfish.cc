@@ -14,6 +14,7 @@ main_func_t count_main;
 main_func_t stats_main;
 main_func_t merge_main;
 main_func_t histo_main;
+main_func_t query_main;
 main_func_t sos;
 main_func_t version;
 
@@ -26,6 +27,7 @@ cmd_func cmd_list[] = {
   {"stats",             &stats_main},
   {"merge",             &merge_main},
   {"histo",             &histo_main},
+  {"query",             &query_main},
 
   /* help in all its form. Must be first non-command */
   {"help",              &sos},

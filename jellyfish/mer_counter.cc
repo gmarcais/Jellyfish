@@ -13,9 +13,9 @@
 #include <sys/mman.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include "time.hpp"
 #include "mer_counting.hpp"
 #include "locks_pthread.hpp"
-#include "time.hpp"
 #include "fasta_parser.hpp"
 #include "thread_exec.hpp"
 
@@ -61,8 +61,8 @@ struct arguments {
   unsigned long	 size;
   unsigned long	 out_buffer_size;
   bool           no_write;
-  bool           raw;
   bool           both_strands;
+  bool           raw;
   char          *timing;
   char          *output;
 };
@@ -106,45 +106,40 @@ static struct argp argp = { options, parse_opt, args_doc, doc };
 class mer_counting : public thread_exec {
   struct arguments        arguments;
   storage_t               ary;
-  mer_counters            counters;
   jellyfish::fasta_parser parser;
   locks::pthread::barrier sync_barrier;
+  mer_counters            counters;
 
 public:
   mer_counting(int arg_st, int argc, char *argv[], struct arguments &_args) :
-    arguments(_args), 
-    ary(arguments.size, 2*arguments.mer_len, arguments.counter_len,
-        arguments.reprobes, jellyfish::quadratic_reprobes),
-    counters(&ary),
+    arguments(_args),
+    ary(arguments.size, 2*arguments.mer_len,
+        arguments.counter_len, arguments.reprobes,
+        jellyfish::quadratic_reprobes),
     parser(argc - arg_st, argv + arg_st, arguments.mer_len, arguments.nb_buffers,
            arguments.buffer_size),
-    sync_barrier(arguments.nb_threads)
+    sync_barrier(arguments.nb_threads),
+    counters(&ary)
   {
-    hash_dumper_t *dumper = NULL;
-    if(!arguments.no_write)
-      dumper = new hash_dumper_t(arguments.nb_threads, arguments.output,
-                                 arguments.out_buffer_size,
-                                 8*arguments.out_counter_len,
-                                 &ary);
-    counters.set_dumper(dumper);
+    if(!arguments.no_write) {
+      hash_dumper_t *dumper = new hash_dumper_t(arguments.nb_threads, arguments.output,
+                                                arguments.out_buffer_size,
+                                                8*arguments.out_counter_len,
+                                                &ary);
+      counters.set_dumper(dumper);
+    }
+    parser.set_canonical(arguments.both_strands);
   }
 
   void start(int id) {
-    sync_barrier.wait(); // Is this needed?
+    sync_barrier.wait();
+    
     try {
-      uint64_t kmer, rkmer;
       jellyfish::fasta_parser::thread mer_stream(parser.new_thread());
       mer_counters::thread_ptr_t counter(counters.new_hash_counter());
-
-      if(arguments.both_strands) {
-        while(mer_stream.next(kmer, rkmer))
-          counter->inc(kmer < rkmer ? kmer : rkmer);
-      } else {
-        while(mer_stream.next(kmer, rkmer))
-          counter->inc(kmer);
-      }
+      mer_stream.parse(counter);
     } catch(exception &e) {
-      std::cerr << e.what() << std::endl;
+      std::cerr << "Thread " << id << " error: " << e.what() << std::endl;
     }
 
     bool is_serial = sync_barrier.wait() == PTHREAD_BARRIER_SERIAL_THREAD;
@@ -167,20 +162,20 @@ int count_main(int argc, char *argv[]) {
   struct arguments arguments;
   int arg_st;
 
-  arguments.nb_threads = 1;
-  arguments.mer_len = 12;
-  arguments.counter_len = 32;
+  arguments.nb_threads      = 1;
+  arguments.mer_len         = 12;
+  arguments.counter_len     = 32;
   arguments.out_counter_len = 4;
-  arguments.size = 1000000UL;
-  arguments.reprobes = 50;
-  arguments.nb_buffers = 100;
-  arguments.buffer_size = 4096;
+  arguments.size            = 1000000UL;
+  arguments.reprobes        = 50;
+  arguments.nb_buffers      = 100;
+  arguments.buffer_size     = 4096;
   arguments.out_buffer_size = 20000000UL;
-  arguments.no_write = false;
-  arguments.raw = false;
-  arguments.both_strands = false;
-  arguments.timing = NULL;
-  arguments.output = (char *)"mer_counts.hash";
+  arguments.no_write        = false;
+  arguments.raw             = false;
+  arguments.both_strands    = false;
+  arguments.timing          = NULL;
+  arguments.output          = (char *)"mer_counts.hash";
   argp_parse(&argp, argc, argv, 0, &arg_st, &arguments);
   if(arg_st == argc) {
     fprintf(stderr, "Missing arguments\n");
@@ -191,26 +186,23 @@ int count_main(int argc, char *argv[]) {
     die("--raw switch not supported anymore. Fix me!");
 
   Time start;
- 
   mer_counting counter(arg_st, argc, argv, arguments);
-
   Time after_init;
-
   counter.count();
-
   Time all_done;
 
   if(arguments.timing) {
     std::ofstream timing_fd(arguments.timing);
     if(!timing_fd.good()) {
       fprintf(stderr, "Can't open timing file '%s': %s\n",
-	      arguments.timing, strerror(errno));
+              arguments.timing, strerror(errno));
     } else {
       Time writing = counter.get_writing_time();
       Time counting = (all_done - after_init) - writing;
-      timing_fd << "Init      " << (after_init - start).str() << std::endl;
-      timing_fd << "Counting  " << counting.str() << std::endl;
-      timing_fd << "Writing   " << writing.str() << std::endl;
+      timing_fd << "Init     " << (after_init - start).str() << "\n";
+      timing_fd << "Counting " << counting.str() << "\n";
+      timing_fd << "Writing  " << writing.str() << std::endl;
+      timing_fd.close();
     }
   }
 

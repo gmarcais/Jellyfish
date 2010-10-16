@@ -12,8 +12,9 @@ class Time {
 
  public:
   static const Time zero;
-  Time() {
-    gettimeofday(&tv, NULL);
+  Time(bool init = true) {
+    if(init)
+      now();
   }
   Time(time_t sec, suseconds_t usec) {
     tv.tv_sec  = sec;
@@ -52,6 +53,7 @@ class Time {
     return Time(sec, usec);
   }
 
+  void now() { gettimeofday(&tv, NULL); }
 
   std::string str() const {
     std::ostringstream res;

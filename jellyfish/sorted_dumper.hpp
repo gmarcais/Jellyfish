@@ -1,21 +1,21 @@
 #include "dumper.hpp"
 #include "heap.hpp"
-#include "time.hpp"
+#include "thread_exec.hpp"
+#include "token_ring.hpp"
 
 namespace jellyfish {
   template<typename storage_t, typename atomic_t>
-  class sorted_dumper : public dumper_t {
+  class sorted_dumper : public dumper_t, public thread_exec {
     typedef typename storage_t::overlap_iterator iterator;
     typedef compacted_hash::writer<storage_t> writer_t;
     typedef heap_t<iterator> oheap_t;
+    typedef token_ring<locks::pthread::cond> token_ring_t;
+
     struct thread_info_t {
-      pthread_t             thread_id;
-      uint_t                id;
-      locks::pthread::cond  cond;
-      volatile bool         token;
-      writer_t              writer;
-      oheap_t                heap;
-      sorted_dumper        *self;
+      pthread_t            thread_id;
+      writer_t             writer;
+      oheap_t              heap;
+      token_ring_t::token *token;
     };
 
     uint_t                threads;
@@ -27,9 +27,9 @@ namespace jellyfish {
     storage_t            *ary;
     int                   file_index;
     Time                  writing_time;
+    token_ring_t          tr;
     struct thread_info_t *thread_info;
-    uint64_t              max_count;
-    uint64_t volatile     unique, distinct, total;
+    uint64_t volatile     unique, distinct, total, max_count;
     std::ofstream         out;
 
   public:
@@ -39,11 +39,10 @@ namespace jellyfish {
                      uint_t _vlen, storage_t *_ary) :
       threads(_threads), file_prefix(_file_prefix), buffer_size(_buffer_size),
       klen(_ary->get_key_len()), vlen(_vlen), ary(_ary), file_index(0),
-      writing_time(Time::zero)
+      writing_time(Time::zero), tr()
     {
       key_len    = bits_to_bytes(klen);
       val_len    = bits_to_bytes(vlen);
-      max_count  = (((uint64_t)1) << (8*val_len)) - 1;
       record_len = key_len + val_len;
       nb_records = ary->floor_block(_buffer_size / record_len, nb_blocks);
       while(nb_records < ary->get_max_reprobe_offset()) {
@@ -52,13 +51,12 @@ namespace jellyfish {
 
       thread_info = new struct thread_info_t[threads];
       for(uint_t i = 0; i < threads; i++) {
-        thread_info[i].token = i == 0;
+        //        thread_info[i].token = i == 0;
         thread_info[i].writer.initialize(nb_records, klen, vlen, ary);
         thread_info[i].heap.initialize(ary->get_max_reprobe_offset());
-        thread_info[i].id = i;
-        thread_info[i].self = this;
+        thread_info[i].token = tr.new_token();
       }
-      unique = distinct = total = 0;
+      unique = distinct = total = max_count = 0;
     }
 
     ~sorted_dumper() {
@@ -66,20 +64,16 @@ namespace jellyfish {
         delete[] thread_info;
       }
     }
-
+    
     Time get_writing_time() const { return writing_time; }
 
-    static void *dump_to_file_thread(void *arg) {
-      struct thread_info_t *info = (struct thread_info_t *)arg;
-      info->self->dump_to_file(info);
-      return NULL;
-    }
-
-    void dump_to_file(struct thread_info_t *my_info);
+    virtual void start(int i) { dump_to_file(i); }
+    void dump_to_file(int i);
 
     virtual void dump();
     void update_stats() {
-      thread_info[0].writer.update_stats_with(&out, unique, distinct, total);
+      thread_info[0].writer.update_stats_with(&out, unique, distinct, total, 
+                                              max_count);
     }
   };
 
@@ -101,16 +95,12 @@ namespace jellyfish {
     if(out.fail())
       return; // TODO: Should throw an error
 
-    unique = distinct = total = 0;
-    for(uint_t i = 0; i < threads; i++)
-      thread_info[i].token = i == 0;
+    unique = distinct = total = max_count = 0;
+    tr.reset();
     for(uint_t i = 0; i < threads; i++) {
-      pthread_create(&thread_info[i].thread_id, NULL, dump_to_file_thread, 
-                     &thread_info[i]);
+      thread_info[i].writer.reset_counters();
     }
-
-    for(uint_t i = 0; i < threads; i++)
-      pthread_join(thread_info[i].thread_id, NULL);
+    exec_join(threads);
     ary->zero_blocks(0, nb_blocks); // zero out last group of blocks
     update_stats();
     out.close();
@@ -120,17 +110,16 @@ namespace jellyfish {
   }
 
   template<typename storage_t, typename atomic_t>
-  void sorted_dumper<storage_t,atomic_t>::dump_to_file(struct thread_info_t *my_info) {
+  void sorted_dumper<storage_t,atomic_t>::dump_to_file(int id) {
     size_t                i;
-    struct thread_info_t *next_info = &thread_info[(my_info->id + 1) % threads];
+    struct thread_info_t *my_info = &thread_info[id];
     atomic_t              atomic;
 
-    if(my_info->token && my_info->id == 0)
+    if(my_info->token->is_active())
       my_info->writer.write_header(&out);
 
-
     size_t append = 0;
-    for(i = my_info->id; i * nb_records < ary->get_size(); i += threads) {
+    for(i = id; i * nb_records < ary->get_size(); i += threads) {
       // fill up buffer
       iterator it(ary, i * nb_records, (i + 1) * nb_records);
       my_info->heap.fill(it);
@@ -150,18 +139,9 @@ namespace jellyfish {
         my_info->heap.pop();
       }
 
-      // wait for token & write buffer
-      my_info->cond.lock();
-      while(!my_info->token) { my_info->cond.wait(); }
-      my_info->cond.unlock();
+      my_info->token->wait();
       my_info->writer.dump(&out);
-          
-      // pass on token
-      my_info->token = false;
-      next_info->cond.lock();
-      next_info->token = true;
-      next_info->cond.signal();
-      next_info->cond.unlock();
+      my_info->token->pass();
 
       // zero out memory
       if(i > 0)
@@ -171,5 +151,6 @@ namespace jellyfish {
     atomic.add_fetch(&unique, my_info->writer.get_unique());
     atomic.add_fetch(&distinct, my_info->writer.get_distinct());
     atomic.add_fetch(&total, my_info->writer.get_total());
+    atomic.set_to_max(&max_count, my_info->writer.get_max_count());
   }
 }

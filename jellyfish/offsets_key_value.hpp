@@ -72,6 +72,7 @@ namespace jellyfish {
       reprobe_limit = _reprobe_limit;
       reprobe_len   = bitsize(_reprobe_limit);
       lval_len      = key_len + val_len - reprobe_len;
+
       compute_offsets();
       bld           = divisor64(block_len);
     }
@@ -91,10 +92,12 @@ namespace jellyfish {
 
     word *get_word_offset(size_t id, const offset_t **o, const offset_t **lo,
 			  word * const base) const {
+      // size_t in_block_id = id % block_len;
+      // *o = &offsets[in_block_id].normal;
+      // *lo = &offsets[in_block_id].large;
+      // return base + (block_word_len * (id / block_len));
       uint64_t q, r;
       bld.division(id, q, r);
-      //      word *w = base + (block_word_len * (id / block_len));
-      //      size_t in_block_id = id % block_len;
       word *w = base + (block_word_len * q);
       *o = &offsets[r].normal;
       *lo = &offsets[r].large;

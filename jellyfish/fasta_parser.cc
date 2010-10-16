@@ -1,53 +1,37 @@
 #include "fasta_parser.hpp"
 
 namespace jellyfish {
-  bool fasta_parser::thread::next(uint64_t &_kmer, uint64_t &_rkmer) {
-    while(true) {
-      while(!sequence) {
-        if(!next_sequence())
-          return false;
-      }
+  fasta_parser::fasta_parser(int nb_files, char *argv[], uint_t _mer_len, unsigned int nb_buffers, size_t _buffer_size) :
+    rq(nb_buffers), wq(nb_buffers), mer_len(_mer_len)
+  {
+    unsigned int i;
+    int j;
+    buffers = new seq[nb_buffers];
+    memset(buffers, '\0', sizeof(struct seq) * nb_buffers);
 
-      while(sequence->buffer < sequence->end) {
-        uint_t c = codes[(uint_t)*sequence->buffer++];
-        switch(c) {
-        case CODE_IGNORE: break;
-        case CODE_COMMENT:
-          while(sequence->buffer < sequence->end)
-            if(codes[(uint_t)*sequence->buffer++] == CODE_IGNORE)
-              break;
-          // Fall through CODE_RESET
-        case CODE_RESET:
-          cmlen = 0;
-          kmer  = rkmer = 0;
-          break;
-
-        default:
-          kmer = ((kmer << 2) & masq) | c;
-          rkmer = (rkmer >> 2) | (c << lshift);
-          if(++cmlen >= mer_len) {
-            cmlen  = mer_len;
-            _kmer  = kmer;
-            _rkmer = rkmer;
-            return true;
-          }
-        }
-      }
-
-      // Buffer exhausted. Get a new one
-      cmlen = 0;
-      kmer = rkmer = 0;
-      parser->wq.enqueue(sequence);
-      sequence = 0;
+    for(i = 0; i < nb_buffers; i++)
+      wq.enqueue(&buffers[i]);
+      
+    for(j = 0; j < nb_files; j++) {
+      mapped_files.push_back(mapped_file(argv[j]));
+      mapped_files.end()->sequential();
     }
+
+    current_file = mapped_files.begin();
+    current_file->will_need();
+    map_base     = current_file->base();
+    current      = current_file->base();
+    map_end      = current_file->end();
+    reader       = 0;
+    buffer_size  = _buffer_size;
   }
 
   bool fasta_parser::thread::next_sequence() {
-    if(parser->rq.is_low() && !parser->rq.is_closed()) {
+    if(rq->is_low() && !rq->is_closed()) {
       parser->read_sequence();
     }
-    while(!(sequence = parser->rq.dequeue())) {
-      if(parser->rq.is_closed())
+    while(!(sequence = rq->dequeue())) {
+      if(rq->is_closed())
         return false;
       parser->read_sequence();
     }

@@ -96,7 +96,9 @@ int histo_main(int argc, char *argv[])
 
   for(uint64_t i = 0; i < nb_buckets; i++)
     std::cout << (base + i * arguments.increment) <<
-      " " << histogram[i] << std::endl;
+      " " << histogram[i] << "\n";
+
+  std::cout << std::flush;
 
   return 0;
 }

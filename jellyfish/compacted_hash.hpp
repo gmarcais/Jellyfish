@@ -5,18 +5,21 @@
 #include <fstream>
 #include <string.h>
 #include <pthread.h>
+#include "mapped_file.hpp"
 #include "square_binary_matrix.hpp"
+#include "fasta_parser.hpp"
 
 namespace jellyfish {
   namespace compacted_hash {
     struct header {
-      uint64_t  key_len;
-      uint64_t  val_len; // In bytes
-      uint64_t  size; // In bytes
-      uint64_t  max_reprobe;
-      uint64_t  unique;
-      uint64_t  distinct;
-      uint64_t  total;
+      uint64_t key_len;
+      uint64_t val_len;         // In bytes
+      uint64_t size;            // In bytes
+      uint64_t max_reprobe;
+      uint64_t unique;
+      uint64_t distinct;
+      uint64_t total;
+      uint64_t max_count;
     };
     class ErrorReading : public std::exception {
       std::string msg;
@@ -30,7 +33,7 @@ namespace jellyfish {
 
     template<typename storage_t>
     class writer {
-      uint64_t   unique, distinct, total;
+      uint64_t   unique, distinct, total, max_count;
       size_t     nb_records;
       uint_t     klen, vlen;
       uint_t     key_len, val_len;
@@ -38,7 +41,8 @@ namespace jellyfish {
       char      *buffer, *end, *ptr;
 
     public:
-      writer() : unique(0), distinct(0), total(0) { buffer = ptr = end = NULL; }
+      writer() : unique(0), distinct(0), total(0), max_count(0)
+      { buffer = ptr = end = NULL; }
 
       writer(size_t _nb_records, uint_t _klen, uint_t _vlen, storage_t *_ary)
       { 
@@ -46,7 +50,7 @@ namespace jellyfish {
       }
 
       void initialize(size_t _nb_records, uint_t _klen, uint_t _vlen, storage_t *_ary) {
-        unique     = distinct = total = 0;
+        unique     = distinct = total = max_count = 0;
         nb_records = _nb_records;
         klen       = _klen;
         vlen       = _vlen;
@@ -73,6 +77,8 @@ namespace jellyfish {
         unique += val == 1;
         distinct++;
         total += val;
+        if(val > max_count)
+          max_count = val;
         return true;
       }
 
@@ -93,19 +99,20 @@ namespace jellyfish {
       }
 
       void update_stats(std::ostream *out) const {
-        update_stats_with(out, unique, distinct, total);
+        update_stats_with(out, unique, distinct, total, max_count);
       }
 
       void update_stats_with(std::ostream *out, uint64_t _unique, uint64_t _distinct,
-                             uint64_t _total) const {
+                             uint64_t _total, uint64_t _max_count) const {
         struct header head;
-        head.key_len = klen;
-        head.val_len = val_len;
-        head.size = ary->get_size();
+        head.key_len     = klen;
+        head.val_len     = val_len;
+        head.size        = ary->get_size();
         head.max_reprobe = ary->get_max_reprobe_offset();
-        head.unique = _unique;
-        head.distinct = _distinct;
-        head.total = _total;
+        head.unique      = _unique;
+        head.distinct    = _distinct;
+        head.total       = _total;
+        head.max_count   = _max_count;
         out->seekp(0);
         out->write((char *)&head, sizeof(head));
       }
@@ -113,8 +120,13 @@ namespace jellyfish {
       uint64_t get_unique() const { return unique; }
       uint64_t get_distinct() const { return distinct; }
       uint64_t get_total() const { return total; }
+      uint64_t get_max_count() const { return max_count; }
       uint_t   get_key_len_bytes() const { return key_len; }
       uint_t   get_val_len_bytes() const { return val_len; }
+
+      void reset_counters() {
+        unique = distinct = total = max_count = 0;
+      }
     };
     
     template<typename key_t, typename val_t>
@@ -170,6 +182,7 @@ namespace jellyfish {
       uint64_t get_unique() const { return header.unique; }
       uint64_t get_distinct() const { return header.distinct; }
       uint64_t get_total() const { return header.total; }
+      uint64_t get_max_count() const { return header.max_count; }
       SquareBinaryMatrix get_hash_matrix() const { return hash_matrix; }
       SquareBinaryMatrix get_hash_inverse_matrix() const { return hash_inverse_matrix; }
       void write_ary_header(std::ostream *out) const {
@@ -203,6 +216,108 @@ namespace jellyfish {
           if((typeof record_len)io->gcount() >= record_len)
             end_buffer = ptr + (io->gcount() - record_len);
         }
+      }
+    };
+
+    template<typename key_t, typename val_t>
+    class query {
+      mapped_file         file;
+      struct header      *header;
+      uint_t              key_len;
+      uint_t              val_len;
+      uint_t              record_len;
+      SquareBinaryMatrix  hash_matrix;
+      SquareBinaryMatrix  hash_inverse_matrix;
+      char               *base;
+      uint64_t            size;
+      uint64_t            size_mask;
+      uint64_t            last_id;
+      key_t               first_key, last_key;
+      uint64_t            first_pos, last_pos;
+
+    public:
+      query(std::string filename) : 
+        file(filename.c_str()), 
+        header((struct header *)file.base()), 
+        key_len((header->key_len / 8) + (header->key_len % 8 != 0)),
+        val_len(header->val_len),
+        record_len(key_len + header->val_len),
+        hash_matrix(file.base() + sizeof(*header)),
+        hash_inverse_matrix(file.base() + sizeof(*header) + hash_matrix.dump_size()),
+        base(file.base() + sizeof(*header) + hash_matrix.dump_size() + hash_inverse_matrix.dump_size()),
+        size(header->size),
+        size_mask(header->size - 1),
+        last_id((file.end() - base) / record_len)
+      { 
+        get_key(0, &first_key);
+        first_pos = get_pos(first_key);
+        get_key(last_id - 1, &last_key);
+        last_pos = get_pos(last_key);
+        key_t after_last;
+        get_key(last_id, &after_last);
+      }
+
+      uint_t get_key_len() const { return header->key_len; }
+      uint_t get_mer_len() const { return header->key_len / 2; }
+      uint_t get_val_len() const { return header->val_len; }
+      size_t get_size() const { return header->size; }
+      uint64_t get_max_reprobe() const { return header->max_reprobe; }
+      uint64_t get_max_reprobe_offset() const { return header->max_reprobe; }
+      uint64_t get_unique() const { return header->unique; }
+      uint64_t get_distinct() const { return header->distinct; }
+      uint64_t get_total() const { return header->total; }
+      uint64_t get_max_count() const { return header->max_count; }
+      SquareBinaryMatrix get_hash_matrix() const { return hash_matrix; }
+      SquareBinaryMatrix get_hash_inverse_matrix() const { return hash_inverse_matrix; }
+
+      /* No check is made on the validity of the string passed. Should only contained [acgtACGT] to get a valid answer.
+       */
+      val_t operator[] (const char *key_s) {
+        key_t key = 0;
+        for(uint_t i = 0; i < header->key_len / 2; i++) {
+          const uint_t c = fasta_parser::codes[(uint_t)*key_s++];
+          if(c & fasta_parser::CODE_NOT_DNA)
+            return 0;
+          key = (key << 2) | c;
+        }
+        return get_key_val(key);
+      }
+      val_t operator[] (key_t key) { return get_key_val(key); }
+
+      void get_key(size_t id, key_t *k) { memcpy(k, base + id * record_len, key_len); }
+      void get_val(size_t id, val_t *v) { memcpy(v, base + id * record_len + key_len, val_len); }
+      uint64_t get_pos(key_t k) { return hash_matrix.times(k) & size_mask; }
+        
+      val_t get_key_val(const key_t key) {
+        val_t res = 0;
+        if(key == first_key) {
+          get_val(0, &res);
+          return res;
+        }
+        if(key == last_key) {
+          get_val(last_id - 1, &res);
+          return res;
+        }
+        uint64_t pos = get_pos(key);
+        if(pos < first_pos || pos > last_pos)
+          return 0;
+        uint64_t first = 0, last = last_id;
+        while(first < last - 1) {
+          uint64_t middle = (first + last) / 2;
+          key_t mid_key;
+          get_key(middle, &mid_key);
+          //          printf("%ld %ld %ld %ld %ld %ld %ld\n", key, pos, first, middle, last, mid_key, get_pos(mid_key));
+          if(key == mid_key) {
+            get_val(middle, &res);
+            return res;
+          }
+          uint64_t mid_pos = get_pos(mid_key);
+          if(mid_pos > pos || (mid_pos == pos && mid_key > key))
+            last = middle;
+          else
+            first = middle;
+        }
+        return 0;
       }
     };
   }

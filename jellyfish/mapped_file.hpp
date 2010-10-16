@@ -1,3 +1,6 @@
+#ifndef __MAPPED_FILE_HPP__
+#define __MAPPED_FILE_HPP__
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -15,7 +18,7 @@ public:
   mapped_file(char *__base, size_t __length) :
     _base(__base), _end(__base + __length), _length(__length), unmap(false) {}
 
-  mapped_file(char *filename) {
+  mapped_file(const char *filename) {
     int fd = open(filename, O_RDONLY);
     struct stat stat;
 
@@ -50,3 +53,5 @@ public:
 };
 
 typedef std::vector<mapped_file> mapped_files_t;
+
+#endif
