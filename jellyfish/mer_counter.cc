@@ -95,7 +95,7 @@ break;
   case OPT_BUF_SIZE: ULONGP(buffer_size);
   case OPT_TIMING: STRING(timing);
   case OPT_OBUF_SIZE: ULONGP(out_buffer_size);
-
+    
   default:
     return ARGP_ERR_UNKNOWN;
   }
@@ -103,8 +103,15 @@ break;
 }
 static struct argp argp = { options, parse_opt, args_doc, doc };
 
+class mer_counting_base {
+public:
+  virtual void count() = 0;
+  virtual Time get_writing_time() = 0;
+  ~mer_counting_base() {}
+};
+
 template <typename parser_t, typename hash_t>
-class mer_counting : public thread_exec {
+class mer_counting : public mer_counting_base, public thread_exec {
 protected:
   struct arguments            arguments;
   locks::pthread::barrier     sync_barrier;
@@ -181,6 +188,27 @@ public:
   }
 };
 
+class mer_counting_fasta_direct : public mer_counting<jellyfish::fasta_parser, direct_index_t> {
+public:
+  mer_counting_fasta_direct(int arg_st, int argc, char *argv[], struct arguments &_args) :
+    mer_counting<jellyfish::fasta_parser, direct_index_t>(_args)
+  {
+    parser = new jellyfish::fasta_parser(argc - arg_st, argv + arg_st, 
+                                         arguments.mer_len, arguments.nb_buffers,
+                                         arguments.buffer_size);
+    ary = new direct_index_t::storage_t(2 * arguments.mer_len);
+    hash = new direct_index_t(ary);
+     if(!arguments.no_write) {
+      dumper = new direct_index_dumper_t(arguments.nb_threads, arguments.output,
+                                         arguments.out_buffer_size,
+                                         8*arguments.out_counter_len,
+                                         ary);
+      hash->set_dumper(dumper);
+    }
+    parser->set_canonical(arguments.both_strands);
+  }
+};
+
 int count_main(int argc, char *argv[]) {
   struct arguments arguments;
   int arg_st;
@@ -209,9 +237,14 @@ int count_main(int argc, char *argv[]) {
     die("--raw switch not supported anymore. Fix me!");
 
   Time start;
-  mer_counting_fasta_hash counter(arg_st, argc, argv, arguments);
+  mer_counting_base *counter;
+  if(ceilLog2(arguments.size) > 2 * arguments.mer_len) {
+    counter = new mer_counting_fasta_direct(arg_st, argc, argv, arguments);
+  } else {
+    counter = new mer_counting_fasta_hash(arg_st, argc, argv, arguments);
+  }
   Time after_init;
-  counter.count();
+  counter->count();
   Time all_done;
 
   if(arguments.timing) {
@@ -220,7 +253,7 @@ int count_main(int argc, char *argv[]) {
       fprintf(stderr, "Can't open timing file '%s': %s\n",
               arguments.timing, strerror(errno));
     } else {
-      Time writing = counter.get_writing_time();
+      Time writing = counter->get_writing_time();
       Time counting = (all_done - after_init) - writing;
       timing_fd << "Init     " << (after_init - start).str() << "\n";
       timing_fd << "Counting " << counting.str() << "\n";

@@ -1,3 +1,5 @@
+#ifndef __TOKEN_RING_HPP__
+#define __TOKEN_RING_HPP__
 
 template<typename cond_t>
 class token_ring {
@@ -73,3 +75,5 @@ public:
     return nt;
   }
 };
+
+#endif

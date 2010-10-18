@@ -18,17 +18,20 @@
 #include "hash.hpp"
 #include "compacted_hash.hpp"
 #include "compacted_dumper.hpp"
-#include "sorted_dumper.hpp"
 
 // Invertible hash types
 #include "invertible_hash_array.hpp"
+#include "sorted_dumper.hpp"
 typedef jellyfish::invertible_hash::array<uint64_t,atomic::gcc<uint64_t>,allocators::mmap> inv_hash_storage_t;
 typedef jellyfish::sorted_dumper< inv_hash_storage_t,atomic::gcc<uint64_t> > inv_hash_dumper_t;
 typedef jellyfish::hash< uint64_t,uint64_t,inv_hash_storage_t,atomic::gcc<uint64_t> > inv_hash_t;
 
 // Direct indexing types
-// #include "direct_indexing_array.hpp"
-// typedef jellyfish::direct_indexing::array<uint64_t,uint64_t,atomic::gcc<uint64_t>,allocators::mmap> direct_index_storage_t;
+#include "direct_indexing_array.hpp"
+#include "direct_sorted_dumper.hpp"
+typedef jellyfish::direct_indexing::array<uint64_t,uint32_t,atomic::gcc<uint32_t>,allocators::mmap> direct_index_storage_t;
+typedef jellyfish::direct_sorted_dumper< direct_index_storage_t, atomic::gcc<uint64_t> > direct_index_dumper_t;
+typedef jellyfish::hash< uint64_t,uint32_t,direct_index_storage_t,atomic::gcc<uint64_t> > direct_index_t;
 
 typedef jellyfish::compacted_hash::reader<uint64_t,uint64_t> hash_reader_t;
 typedef jellyfish::compacted_hash::query<uint64_t,uint64_t> hash_query_t;
