@@ -12,7 +12,6 @@ namespace jellyfish {
     typedef token_ring<locks::pthread::cond> token_ring_t;
 
     struct thread_info_t {
-      pthread_t            thread_id;
       writer_t             writer;
       oheap_t              heap;
       token_ring_t::token *token;
@@ -26,11 +25,10 @@ namespace jellyfish {
     size_t                record_len, nb_records, nb_blocks;
     storage_t            *ary;
     int                   file_index;
-    Time                  writing_time;
     token_ring_t          tr;
     struct thread_info_t *thread_info;
     uint64_t volatile     unique, distinct, total, max_count;
-    std::ofstream         out;
+    std::ofstream        *out;
 
   public:
     // klen: key field length in bits in hash (i.e before rounding up to bytes)
@@ -39,7 +37,7 @@ namespace jellyfish {
                      uint_t _vlen, storage_t *_ary) :
       threads(_threads), file_prefix(_file_prefix), buffer_size(_buffer_size),
       klen(_ary->get_key_len()), vlen(_vlen), ary(_ary), file_index(0),
-      writing_time(Time::zero), tr()
+      tr()
     {
       key_len    = bits_to_bytes(klen);
       val_len    = bits_to_bytes(vlen);
@@ -65,36 +63,21 @@ namespace jellyfish {
       }
     }
     
-    Time get_writing_time() const { return writing_time; }
-
     virtual void start(int i) { dump_to_file(i); }
     void dump_to_file(int i);
 
-    virtual void dump();
+    virtual void _dump();
     void update_stats() {
-      thread_info[0].writer.update_stats_with(&out, unique, distinct, total, 
+      thread_info[0].writer.update_stats_with(out, unique, distinct, total, 
                                               max_count);
     }
   };
 
   template<typename storage_t, typename atomic_t>
-  void sorted_dumper<storage_t,atomic_t>::dump() {
-    static const long file_len = pathconf("/", _PC_PATH_MAX);
-
-    Time start_dump;
-    char file[file_len + 1];
-    file[file_len] = '\0';
-    int off = snprintf(file, file_len, "%s", file_prefix.c_str());
-    if(off > 0 && off < file_len)
-      off += snprintf(file + off, file_len - off, "_%d", file_index++);
-      //off += snprintf(file + off, file_len - off, "_%" PRIUINTu, file_index++);
-    if(off < 0 || off >= file_len)
-      return; // TODO: Should throw an error
-      
-    out.open(file);
-    if(out.fail())
-      return; // TODO: Should throw an error
-
+  void sorted_dumper<storage_t,atomic_t>::_dump() {
+    std::ofstream _out;
+    open_next_file(file_prefix.c_str(), file_index, _out);
+    out = &_out;
     unique = distinct = total = max_count = 0;
     tr.reset();
     for(uint_t i = 0; i < threads; i++) {
@@ -103,10 +86,7 @@ namespace jellyfish {
     exec_join(threads);
     ary->zero_blocks(0, nb_blocks); // zero out last group of blocks
     update_stats();
-    out.close();
-
-    Time end_dump;
-    writing_time += end_dump - start_dump;
+    _out.close();
   }
 
   template<typename storage_t, typename atomic_t>
@@ -116,9 +96,8 @@ namespace jellyfish {
     atomic_t              atomic;
 
     if(my_info->token->is_active())
-      my_info->writer.write_header(&out);
+      my_info->writer.write_header(out);
 
-    size_t append = 0;
     for(i = id; i * nb_records < ary->get_size(); i += threads) {
       // fill up buffer
       iterator it(ary, i * nb_records, (i + 1) * nb_records);
@@ -127,7 +106,6 @@ namespace jellyfish {
       while(it.next()) {
         typename oheap_t::const_item_t item = my_info->heap.head();
         my_info->writer.append(item->key, item->val);
-        append++;
         my_info->heap.pop();
         my_info->heap.push(it);
       }
@@ -135,12 +113,11 @@ namespace jellyfish {
       while(my_info->heap.is_not_empty()) {
         typename oheap_t::const_item_t item = my_info->heap.head();
         my_info->writer.append(item->key, item->val);
-        append++;
         my_info->heap.pop();
       }
 
       my_info->token->wait();
-      my_info->writer.dump(&out);
+      my_info->writer.dump(out);
       my_info->token->pass();
 
       // zero out memory

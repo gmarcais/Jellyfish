@@ -9,6 +9,7 @@
 #include <utility>
 #include <exception>
 #include <assert.h>
+#include "storage.hpp"
 #include "misc.hpp"
 #include "square_binary_matrix.hpp"
 #include "storage.hpp"
@@ -37,7 +38,7 @@ namespace jellyfish {
      * not to be zero.
      */
     template <typename word, typename atomic_t, typename mem_block_t>
-    class array {
+    class array : public storage_t {
       typedef typename Offsets<word>::offset_t offset_t;
       uint_t             lsize;    // log of size
       size_t             size, size_mask;

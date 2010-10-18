@@ -103,50 +103,47 @@ break;
 }
 static struct argp argp = { options, parse_opt, args_doc, doc };
 
+template <typename parser_t, typename hash_t>
 class mer_counting : public thread_exec {
-  struct arguments        arguments;
-  storage_t               ary;
-  jellyfish::fasta_parser parser;
-  locks::pthread::barrier sync_barrier;
-  mer_counters            counters;
+protected:
+  struct arguments            arguments;
+  locks::pthread::barrier     sync_barrier;
+  parser_t                   *parser;
+  typename hash_t::storage_t *ary;
+  hash_t                     *hash;
+  jellyfish::dumper_t        *dumper;
 
 public:
-  mer_counting(int arg_st, int argc, char *argv[], struct arguments &_args) :
-    arguments(_args),
-    ary(arguments.size, 2*arguments.mer_len,
-        arguments.counter_len, arguments.reprobes,
-        jellyfish::quadratic_reprobes),
-    parser(argc - arg_st, argv + arg_st, arguments.mer_len, arguments.nb_buffers,
-           arguments.buffer_size),
-    sync_barrier(arguments.nb_threads),
-    counters(&ary)
-  {
-    if(!arguments.no_write) {
-      hash_dumper_t *dumper = new hash_dumper_t(arguments.nb_threads, arguments.output,
-                                                arguments.out_buffer_size,
-                                                8*arguments.out_counter_len,
-                                                &ary);
-      counters.set_dumper(dumper);
-    }
-    parser.set_canonical(arguments.both_strands);
-  }
+  mer_counting(struct arguments &args) :
+    arguments(args), sync_barrier(arguments.nb_threads) {}
 
+  ~mer_counting() { 
+    if(dumper)
+      delete dumper;
+    if(hash)
+      delete hash;
+    if(ary)
+      delete ary;
+    if(parser)
+      delete parser;
+  }
+  
   void start(int id) {
     sync_barrier.wait();
     
     try {
-      jellyfish::fasta_parser::thread mer_stream(parser.new_thread());
-      mer_counters::thread_ptr_t counter(counters.new_hash_counter());
+      typename parser_t::thread     mer_stream(parser->new_thread());
+      typename hash_t::thread_ptr_t counter(hash->new_thread());
       mer_stream.parse(counter);
     } catch(exception &e) {
       std::cerr << "Thread " << id << " error: " << e.what() << std::endl;
     }
-
+    
     bool is_serial = sync_barrier.wait() == PTHREAD_BARRIER_SERIAL_THREAD;
     if(is_serial)
-      counters.dump();
+      hash->dump();
   }
-
+  
   void count() {
     try {
       exec_join(arguments.nb_threads);
@@ -155,7 +152,33 @@ public:
     }
   }
 
-  Time get_writing_time() { return counters.get_writing_time(); }
+  Time get_writing_time() { return hash->get_writing_time(); }
+};
+
+
+class mer_counting_fasta_hash : public mer_counting<jellyfish::fasta_parser, inv_hash_t> {
+public:
+  mer_counting_fasta_hash(int arg_st, int argc, char *argv[], struct arguments &_args) :
+    mer_counting<jellyfish::fasta_parser, inv_hash_t>(_args)
+  {
+    parser = new jellyfish::fasta_parser(argc - arg_st, argv + arg_st, 
+                                         arguments.mer_len, arguments.nb_buffers,
+                                         arguments.buffer_size);
+    ary = new inv_hash_t::storage_t(arguments.size, 2*arguments.mer_len,
+                                    arguments.counter_len, 
+                                    arguments.reprobes, 
+                                    jellyfish::quadratic_reprobes);
+    hash = new inv_hash_t(ary);
+
+    if(!arguments.no_write) {
+      dumper = new inv_hash_dumper_t(arguments.nb_threads, arguments.output,
+                                     arguments.out_buffer_size,
+                                     8*arguments.out_counter_len,
+                                     ary);
+      hash->set_dumper(dumper);
+    }
+    parser->set_canonical(arguments.both_strands);
+  }
 };
 
 int count_main(int argc, char *argv[]) {
@@ -186,7 +209,7 @@ int count_main(int argc, char *argv[]) {
     die("--raw switch not supported anymore. Fix me!");
 
   Time start;
-  mer_counting counter(arg_st, argc, argv, arguments);
+  mer_counting_fasta_hash counter(arg_st, argc, argv, arguments);
   Time after_init;
   counter.count();
   Time all_done;

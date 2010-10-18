@@ -7,6 +7,12 @@
 
 namespace jellyfish {
 
+  class storage_t {
+  public:
+    storage_t() {}
+    virtual ~storage_t() {}
+  };
+
   // Entry 0 is used only when switching to a large field
   extern size_t *quadratic_reprobes;
   

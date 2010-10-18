@@ -22,11 +22,17 @@ namespace jellyfish {
      memory management, reprobing, etc.
    */
 
-  template<typename key_t, typename val_t, typename storage_t, typename atomic_t>
-  class hash {
+  class hash_t {
+  public:
+    virtual ~hash_t() {}
+  };
+
+  template<typename key_t, typename val_t, typename ary_t, typename atomic_t>
+  class hash : public hash_t {
   public:
     typedef typename std::pair<key_t,val_t> kv_t;
-    typedef typename storage_t::iterator iterator;
+    typedef ary_t storage_t;
+    typedef typename ary_t::iterator iterator;
 
     class TableFull : public std::exception {
       virtual const char* what() const throw() {
@@ -36,14 +42,16 @@ namespace jellyfish {
     class MappingError : public StandardError { };
     
     hash() : ary(NULL), dumper(NULL) {}
-    hash(storage_t *_ary) : ary(_ary), dumper(NULL) {}
+    hash(ary_t *_ary) : ary(_ary), dumper(NULL) {}
     hash(char *map, size_t length) : 
-      ary(new storage_t(map, length)),
+      ary(new ary_t(map, length)),
       dumper(NULL) { }
     hash(const char *filename, bool sequential) {
       dumper = NULL;
       open(filename, sequential);
     }
+
+    virtual ~hash() {}
 
     void open(const char *filename, bool sequential) {
       struct stat finfo;
@@ -65,7 +73,7 @@ namespace jellyfish {
           throw new StandardError(errno, "Can't set memory parameters");
       }
       close(fd);
-      ary = new storage_t(map, finfo.st_size);
+      ary = new ary_t(map, finfo.st_size);
     }
 
     size_t get_size() const { return ary->get_size(); }
@@ -92,7 +100,7 @@ namespace jellyfish {
      */
     enum status_t { FREE, INUSE, BLOCKED };
     class thread {
-      storage_t                 *ary;
+      ary_t                 *ary;
       size_t                     hsize_mask;
       typename atomic_t::type    status;
       typename atomic_t::type    ostatus;
@@ -100,7 +108,7 @@ namespace jellyfish {
       atomic_t                   atomic;
     
     public:
-      thread(storage_t *_ary, hash *_my_hash) :
+      thread(ary_t *_ary, hash *_my_hash) :
         ary(_ary), hsize_mask(ary->get_size() - 1), status(FREE), my_hash(_my_hash)
       { }
 
@@ -129,10 +137,10 @@ namespace jellyfish {
       friend class hash;
     };
     friend class thread;
-    typedef list<thread> thread_list_t;
+    typedef std::list<thread> thread_list_t;
     typedef typename thread_list_t::iterator thread_ptr_t;
 
-    thread_ptr_t new_hash_counter() { 
+    thread_ptr_t new_thread() { 
       user_thread_lock.lock();
       thread_ptr_t res = 
         user_thread_list.insert(user_thread_list.begin(), thread(ary, this));
@@ -140,7 +148,7 @@ namespace jellyfish {
       return res;
     }
 
-    void release_hash_counter(thread_ptr_t &th) {
+    void release_thread(thread_ptr_t &th) {
       user_thread_lock.lock();
       user_thread_list.erase(th);
       user_thread_lock.unlock();
@@ -227,7 +235,7 @@ namespace jellyfish {
     }
 
   private:
-    storage_t             *ary;
+    ary_t                 *ary;
     dumper_t              *dumper;
     thread_list_t          user_thread_list;
     locks::pthread::mutex  user_thread_lock;
