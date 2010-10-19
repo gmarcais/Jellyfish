@@ -1,9 +1,9 @@
-#ifndef __STORAGE_HPP__
-#define __STORAGE_HPP__
+#ifndef __JELLYFISH_STORAGE_HPP__
+#define __JELLYFISH_STORAGE_HPP__
 
 #include <stdlib.h>
 #include <stdint.h>
-#include "misc.hpp"
+#include <jellyfish/misc.hpp>
 
 namespace jellyfish {
 

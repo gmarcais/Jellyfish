@@ -1,5 +1,5 @@
-#ifndef __ALLOCATORS_MMAP_HPP__
-#define __ALLOCATORS_MMAP_HPP__
+#ifndef __JELLYFISH_ALLOCATORS_MMAP_HPP__
+#define __JELLYFISH_ALLOCATORS_MMAP_HPP__
 
 #include <sys/types.h>
 #include <sys/mman.h>

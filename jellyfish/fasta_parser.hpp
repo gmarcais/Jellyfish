@@ -1,10 +1,10 @@
-#ifndef __FASTA_PARSER_HPP__
-#define __FASTA_PARSER_HPP__
+#ifndef __JELLYFISH_FASTA_PARSER_HPP__
+#define __JELLYFISH_FASTA_PARSER_HPP__
 
 #include <iostream>
-#include "concurrent_queues.hpp"
-#include "atomic_gcc.hpp"
-#include "mapped_file.hpp"
+#include <jellyfish/concurrent_queues.hpp>
+#include <jellyfish/atomic_gcc.hpp>
+#include <jellyfish/mapped_file.hpp>
 
 namespace jellyfish {
   class fasta_parser {

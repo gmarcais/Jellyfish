@@ -3,6 +3,7 @@ AC_CANONICAL_HOST
 AM_CONDITIONAL([MACOSX], [test x$host_vendor = xapple])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_PROG_CXX
+
 AC_CONFIG_HEADERS([config.h])
 gl_EARLY 
 gl_INIT
@@ -10,6 +11,7 @@ AC_CONFIG_FILES([
     Makefile
     gnulib/Makefile
     jellyfish/Makefile
+    jellyfish-1.0.pc
 ])
 
 AC_ARG_WITH([sse],
@@ -19,12 +21,8 @@ AS_IF([test "x$with_sse" != xno],
       [AC_DEFINE([HAVE_SSE], [1], [Define if you have SSE])],
       [])
       
-                     
-#], [
-#AC_CONFIG_FILES([
-#    Makefile
-#    jellyfish/Makefile
-#])])
+
+LT_INIT
 AC_OUTPUT
 
 

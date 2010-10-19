@@ -2,15 +2,15 @@
  * n threads are doing 100% insertion operations.
  */
 
-#ifndef __PACKED_CONCURRENT_HASH_COUNTERS__
-#define __PACKED_CONCURRENT_HASH_COUNTERS__
+#ifndef __JELLYFISH_PACKED_CONCURRENT_HASH_COUNTERS__
+#define __JELLYFISH_PACKED_CONCURRENT_HASH_COUNTERS__
 
 #include <new>
 #include <cstring>
 #include <iostream>
 #include <pthread.h>
 #include <stdint.h>
-#include "small_packed_array.hpp"
+#include <jellyfish/small_packed_array.hpp>
 using namespace std;
 
 struct stats {

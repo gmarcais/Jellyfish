@@ -1,7 +1,7 @@
-#include "dumper.hpp"
-#include "heap.hpp"
-#include "thread_exec.hpp"
-#include "token_ring.hpp"
+#include <jellyfish/dumper.hpp>
+#include <jellyfish/heap.hpp>
+#include <jellyfish/thread_exec.hpp>
+#include <jellyfish/token_ring.hpp>
 
 namespace jellyfish {
   template<typename storage_t, typename atomic_t>

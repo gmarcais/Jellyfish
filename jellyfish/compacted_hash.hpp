@@ -1,13 +1,13 @@
-#ifndef __COMPACTED_HASH__
-#define __COMPACTED_HASH__
+#ifndef __JELLYFISH_COMPACTED_HASH__
+#define __JELLYFISH_COMPACTED_HASH__
 
 #include <iostream>
 #include <fstream>
 #include <string.h>
 #include <pthread.h>
-#include "mapped_file.hpp"
-#include "square_binary_matrix.hpp"
-#include "fasta_parser.hpp"
+#include <jellyfish/mapped_file.hpp>
+#include <jellyfish/square_binary_matrix.hpp>
+#include <jellyfish/fasta_parser.hpp>
 
 namespace jellyfish {
   namespace compacted_hash {
@@ -253,8 +253,6 @@ namespace jellyfish {
         first_pos = get_pos(first_key);
         get_key(last_id - 1, &last_key);
         last_pos = get_pos(last_key);
-        key_t after_last;
-        get_key(last_id, &after_last);
       }
 
       uint_t get_key_len() const { return header->key_len; }

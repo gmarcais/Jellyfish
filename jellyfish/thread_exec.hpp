@@ -1,5 +1,5 @@
-#ifndef __THREAD_EXEC_HPP__
-#define __THREAD_EXEC_HPP__
+#ifndef __JELLYFISH_THREAD_EXEC_HPP__
+#define __JELLYFISH_THREAD_EXEC_HPP__
 
 #include <pthread.h>
 #include <vector>

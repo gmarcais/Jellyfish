@@ -1,5 +1,5 @@
-#ifndef __HEAP_HPP__
-#define __HEAP_HPP__
+#ifndef __JELLYFISH_HEAP_HPP__
+#define __JELLYFISH_HEAP_HPP__
 
 #include <algorithm>
 

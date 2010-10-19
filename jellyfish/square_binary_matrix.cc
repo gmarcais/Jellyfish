@@ -45,8 +45,9 @@ SquareBinaryMatrix SquareBinaryMatrix::operator*(const SquareBinaryMatrix &other
   if(size != other.get_size()) 
     throw mismatching_size_ex;
   
-  for(i = 0; i < size; i++)
+  for(i = 0; i < size; i++) {
     res[i] = this->times(other[i]);
+  }
 
   return res;
 }

@@ -10,11 +10,13 @@ GTEST_DIR = gtest-1.4.0
 
 # Where to find user code.
 UPDIR = $(realpath ..)
-USER_DIR = $(UPDIR) $(UPDIR)/lib
+USER_DIR = $(UPDIR)/jellyfish
+
+VPATH = $(USER_DIR)
 
 CC = g++
 # Flags passed to the preprocessor.
-CPPFLAGS += -I$(GTEST_DIR) -I$(GTEST_DIR)/include $(patsubst %,-I%,$(USER_DIR)) -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS
+CPPFLAGS += -I. -I$(GTEST_DIR) -I$(GTEST_DIR)/include $(patsubst %,-I%,$(USER_DIR)) -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS -DHAVE_SSE
 
 # Flags passed to the C++ compiler.
 # For profiling -fprofile-arcs -ftest-coverage -O0
@@ -51,9 +53,9 @@ clean :
 $(TESTS): gtest_main.a
 
 # Some extra dependencies
-test_packed_key_value_array: ../storage.o
+test_packed_key_value_array: storage.o
 
-test_square_binary_matrix: ../lib/square_binary_matrix.o
+test_square_binary_matrix: square_binary_matrix.o
 
 # Builds gtest.a and gtest_main.a.
 

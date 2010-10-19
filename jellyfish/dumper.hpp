@@ -1,8 +1,8 @@
-#ifndef __DUMPER_HPP__
-#define __DUMPER_HPP__
+#ifndef __JELLYFISH_DUMPER_HPP__
+#define __JELLYFISH_DUMPER_HPP__
 
-#include "mer_counting.hpp"
-#include "time.hpp"
+#include <jellyfish/mer_counting.hpp>
+#include <jellyfish/time.hpp>
 
 /**
  * A dumper is responsible to dump the hash array to permanent storage

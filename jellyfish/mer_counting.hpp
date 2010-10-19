@@ -1,5 +1,5 @@
-#ifndef __MER_COUNTING__
-#define __MER_COUNTING__
+#ifndef __JELLYFISH_MER_COUNTING__
+#define __JELLYFISH_MER_COUNTING__
 
 #include <sys/types.h>
 #include <stdint.h>
@@ -7,28 +7,26 @@
 #include <vector>
 #include <utility>
 
-#include <invertible_hash_config.hpp>
-
-#include "misc.hpp"
-#include "storage.hpp"
-#include "hash.hpp"
-#include "concurrent_queues.hpp"
-#include "atomic_gcc.hpp"
-#include "allocators_mmap.hpp"
-#include "hash.hpp"
-#include "compacted_hash.hpp"
-#include "compacted_dumper.hpp"
+#include <jellyfish/misc.hpp>
+#include <jellyfish/storage.hpp>
+#include <jellyfish/hash.hpp>
+#include <jellyfish/concurrent_queues.hpp>
+#include <jellyfish/atomic_gcc.hpp>
+#include <jellyfish/allocators_mmap.hpp>
+#include <jellyfish/hash.hpp>
+#include <jellyfish/compacted_hash.hpp>
+#include <jellyfish/compacted_dumper.hpp>
 
 // Invertible hash types
-#include "invertible_hash_array.hpp"
-#include "sorted_dumper.hpp"
+#include <jellyfish/invertible_hash_array.hpp>
+#include <jellyfish/sorted_dumper.hpp>
 typedef jellyfish::invertible_hash::array<uint64_t,atomic::gcc<uint64_t>,allocators::mmap> inv_hash_storage_t;
 typedef jellyfish::sorted_dumper< inv_hash_storage_t,atomic::gcc<uint64_t> > inv_hash_dumper_t;
 typedef jellyfish::hash< uint64_t,uint64_t,inv_hash_storage_t,atomic::gcc<uint64_t> > inv_hash_t;
 
 // Direct indexing types
-#include "direct_indexing_array.hpp"
-#include "direct_sorted_dumper.hpp"
+#include <jellyfish/direct_indexing_array.hpp>
+#include <jellyfish/direct_sorted_dumper.hpp>
 typedef jellyfish::direct_indexing::array<uint64_t,uint32_t,atomic::gcc<uint32_t>,allocators::mmap> direct_index_storage_t;
 typedef jellyfish::direct_sorted_dumper< direct_index_storage_t, atomic::gcc<uint64_t> > direct_index_dumper_t;
 typedef jellyfish::hash< uint64_t,uint32_t,direct_index_storage_t,atomic::gcc<uint64_t> > direct_index_t;
@@ -36,17 +34,5 @@ typedef jellyfish::hash< uint64_t,uint32_t,direct_index_storage_t,atomic::gcc<ui
 typedef jellyfish::compacted_hash::reader<uint64_t,uint64_t> hash_reader_t;
 typedef jellyfish::compacted_hash::query<uint64_t,uint64_t> hash_query_t;
 typedef jellyfish::compacted_hash::writer<hash_reader_t> hash_writer_t;
-
-
-struct seq {
-  char  *buffer;
-  char  *end;
-  char	*map_end;
-  bool   nl;			// Char before buffer start is a new line
-  bool   ns;			// Beginning of buffer is not sequence data
-};
-typedef struct seq seq;
-
-typedef concurrent_queue<seq> seq_queue;
 
 #endif /* __MER_COUNTING__ */

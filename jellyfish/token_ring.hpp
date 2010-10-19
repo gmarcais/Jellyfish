@@ -1,5 +1,5 @@
-#ifndef __TOKEN_RING_HPP__
-#define __TOKEN_RING_HPP__
+#ifndef __JELLYFISH_TOKEN_RING_HPP__
+#define __JELLYFISH_TOKEN_RING_HPP__
 
 template<typename cond_t>
 class token_ring {

@@ -1,5 +1,5 @@
-#ifndef __PACKED_KEY_VALUE_ARRAY__
-#define __PACKED_KEY_VALUE_ARRAY__
+#ifndef __JELLYFISH_PACKED_KEY_VALUE_ARRAY__
+#define __JELLYFISH_PACKED_KEY_VALUE_ARRAY__
 
 #include <stdlib.h>
 #include <string.h>
@@ -10,10 +10,10 @@
 #include <exception>
 #include <string>
 #include <assert.h>
-#include "lib/misc.hpp"
-#include "lib/hash_function.hpp"
-#include "storage.hpp"
-#include "offsets_key_value.hpp"
+#include <jellyfish/lib/misc.hpp>
+#include <jellyfish/lib/hash_function.hpp>
+#include <jellyfish/storage.hpp>
+#include <jellyfish/offsets_key_value.hpp>
 
 namespace jellyfish {
   namespace packed_key_value {

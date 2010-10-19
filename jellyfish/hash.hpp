@@ -1,5 +1,5 @@
-#ifndef __HASH_HPP__
-#define __HASH_HPP__
+#ifndef __JELLYFISH_HASH_HPP__
+#define __JELLYFISH_HASH_HPP__
 
 #include <iostream>
 #include <fstream>
@@ -8,11 +8,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/mman.h>
-#include "locks_pthread.hpp"
-#include "misc.hpp"
-#include "square_binary_matrix.hpp"
-#include "dumper.hpp"
-#include "time.hpp"
+#include <jellyfish/locks_pthread.hpp>
+#include <jellyfish/misc.hpp>
+#include <jellyfish/square_binary_matrix.hpp>
+#include <jellyfish/dumper.hpp>
+#include <jellyfish/time.hpp>
 
 namespace jellyfish {
   /* Wrapper around a "storage". The hash class manages threads. In

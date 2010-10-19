@@ -1,5 +1,5 @@
-#ifndef __SQUARE_BINARY_MATRIX_HPP__
-#define __SQUARE_BINARY_MATRIX_HPP__
+#ifndef __JELLYFISH_SQUARE_BINARY_MATRIX_HPP__
+#define __JELLYFISH_SQUARE_BINARY_MATRIX_HPP__
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -7,13 +7,7 @@
 #include <iostream>
 #include <exception>
 #include <assert.h>
-#include "misc.hpp"
-
-#ifdef HAVE_SSE
-#define FFs ((uint64_t)-1)
-static const uint64_t smear[8] asm("smear") __attribute__ ((aligned(16),used)) =
-{0, 0, 0, FFs, FFs, 0, FFs, FFs};
-#endif
+#include <jellyfish/misc.hpp>
 
 class SquareBinaryMatrix {
   uint64_t *columns;
@@ -226,6 +220,10 @@ public:
 
 #ifdef HAVE_SSE
   uint64_t times_sse(uint64_t v) const {
+#define FFs ((uint64_t)-1)
+    static const uint64_t smear[8] asm("smear") __attribute__ ((aligned(16),used)) =
+      {0, 0, 0, FFs, FFs, 0, FFs, FFs};
+
     uint64_t *c = columns + (size - 2);
     uint64_t res;
 
@@ -234,7 +232,7 @@ public:
                           "movq %2, %0\n\t"
                           "andq $3, %0\n\t"
                           "shlq $4, %0\n\t"
-                          "movdqa smear(%0), %%xmm1\n\t"
+                          "movdqa (%5,%0), %%xmm1\n\t"
                           "pand (%1), %%xmm1\n\t"
                           "pxor %%xmm1, %%xmm0\n\t"
                           "subq $0x10, %1\n\t"
@@ -242,7 +240,7 @@ public:
                           "movq %2, %0\n\t"
                           "andq $3, %0\n\t"
                           "shlq $4, %0\n\t"
-                          "movdqa smear(%0), %%xmm1\n\t"
+                          "movdqa (%5,%0), %%xmm1\n\t"
                           "pand (%1), %%xmm1\n\t"
                           "pxor %%xmm1, %%xmm0\n\t"
                           "subq $0x10, %1\n\t"
@@ -253,7 +251,7 @@ public:
                           "movd %%xmm0, %1\n\t"
                           "xorq %1, %0\n\t"
                           : "=r" (res), "=r" (c), "=r" (v)
-                          : "1" (c), "2" (v)
+                          : "1" (c), "2" (v), "r" (smear)
                           : "xmm0", "xmm1");
     return res;
   }

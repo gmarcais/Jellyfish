@@ -1,5 +1,5 @@
-#ifndef __MISC_HPP__
-#define __MISC_HPP__
+#ifndef __JELLYFISH_MISC_HPP__
+#define __JELLYFISH_MISC_HPP__
 
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS

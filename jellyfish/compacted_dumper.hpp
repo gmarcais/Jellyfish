@@ -1,4 +1,4 @@
-#include "dumper.hpp"
+#include <jellyfish/dumper.hpp>
 
 namespace jellyfish {
   template<typename storage_t, typename atomic_t>

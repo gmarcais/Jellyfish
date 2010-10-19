@@ -1,5 +1,5 @@
-#ifndef __REVERSIBLE_HASH__
-#define __REVERSIBLE_HASH__
+#ifndef __JELLYFISH_REVERSIBLE_HASH__
+#define __JELLYFISH_REVERSIBLE_HASH__
 
 #include <stdlib.h>
 #include <string.h>
@@ -9,11 +9,11 @@
 #include <utility>
 #include <exception>
 #include <assert.h>
-#include "storage.hpp"
-#include "misc.hpp"
-#include "square_binary_matrix.hpp"
-#include "storage.hpp"
-#include "offsets_key_value.hpp"
+#include <jellyfish/storage.hpp>
+#include <jellyfish/misc.hpp>
+#include <jellyfish/square_binary_matrix.hpp>
+#include <jellyfish/storage.hpp>
+#include <jellyfish/offsets_key_value.hpp>
 
 namespace jellyfish {
   namespace invertible_hash {

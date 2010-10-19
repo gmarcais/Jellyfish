@@ -1,5 +1,5 @@
-#ifndef __SMALL_PACKED_ARRAY__
-#define __SMALL_PACKED_ARRAY__
+#ifndef __JELLYFISH_SMALL_PACKED_ARRAY__
+#define __JELLYFISH_SMALL_PACKED_ARRAY__
 
 #include <stdlib.h>
 #include <string.h>

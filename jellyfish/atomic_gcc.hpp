@@ -1,5 +1,5 @@
-#ifndef __ATOMIC_GCC_HPP__
-#define __ATOMIC_GCC_HPP__
+#ifndef __JELLYFISH_ATOMIC_GCC_HPP__
+#define __JELLYFISH_ATOMIC_GCC_HPP__
 
 namespace atomic
 {

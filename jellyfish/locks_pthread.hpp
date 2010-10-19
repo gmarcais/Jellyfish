@@ -1,5 +1,5 @@
-#ifndef __LOCKS_PTHREAD_HPP__
-#define __LOCKS_PTHREAD_HPP__
+#ifndef __JELLYFISH_LOCKS_PTHREAD_HPP__
+#define __JELLYFISH_LOCKS_PTHREAD_HPP__
 
 #include <pthread.h>
 

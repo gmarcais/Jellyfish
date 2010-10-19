@@ -1,5 +1,5 @@
-#ifndef __MAPPED_FILE_HPP__
-#define __MAPPED_FILE_HPP__
+#ifndef __JELLYFISH_MAPPED_FILE_HPP__
+#define __JELLYFISH_MAPPED_FILE_HPP__
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -7,7 +7,9 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <vector>
-#include "misc.hpp"
+#include <errno.h>
+
+#include <jellyfish/misc.hpp>
 
 class mapped_file {
   char   *_base, *_end;

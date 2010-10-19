@@ -1,5 +1,5 @@
-#ifndef __LOCKING_HASH_COUNTERS__
-#define __LOCKING_HASH_COUNTERS__
+#ifndef __JELLYFISH_LOCKING_HASH_COUNTERS__
+#define __JELLYFISH_LOCKING_HASH_COUNTERS__
 
 #include <new>
 #include <cstring>

@@ -2,8 +2,8 @@
  * n threads are doing 100% insertion operations.
  */
 
-#ifndef __CONCURRENT_HASH_COUNTERS__
-#define __CONCURRENT_HASH_COUNTERS__
+#ifndef __JELLYFISH_CONCURRENT_HASH_COUNTERS__
+#define __JELLYFISH_CONCURRENT_HASH_COUNTERS__
 
 #include <new>
 #include <cstring>
@@ -11,7 +11,7 @@
 #include <pthread.h>
 #include <stdint.h>
 
-#include "locks_pthread.hpp"
+#include <jellyfish/locks_pthread.hpp>
 
 using namespace std;
 

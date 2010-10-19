@@ -1,8 +1,8 @@
-#ifndef __OFFSETS_KEY_VALUE_HPP__
-#define __OFFSETS_KEY_VALUE_HPP__
+#ifndef __JELLYFISH_OFFSETS_KEY_VALUE_HPP__
+#define __JELLYFISH_OFFSETS_KEY_VALUE_HPP__
 
-#include "misc.hpp"
-#include "divisor.hpp"
+#include <jellyfish/misc.hpp>
+#include <jellyfish/divisor.hpp>
 
 namespace jellyfish {
   /* A word is whatever aligned type used for atomic operations

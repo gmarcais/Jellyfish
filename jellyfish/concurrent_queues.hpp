@@ -1,5 +1,5 @@
-#ifndef __CONCURRENT_QUEUES_HPP__
-#define __CONCURRENT_QUEUES_HPP__
+#ifndef __JELLYFISH_CONCURRENT_QUEUES_HPP__
+#define __JELLYFISH_CONCURRENT_QUEUES_HPP__
 
 #include <sys/time.h>
 #include <sys/syscall.h>

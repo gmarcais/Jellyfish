@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <square_binary_matrix.hpp>
+#include <time.hpp>
 #include <fstream>
 
 class RandomEnvironment : public ::testing::Environment {
@@ -101,7 +102,7 @@ TEST(SquareBinaryMatrix, Initialization) {
   uint64_t v7 = random_vector(VECLEN);
   uint64_t v8 = random_vector(VECLEN);
   uint64_t res_unrolled = 0, res_sse = 0;
-  Timing time1;
+  Time time1;
   const int nb_loops = 2560000;
   for(i = 0; i < nb_loops; i++) {
     res_unrolled ^= rand_m.times_unrolled(v1);
@@ -113,7 +114,7 @@ TEST(SquareBinaryMatrix, Initialization) {
     res_unrolled ^= rand_m.times_unrolled(v7);
     res_unrolled ^= rand_m.times_unrolled(v8);
   }
-  Timing time2;
+  Time time2;
   for(i = 0; i < nb_loops; i++) {
     res_sse ^= rand_m.times_sse(v1);
     res_sse ^= rand_m.times_sse(v2);
@@ -124,8 +125,8 @@ TEST(SquareBinaryMatrix, Initialization) {
     res_sse ^= rand_m.times_sse(v7);
     res_sse ^= rand_m.times_sse(v8);
   }
-  Timing time3;
-  std::cout << "unrolled timing " << (time2 - time1).to_str() <<
-    " sse timing " << (time3 - time2).to_str() << std::endl;
+  Time time3;
+  std::cout << "unrolled timing " << (time2 - time1).str() <<
+    " sse timing " << (time3 - time2).str() << std::endl;
   ASSERT_EQ(res_unrolled, res_sse);
 }

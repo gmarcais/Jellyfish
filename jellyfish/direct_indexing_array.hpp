@@ -1,5 +1,5 @@
-#ifndef __DIRECT_INDEXING_ARRAY_HPP__
-#define __DIRECT_INDEXING_ARRAY_HPP__
+#ifndef __JELLYFISH_DIRECT_INDEXING_ARRAY_HPP__
+#define __JELLYFISH_DIRECT_INDEXING_ARRAY_HPP__
 
 namespace jellyfish {
   namespace direct_indexing {

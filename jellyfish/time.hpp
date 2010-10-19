@@ -1,5 +1,5 @@
-#ifndef __TIME_HPP__
-#define __TIME_HPP__
+#ifndef __JELLYFISH_TIME_HPP__
+#define __JELLYFISH_TIME_HPP__
 
 #include <sys/time.h>
 #include <iostream>

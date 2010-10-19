@@ -1,7 +1,7 @@
 /* Allocators return zeroed chunk of memory
  */
-#ifndef __ALLOCATORS_MALLOC_HPP__
-#define __ALLOCATORS_MALLOC_HPP__
+#ifndef __JELLYFISH_ALLOCATORS_MALLOC_HPP__
+#define __JELLYFISH_ALLOCATORS_MALLOC_HPP__
 
 #include <stdlib.h>
 
