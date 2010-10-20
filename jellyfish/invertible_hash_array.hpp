@@ -160,7 +160,7 @@ namespace jellyfish {
         {}
         
         void get_string(char *out) const {
-          tostring(key, ary->get_key_len() / 2, out);
+          fasta_parser::mer_binary_to_string(key, ary->get_key_len() / 2, out);
         }
         uint64_t get_hash() const { return hash; }
         uint64_t get_pos() const { return hash & mask; }
@@ -223,7 +223,7 @@ namespace jellyfish {
         }
         
         void get_string(char *out) const {
-          tostring(key, ary->get_key_len() / 2, out);
+          fasta_parser::mer_binary_to_string(key, ary->get_key_len() / 2, out);
         }
         uint64_t get_hash() const { return hash; }
         uint64_t get_pos() const { return hash & mask; }

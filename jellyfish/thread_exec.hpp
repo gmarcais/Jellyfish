@@ -19,6 +19,7 @@ class thread_exec {
 
 public:
   thread_exec() {}
+  virtual ~thread_exec() {}
   virtual void start(int id) = 0;
   void exec(int nb_threads);
   void join();

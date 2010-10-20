@@ -226,6 +226,8 @@ public:
 
     uint64_t *c = columns + (size - 2);
     uint64_t res;
+    // How do I make sure that gcc does not use the smear register for something else?
+    // Is the & constraint for res enough?
 
     __asm__ __volatile__ ("pxor %%xmm0, %%xmm0\n"
                           "times_sse_loop%=:\n\t"
@@ -250,7 +252,7 @@ public:
                           "psrldq $8, %%xmm0\n\t"
                           "movd %%xmm0, %1\n\t"
                           "xorq %1, %0\n\t"
-                          : "=r" (res), "=r" (c), "=r" (v)
+                          : "=&r" (res), "=r" (c), "=r" (v)
                           : "1" (c), "2" (v), "r" (smear)
                           : "xmm0", "xmm1");
     return res;

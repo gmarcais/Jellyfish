@@ -191,7 +191,7 @@ namespace jellyfish {
       }
 
       void get_string(char *out) const {
-        tostring(key, get_mer_len(), out);
+        fasta_parser::mer_binary_to_string(key, get_mer_len(), out);
       }
       uint64_t get_hash() const { return hash_matrix.times(key); }
       uint64_t get_pos() const { return hash_matrix.times(key) & size_mask; }
@@ -234,6 +234,7 @@ namespace jellyfish {
       uint64_t            last_id;
       key_t               first_key, last_key;
       uint64_t            first_pos, last_pos;
+      bool                canonical;
 
     public:
       query(std::string filename) : 
@@ -247,7 +248,8 @@ namespace jellyfish {
         base(file.base() + sizeof(*header) + hash_matrix.dump_size() + hash_inverse_matrix.dump_size()),
         size(header->size),
         size_mask(header->size - 1),
-        last_id((file.end() - base) / record_len)
+        last_id((file.end() - base) / record_len),
+        canonical(false)
       { 
         get_key(0, &first_key);
         first_pos = get_pos(first_key);
@@ -267,18 +269,13 @@ namespace jellyfish {
       uint64_t get_max_count() const { return header->max_count; }
       SquareBinaryMatrix get_hash_matrix() const { return hash_matrix; }
       SquareBinaryMatrix get_hash_inverse_matrix() const { return hash_inverse_matrix; }
+      bool get_canonical() const { return canonical; }
+      void set_canonical(bool v) { canonical = v; }
 
       /* No check is made on the validity of the string passed. Should only contained [acgtACGT] to get a valid answer.
        */
       val_t operator[] (const char *key_s) {
-        key_t key = 0;
-        for(uint_t i = 0; i < header->key_len / 2; i++) {
-          const uint_t c = fasta_parser::codes[(uint_t)*key_s++];
-          if(c & fasta_parser::CODE_NOT_DNA)
-            return 0;
-          key = (key << 2) | c;
-        }
-        return get_key_val(key);
+        return get_key_val(fasta_parser::mer_string_to_binary(key_s, get_mer_len()));
       }
       val_t operator[] (key_t key) { return get_key_val(key); }
 
@@ -286,7 +283,17 @@ namespace jellyfish {
       void get_val(size_t id, val_t *v) { memcpy(v, base + id * record_len + key_len, val_len); }
       uint64_t get_pos(key_t k) { return hash_matrix.times(k) & size_mask; }
         
-      val_t get_key_val(const key_t key) {
+      
+
+      val_t get_key_val(const key_t _key) {
+        key_t key;
+        if(canonical) {
+          key = fasta_parser::reverse_complement(_key, get_mer_len());
+          if(key > _key)
+            key = _key;
+        } else {
+          key = _key;
+        }
         val_t res = 0;
         if(key == first_key) {
           get_val(0, &res);

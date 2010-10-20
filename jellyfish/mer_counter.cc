@@ -107,7 +107,7 @@ class mer_counting_base {
 public:
   virtual void count() = 0;
   virtual Time get_writing_time() = 0;
-  ~mer_counting_base() {}
+  virtual ~mer_counting_base() {}
 };
 
 template <typename parser_t, typename hash_t>

@@ -5,6 +5,7 @@
 #include <jellyfish/concurrent_queues.hpp>
 #include <jellyfish/atomic_gcc.hpp>
 #include <jellyfish/mapped_file.hpp>
+#include <jellyfish/misc.hpp>
 
 namespace jellyfish {
   class fasta_parser {
@@ -38,6 +39,35 @@ namespace jellyfish {
     static const uint_t CODE_IGNORE = -2;
     static const uint_t CODE_COMMENT = -3;
     static const uint_t CODE_NOT_DNA = ((uint_t)1) << (sizeof(uint_t) - 1);
+
+    static uint64_t mer_string_to_binary(const char *in, uint_t klen) {
+      uint64_t res = 0;
+      for(uint_t i = 0; i < klen; i++) {
+        const uint_t c = fasta_parser::codes[(uint_t)*in++];
+        if(c & CODE_NOT_DNA)
+          return 0;
+        res = (res << 2) | c;
+      }
+      return res;
+    }
+    static void mer_binary_to_string(uint64_t mer, uint_t klen, char *out) {
+      static const char table[4] = { 'A', 'C', 'G', 'T' };
+      
+      for(unsigned int i = 0 ; i < klen; i++) {
+        out[klen-1-i] = table[mer & UINT64_C(0x3)];
+        mer >>= 2;
+      }
+      out[klen] = '\0';
+    }
+
+    static uint64_t reverse_complement(uint64_t v, uint_t length) {
+      v = ((v >> 2)  & 0x3333333333333333UL) | ((v & 0x3333333333333333UL) << 2);
+      v = ((v >> 4)  & 0x0F0F0F0F0F0F0F0FUL) | ((v & 0x0F0F0F0F0F0F0F0FUL) << 4);
+      v = ((v >> 8)  & 0x00FF00FF00FF00FFUL) | ((v & 0x00FF00FF00FF00FFUL) << 8);
+      v = ((v >> 16) & 0x0000FFFF0000FFFFUL) | ((v & 0x0000FFFF0000FFFFUL) << 16);
+      v = ( v >> 32                        ) | ( v                         << 32);
+      return (((uint64_t)-1) - v) >> (bsizeof(v) - (length << 1));
+    }
 
 
     fasta_parser(int nb_files, char *argv[], uint_t _mer_len, unsigned int nb_buffers, size_t _buffer_size); 

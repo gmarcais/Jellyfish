@@ -52,6 +52,30 @@ uint_t bitsize(T n) {
   return floorLog2(n) + 1;
 }
 
+inline uint32_t reverse_bits(uint32_t v) {
+  // swap odd and even bits
+  v = ((v >> 1) & 0x55555555) | ((v & 0x55555555) << 1);
+  // swap consecutive pairs
+  v = ((v >> 2) & 0x33333333) | ((v & 0x33333333) << 2);
+  // swap nibbles ... 
+  v = ((v >> 4) & 0x0F0F0F0F) | ((v & 0x0F0F0F0F) << 4);
+  // swap bytes
+  v = ((v >> 8) & 0x00FF00FF) | ((v & 0x00FF00FF) << 8);
+  // swap 2-byte long pairs
+  v = ( v >> 16             ) | ( v               << 16);
+  return v;
+}
+
+inline uint64_t reverse_bits(uint64_t v) {
+  v = ((v >> 1)  & 0x5555555555555555UL) | ((v & 0x5555555555555555UL) << 1);
+  v = ((v >> 2)  & 0x3333333333333333UL) | ((v & 0x3333333333333333UL) << 2);
+  v = ((v >> 4)  & 0x0F0F0F0F0F0F0F0FUL) | ((v & 0x0F0F0F0F0F0F0F0FUL) << 4);
+  v = ((v >> 8)  & 0x00FF00FF00FF00FFUL) | ((v & 0x00FF00FF00FF00FFUL) << 8);
+  v = ((v >> 16) & 0x0000FFFF0000FFFFUL) | ((v & 0x0000FFFF0000FFFFUL) << 16);
+  v = ( v >> 32                        ) | ( v                         << 32);
+  return v;
+}
+
 /* Like Perl's die function
  */
 void die(const char *msg, ...) __attribute__ ((noreturn, format(printf, 1, 2)));
@@ -87,19 +111,6 @@ public:
     return msg;
   }
 };
-
-/**
- * Convert a bit-packed key to a char* string
- **/
-inline void tostring(uint64_t key, unsigned int rklen, char * out) {
-  static const char table[4] = { 'A', 'C', 'G', 'T' };
-
-  for(unsigned int i = 0 ; i < rklen; i++) {
-    out[rklen-1-i] = table[key & UINT64_C(0x3)];
-    key >>= 2;
-  }
-  out[rklen] = '\0';
-}
 
 uint64_t bogus_sum(void *data, size_t len);
 
