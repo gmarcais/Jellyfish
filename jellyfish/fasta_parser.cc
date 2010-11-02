@@ -2,21 +2,17 @@
 
 namespace jellyfish {
   fasta_parser::fasta_parser(int nb_files, char *argv[], uint_t _mer_len, unsigned int nb_buffers, size_t _buffer_size) :
-    rq(nb_buffers), wq(nb_buffers), mer_len(_mer_len)
+    rq(nb_buffers), wq(nb_buffers), mer_len(_mer_len), 
+    mapped_files(nb_files, argv, true)
   {
     unsigned int i;
-    int j;
+
     buffers = new seq[nb_buffers];
     memset(buffers, '\0', sizeof(struct seq) * nb_buffers);
 
     for(i = 0; i < nb_buffers; i++)
       wq.enqueue(&buffers[i]);
       
-    for(j = 0; j < nb_files; j++) {
-      mapped_files.push_back(mapped_file(argv[j]));
-      mapped_files.end()->sequential();
-    }
-
     current_file = mapped_files.begin();
     current_file->will_need();
     map_base     = current_file->base();

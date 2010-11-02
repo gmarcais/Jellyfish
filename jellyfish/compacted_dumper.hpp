@@ -87,7 +87,7 @@ namespace jellyfish {
     if(out.fail())
       return; // TODO: Should throw an error
 
-
+    out.write("JFLISTDN", 8);
     unique = distinct = total = 0;
     for(uint_t i = 0; i < threads; i++)
       thread_info[i].token = i == 0;

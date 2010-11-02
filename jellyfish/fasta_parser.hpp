@@ -17,12 +17,12 @@ namespace jellyfish {
 
     seq_queue                       rq, wq;
     uint_t                          mer_len;
+    mapped_files_t                  mapped_files;
     uint64_t volatile               reader;
     char                           *current;
     char                           *map_base;
     char                           *map_end;
     size_t                          buffer_size;
-    mapped_files_t                  mapped_files;
     struct seq                     *buffers;
     mapped_files_t::const_iterator  current_file;
     bool                            canonical;

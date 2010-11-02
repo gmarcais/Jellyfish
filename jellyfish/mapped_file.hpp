@@ -54,6 +54,20 @@ public:
   }
 };
 
-typedef std::vector<mapped_file> mapped_files_t;
+class mapped_files_t : public std::vector<mapped_file> {
+public:
+  mapped_files_t(int nb_files, char *argv[]) {
+    for(int j = 0; j < nb_files; j++)
+      push_back(mapped_file(argv[j]));
+  }
+
+  mapped_files_t(int nb_files, char *argv[], bool sequential) {
+    for(int j = 0; j < nb_files; j++) {
+      push_back(mapped_file(argv[j]));
+      if(sequential)
+        end()->sequential();
+    }
+  }
+};
 
 #endif

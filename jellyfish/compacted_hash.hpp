@@ -11,7 +11,19 @@
 
 namespace jellyfish {
   namespace compacted_hash {
+    class ErrorReading : public std::exception {
+      std::string msg;
+    public:
+      ErrorReading(const std::string _msg) : msg(_msg) { }
+      virtual ~ErrorReading() throw() {}
+      virtual const char* what() const throw() {
+        return msg.c_str();
+      }
+    };
+
+    static const char *file_type = "JFLISTDN";
     struct header {
+      char     type[8];         // type of file. Expect file_type
       uint64_t key_len;
       uint64_t val_len;         // In bytes
       uint64_t size;            // In bytes
@@ -20,14 +32,12 @@ namespace jellyfish {
       uint64_t distinct;
       uint64_t total;
       uint64_t max_count;
-    };
-    class ErrorReading : public std::exception {
-      std::string msg;
-    public:
-      ErrorReading(const std::string _msg) : msg(_msg) { }
-      virtual ~ErrorReading() throw() {}
-      virtual const char* what() const throw() {
-        return msg.c_str();
+
+      header() { }
+      header(char *ptr) {
+        if(memcmp(ptr, file_type, sizeof(file_type)))
+          throw new ErrorReading("Bad file type");
+        memcpy((void *)this, ptr, sizeof(struct header));
       }
     };
 
@@ -90,6 +100,7 @@ namespace jellyfish {
       void write_header(std::ostream *out) const {
         struct header head;
         memset(&head, '\0', sizeof(head));
+        memcpy(&head.type, file_type, sizeof(file_type));
         head.key_len = klen;
         head.val_len = val_len;
         head.size = ary->get_size();
@@ -105,6 +116,7 @@ namespace jellyfish {
       void update_stats_with(std::ostream *out, uint64_t _unique, uint64_t _distinct,
                              uint64_t _total, uint64_t _max_count) const {
         struct header head;
+        memcpy(&head.type, file_type, sizeof(file_type));
         head.key_len     = klen;
         head.val_len     = val_len;
         head.size        = ary->get_size();
@@ -153,6 +165,9 @@ namespace jellyfish {
         io->read((char *)&header, sizeof(header));
         if(!io->good())
           throw new ErrorReading("Error reading header");
+        if(memcmp(header.type, file_type, sizeof(file_type))) {
+          throw new ErrorReading("Bad file type");
+        }
         key_len  = (header.key_len / 8) + (header.key_len % 8 != 0);
         record_len = key_len + header.val_len;
         buffer_len = record_len * (_buff_len / record_len);
@@ -222,7 +237,7 @@ namespace jellyfish {
     template<typename key_t, typename val_t>
     class query {
       mapped_file         file;
-      struct header      *header;
+      struct header       header;
       uint_t              key_len;
       uint_t              val_len;
       uint_t              record_len;
@@ -239,15 +254,15 @@ namespace jellyfish {
     public:
       query(std::string filename) : 
         file(filename.c_str()), 
-        header((struct header *)file.base()), 
-        key_len((header->key_len / 8) + (header->key_len % 8 != 0)),
-        val_len(header->val_len),
-        record_len(key_len + header->val_len),
-        hash_matrix(file.base() + sizeof(*header)),
-        hash_inverse_matrix(file.base() + sizeof(*header) + hash_matrix.dump_size()),
-        base(file.base() + sizeof(*header) + hash_matrix.dump_size() + hash_inverse_matrix.dump_size()),
-        size(header->size),
-        size_mask(header->size - 1),
+        header(file.base()), 
+        key_len((header.key_len / 8) + (header.key_len % 8 != 0)),
+        val_len(header.val_len),
+        record_len(key_len + header.val_len),
+        hash_matrix(file.base() + sizeof(header)),
+        hash_inverse_matrix(file.base() + sizeof(header) + hash_matrix.dump_size()),
+        base(file.base() + sizeof(header) + hash_matrix.dump_size() + hash_inverse_matrix.dump_size()),
+        size(header.size),
+        size_mask(header.size - 1),
         last_id((file.end() - base) / record_len),
         canonical(false)
       { 
@@ -257,16 +272,16 @@ namespace jellyfish {
         last_pos = get_pos(last_key);
       }
 
-      uint_t get_key_len() const { return header->key_len; }
-      uint_t get_mer_len() const { return header->key_len / 2; }
-      uint_t get_val_len() const { return header->val_len; }
-      size_t get_size() const { return header->size; }
-      uint64_t get_max_reprobe() const { return header->max_reprobe; }
-      uint64_t get_max_reprobe_offset() const { return header->max_reprobe; }
-      uint64_t get_unique() const { return header->unique; }
-      uint64_t get_distinct() const { return header->distinct; }
-      uint64_t get_total() const { return header->total; }
-      uint64_t get_max_count() const { return header->max_count; }
+      uint_t get_key_len() const { return header.key_len; }
+      uint_t get_mer_len() const { return header.key_len / 2; }
+      uint_t get_val_len() const { return header.val_len; }
+      size_t get_size() const { return header.size; }
+      uint64_t get_max_reprobe() const { return header.max_reprobe; }
+      uint64_t get_max_reprobe_offset() const { return header.max_reprobe; }
+      uint64_t get_unique() const { return header.unique; }
+      uint64_t get_distinct() const { return header.distinct; }
+      uint64_t get_total() const { return header.total; }
+      uint64_t get_max_count() const { return header.max_count; }
       SquareBinaryMatrix get_hash_matrix() const { return hash_matrix; }
       SquareBinaryMatrix get_hash_inverse_matrix() const { return hash_inverse_matrix; }
       bool get_canonical() const { return canonical; }
