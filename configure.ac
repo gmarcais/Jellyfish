@@ -7,9 +7,9 @@ AC_PROG_CXX
 AC_CONFIG_HEADERS([config.h])
 gl_EARLY 
 gl_INIT
+#    gnulib/Makefile
 AC_CONFIG_FILES([
     Makefile
-    gnulib/Makefile
     jellyfish/Makefile
     jellyfish-1.0.pc
 ])
