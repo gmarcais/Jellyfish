@@ -1,0 +1,198 @@
+\documentclass[english]{article}
+\usepackage[latin1]{inputenc}
+\usepackage{babel}
+\usepackage{verbatim}
+
+%% do we have the `hyperref package?
+\IfFileExists{hyperref.sty}{
+   \usepackage[bookmarksopen,bookmarksnumbered]{hyperref}
+}{}
+
+%% do we have the `fancyhdr' package?
+\IfFileExists{fancyhdr.sty}{
+\usepackage[fancyhdr]{latex2man}
+}{
+%% do we have the `fancyheadings' package?
+\IfFileExists{fancyheadings.sty}{
+\usepackage[fancy]{latex2man}
+}{
+\usepackage[nofancy]{latex2man}
+\message{no fancyhdr or fancyheadings package present, discard it}
+}}
+
+\setVersion{0.9}
+\setDate{2010/10/1}
+
+\begin{document}
+
+\begin{Name}{1}{jellyfish}{G. Marcais}{k-mer counter}{Jellyfish: A fast k-mer counter}
+
+\Prog{Jellyfish} is a software to count $k$-mers in DNA sequences.
+
+\end{Name}
+
+\section{Synopsis}
+\Prog{jellyfish count} \oOptArg{-o}{prefix} \oOptArg{-m}{merlength} \oOptArg{-t}{threads} \oOptArg{-s}{hashsize} \oOpt{--both-strands} \Arg{fasta} \oArg{fasta \Dots} \\
+\Prog{jellyfish merge} \Arg{hash1} \Arg{hash2} \Dots \\
+\Prog{jellyfish stats} \oOpt{--fasta} \Arg{hash} \\
+\Prog{jellyfish histo} \oOptArg{-h}{high} \oOptArg{-l}{low} \oOptArg{-i}{increment} \Arg{hash}
+
+\section{Description}
+
+\Prog{Jellyfish} is a $k$-mer counter based on a multi-threaded hash
+table implementation.
+
+To count $k$-mers, use a command like:
+
+\begin{verbatim}
+jellyfish count -m 22 -o output -c 3 -s 10000000 -t 32 input.fasta
+\end{verbatim}
+
+This will count the the 22-mers in species.fasta with 32 threads. The
+counter field in the hash uses only 3 bits and the hash has at least
+10 million entries. Let the size of the table be $s=2^l$ and the max
+reprobe value is less than $2^r$, then the memory usage per entry in the hash is (in bits, not bytes) $2k-l+r+1$.
+
+To save space, the hash table supports variable length counter, i.e. a
+$k$-mer occurring only a few times will use a small counter, a $k$-mer
+occurring many times will used multiple entries in the hash. The
+\Opt{-c} specify the length of the small counter. The tradeoff is: a
+low value will save space per entry in the hash but will increase the
+number of entries used, hence maybe requiring a larger hash. In
+practice, use a value for \Opt{-c} so that most of you $k$-mers
+require only 1 entry. For example, to count $k$-mers in a genome,
+where most of the sequence is unique, use \OptArg{-c}{1} or
+\OptArg{-c}{2}. For sequencing reads, use a value for
+\Opt{-c} large enough to counts up to twice the coverage.
+
+When the orientation of the sequences in the input fasta file is not
+known, e.g. in sequencing reads, using \Opt{--both-strands} makes the most sense.
+
+\section{Options}
+
+\subsection{count}
+
+Count $k$-mers in one or many fasta file(s). There is no restriction
+in the size of the fasta file, the number of sequences or the size of
+the sequences in the fasta files. On the other hand, they must be
+files on and not pipes, as the files are memory mapped into memory.
+
+\begin{description}
+\item[\Opt{-o},\OptArg{--output=}{prefix}] Output file prefix. Results will be store
+  in files with the format \File{prefix\_\#}, where \# is a number
+  starting at 0. More than one file will be written if all the
+  $k$-mers could not be counted in the given size.
+\item[\Opt{-m},\OptArg{--mer-len=}{merlength}] Length of mer to
+  count. I.e. value of $k$ in $k$-mer.
+\item[\Opt{-t},\OptArg{--threads=}{NB}] Number of threads.
+\item[\Opt{-s},\OptArg{--size=}{hashsize}] Size of hash table. This
+  will be rounded up to the next power of two.
+\item[\Opt{--both-strands}] Collapse counters for a $k$-mer and its
+  reverse complement. I.e., when \Prog{jellyfish} encounters a $k$-mer
+  $m$, it checks which of $m$ or the reverse complement of $m$ comes
+  first in lexicographic order (call it the canonical representation)
+  and increments the counter for this canonical representation.
+\item[\Opt{-p},\OptArg{--reprobes=}{NB}] Maximum reprobe
+  value. This determine the usage of the hash table (i.e. \% of
+  entries used in hash) before being deemed full and written to disk.
+\item[\OptArg{--timing=}{file}] Write detailed timing information to
+  \File{file}.
+\item[\Opt{--no-write}] Do not write result file. Used for timing only.
+\item[\OptArg{--out-counter-len=}{LEN}] Length of the counter field in
+  the output (in bytes). The value of the counter for any $k$-mer is
+  capped at the maximum value that can be encoded in this number of
+  bytes.
+\end{description}
+
+\subsection{stats}
+
+Display statistics or dump full content of hash table in an easily
+parsable text format.
+
+\begin{description}
+\item[\Opt{-c},\Opt{--column}] Print $k$-mers counts in column format: sequence count.
+\item[\Opt{-f},\Opt{--fasta}] Print $k$-mers counts in fasta format. The header is the count.
+\item[\Opt{-r},\Opt{--recompute}] Recompute statistics from the hash
+  table instead of the statistics in the header.
+\end{description}
+
+By default, it displays the statistics in the header of the file. These are:
+
+\begin{description}
+\item[Unique:] Number of $k$-mers which occur only once.
+\item[Distinct:] Number of $k$-mers, not counting multiplicity.
+\item[Total:] Number of $k$-mers including multiplicity.
+\item[Max\_count:] Maximum number of occurrence of a $k$-mer.
+\end{description}
+
+\subsection{histo}
+
+Create an histogram with the number of $k$-mers having a given count. In bucket $i$ are tallied the $k$-mers which have a count $c$ satisfying $low+i*inc<=c<low+(i+1)*inc$. Buckets in the output are labeled by the low end point ($low+i*inc$).
+
+The last bucket in the output behaves as a catchall: it tallies all
+$k$-mers with a count greater or equal to the low end point of this
+bucket.
+
+\begin{description}
+\item[\Opt{-h},\OptArg{--high=}{HIGH}] High count bucket value.
+\item[\Opt{-i},\OptArg{--increment=}{INC}] Increment for bucket value.
+\item[\Opt{-l},\OptArg{--low=}{LOW}] Low count bucket value.
+\end{description}
+
+\subsection{query}
+
+Query a database created with \Prog{jellyfish count}. It reads
+$k$-mers from the standard input and write the counts on the standard
+output. For example:
+
+\begin{verbatim}
+$ echo "AAAAA ACGTA" | jellyfish query database
+AAAAA 12
+ACGTA 3
+\end{verbatim}
+
+\begin{description}
+\item[--both-strands] Report the count for the canonical version of
+  the $k$-mers read from standard input.
+\end{description}
+
+\section{Version}
+
+Version: \Version\ of \Date
+
+\section{Bugs}
+
+\begin{itemize}
+\item \Prog{jellyfish merge} has not been parallelized and is very
+  slow.
+\end{itemize}
+
+\section{Copyright \& License}
+\begin{description}
+\item[Copyright] \copyright\ 2010, Guillaume Marcais \Email{guillaume@marcais.net} and Carl Kingsford \Email{carlk@umiacs.umd.edu}.
+
+\item[License] This program is free software: you can redistribute it
+  and/or modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation, either version 3 of
+  the License, or (at your option) any later version. \\
+  This program is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  General Public License for more details. \\
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see
+  <\URL{http://www.gnu.org/licenses/}>.
+\end{description}
+
+\section{Authors}
+\noindent
+Guillaume Marcais \\
+University of Maryland \\
+\Email{guillaume@marcais.net}
+
+Carl Kingsford \\
+University of Maryland \\
+\Email{carlk@umiacs.umd.edu}
+
+\LatexManEnd
+\end{document}

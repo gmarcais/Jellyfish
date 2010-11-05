@@ -1,6 +1,8 @@
 
 ACLOCAL_AMFLAGS = -I m4
-EXTRA_DIST = m4/gnulib-cache.m4
+EXTRA_DIST = m4/gnulib-cache.m4 doc/jellyfish.pdf
+man2_MANS = doc/jellyfish.man
+
 #AM_CPPFLAGS = -I$(top_builddir)/gnulib -I$(top_srcdir)/gnulib 
 
 #if MACOSX
@@ -11,3 +13,4 @@ SUBDIRS = jellyfish
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = jellyfish-1.0.pc
+
