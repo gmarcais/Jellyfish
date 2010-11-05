@@ -1,0 +1,45 @@
+Installation
+============
+
+% ./configure
+% make
+# As root:
+% make install
+
+To install in a custom directory:
+
+% ./configure --prefix=/my/dir
+% make
+% make install
+
+Then make sure the following environment variables contain the correct
+paths:
+
+PATH            -> /my/dir/bin
+LD_LIBRARY_PATH -> /my/dir/lib
+MANPATH         -> /my/dir/share/man
+PKG_CONFIG_PATH -> /my/dir/lib/pkgconfig
+
+Notes
+=====
+
+* Jellyfish has been devellopped and tested on x86-64 GNU/Linux. It
+  should be fairly easy to port on other *NIX platform with the gcc
+  compiler, but no guarantee is made. Support for 32-bits platform has
+  not been tested.
+
+License
+=======
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.

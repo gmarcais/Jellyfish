@@ -1,5 +1,5 @@
 '\" t
-.\" Manual page created with latex2man on Fri Nov  5 11:59:35 EDT 2010
+.\" Manual page created with latex2man on Fri Nov  5 13:25:16 EDT 2010
 .\" NOTE: This file is generated, DO NOT EDIT.
 .de Vb
 .ft CW
@@ -255,7 +255,7 @@ Guillaume Marcais
 .br
 University of Maryland 
 .br
-\fBguillaume@marcais.net\fP
+\fBgmarcais@umd.edu\fP
 .PP
 Carl Kingsford 
 .br
