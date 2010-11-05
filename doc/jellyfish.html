@@ -1,0 +1,313 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<!-- Manual page created with latex2man on Fri Nov  5 11:59:35 EDT 2010 --
+-- Author of latex2man: Juergen.Vollmer@informatik-vollmer.de --
+-- NOTE: This file is generated, DO NOT EDIT. -->
+<html>
+<head><title>JELLYFISH</title></head>
+<body bgcolor="white">
+<h1 align=center>
+Jellyfish: A fast k-mer counter 
+</h1>
+<h4 align=center>G. Marcais </h4>
+<h4 align=center>2010/10/1</h4>
+<h4 align=center>Version 0.9</h4>
+<p>
+<tt>Jellyfish</tt>
+is a software to count k-mers in DNA sequences. 
+<p>
+<h3>Table of Contents</h3>
+<ul>
+<li><a href="#section_1">Synopsis </a></li>
+<li><a href="#section_2">Description </a></li>
+<li><a href="#section_3">Options </a>
+<ul>
+<li><a href="#section_4">count </a></li>
+<li><a href="#section_5">stats </a></li>
+<li><a href="#section_6">histo </a></li>
+<li><a href="#section_7">query </a></li>
+</ul>
+<li><a href="#section_8">Version </a></li>
+<li><a href="#section_9">Bugs </a></li>
+<li><a href="#section_10">Copyright &amp; License </a></li>
+<li><a href="#section_11">Authors </a></li>
+</ul>
+<p>
+<h2><a name="section_1">Synopsis</a></h2>
+
+<tt>jellyfish count</tt>
+[<b>-o</b><i>prefix</i>]
+[<b>-m</b><i>merlength</i>]
+[<b>-t</b><i>threads</i>]
+[<b>-s</b><i>hashsize</i>]
+[<b>--both-strands</b>]
+<i>fasta</i>
+[<i>fasta ...</i>]
+<br>
+<tt>jellyfish merge</tt>
+<i>hash1</i>
+<i>hash2</i>
+...<br>
+<tt>jellyfish stats</tt>
+[<b>--fasta</b>]
+<i>hash</i>
+<br>
+<tt>jellyfish histo</tt>
+[<b>-h</b><i>high</i>]
+[<b>-l</b><i>low</i>]
+[<b>-i</b><i>increment</i>]
+<i>hash</i>
+<p>
+<h2><a name="section_2">Description</a></h2>
+
+<p>
+<tt>Jellyfish</tt>
+is a k-mer counter based on a multi-threaded hash 
+table implementation. 
+<p>
+To count k-mers, use a command like: 
+<p>
+<pre>
+jellyfish count -m 22 -o output -c 3 -s 10000000 -t 32 input.fasta
+</pre>
+<p>
+This will count the the 22-mers in species.fasta with 32 threads. The 
+counter field in the hash uses only 3 bits and the hash has at least 
+10 million entries. Let the size of the table be s=2^l and the max 
+reprobe value is less than 2^r, then the memory usage per entry in the hash is (in bits, not bytes) 2k-l+r+1. 
+<p>
+To save space, the hash table supports variable length counter, i.e. a 
+k-mer occurring only a few times will use a small counter, a k-mer 
+occurring many times will used multiple entries in the hash. The 
+<b>-c</b>
+specify the length of the small counter. The tradeoff is: a 
+low value will save space per entry in the hash but will increase the 
+number of entries used, hence maybe requiring a larger hash. In 
+practice, use a value for <b>-c</b>
+so that most of you k-mers 
+require only 1 entry. For example, to count k-mers in a genome, 
+where most of the sequence is unique, use <b>-c</b><i>1</i>
+or 
+<b>-c</b><i>2</i>.
+For sequencing reads, use a value for 
+<b>-c</b>
+large enough to counts up to twice the coverage. 
+<p>
+When the orientation of the sequences in the input fasta file is not 
+known, e.g. in sequencing reads, using <b>--both-strands</b>
+makes the most sense. 
+<p>
+<h2><a name="section_3">Options</a></h2>
+
+<p>
+<h4><a name="section_4">count</a></h4>
+
+<p>
+Count k-mers in one or many fasta file(s). There is no restriction 
+in the size of the fasta file, the number of sequences or the size of 
+the sequences in the fasta files. On the other hand, they must be 
+files on and not pipes, as the files are memory mapped into memory. 
+<p>
+<dl compact>
+<dt><b>-o</b>,
+<b>--output=</b><i>prefix</i>
+</dt>
+<dd> Output file prefix. Results will be store 
+in files with the format <tt>prefix_#</tt>,
+where # is a number 
+starting at 0. More than one file will be written if all the 
+k-mers could not be counted in the given size. 
+</dd>
+<dt><b>-m</b>,
+<b>--mer-len=</b><i>merlength</i>
+</dt>
+<dd> Length of mer to 
+count. I.e. value of k in k-mer. 
+</dd>
+<dt><b>-t</b>,
+<b>--threads=</b><i>NB</i>
+</dt>
+<dd> Number of threads. 
+</dd>
+<dt><b>-s</b>,
+<b>--size=</b><i>hashsize</i>
+</dt>
+<dd> Size of hash table. This 
+will be rounded up to the next power of two. 
+</dd>
+<dt><b>--both-strands</b>
+</dt>
+<dd> Collapse counters for a k-mer and its 
+reverse complement. I.e., when <tt>jellyfish</tt>
+encounters a k-mer 
+m, it checks which of m or the reverse complement of m comes 
+first in lexicographic order (call it the canonical representation) 
+and increments the counter for this canonical representation. 
+</dd>
+<dt><b>-p</b>,
+<b>--reprobes=</b><i>NB</i>
+</dt>
+<dd> Maximum reprobe 
+value. This determine the usage of the hash table (i.e. % of 
+entries used in hash) before being deemed full and written to disk. 
+</dd>
+<dt><b>--timing=</b><i>file</i>
+</dt>
+<dd> Write detailed timing information to 
+<tt>file</tt>.
+</dd>
+<dt><b>--no-write</b>
+</dt>
+<dd> Do not write result file. Used for timing only. 
+</dd>
+<dt><b>--out-counter-len=</b><i>LEN</i>
+</dt>
+<dd> Length of the counter field in 
+the output (in bytes). The value of the counter for any k-mer is 
+capped at the maximum value that can be encoded in this number of 
+bytes. 
+</dd>
+</dl>
+<p>
+<h4><a name="section_5">stats</a></h4>
+
+<p>
+Display statistics or dump full content of hash table in an easily 
+parsable text format. 
+<p>
+<dl compact>
+<dt><b>-c</b>,<b>--column</b>
+</dt>
+<dd> Print k-mers counts in column format: sequence count. 
+</dd>
+<dt><b>-f</b>,<b>--fasta</b>
+</dt>
+<dd> Print k-mers counts in fasta format. The header is the count. 
+</dd>
+<dt><b>-r</b>,<b>--recompute</b>
+</dt>
+<dd> Recompute statistics from the hash 
+table instead of the statistics in the header. 
+</dd>
+</dl>
+<p>
+By default, it displays the statistics in the header of the file. These are: 
+<p>
+<dl compact>
+<dt>Unique:</dt>
+<dd> Number of k-mers which occur only once. 
+</dd>
+<dt>Distinct:</dt>
+<dd> Number of k-mers, not counting multiplicity. 
+</dd>
+<dt>Total:</dt>
+<dd> Number of k-mers including multiplicity. 
+</dd>
+<dt>Max_count:</dt>
+<dd> Maximum number of occurrence of a k-mer. 
+</dd>
+</dl>
+<p>
+<h4><a name="section_6">histo</a></h4>
+
+<p>
+Create an histogram with the number of k-mers having a given count. In bucket i are tallied the k-mers which have a count c satisfying low+i*inc<=c<low+(i+1)*inc. Buckets in the output are labeled by the low end point (low+i*inc). 
+<p>
+The last bucket in the output behaves as a catchall: it tallies all 
+k-mers with a count greater or equal to the low end point of this 
+bucket. 
+<p>
+<dl compact>
+<dt><b>-h</b>,
+<b>--high=</b><i>HIGH</i>
+</dt>
+<dd> High count bucket value. 
+</dd>
+<dt><b>-i</b>,
+<b>--increment=</b><i>INC</i>
+</dt>
+<dd> Increment for bucket value. 
+</dd>
+<dt><b>-l</b>,
+<b>--low=</b><i>LOW</i>
+</dt>
+<dd> Low count bucket value. 
+</dd>
+</dl>
+<p>
+<h4><a name="section_7">query</a></h4>
+
+<p>
+Query a database created with <tt>jellyfish count</tt>.
+It reads 
+k-mers from the standard input and write the counts on the standard 
+output. For example: 
+<p>
+<pre>
+$ echo "AAAAA ACGTA" | jellyfish query database
+AAAAA 12
+ACGTA 3
+</pre>
+<p>
+<dl compact>
+<dt>--both-strands</dt>
+<dd> Report the count for the canonical version of 
+the k-mers read from standard input. 
+</dd>
+</dl>
+<p>
+<h2><a name="section_8">Version</a></h2>
+
+<p>
+Version: 0.9 of 2010/10/1
+<p>
+<h2><a name="section_9">Bugs</a></h2>
+
+<p>
+<ul compact>
+<li><tt>jellyfish merge</tt> has not been parallelized and is very
+slow. 
+</li>
+</ul>
+<p>
+<h2><a name="section_10">Copyright &amp; License</a></h2>
+
+<dl compact>
+<dt>Copyright</dt>
+<dd> &copy; 2010, Guillaume Marcais <a href ="mailto:guillaume@marcais.net"><tt>guillaume@marcais.net</tt></a>
+and Carl Kingsford <a href ="mailto:carlk@umiacs.umd.edu"><tt>carlk@umiacs.umd.edu</tt></a>.
+<p>
+</dd>
+<dt>License</dt>
+<dd> This program is free software: you can redistribute it 
+and/or modify it under the terms of the GNU General Public License 
+as published by the Free Software Foundation, either version 3 of 
+the License, or (at your option) any later version. <br>
+
+This program is distributed in the hope that it will be useful, but 
+WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+General Public License for more details. <br>
+
+You should have received a copy of the GNU General Public License 
+along with this program. If not, see 
+<<a href ="http://www.gnu.org/licenses/"><tt>http://www.gnu.org/licenses/</tt></a>>.
+</dd>
+</dl>
+<p>
+<h2><a name="section_11">Authors</a></h2>
+
+Guillaume Marcais <br>
+
+University of Maryland <br>
+
+<a href ="mailto:guillaume@marcais.net"><tt>guillaume@marcais.net</tt></a>
+<p>
+Carl Kingsford <br>
+
+University of Maryland <br>
+
+<a href ="mailto:carlk@umiacs.umd.edu"><tt>carlk@umiacs.umd.edu</tt></a>
+<p>
+</body>
+</html>
+<!-- NOTE: This file is generated, DO NOT EDIT. -->
