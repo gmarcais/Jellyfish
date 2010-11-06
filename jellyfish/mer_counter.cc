@@ -11,7 +11,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+    along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <config.h>
@@ -59,6 +59,7 @@ static struct argp_option options[] = {
   {"buffer-size",       OPT_BUF_SIZE,	"SIZE", 0, "Size of a buffer"},
   {"out-buffer-size",   OPT_OBUF_SIZE,  "SIZE", 0, "Size of output buffer per thread"},
   {"hash-size",         's',		"SIZE", 0, "Initial hash size"},
+  {"size",              's',		"SIZE", 0, "Initial hash size"},
   {"reprobes",          'p',    "NB",   0, "Maximum number of reprobing"},
   {"no-write",          'w',		0,      0, "Don't write hash to disk"},
   {"raw",               'r',		0,      0, "Dump raw database"},
@@ -69,11 +70,11 @@ static struct argp_option options[] = {
 struct arguments {
   unsigned long	 nb_threads;
   unsigned long	 buffer_size;
-  unsigned int	 nb_buffers;
-  unsigned int	 mer_len;
-  unsigned int	 counter_len;
-  unsigned int	 out_counter_len;
-  unsigned int   reprobes;
+  unsigned long	 nb_buffers;
+  unsigned long	 mer_len;
+  unsigned long	 counter_len;
+  unsigned long	 out_counter_len;
+  unsigned long   reprobes;
   unsigned long	 size;
   unsigned long	 out_buffer_size;
   bool           no_write;
@@ -83,34 +84,49 @@ struct arguments {
   char          *output;
 };
 
+static error_t parse_long(char *arg, struct argp_state *state, 
+                          unsigned long *res)
+{
+  char *endptr;
+  errno = 0;
+  *res = strtoul(arg, &endptr, 0);
+  if(errno)
+    return errno;
+  if(*arg == '\0' || *endptr != '\0') {
+    fprintf(stderr, "Invalid integer argument '%s'.\n", arg);
+    return EINVAL;
+  }
+  return 0;
+}
+
 static error_t parse_opt (int key, char *arg, struct argp_state *state)
 {
   struct arguments *arguments = (struct arguments *)state->input;
+  error_t error;
 
-#define ULONGP(field) errno = 0; \
-arguments->field = strtoul(arg,NULL,0); \
-if(errno) return errno; \
-break;
+#define ULONGP(field) \
+error = parse_long(arg, state, &arguments->field); \
+if(error) return(error); else break;
 
 #define FLAG(field) arguments->field = true; break;
 
 #define STRING(field) arguments->field = arg; break;
 
   switch(key) {
-  case 't': ULONGP(nb_threads); 
-  case 's': ULONGP(size);
-  case 'b': ULONGP(nb_buffers);
-  case 'm': ULONGP(mer_len);
-  case 'c': ULONGP(counter_len);
-  case 'p': ULONGP(reprobes);
+  case 't': ULONGP(nb_threads);
+  case 's': ULONGP(size); break;
+  case 'b': ULONGP(nb_buffers); break;
+  case 'm': ULONGP(mer_len); break;
+  case 'c': ULONGP(counter_len); break;
+  case 'p': ULONGP(reprobes); break;
   case 'w': FLAG(no_write);
   case 'r': FLAG(raw);
   case OPT_BOTH: FLAG(both_strands);
   case 'o': STRING(output);
-  case OPT_VAL_LEN: ULONGP(out_counter_len);
-  case OPT_BUF_SIZE: ULONGP(buffer_size);
+  case OPT_VAL_LEN: ULONGP(out_counter_len); break;
+  case OPT_BUF_SIZE: ULONGP(buffer_size); break;
   case OPT_TIMING: STRING(timing);
-  case OPT_OBUF_SIZE: ULONGP(out_buffer_size);
+  case OPT_OBUF_SIZE: ULONGP(out_buffer_size); break;
     
   default:
     return ARGP_ERR_UNKNOWN;
@@ -243,7 +259,13 @@ int count_main(int argc, char *argv[]) {
   arguments.both_strands    = false;
   arguments.timing          = NULL;
   arguments.output          = (char *)"mer_counts.hash";
-  argp_parse(&argp, argc, argv, 0, &arg_st, &arguments);
+  int error = argp_parse(&argp, argc, argv, 0, &arg_st, &arguments);
+  if(error) {
+    fprintf(stderr, "Error parsing arguments: %s\n", strerror(error));
+    argp_help(&argp, stderr, ARGP_HELP_SEE, argv[0]);
+    exit(1);
+  }
+
   if(arg_st == argc) {
     fprintf(stderr, "Missing arguments\n");
     argp_help(&argp, stderr, ARGP_HELP_SEE, argv[0]);
