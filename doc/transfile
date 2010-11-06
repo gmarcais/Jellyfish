@@ -1,0 +1,19 @@
+my @opt1_types = ('Opt', 'oOpt');
+for my $otype (@opt1_types) {
+    $manMacro1a{'L' . $otype} = $manMacro1a{$otype} . '--';
+    $manMacro1b{'L' . $otype} = $manMacro1b{$otype};
+
+    $htmlMacro1a{'L' . $otype} = $htmlMacro1a{$otype} . '--';
+    $htmlMacro1b{'L' . $otype} = $htmlMacro1b{$otype};
+}
+
+my @opt2_types = ('OptArg', 'oOptArg', 'OptoArg', 'oOptoArg');
+for my $otype (@opt2_types) {
+    $manMacro2a{'L' . $otype} = $manMacro2a{$otype} . '--';
+    $manMacro2b{'L' . $otype} = $manMacro2b{$otype};
+    $manMacro2c{'L' . $otype} = $manMacro2c{$otype};
+
+    $htmlMacro2a{'L' . $otype} = $htmlMacro2a{$otype} . '--';
+    $htmlMacro2b{'L' . $otype} = $htmlMacro2b{$otype};
+    $htmlMacro2c{'L' . $otype} = $htmlMacro2c{$otype};
+}

@@ -1,4 +1,4 @@
-L2M = latex2man
+L2M = latex2man -t transfile
 MI = makeinfo
 PDFLATEX = pdflatex
 

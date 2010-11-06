@@ -1,5 +1,5 @@
 '\" t
-.\" Manual page created with latex2man on Fri Nov  5 13:25:16 EDT 2010
+.\" Manual page created with latex2man on Fri Nov  5 23:57:00 EDT 2010
 .\" NOTE: This file is generated, DO NOT EDIT.
 .de Vb
 .ft CW
@@ -24,7 +24,7 @@ jellyfish count
 [\fB\-m\fP\fImerlength\fP]
 [\fB\-t\fP\fIthreads\fP]
 [\fB\-s\fP\fIhashsize\fP]
-[\fB\-\-both\-strands\fP]
+[\fB--both\-strands\fP]
 \fIfasta\fP
 [\fIfasta \&...
 \fP]
@@ -35,13 +35,17 @@ jellyfish merge
 \&...
 .br
 jellyfish stats
-[\fB\-\-fasta\fP]
+[\fB--fasta\fP]
+[\fB\-c\fP]
 \fIhash\fP
 .br
 jellyfish histo
 [\fB\-h\fP\fIhigh\fP]
 [\fB\-l\fP\fIlow\fP]
 [\fB\-i\fP\fIincrement\fP]
+\fIhash\fP
+.br
+jellyfish query
 \fIhash\fP
 .PP
 .SH DESCRIPTION
@@ -80,7 +84,7 @@ For sequencing reads, use a value for
 large enough to counts up to twice the coverage. 
 .PP
 When the orientation of the sequences in the input fasta file is not 
-known, e.g. in sequencing reads, using \fB\-\-both\-strands\fP
+known, e.g. in sequencing reads, using \fB--both\-strands\fP
 makes the most sense. 
 .PP
 .SH OPTIONS
@@ -95,7 +99,7 @@ files on and not pipes, as the files are memory mapped into memory.
 .PP
 .TP
 \fB\-o\fP,
-\fB\-\-output=\fP\fIprefix\fP
+\fB--output=\fP\fIprefix\fP
  Output file prefix. Results will be store 
 in files with the format prefix_#,
 where # is a number 
@@ -103,20 +107,20 @@ starting at 0. More than one file will be written if all the
 k\-mers could not be counted in the given size. 
 .TP
 \fB\-m\fP,
-\fB\-\-mer\-len=\fP\fImerlength\fP
+\fB--mer\-len=\fP\fImerlength\fP
  Length of mer to 
 count. I.e. value of k in k\-mer. 
 .TP
 \fB\-t\fP,
-\fB\-\-threads=\fP\fINB\fP
+\fB--threads=\fP\fINB\fP
  Number of threads. 
 .TP
 \fB\-s\fP,
-\fB\-\-size=\fP\fIhashsize\fP
+\fB--size=\fP\fIhashsize\fP
  Size of hash table. This 
 will be rounded up to the next power of two. 
 .TP
-\fB\-\-both\-strands\fP
+\fB--both\-strands\fP
  Collapse counters for a k\-mer and its 
 reverse complement. I.e., when jellyfish
 encounters a k\-mer 
@@ -125,19 +129,19 @@ first in lexicographic order (call it the canonical representation)
 and increments the counter for this canonical representation. 
 .TP
 \fB\-p\fP,
-\fB\-\-reprobes=\fP\fINB\fP
+\fB--reprobes=\fP\fINB\fP
  Maximum reprobe 
 value. This determine the usage of the hash table (i.e. % of 
 entries used in hash) before being deemed full and written to disk. 
 .TP
-\fB\-\-timing=\fP\fIfile\fP
+\fB--timing=\fP\fIfile\fP
  Write detailed timing information to 
 file\&.
 .TP
-\fB\-\-no\-write\fP
+\fB--no\-write\fP
  Do not write result file. Used for timing only. 
 .TP
-\fB\-\-out\-counter\-len=\fP\fILEN\fP
+\fB--out\-counter\-len=\fP\fILEN\fP
  Length of the counter field in 
 the output (in bytes). The value of the counter for any k\-mer is 
 capped at the maximum value that can be encoded in this number of 
@@ -149,13 +153,13 @@ Display statistics or dump full content of hash table in an easily
 parsable text format. 
 .PP
 .TP
-\fB\-c\fP,\fB\-\-column\fP
+\fB\-c\fP,\fB--column\fP
  Print k\-mers counts in column format: sequence count. 
 .TP
-\fB\-f\fP,\fB\-\-fasta\fP
+\fB\-f\fP,\fB--fasta\fP
  Print k\-mers counts in fasta format. The header is the count. 
 .TP
-\fB\-r\fP,\fB\-\-recompute\fP
+\fB\-r\fP,\fB--recompute\fP
  Recompute statistics from the hash 
 table instead of the statistics in the header. 
 .PP
@@ -184,15 +188,15 @@ bucket.
 .PP
 .TP
 \fB\-h\fP,
-\fB\-\-high=\fP\fIHIGH\fP
+\fB--high=\fP\fIHIGH\fP
  High count bucket value. 
 .TP
 \fB\-i\fP,
-\fB\-\-increment=\fP\fIINC\fP
+\fB--increment=\fP\fIINC\fP
  Increment for bucket value. 
 .TP
 \fB\-l\fP,
-\fB\-\-low=\fP\fILOW\fP
+\fB--low=\fP\fILOW\fP
  Low count bucket value. 
 .PP
 .SS QUERY
@@ -209,8 +213,8 @@ ACGTA 3
 .Ve
 .PP
 .TP
-\-\-both\-strands 
-Report the count for the canonical version of 
+\fB--both\-strands\fP
+ Report the count for the canonical version of 
 the k\-mers read from standard input. 
 .PP
 .SH VERSION

@@ -20,6 +20,13 @@
 \message{no fancyhdr or fancyheadings package present, discard it}
 }}
 
+\newcommand{\ddash}[1]{-\,-#1}
+\newcommand{\LOpt}[1]{\Opt{\ddash{#1}}}
+\newcommand{\LoOpt}[1]{\oOpt{\ddash{#1}}}
+\newcommand{\LOptArg}[2]{\OptArg{\ddash{#1}}{#2}}
+\newcommand{\LoOptArg}[2]{\oOptArg{\ddash{#1}}{#2}}
+\newcommand{\LoOptoArg}[2]{\oOptoArg{\ddash{#1}}{#2}}
+
 \setVersion{0.9}
 \setDate{2010/10/1}
 
@@ -32,10 +39,11 @@
 \end{Name}
 
 \section{Synopsis}
-\Prog{jellyfish count} \oOptArg{-o}{prefix} \oOptArg{-m}{merlength} \oOptArg{-t}{threads} \oOptArg{-s}{hashsize} \oOpt{--both-strands} \Arg{fasta} \oArg{fasta \Dots} \\
+\Prog{jellyfish count} \oOptArg{-o}{prefix} \oOptArg{-m}{merlength} \oOptArg{-t}{threads} \oOptArg{-s}{hashsize} \LoOpt{both-strands} \Arg{fasta} \oArg{fasta \Dots} \\
 \Prog{jellyfish merge} \Arg{hash1} \Arg{hash2} \Dots \\
-\Prog{jellyfish stats} \oOpt{--fasta} \Arg{hash} \\
-\Prog{jellyfish histo} \oOptArg{-h}{high} \oOptArg{-l}{low} \oOptArg{-i}{increment} \Arg{hash}
+\Prog{jellyfish stats} \LoOpt{fasta} \oOpt{-c} \Arg{hash} \\
+\Prog{jellyfish histo} \oOptArg{-h}{high} \oOptArg{-l}{low} \oOptArg{-i}{increment} \Arg{hash} \\
+\Prog{jellyfish query} \Arg{hash}
 
 \section{Description}
 
@@ -66,7 +74,7 @@ where most of the sequence is unique, use \OptArg{-c}{1} or
 \Opt{-c} large enough to counts up to twice the coverage.
 
 When the orientation of the sequences in the input fasta file is not
-known, e.g. in sequencing reads, using \Opt{--both-strands} makes the most sense.
+known, e.g. in sequencing reads, using \LOpt{both-strands} makes the most sense.
 
 \section{Options}
 
@@ -78,27 +86,27 @@ the sequences in the fasta files. On the other hand, they must be
 files on and not pipes, as the files are memory mapped into memory.
 
 \begin{description}
-\item[\Opt{-o},\OptArg{--output=}{prefix}] Output file prefix. Results will be store
+\item[\Opt{-o},\LOptArg{output=}{prefix}] Output file prefix. Results will be store
   in files with the format \File{prefix\_\#}, where \# is a number
   starting at 0. More than one file will be written if all the
   $k$-mers could not be counted in the given size.
-\item[\Opt{-m},\OptArg{--mer-len=}{merlength}] Length of mer to
+\item[\Opt{-m},\LOptArg{mer-len=}{merlength}] Length of mer to
   count. I.e. value of $k$ in $k$-mer.
-\item[\Opt{-t},\OptArg{--threads=}{NB}] Number of threads.
-\item[\Opt{-s},\OptArg{--size=}{hashsize}] Size of hash table. This
+\item[\Opt{-t},\LOptArg{threads=}{NB}] Number of threads.
+\item[\Opt{-s},\LOptArg{size=}{hashsize}] Size of hash table. This
   will be rounded up to the next power of two.
-\item[\Opt{--both-strands}] Collapse counters for a $k$-mer and its
+\item[\LOpt{both-strands}] Collapse counters for a $k$-mer and its
   reverse complement. I.e., when \Prog{jellyfish} encounters a $k$-mer
   $m$, it checks which of $m$ or the reverse complement of $m$ comes
   first in lexicographic order (call it the canonical representation)
   and increments the counter for this canonical representation.
-\item[\Opt{-p},\OptArg{--reprobes=}{NB}] Maximum reprobe
+\item[\Opt{-p},\LOptArg{reprobes=}{NB}] Maximum reprobe
   value. This determine the usage of the hash table (i.e. \% of
   entries used in hash) before being deemed full and written to disk.
-\item[\OptArg{--timing=}{file}] Write detailed timing information to
+\item[\LOptArg{timing=}{file}] Write detailed timing information to
   \File{file}.
-\item[\Opt{--no-write}] Do not write result file. Used for timing only.
-\item[\OptArg{--out-counter-len=}{LEN}] Length of the counter field in
+\item[\LOpt{no-write}] Do not write result file. Used for timing only.
+\item[\LOptArg{out-counter-len=}{LEN}] Length of the counter field in
   the output (in bytes). The value of the counter for any $k$-mer is
   capped at the maximum value that can be encoded in this number of
   bytes.
@@ -110,9 +118,9 @@ Display statistics or dump full content of hash table in an easily
 parsable text format.
 
 \begin{description}
-\item[\Opt{-c},\Opt{--column}] Print $k$-mers counts in column format: sequence count.
-\item[\Opt{-f},\Opt{--fasta}] Print $k$-mers counts in fasta format. The header is the count.
-\item[\Opt{-r},\Opt{--recompute}] Recompute statistics from the hash
+\item[\Opt{-c},\LOpt{column}] Print $k$-mers counts in column format: sequence count.
+\item[\Opt{-f},\LOpt{fasta}] Print $k$-mers counts in fasta format. The header is the count.
+\item[\Opt{-r},\LOpt{recompute}] Recompute statistics from the hash
   table instead of the statistics in the header.
 \end{description}
 
@@ -134,9 +142,9 @@ $k$-mers with a count greater or equal to the low end point of this
 bucket.
 
 \begin{description}
-\item[\Opt{-h},\OptArg{--high=}{HIGH}] High count bucket value.
-\item[\Opt{-i},\OptArg{--increment=}{INC}] Increment for bucket value.
-\item[\Opt{-l},\OptArg{--low=}{LOW}] Low count bucket value.
+\item[\Opt{-h},\LOptArg{high=}{HIGH}] High count bucket value.
+\item[\Opt{-i},\LOptArg{increment=}{INC}] Increment for bucket value.
+\item[\Opt{-l},\LOptArg{low=}{LOW}] Low count bucket value.
 \end{description}
 
 \subsection{query}
@@ -152,7 +160,7 @@ ACGTA 3
 \end{verbatim}
 
 \begin{description}
-\item[--both-strands] Report the count for the canonical version of
+\item[\LOpt{both-strands}] Report the count for the canonical version of
   the $k$-mers read from standard input.
 \end{description}
 

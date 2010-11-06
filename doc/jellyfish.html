@@ -1,5 +1,5 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-<!-- Manual page created with latex2man on Fri Nov  5 13:25:16 EDT 2010 --
+<!-- Manual page created with latex2man on Fri Nov  5 23:57:00 EDT 2010 --
 -- Author of latex2man: Juergen.Vollmer@informatik-vollmer.de --
 -- NOTE: This file is generated, DO NOT EDIT. -->
 <html>
@@ -49,12 +49,16 @@ is a software to count k-mers in DNA sequences.
 ...<br>
 <tt>jellyfish stats</tt>
 [<b>--fasta</b>]
+[<b>-c</b>]
 <i>hash</i>
 <br>
 <tt>jellyfish histo</tt>
 [<b>-h</b><i>high</i>]
 [<b>-l</b><i>low</i>]
 [<b>-i</b><i>increment</i>]
+<i>hash</i>
+<br>
+<tt>jellyfish query</tt>
 <i>hash</i>
 <p>
 <h2><a name="section_2">Description</a></h2>
@@ -249,7 +253,8 @@ ACGTA 3
 </pre>
 <p>
 <dl compact>
-<dt>--both-strands</dt>
+<dt><b>--both-strands</b>
+</dt>
 <dd> Report the count for the canonical version of 
 the k-mers read from standard input. 
 </dd>
