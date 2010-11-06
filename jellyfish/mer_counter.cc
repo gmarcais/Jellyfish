@@ -29,6 +29,7 @@
 #include <sys/mman.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include "misc.hpp"
 #include "time.hpp"
 #include "mer_counting.hpp"
 #include "locks_pthread.hpp"
@@ -74,7 +75,7 @@ struct arguments {
   unsigned long	 mer_len;
   unsigned long	 counter_len;
   unsigned long	 out_counter_len;
-  unsigned long   reprobes;
+  unsigned long  reprobes;
   unsigned long	 size;
   unsigned long	 out_buffer_size;
   bool           no_write;
@@ -84,29 +85,14 @@ struct arguments {
   char          *output;
 };
 
-static error_t parse_long(char *arg, struct argp_state *state, 
-                          unsigned long *res)
-{
-  char *endptr;
-  errno = 0;
-  *res = strtoul(arg, &endptr, 0);
-  if(errno)
-    return errno;
-  if(*arg == '\0' || *endptr != '\0') {
-    fprintf(stderr, "Invalid integer argument '%s'.\n", arg);
-    return EINVAL;
-  }
-  return 0;
-}
-
 static error_t parse_opt (int key, char *arg, struct argp_state *state)
 {
   struct arguments *arguments = (struct arguments *)state->input;
   error_t error;
 
 #define ULONGP(field) \
-error = parse_long(arg, state, &arguments->field); \
-if(error) return(error); else break;
+  error = parse_long(arg, &std::cerr, &arguments->field);       \
+  if(error) return(error); else break;
 
 #define FLAG(field) arguments->field = true; break;
 

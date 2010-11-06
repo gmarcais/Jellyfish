@@ -30,8 +30,11 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <string.h>
+#include <errno.h>
 #include <exception>
 #include <new>
+#include <ostream>
 
 #define bsizeof(v)      (8 * sizeof(v))
 #define PRINTVAR(v) {std::cout << __LINE__ << " " #v ": " << v << std::endl; }
@@ -129,6 +132,7 @@ public:
 };
 
 uint64_t bogus_sum(void *data, size_t len);
+int parse_long(char *arg, std::ostream *err, unsigned long *res);
 
 template <typename T>
 size_t bits_to_bytes(T bits) {

@@ -30,9 +30,9 @@
 #include <unistd.h>
 #include <sys/mman.h>
 
+#include "misc.hpp"
 #include "mer_counting.hpp"
 #include "compacted_hash.hpp"
-#include "misc.hpp"
 #include "heap.hpp"
 
 #define MAX_KMER_SIZE 32
@@ -57,10 +57,10 @@ static struct argp_option options[] = {
 };
 
 struct arguments {
-  bool         fasta;
-  const char * output;
-  unsigned int out_counter_len;
-  size_t       out_buffer_size;
+  bool          fasta;
+  const char *  output;
+  unsigned long out_counter_len;
+  size_t        out_buffer_size;
 };
 
 
@@ -70,11 +70,11 @@ struct arguments {
 static error_t parse_opt(int key, char *arg, struct argp_state *state)
 {
   struct arguments *arguments = (struct arguments *)state->input;
+  error_t error;
 
-#define ULONGP(field) errno = 0;					\
-  arguments->field = (typeof(arguments->field))strtoul(arg,NULL,0);     \
-  if(errno) return errno;						\
-  break;
+#define ULONGP(field) \
+  error = parse_long(arg, &std::cerr, &arguments->field);       \
+  if(error) return(error); else break;
 
 #define FLAG(field) arguments->field = true; break;
 #define STRING(field) arguments->field = arg; break;

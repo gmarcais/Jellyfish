@@ -22,6 +22,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include "misc.hpp"
 #include "mer_counting.hpp"
 #include "compacted_hash.hpp"
 
@@ -49,11 +50,11 @@ struct arguments {
 static error_t parse_opt (int key, char *arg, struct argp_state *state)
 {
   struct arguments *arguments = (struct arguments *)state->input;
+  error_t error;
 
-#define ULONGP(field) errno = 0; \
-arguments->field = (typeof(arguments->field))strtoul(arg,NULL,0);     \
-if(errno) return errno; \
-break;
+#define ULONGP(field) \
+  error = parse_long(arg, &std::cerr, &arguments->field);       \
+  if(error) return(error); else break;
 
 #define FLAG(field) arguments->field = true; break;
 
