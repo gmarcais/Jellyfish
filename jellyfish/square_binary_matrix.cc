@@ -19,9 +19,6 @@
 #include <iostream>
 #include <sstream>
 
-SquareBinaryMatrix::SingularMatrix singular_matrix_ex;
-SquareBinaryMatrix::MismatchingSize mismatching_size_ex;
-
 void SquareBinaryMatrix::init_random() {
   uint64_t _mask = mask();
   int i, j;
@@ -59,7 +56,7 @@ SquareBinaryMatrix SquareBinaryMatrix::operator*(const SquareBinaryMatrix &other
   SquareBinaryMatrix res(size);
 
   if(size != other.get_size()) 
-    throw mismatching_size_ex;
+    throw_error<MismatchingSize>("Multiplication operator dimension mismatch: %1$ldx%1$ld != %2$ldx%2$lddoes not match", size, other.get_size());
   
   for(i = 0; i < size; i++) {
     res[i] = this->times(other[i]);
@@ -82,7 +79,7 @@ SquareBinaryMatrix SquareBinaryMatrix::inverse() const {
         if((pivot.columns[j] >> (size - i - 1)) & (uint64_t)0x1)
           break;
       if(j >= size)
-	throw singular_matrix_ex;
+	throw_error<SingularMatrix>("Matrix is singular");
       pivot.columns[i] ^= pivot.columns[j];
       res.columns[i] ^= res.columns[j];
     }

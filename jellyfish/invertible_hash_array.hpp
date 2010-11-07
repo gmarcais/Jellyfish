@@ -33,11 +33,8 @@
 
 namespace jellyfish {
   namespace invertible_hash {
-    class InvalidMap : public std::exception {
-      virtual const char* what() const throw() {
-        return "Mapped region is invalid";
-      }
-    };
+    define_error_class(InvalidMap);
+    define_error_class(ErrorAllocation);
 
     /* (key,value) pair bit-packed array.  It implements the logic of the
      * packed hash except for size doubling. Setting or incrementing a key
@@ -94,23 +91,25 @@ namespace jellyfish {
         hash_matrix(key_len), 
         hash_inverse_matrix(hash_matrix.init_random_inverse())
       {
-        if(!data) {
-          // TODO: should throw an error
-          std::cerr << "allocation failed";
-        }
+        if(!data)
+          throw_error<ErrorAllocation>("Failed to allocate %ld bytes of memory",
+                                       div_ceil(size, (size_t)offsets.get_block_len()) * offsets.get_block_word_len() * sizeof(word));
       }
       
       array(char *map, size_t length) :
         hash_matrix(0), hash_inverse_matrix(0) {
         if(length < sizeof(struct header))
-          throw new InvalidMap();
+          throw_error<InvalidMap>("File truncated");
         struct header *header = (struct header *)map;
-        // TODO: Should make more consistency check on the map...
         size = header->size;
+        if(size != (1UL << floorLog2(size)))
+          throw_error<InvalidMap>("Size '%ld' is not a power of 2", size);
         lsize = ceilLog2(size);
         size_mask = size - 1;
         reprobe_limit = header->reprobe_limit;
         key_len = header->klen;
+        if(key_len > 64 || key_len == 0)
+          throw_error<InvalidMap>("Invalid key length '%ld'", key_len);
         offsets.init(key_len + bitsize(reprobe_limit + 1) - lsize, header->clen,
                      reprobe_limit);
         key_mask = (((word)1) << (key_len - lsize)) - 1;

@@ -19,6 +19,7 @@
 namespace jellyfish {
   template<typename storage_t, typename atomic_t>
   class compacted_dumper : public dumper_t {
+    define_error_class(ErrorWriting);
     typedef typename storage_t::iterator iterator;
     typedef compacted_hash::writer<storage_t> writer_t;
     struct thread_info_t {
@@ -51,6 +52,7 @@ namespace jellyfish {
       threads(_threads), file_prefix(_file_prefix), buffer_size(_buffer_size),
       klen(_ary->get_key_len()), vlen(_vlen), ary(_ary), file_index(0)
     {
+      std::cerr << "Compacted dumper init" << std::endl;
       key_len    = bits_to_bytes(klen);
       val_len    = bits_to_bytes(vlen);
       max_count  = (((uint64_t)1) << (8*val_len)) - 1;
@@ -90,18 +92,29 @@ namespace jellyfish {
   template<typename storage_t, typename atomic_t>
   void compacted_dumper<storage_t,atomic_t>::dump() {
     static const long file_len = pathconf("/", _PC_PATH_MAX);
-
+    std::cerr << "dump()" << std::endl;
     char file[file_len + 1];
     file[file_len] = '\0';
     int off = snprintf(file, file_len, "%s", file_prefix.c_str());
-    if(off > 0 && off < file_len)
-      off += snprintf(file + off, file_len - off, "_%" PRIUINTu, file_index++);
-    if(off < 0 || off >= file_len)
-      return; // TODO: Should throw an error
+    if(off < 0)
+      throw_perror<ErrorWriting>("Error creating output path");
+    if(off > 0 && off < file_len) {
+      int _off = snprintf(file + off, file_len - off, "_%" PRIUINTu, file_index++);
+      if(_off < 0)
+        throw_perror<ErrorWriting>("Error creating output path");
+      off += _off;
+    }
+    if(off >= file_len)
+      throw_error<ErrorWriting>("File path is too long");
       
+    
+    //    out.exceptions(std::ios::eofbit|std::ios::failbit|std::ios::badbit);
+    std::cerr << "Open " << file << std::endl;
     out.open(file);
-    if(out.fail())
-      return; // TODO: Should throw an error
+    if(!out.good()) {
+      std::cerr << "Throw ErrorWriting" << std::endl;
+      throw_perror<ErrorWriting>("Can't open file '%s' for writing", file);
+    }
 
     out.write("JFLISTDN", 8);
     unique = distinct = total = 0;

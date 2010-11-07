@@ -24,6 +24,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <jellyfish/mapped_file.hpp>
 #include <jellyfish/locks_pthread.hpp>
 #include <jellyfish/misc.hpp>
 #include <jellyfish/square_binary_matrix.hpp>
@@ -36,7 +37,7 @@ namespace jellyfish {
      operation and manages dumping the hash to disk. The storage class
      is reponsible for the details of storing the key,value pairs,
      memory management, reprobing, etc.
-   */
+  */
 
   class hash_t {
   public:
@@ -46,17 +47,11 @@ namespace jellyfish {
   template<typename key_t, typename val_t, typename ary_t, typename atomic_t>
   class hash : public hash_t {
   public:
+    define_error_class(TableFull);
     typedef typename std::pair<key_t,val_t> kv_t;
     typedef ary_t storage_t;
     typedef typename ary_t::iterator iterator;
 
-    class TableFull : public std::exception {
-      virtual const char* what() const throw() {
-        return "Table is full";
-      }
-    };
-    class MappingError : public StandardError { };
-    
     hash() : ary(NULL), dumper(NULL) {}
     hash(ary_t *_ary) : ary(_ary), dumper(NULL) {}
     hash(char *map, size_t length) : 
@@ -70,26 +65,10 @@ namespace jellyfish {
     virtual ~hash() {}
 
     void open(const char *filename, bool sequential) {
-      struct stat finfo;
-      char *map;
-      int fd = ::open(filename, O_RDONLY);
-
-      std::cerr << "opening " << filename << " sequential " << sequential << std::endl;
-      if(fd < 0)
-        throw new StandardError(errno, "Can't open file '%s'", filename);
-      if(fstat(fd, &finfo) < 0)
-        throw new StandardError(errno, "Can't stat '%s'",
-                                filename);
-      map = (char *)mmap(NULL, finfo.st_size, PROT_READ, MAP_SHARED, fd, 0);
-      if(map == MAP_FAILED)
-        throw new StandardError(errno, "Can't mmap '%s'", filename);
-      if(sequential) {
-        int adv = madvise(map, finfo.st_size, MADV_SEQUENTIAL);
-        if (adv != 0)
-          throw new StandardError(errno, "Can't set memory parameters");
-      }
-      close(fd);
-      ary = new ary_t(map, finfo.st_size);
+      mapped_file mf(filename);
+      if(sequential)
+        mf.sequential();
+      ary = new ary_t(mf.base(), mf.length());
     }
 
     size_t get_size() const { return ary->get_size(); }
@@ -173,7 +152,8 @@ namespace jellyfish {
     void dump() {
       if(dumper)
         dumper->dump();
-      // TODO: should throw an error if dumper == NULL ?
+      else
+        throw_error<TableFull>("No dumper defined");
     }
 
   private:

@@ -23,6 +23,7 @@
 #include <stdexcept>
 #include <string>
 #include <string.h>
+#include "misc.hpp"
 
 class thread_exec {
   struct thread_info {
@@ -34,6 +35,7 @@ class thread_exec {
   std::vector<struct thread_info> infos;
 
 public:
+  define_error_class(Error);
   thread_exec() {}
   virtual ~thread_exec() {}
   virtual void start(int id) = 0;

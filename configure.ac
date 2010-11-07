@@ -20,7 +20,9 @@ AC_ARG_WITH([sse],
 AS_IF([test "x$with_sse" != xno],
       [AC_DEFINE([HAVE_SSE], [1], [Define if you have SSE])],
       [])
-      
+
+# Check the version of strerror_r
+AC_FUNC_STRERROR_R      
 
 LT_INIT
 AC_OUTPUT

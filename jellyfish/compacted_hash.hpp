@@ -27,15 +27,7 @@
 
 namespace jellyfish {
   namespace compacted_hash {
-    class ErrorReading : public std::exception {
-      std::string msg;
-    public:
-      ErrorReading(const std::string _msg) : msg(_msg) { }
-      virtual ~ErrorReading() throw() {}
-      virtual const char* what() const throw() {
-        return msg.c_str();
-      }
-    };
+    define_error_class(ErrorReading);
 
     static const char *file_type = "JFLISTDN";
     struct header {
@@ -52,7 +44,9 @@ namespace jellyfish {
       header() { }
       header(char *ptr) {
         if(memcmp(ptr, file_type, sizeof(file_type)))
-          throw new ErrorReading("Bad file type");
+          throw_error<ErrorReading>("Bad file type '%.*s', expected '%.*s'",
+                                    sizeof(file_type), ptr,
+                                    sizeof(file_type), file_type);
         memcpy((void *)this, ptr, sizeof(struct header));
       }
     };
@@ -180,10 +174,15 @@ namespace jellyfish {
         io = new ifstream(filename.c_str());
         io->read((char *)&header, sizeof(header));
         if(!io->good())
-          throw new ErrorReading("Error reading header");
-        if(memcmp(header.type, file_type, sizeof(file_type))) {
-          throw new ErrorReading("Bad file type");
-        }
+          throw_error<ErrorReading>("File truncated");
+        if(memcmp(header.type, file_type, sizeof(file_type)))
+          throw_error<ErrorReading>("Bad file type '%.*s', expected '%.*s'",
+                                    sizeof(file_type), header.type,
+                                    sizeof(file_type), file_type);
+        if(header.key_len > 64 || header.key_len == 0)
+          throw_error<ErrorReading>("Invalid key length '%ld'", header.key_len);
+        if(header.size != (1UL << floorLog2(header.size)))
+          throw_error<ErrorReading>("Size '%ld' is not a power of 2", header.size);
         key_len  = (header.key_len / 8) + (header.key_len % 8 != 0);
         record_len = key_len + header.val_len;
         buffer_len = record_len * (_buff_len / record_len);
@@ -194,7 +193,7 @@ namespace jellyfish {
         hash_matrix.load(io);
         hash_inverse_matrix.load(io);
         key = val = 0;
-        size_mask = header.size - 1; //TODO: check that header.size is a power of 2
+        size_mask = header.size - 1;
       }
 
       ~reader() {

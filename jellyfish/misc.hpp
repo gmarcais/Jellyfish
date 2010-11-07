@@ -24,6 +24,7 @@
 #define __STDC_CONSTANT_MACROS
 #endif
 
+#include <config.h>
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
@@ -33,6 +34,8 @@
 #include <string.h>
 #include <errno.h>
 #include <exception>
+#include <stdexcept>
+#include <string>
 #include <new>
 #include <ostream>
 
@@ -98,6 +101,66 @@ inline uint64_t reverse_bits(uint64_t v) {
 /* Like Perl's die function
  */
 void die(const char *msg, ...) __attribute__ ((noreturn, format(printf, 1, 2)));
+
+// String format
+std::string stringf(const char *fmt, va_list _ap);
+std::string stringf(const char *fmt, ...) __attribute__ ((format(printf, 1, 2)));
+
+// Errors
+#define define_error_class(name)                                    \
+  class name : public std::runtime_error {                          \
+  public: name(const std::string &txt) : std::runtime_error(txt) {} \
+  }
+
+template<typename T>
+void throw_error(const char *fmt, ...)
+{
+  va_list ap;
+
+  va_start(ap, fmt);
+  std::string txt = stringf(fmt, ap);
+  va_end(ap);
+  throw T(txt);
+}
+
+template<typename T>
+void throw_perror(const char *fmt, ...)
+{
+  va_list ap;
+  char *buf = NULL;
+
+#ifdef STRERROR_R_CHAR_P
+  char _buf[4096];
+  buf = strerror_r(errno, _buf, sizeof(_buf));
+#else
+  int save_error = errno;
+  int size = 1024;
+  int res;
+  while(true) {
+    buf = (char *)realloc(buf, size);
+    res = strerror_r(save_error, buf, size);
+    if(!res)
+      break;
+    if(errno == EINVAL)
+      save_error = errno;
+    else
+      size <<= 1;
+  }
+#endif
+
+  va_start(ap, fmt);
+  std::string txt = stringf(fmt, ap);
+  va_end(ap);
+
+  txt.append(": ");
+  txt.append(buf);
+
+#ifndef STRERROR_R_CHAR_P
+  free(buf);
+#endif
+
+  throw T(txt);
+}
 
 class StandardError : public std::exception {
   char msg[4096];

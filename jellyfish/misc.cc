@@ -62,3 +62,37 @@ int parse_long(char *arg, std::ostream *err, unsigned long *res)
   }
   return 0;
 }
+
+std::string stringf(const char *fmt, va_list _ap)
+{
+  char *buf = NULL;
+  int olength;
+  int length = 5;   // Initial guess                                                             
+  va_list ap;
+
+  do {
+    olength = length + 1;
+    buf = (char *)realloc(buf, olength);
+    va_copy(ap, _ap);
+    length = vsnprintf(buf, olength, fmt, ap);
+    if(length < 0) { // What should we do? Throw?                                                
+      strerror_r(errno, buf, olength);
+      return std::string(buf, olength);
+    }
+    va_end(ap);
+  } while(length > olength);
+  std::string res(buf, length);
+  free(buf);
+  return res;
+}
+
+std::string stringf(const char *fmt, ...)
+{
+  va_list ap;
+
+  va_start(ap, fmt);
+  std::string res = stringf(fmt, ap);
+  va_end(ap);
+
+  return res;
+}

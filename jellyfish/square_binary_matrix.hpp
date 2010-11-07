@@ -73,18 +73,9 @@ public:
     if(columns)
       free(columns);
   }
-  
-  class SingularMatrix : public std::exception {
-    virtual const char* what() const throw() {
-      return "Matrix is singular";
-    }
-  };
-  class MismatchingSize : public std::exception {
-    virtual const char  *what() const throw() {
-      return "Matrix sizes do not match";
-    }
-  };
 
+  define_error_class(SingularMatrix);
+  define_error_class(MismatchingSize);
 
   SquareBinaryMatrix &operator=(const SquareBinaryMatrix &rhs) {
     int i;
