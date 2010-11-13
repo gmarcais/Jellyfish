@@ -24,14 +24,12 @@
 #define __STDC_CONSTANT_MACROS
 #endif
 
-#include <config.h>
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdarg.h>
 #include <stdlib.h>
-#include <string.h>
 #include <errno.h>
 #include <exception>
 #include <stdexcept>
@@ -123,41 +121,20 @@ void throw_error(const char *fmt, ...)
   throw T(txt);
 }
 
+std::string strerror_string(int errnum);
+
 template<typename T>
 void throw_perror(const char *fmt, ...)
 {
   va_list ap;
-  char *buf = NULL;
-
-#ifdef STRERROR_R_CHAR_P
-  char _buf[4096];
-  buf = strerror_r(errno, _buf, sizeof(_buf));
-#else
-  int save_error = errno;
-  int size = 1024;
-  int res;
-  while(true) {
-    buf = (char *)realloc(buf, size);
-    res = strerror_r(save_error, buf, size);
-    if(!res)
-      break;
-    if(errno == EINVAL)
-      save_error = errno;
-    else
-      size <<= 1;
-  }
-#endif
+  std::string error = strerror_string(errno);
 
   va_start(ap, fmt);
   std::string txt = stringf(fmt, ap);
   va_end(ap);
 
   txt.append(": ");
-  txt.append(buf);
-
-#ifndef STRERROR_R_CHAR_P
-  free(buf);
-#endif
+  txt.append(error);
 
   throw T(txt);
 }

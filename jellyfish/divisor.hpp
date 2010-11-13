@@ -14,7 +14,7 @@
     along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <misc.hpp>
+#include <jellyfish/misc.hpp>
 #include <stdint.h>
 
 class divisor64 {

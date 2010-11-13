@@ -96,3 +96,34 @@ std::string stringf(const char *fmt, ...)
 
   return res;
 }
+
+std::string strerror_string(int errnum)
+{
+  char *buf = NULL;
+#ifdef STRERROR_R_CHAR_P
+  char _buf[4096];
+  buf = strerror_r(errnum, _buf, sizeof(_buf)) ;
+#else
+
+  int size = 1024;
+  int res;
+  while(true) {
+    char *nbuf = (char *)realloc(buf, size);
+    if(nbuf == NULL) {
+      // Now we are in real trouble!
+      buf = "Out of memory!";
+      break;
+    }
+    buf = nbuf;
+    res = strerror_r(errnum, buf, size);
+    if(!res)
+      break;
+    if(errno == EINVAL)
+      errnum = errno;
+    else
+      size <<= 1;
+  }
+#endif
+
+  return std::string(buf);
+}
