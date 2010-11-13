@@ -407,12 +407,19 @@ namespace jellyfish {
         return true;
       }
 
-      bool get_val(size_t id, word key, word &val, bool full = false) const {
-        word     *w, *kvw, nkey, nval;
-        offset_t *o, *lo;
-        uint_t    reprobe = 0;
-        size_t    cid = id;
-    
+      inline bool get_val(word key, word &val, bool full = false) const {
+        uint64_t hash = hash_matrix.times(key);
+        return get_val(hash & size_mask, (hash >> lsize) & key_mask, val, full);
+      }
+
+      bool get_val(const size_t id, const word key, word &val, 
+                   const bool full = false) const {
+        word           *w, *kvw, nkey, nval;
+        const offset_t *o, *lo;
+        uint_t          reprobe = 0;
+        size_t          cid     = id;
+        word            akey    = key | ((word)1 << key_off);
+
         // Find key
         while(true) {
           w   = offsets.get_word_offset(cid, &o, &lo, data);
@@ -426,12 +433,13 @@ namespace jellyfish {
             } else {
               nkey = (nkey & o->key.mask1) >> o->key.boff;
             }
-            if(nkey == key)
+            if(nkey == akey)
               break;
           }
           if(++reprobe > reprobe_limit)
             return false;
           cid = (id + reprobes[reprobe]) & size_mask;
+          akey = key | ((reprobe + 1) << key_off);
         }
 
         // Get value
@@ -443,7 +451,8 @@ namespace jellyfish {
 
         // Eventually get large values...
         if(full) {
-          cid = id = (cid + reprobes[0]) & size_mask;
+          const size_t bid = (cid + reprobes[0]) & size_mask;
+          cid = bid;
           reprobe = 0;
           do {
             w   = offsets.get_word_offset(cid, &o, &lo, data);
@@ -467,7 +476,7 @@ namespace jellyfish {
               }
             }
 
-            cid = (id + reprobes[++reprobe]) & size_mask;
+            cid = (bid + reprobes[++reprobe]) & size_mask;
           } while(reprobe <= reprobe_limit);
         }
 
@@ -487,7 +496,7 @@ namespace jellyfish {
         bool		 key_claimed = false;
         size_t		 cid         = id;
         word		 cary;
-        word		 akey        = large ? 0 : (key | (1 << key_off));
+        word		 akey        = large ? 0 : (key | ((word)1 << key_off));
 
         // Claim key
         do {
@@ -545,7 +554,7 @@ namespace jellyfish {
 
           // Adding failed, table is full. Need to back-track and
           // substract val.
-          cary = add_val(vw, (1 << offsets.get_val_len()) - val,
+          cary = add_val(vw, ((word)1 << offsets.get_val_len()) - val,
                          ao->val.boff, ao->val.mask1);
           cary >>= ao->val.shift;
           if(cary && ao->val.mask2) {

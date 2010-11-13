@@ -24,6 +24,7 @@
 #include <jellyfish/mapped_file.hpp>
 #include <jellyfish/square_binary_matrix.hpp>
 #include <jellyfish/fasta_parser.hpp>
+#include <jellyfish/atomic_gcc.hpp>
 
 namespace jellyfish {
   namespace compacted_hash {
@@ -291,6 +292,7 @@ namespace jellyfish {
       uint_t get_mer_len() const { return header.key_len / 2; }
       uint_t get_val_len() const { return header.val_len; }
       size_t get_size() const { return header.size; }
+      size_t get_nb_mers() const { return last_id; }
       uint64_t get_max_reprobe() const { return header.max_reprobe; }
       uint64_t get_max_reprobe_offset() const { return header.max_reprobe; }
       uint64_t get_unique() const { return header.unique; }
@@ -307,15 +309,31 @@ namespace jellyfish {
       val_t operator[] (const char *key_s) {
         return get_key_val(fasta_parser::mer_string_to_binary(key_s, get_mer_len()));
       }
-      val_t operator[] (key_t key) { return get_key_val(key); }
+      val_t operator[] (const key_t key) const { return get_key_val(key); }
 
-      void get_key(size_t id, key_t *k) { memcpy(k, base + id * record_len, key_len); }
-      void get_val(size_t id, val_t *v) { memcpy(v, base + id * record_len + key_len, val_len); }
-      uint64_t get_pos(key_t k) { return hash_matrix.times(k) & size_mask; }
+      void get_key(size_t id, key_t *k) const {
+        *k = 0;
+        memcpy(k, base + id * record_len, key_len);
+      }
+      void get_val(size_t id, val_t *v) const {
+        *v = 0;
+        memcpy(v, base + id * record_len + key_len, val_len);
+      }
+      uint64_t get_pos(key_t k) const { 
+        return hash_matrix.times(k) & size_mask;
+      }
         
-      
+      val_t get_key_val(const key_t key) const {
+        uint64_t id;
+        val_t res;
+        if(get_key_val_id(key, &res, &id))
+          return res;
+        else
+          return 0;
+      }
 
-      val_t get_key_val(const key_t _key) {
+      bool get_key_val_id(const key_t _key, val_t *res, 
+                          uint64_t *id) const {
         key_t key;
         if(canonical) {
           key = fasta_parser::reverse_complement(_key, get_mer_len());
@@ -324,18 +342,19 @@ namespace jellyfish {
         } else {
           key = _key;
         }
-        val_t res = 0;
         if(key == first_key) {
-          get_val(0, &res);
-          return res;
+          get_val(0, res);
+          *id = 0;
+          return true;
         }
         if(key == last_key) {
-          get_val(last_id - 1, &res);
-          return res;
+          get_val(last_id - 1, res);
+          *id = last_id;
+          return true;
         }
         uint64_t pos = get_pos(key);
         if(pos < first_pos || pos > last_pos)
-          return 0;
+          return false;
         uint64_t first = 0, last = last_id;
         while(first < last - 1) {
           uint64_t middle = (first + last) / 2;
@@ -343,8 +362,9 @@ namespace jellyfish {
           get_key(middle, &mid_key);
           //          printf("%ld %ld %ld %ld %ld %ld %ld\n", key, pos, first, middle, last, mid_key, get_pos(mid_key));
           if(key == mid_key) {
-            get_val(middle, &res);
-            return res;
+            get_val(middle, res);
+            *id = middle;
+            return true;
           }
           uint64_t mid_pos = get_pos(mid_key);
           if(mid_pos > pos || (mid_pos == pos && mid_key > key))
@@ -352,8 +372,65 @@ namespace jellyfish {
           else
             first = middle;
         }
-        return 0;
+        return false;
       }
+      
+      class iterator {
+        char                  *base;
+        uint64_t               last_id;
+        uint_t                 key_len;
+        uint_t                 val_len;
+        uint_t                 record_len;
+        uint64_t               id;
+        atomic::gcc<uint64_t>  atomic;
+
+        key_t key;
+        val_t val;
+
+      public:
+        iterator(char *_base, uint64_t _last_id, uint_t _key_len, uint_t _val_len) :
+          base(_base), last_id(_last_id), key_len(_key_len), val_len(_val_len),
+          record_len(key_len + val_len), id(0) {}
+
+        key_t get_key() const { return key; }
+        val_t get_val() const { return val; }
+        uint64_t get_id() const { return id; }
+
+        bool next() {
+          if(id >= last_id - 1)
+            return false;
+          id++;
+          char *ptr = base + id * record_len;
+          key = 0;
+          memcpy(&key, ptr, key_len);
+          ptr += key_len;
+          val = 0;
+          memcpy(&val, ptr, val_len);
+          return true;
+        }
+
+        bool next(uint64_t *_id, key_t *_key, val_t *_val) {
+          if(id >= last_id - 1)
+            return false;
+          *_id = atomic.add_fetch(&id, 1) - 1;
+          if(*_id >= last_id)
+            return false;
+          char *ptr = base + (*_id) * record_len;
+          *_key = 0;
+          memcpy(_key, ptr, key_len);
+          ptr += key_len;
+          *_val = 0;
+          memcpy(_val, ptr, val_len);
+          return true;
+        }
+
+        inline bool next(key_t *_key, val_t *_val) {
+          uint64_t _id;
+          return next(&_id, _key, _val);
+        }
+      };
+
+      iterator get_iterator() { return iterator(base, last_id, key_len, val_len); }
     };
   }
 }
