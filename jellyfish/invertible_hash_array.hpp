@@ -35,6 +35,7 @@ namespace jellyfish {
   namespace invertible_hash {
     define_error_class(InvalidMap);
     define_error_class(ErrorAllocation);
+    define_error_class(InvalidMatrix);
 
     /* (key,value) pair bit-packed array.  It implements the logic of the
      * packed hash except for size doubling. Setting or incrementing a key
@@ -119,13 +120,27 @@ namespace jellyfish {
         memcpy(reprobes, map, sizeof(size_t) * (header->reprobe_limit + 1));
         map += sizeof(size_t) * (header->reprobe_limit + 1);
         map += hash_matrix.read(map);
+        if(hash_matrix.get_size() != key_len)
+          throw_error<InvalidMatrix>("Size of hash matrix '%ld' not equal to key length '%d'",
+                                     hash_matrix.get_size(), key_len);
         map += hash_inverse_matrix.read(map);
+        if(hash_inverse_matrix.get_size() != key_len)
+          throw_error<InvalidMatrix>("Size of inverse hash matrix '%ld' not equal to key length '%d'",
+                                     hash_inverse_matrix.get_size(), key_len);
         if((size_t)map & 0x7)
           map += 0x8 - ((size_t)map & 0x7); // Make sure aligned for 64bits word. TODO: use alignof?
         data = (word *)map;
       }
 
       ~array() { }
+
+      void set_matrix(SquareBinaryMatrix &m) {
+        if((uint_t)m.get_size() != key_len)
+          throw_error<InvalidMatrix>("Size of matrix '%ld' not equal to key length '%d'",
+                                     m.get_size(), key_len);
+        hash_matrix = m;
+        hash_inverse_matrix = m.inverse();
+      }
 
       size_t get_size() const { return size; }
       uint_t get_key_len() const { return key_len; }
@@ -574,11 +589,6 @@ namespace jellyfish {
       }
 
       void write_raw(std::ostream *out) const {
-        struct header header = { size, key_len, offsets.get_val_len(),
-                                 reprobe_limit };
-        out->write((char *)&header, sizeof(header));
-        out->write((char *)reprobes, sizeof(size_t) * (reprobe_limit + 1));
-	write_ary_header(out);
         if(out->tellp() & 0x7) { // Make sure aligned
           string padding(0x8 - (out->tellp() & 0x7), '\0');
           out->write(padding.c_str(), padding.size());

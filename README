@@ -31,7 +31,11 @@ Notes
 License
 =======
 
-    This program is free software: you can redistribute it and/or modify
+* The Mersenne Twister random generator is copyrighted by Agner Fog
+  and distributed under the GPL version 3 or
+  higher. http://www.agner.org.
+
+*   This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.

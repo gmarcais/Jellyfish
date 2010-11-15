@@ -29,12 +29,14 @@
 #include <sys/mman.h>
 #include <stdint.h>
 #include <inttypes.h>
-#include "misc.hpp"
-#include "time.hpp"
-#include "mer_counting.hpp"
-#include "locks_pthread.hpp"
-#include "fasta_parser.hpp"
-#include "thread_exec.hpp"
+
+#include <jellyfish/misc.hpp>
+#include <jellyfish/time.hpp>
+#include <jellyfish/mer_counting.hpp>
+#include <jellyfish/locks_pthread.hpp>
+#include <jellyfish/fasta_parser.hpp>
+#include <jellyfish/thread_exec.hpp>
+#include <jellyfish/square_binary_matrix.hpp>
 
 /*
  * Option parsing
@@ -47,7 +49,8 @@ enum {
   OPT_BUF_SIZE,
   OPT_TIMING,
   OPT_OBUF_SIZE,
-  OPT_BOTH
+  OPT_BOTH,
+  OPT_MATRIX
 };
 static struct argp_option options[] = {
   {"threads",		't',		"NB",   0, "Nb of threads"},
@@ -64,6 +67,7 @@ static struct argp_option options[] = {
   {"reprobes",          'p',    "NB",   0, "Maximum number of reprobing"},
   {"no-write",          'w',		0,      0, "Don't write hash to disk"},
   {"raw",               'r',		0,      0, "Dump raw database"},
+  {"matrix",            OPT_MATRIX,     "FILE", 0, "Matrix for hash function"},
   {"timing",            OPT_TIMING,	"FILE", 0, "Print timing information to FILE"},
   { 0 }
 };
@@ -83,6 +87,7 @@ struct arguments {
   bool           raw;
   char          *timing;
   char          *output;
+  char          *matrix;
 };
 
 static error_t parse_opt (int key, char *arg, struct argp_state *state)
@@ -100,19 +105,20 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state)
 
   switch(key) {
   case 't': ULONGP(nb_threads);
-  case 's': ULONGP(size); break;
-  case 'b': ULONGP(nb_buffers); break;
-  case 'm': ULONGP(mer_len); break;
-  case 'c': ULONGP(counter_len); break;
-  case 'p': ULONGP(reprobes); break;
+  case 's': ULONGP(size); 
+  case 'b': ULONGP(nb_buffers); 
+  case 'm': ULONGP(mer_len); 
+  case 'c': ULONGP(counter_len); 
+  case 'p': ULONGP(reprobes); 
   case 'w': FLAG(no_write);
   case 'r': FLAG(raw);
   case OPT_BOTH: FLAG(both_strands);
   case 'o': STRING(output);
-  case OPT_VAL_LEN: ULONGP(out_counter_len); break;
-  case OPT_BUF_SIZE: ULONGP(buffer_size); break;
+  case OPT_VAL_LEN: ULONGP(out_counter_len); 
+  case OPT_BUF_SIZE: ULONGP(buffer_size); 
   case OPT_TIMING: STRING(timing);
-  case OPT_OBUF_SIZE: ULONGP(out_buffer_size); break;
+  case OPT_OBUF_SIZE: ULONGP(out_buffer_size); 
+  case OPT_MATRIX: STRING(matrix);
     
   default:
     return ARGP_ERR_UNKNOWN;
@@ -193,6 +199,14 @@ public:
                                     arguments.counter_len, 
                                     arguments.reprobes, 
                                     jellyfish::quadratic_reprobes);
+    if(_args.matrix) {
+      std::ifstream fd;
+      fd.exceptions(std::ifstream::eofbit|std::ifstream::failbit|std::ifstream::badbit);
+      fd.open(_args.matrix);
+      SquareBinaryMatrix m(&fd);
+      fd.close();
+      ary->set_matrix(m);
+    }
     hash = new inv_hash_t(ary);
 
     if(!arguments.no_write) {
@@ -244,6 +258,7 @@ int count_main(int argc, char *argv[]) {
   arguments.raw             = false;
   arguments.both_strands    = false;
   arguments.timing          = NULL;
+  arguments.matrix          = NULL;
   arguments.output          = (char *)"mer_counts.hash";
   int error = argp_parse(&argp, argc, argv, 0, &arg_st, &arguments);
   if(error) {

@@ -44,25 +44,6 @@ uint64_t bogus_sum(void *data, size_t len) {
   return res;
 }
 
-int parse_long(char *arg, std::ostream *err, unsigned long *res)
-{
-  char *endptr;
-  char error[200];
-  errno = 0;
-  *res = strtoul(arg, &endptr, 0);
-  if(errno) {
-    error[0] = '\0';
-    strerror_r(errno, error, sizeof(error));
-    (*err) << "Error parsing integer string '" << arg << "': " << error << std::endl;
-    return errno;
-  }
-  if(*arg == '\0' || *endptr != '\0') {
-    (*err) << "Invalid integer argument '" << arg << "'" << std::endl;;
-    return EINVAL;
-  }
-  return 0;
-}
-
 std::string stringf(const char *fmt, va_list _ap)
 {
   char *buf = NULL;
@@ -126,4 +107,21 @@ std::string strerror_string(int errnum)
 #endif
 
   return std::string(buf);
+}
+
+int parse_long(char *arg, std::ostream *err, unsigned long *res)
+{
+  char *endptr;
+
+  *res = strtoul(arg, &endptr, 0);
+  if(errno) {
+    std::string error = strerror_string(errno);
+    (*err) << "Error parsing integer string '" << arg << "': " << error << std::endl;
+    return errno;
+  }
+  if(*arg == '\0' || *endptr != '\0') {
+    (*err) << "Invalid integer argument '" << arg << "'" << std::endl;;
+    return EINVAL;
+  }
+  return 0;
 }
