@@ -1,5 +1,5 @@
 '\" t
-.\" Manual page created with latex2man on Fri Nov  5 23:57:00 EDT 2010
+.\" Manual page created with latex2man on Mon Nov 15 14:11:33 EST 2010
 .\" NOTE: This file is generated, DO NOT EDIT.
 .de Vb
 .ft CW
@@ -220,7 +220,7 @@ the k\-mers read from standard input.
 .SH VERSION
 
 .PP
-Version: 0.9 of 2010/10/1
+Version: 1.0 of 2010/10/1
 .PP
 .SH BUGS
 
