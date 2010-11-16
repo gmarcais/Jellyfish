@@ -42,3 +42,4 @@ token_ring.hpp
 check_PROGRAMS = generate_sequence
 generate_sequence_SOURCES = generate_sequence.cc misc.cc mersenne.cpp	\
 square_binary_matrix.cc
+EXTRA_DIST = randomc.h
