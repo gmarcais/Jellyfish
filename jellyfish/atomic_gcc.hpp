@@ -41,6 +41,15 @@ namespace atomic
       return count + x;
     }
 
+    inline T fetch_add(volatile T *ptr, T x) {
+      T ncount = *ptr, count;
+      do {
+	count = ncount;
+	ncount = cas((T *)ptr, count, count + x);
+      } while(ncount != count);
+      return count;
+    }
+
     inline T set_to_max(volatile T *ptr, T x) {
       T count = *ptr;
       while(x > count) {

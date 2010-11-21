@@ -113,6 +113,7 @@ int parse_long(char *arg, std::ostream *err, unsigned long *res)
 {
   char *endptr;
 
+  errno = 0;
   *res = strtoul(arg, &endptr, 0);
   if(errno) {
     std::string error = strerror_string(errno);

@@ -376,50 +376,52 @@ namespace jellyfish {
       }
       
       class iterator {
-        char                  *base;
+        char                  *base, *ptr;
         uint64_t               last_id;
         uint_t                 key_len;
         uint_t                 val_len;
         uint_t                 record_len;
+        uint_t                 mer_len;
         uint64_t               id;
-        atomic::gcc<uint64_t>  atomic;
-
         key_t key;
         val_t val;
 
+        char                   dna_str[33];
+        atomic::gcc<uint64_t>  atomic;
       public:
-        iterator(char *_base, uint64_t _last_id, uint_t _key_len, uint_t _val_len) :
-          base(_base), last_id(_last_id), key_len(_key_len), val_len(_val_len),
-          record_len(key_len + val_len), id(0) {}
+        iterator(char *_base, uint64_t _last_id, uint_t _key_len, uint_t _val_len, uint_t _mer_len) :
+          base(_base), ptr(_base), last_id(_last_id), key_len(_key_len), val_len(_val_len),
+          record_len(key_len + val_len), mer_len(_mer_len), id(0), key(0), val(0)
+        {
+          memset(dna_str, '\0', sizeof(dna_str));
+        }
 
         key_t get_key() const { return key; }
         val_t get_val() const { return val; }
         uint64_t get_id() const { return id; }
 
         bool next() {
-          if(id >= last_id - 1)
+          if(id >= last_id)
             return false;
           id++;
-          char *ptr = base + id * record_len;
-          key = 0;
           memcpy(&key, ptr, key_len);
           ptr += key_len;
-          val = 0;
           memcpy(&val, ptr, val_len);
+          ptr += val_len;
           return true;
         }
 
         bool next(uint64_t *_id, key_t *_key, val_t *_val) {
-          if(id >= last_id - 1)
+          if(id >= last_id)
             return false;
           *_id = atomic.add_fetch(&id, 1) - 1;
           if(*_id >= last_id)
             return false;
           char *ptr = base + (*_id) * record_len;
-          *_key = 0;
+          //          *_key = 0;
           memcpy(_key, ptr, key_len);
           ptr += key_len;
-          *_val = 0;
+          //          *_val = 0;
           memcpy(_val, ptr, val_len);
           return true;
         }
@@ -428,9 +430,18 @@ namespace jellyfish {
           uint64_t _id;
           return next(&_id, _key, _val);
         }
+
+        char *get_dna_str() {
+          ::jellyfish::fasta_parser::mer_binary_to_string(key, mer_len, dna_str);
+          return dna_str;
+        }
+
+        void get_dna_str(char *out) {
+          ::jellyfish::fasta_parser::mer_binary_to_string(key, mer_len, out);
+        }
       };
 
-      iterator get_iterator() { return iterator(base, last_id, key_len, val_len); }
+      iterator get_iterator() { return iterator(base, last_id, key_len, val_len, get_mer_len()); }
     };
   }
 }

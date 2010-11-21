@@ -96,9 +96,6 @@ namespace jellyfish {
     out = &_out;
     unique = distinct = total = max_count = 0;
     tr.reset();
-    for(uint_t i = 0; i < threads; i++) {
-      thread_info[i].writer.reset_counters();
-    }
     exec_join(threads);
     ary->zero_blocks(0, nb_blocks); // zero out last group of blocks
     update_stats();
@@ -111,6 +108,7 @@ namespace jellyfish {
     struct thread_info_t *my_info = &thread_info[id];
     atomic_t              atomic;
 
+    my_info->writer.reset_counters();
     if(my_info->token->is_active())
       my_info->writer.write_header(out);
 
