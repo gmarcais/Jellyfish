@@ -18,13 +18,14 @@ bin_PROGRAMS = jellyfish
 
 jellyfish_SOURCES = jellyfish.cc dump_stats_compacted.cc hash_merge.cc	\
 storage.cc misc.cc mer_counter.cc histogram.cc time.cc thread_exec.cc	\
-query_main.cc square_binary_matrix.cc fasta_parser.cc
+query_main.cc square_binary_matrix.cc fasta_parser.cc			\
+dump_stats_raw.cc rquery_main.cc
 # jellyfish_CPPFLAGS = $(AM_CPPFLAGS)
 
 
 lib_LTLIBRARIES = libjellyfish-1.0.la
 libjellyfish_1_0_la_SOURCES = square_binary_matrix.cc fasta_parser.cc	\
-misc.cc storage.cc
+misc.cc storage.cc thread_exec.cc
 libjellyfish_1_0_la_CPPFLAGS = $(AM_CPPFLAGS)
 library_includedir=$(includedir)/jellyfish-1.0/jellyfish
 library_include_HEADERS = allocators_malloc.hpp allocators_mmap.hpp	\

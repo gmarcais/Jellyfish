@@ -210,10 +210,14 @@ public:
     hash = new inv_hash_t(ary);
 
     if(!arguments.no_write) {
-      dumper = new inv_hash_dumper_t(arguments.nb_threads, arguments.output,
-                                     arguments.out_buffer_size,
-                                     8*arguments.out_counter_len,
-                                     ary);
+      if(arguments.raw) {
+        dumper = new raw_inv_hash_dumper_t((uint_t)4, arguments.output, arguments.out_buffer_size, ary);
+      } else {
+        dumper = new inv_hash_dumper_t(arguments.nb_threads, arguments.output,
+                                       arguments.out_buffer_size,
+                                       8*arguments.out_counter_len,
+                                       ary);
+      }
       hash->set_dumper(dumper);
     }
     parser->set_canonical(arguments.both_strands);
@@ -230,7 +234,9 @@ public:
                                          arguments.buffer_size);
     ary = new direct_index_t::storage_t(2 * arguments.mer_len);
     hash = new direct_index_t(ary);
-     if(!arguments.no_write) {
+    if(!arguments.no_write) {
+      if(arguments.raw)
+        std::cerr << "Switch --raw not (yet) supported with direct indexing. Ignoring." << std::endl;
       dumper = new direct_index_dumper_t(arguments.nb_threads, arguments.output,
                                          arguments.out_buffer_size,
                                          8*arguments.out_counter_len,
@@ -272,8 +278,6 @@ int count_main(int argc, char *argv[]) {
     argp_help(&argp, stderr, ARGP_HELP_SEE, argv[0]);
     exit(1);
   }
-  if(arguments.raw)
-    die("--raw switch not supported anymore. Fix me!");
 
   Time start;
   mer_counting_base *counter;
