@@ -48,7 +48,7 @@ namespace jellyfish {
   class hash : public hash_t {
   public:
     define_error_class(TableFull);
-    typedef typename std::pair<key_t,val_t> kv_t;
+    //    typedef typename std::pair<key_t,val_t> kv_t;
     typedef ary_t storage_t;
     typedef typename ary_t::iterator iterator;
 
@@ -107,7 +107,7 @@ namespace jellyfish {
         ary(_ary), hsize_mask(ary->get_size() - 1), status(FREE), my_hash(_my_hash)
       { }
 
-      inline void add(key_t key, val_t val) {
+      inline void add(key_t key, const val_t &val) {
         while(true) {
           while(atomic.cas(&status, FREE, INUSE) != FREE)
             my_hash->wait_event_is_done();
@@ -126,8 +126,8 @@ namespace jellyfish {
           my_hash->signal_not_in_use();
       }
 
-      inline void inc(key_t key) { return this->add(key, (val_t)1); }
-      inline void operator()(key_t key) { return this->add(key, (val_t)1); }
+      inline void inc(key_t key) { return this->add(key, 1); }
+      inline void operator()(key_t key) { return this->add(key, 1); }
 
       friend class hash;
     };

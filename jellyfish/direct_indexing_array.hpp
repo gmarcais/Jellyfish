@@ -21,23 +21,31 @@ namespace jellyfish {
   namespace direct_indexing {
     template<typename key_t, typename val_t, typename atomic_t, typename mem_block_t>
     class array {
+    public:
+      typedef typename val_t::bits_t bits_t;
+
       uint_t       key_len;
       size_t       size;
       mem_block_t  mem_block;
-      val_t       *data;
+      bits_t      *data;
       atomic_t     atomic;
       
 
     public:
       array(uint_t _key_len) :
         key_len(_key_len), size(((size_t)1) << key_len),
-        mem_block(size * sizeof(val_t)),
-        data((val_t *)mem_block.get_ptr())
+        mem_block(size * sizeof(bits_t)),
+        data((bits_t *)mem_block.get_ptr())
+      { }
+
+      array(char *map, uint_t _key_len) :
+        key_len(_key_len), size(((size_t)1) << key_len),
+        data((bits_t *)map)
       { }
 
       size_t get_size() const { return size; }
       uint_t get_key_len() const { return key_len; }
-      uint_t get_val_len() const { return sizeof(val_t); }
+      uint_t get_val_len() const { return sizeof(bits_t); }
       size_t get_max_reprobe_offset() const { return 1; }
 
       void write_ary_header(std::ostream *out) const {
@@ -49,15 +57,16 @@ namespace jellyfish {
       void write_raw(std::ostream *out) const {}
 
       bool add(key_t key, val_t val) {
-        static const val_t cap = (val_t)-1;
-        val_t oval = data[key];
+        bits_t oval = data[key];
+        bits_t nval = (val_t(oval) + val).bits();
+        //        std::cerr << "key " << key << " oval " << (val_t(oval).to_float()) << " val " << val.to_float() << " nval " << (val_t(nval).to_float()) << std::endl;
 
-        while(oval != cap) {
-          val_t nval = (val > ~oval ? cap : oval + val);
-          nval = atomic.cas(&data[key], oval, nval);
-          if(nval == oval)
+        while(true) {
+          bits_t noval = atomic.cas(&data[key], oval, nval);
+          if(noval == oval)
             return true;
-          oval = nval;
+          oval = noval;
+          nval = (val_t(oval) + val).bits();
         }
         return true;
       }
@@ -67,12 +76,11 @@ namespace jellyfish {
         size_t       start_id;
         size_t       nid;
         size_t       end_id;
+        key_t        key;
+        bits_t       val;
+        size_t       id;
 
       public:
-        key_t   key;
-        val_t   val;
-        size_t  id;
-        
         iterator(const array *_ary, size_t start, size_t end) :
           ary(_ary), start_id(start), nid(start),
           end_id(end > ary->get_size() ? ary->get_size() : end)
@@ -85,6 +93,9 @@ namespace jellyfish {
         uint64_t get_pos() const { return key; }
         uint64_t get_start() const { return start_id; }
         uint64_t get_end() const { return end_id; }
+        key_t    get_key() const { return key; }
+        val_t    get_val() const { return val_t(val); }
+        size_t   get_id() const { return id; }
         
         bool next() {
           while((id = nid) < end_id) {
@@ -105,11 +116,26 @@ namespace jellyfish {
         return iterator(this, slice_number * slice_size, (slice_number + 1) * slice_size);
       }
 
+      /**
+       * Zero out entries in [start, start+length).
+       */
       void zero(size_t start, size_t length) {
+        if(start >= size)
+          return;
         if(start + length > size)
           length = size - start;
-        memset(data + start, '\0', length);
+        memset(data + start, '\0', length * sizeof(*data));
       }
+
+      void write(std::ostream *out, const size_t start, size_t length) const {
+        if(start >= size)
+          return;
+        if(start + length > size)
+          length = size - start;
+        out->write((char *)(data + start), length * sizeof(*data));
+      }
+
+      val_t operator[](key_t key) const { return data[key]; }
     };
   }
 }

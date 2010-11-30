@@ -41,34 +41,34 @@
 /*
  * Option parsing
  */
-static char doc[] = "Count k-mers in a fasta files and write tables";
-static char args_doc[] = "fasta ...";
+static char doc[] = "Count k-mers in a fast[aq] files";
+static char args_doc[] = "fasta|fastq ...";
      
 enum {
   OPT_VAL_LEN = 1024,
   OPT_BUF_SIZE,
   OPT_TIMING,
   OPT_OBUF_SIZE,
-  OPT_BOTH,
   OPT_MATRIX
 };
 static struct argp_option options[] = {
-  {"threads",		't',		"NB",   0, "Nb of threads"},
-  {"mer-len",           'm',		"LEN",  0, "Length of a mer"},
-  {"counter-len",       'c',		"LEN",  0, "Length (in bits) of counting field"},
-  {"output",		'o',		"FILE", 0, "Output file"},
-  {"out-counter-len",   OPT_VAL_LEN,	"LEN",  0, "Length (in bytes) of counting field in output"},
-  {"buffers",           'b',		"NB",   0, "Nb of buffers per thread"},
-  {"both-strands",      OPT_BOTH,       0,      0, "Count both strands"},
-  {"buffer-size",       OPT_BUF_SIZE,	"SIZE", 0, "Size of a buffer"},
+  {"threads",           't',            "NB",   0, "Nb of threads"},
+  {"mer-len",           'm',            "LEN",  0, "Length of a mer"},
+  {"counter-len",       'c',            "LEN",  0, "Length (in bits) of counting field"},
+  {"output",            'o',            "FILE", 0, "Output file"},
+  {"out-counter-len",   OPT_VAL_LEN,    "LEN",  0, "Length (in bytes) of counting field in output"},
+  {"buffers",           'b',            "NB",   0, "Nb of buffers per thread"},
+  {"fastq",             'q',            0,      0, "Fastq input files"},
+  {"both-strands",      'C',            0,      0, "Count both strands, canonical representation"},
+  {"buffer-size",       OPT_BUF_SIZE,   "SIZE", 0, "Size of a buffer"},
   {"out-buffer-size",   OPT_OBUF_SIZE,  "SIZE", 0, "Size of output buffer per thread"},
-  {"hash-size",         's',		"SIZE", 0, "Initial hash size"},
-  {"size",              's',		"SIZE", 0, "Initial hash size"},
-  {"reprobes",          'p',    "NB",   0, "Maximum number of reprobing"},
-  {"no-write",          'w',		0,      0, "Don't write hash to disk"},
-  {"raw",               'r',		0,      0, "Dump raw database"},
+  {"hash-size",         's',            "SIZE", 0, "Initial hash size"},
+  {"size",              's',            "SIZE", 0, "Initial hash size"},
+  {"reprobes",          'p',            "NB",   0, "Maximum number of reprobing"},
+  {"no-write",          'w',            0,      0, "Don't write hash to disk"},
+  {"raw",               'r',            0,      0, "Dump raw database"},
   {"matrix",            OPT_MATRIX,     "FILE", 0, "Matrix for hash function"},
-  {"timing",            OPT_TIMING,	"FILE", 0, "Print timing information to FILE"},
+  {"timing",            OPT_TIMING,     "FILE", 0, "Print timing information to FILE"},
   { 0 }
 };
 
@@ -88,6 +88,7 @@ struct arguments {
   char          *timing;
   char          *output;
   char          *matrix;
+  bool           fastq;
 };
 
 static error_t parse_opt (int key, char *arg, struct argp_state *state)
@@ -112,7 +113,8 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state)
   case 'p': ULONGP(reprobes); 
   case 'w': FLAG(no_write);
   case 'r': FLAG(raw);
-  case OPT_BOTH: FLAG(both_strands);
+  case 'q': FLAG(fastq);
+  case 'C': FLAG(both_strands);
   case 'o': STRING(output);
   case OPT_VAL_LEN: ULONGP(out_counter_len); 
   case OPT_BUF_SIZE: ULONGP(buffer_size); 
@@ -162,13 +164,9 @@ public:
   void start(int id) {
     sync_barrier.wait();
     
-    try {
-      typename parser_t::thread     mer_stream(parser->new_thread());
-      typename hash_t::thread_ptr_t counter(hash->new_thread());
-      mer_stream.parse(counter);
-    } catch(exception &e) {
-      std::cerr << "Thread " << id << " error: " << e.what() << std::endl;
-    }
+    typename parser_t::thread     mer_stream(parser->new_thread());
+    typename hash_t::thread_ptr_t counter(hash->new_thread());
+    mer_stream.parse(counter);
     
     bool is_serial = sync_barrier.wait() == PTHREAD_BARRIER_SERIAL_THREAD;
     if(is_serial)
@@ -176,11 +174,7 @@ public:
   }
   
   void count() {
-    try {
-      exec_join(arguments.nb_threads);
-    } catch(exception e) {
-      die(e.what());
-    }
+    exec_join(arguments.nb_threads);
   }
 
   Time get_writing_time() { return hash->get_writing_time(); }
@@ -247,6 +241,27 @@ public:
   }
 };
 
+class mer_counting_fastq : public mer_counting<jellyfish::fastq_parser, fastq_hash_t> {
+public:
+  mer_counting_fastq(int arg_st, int argc, char *argv[], struct arguments &_args) :
+    mer_counting<jellyfish::fastq_parser, fastq_hash_t>(_args)
+  {
+    parser = new jellyfish::fastq_parser(argc - arg_st, argv + arg_st,
+                                         arguments.mer_len, arguments.nb_buffers);
+    ary = new fastq_hash_t::storage_t(arguments.size, 2*arguments.mer_len,
+                                      arguments.reprobes, 
+                                      jellyfish::quadratic_reprobes);
+    hash = new fastq_hash_t(ary);
+    if(!arguments.no_write) {
+      dumper = new raw_fastq_dumper_t(arguments.nb_threads, arguments.output,
+                                      arguments.out_buffer_size,
+                                      ary);
+      hash->set_dumper(dumper);
+    }
+    parser->set_canonical(arguments.both_strands);
+  }
+};
+
 int count_main(int argc, char *argv[]) {
   struct arguments arguments;
   int arg_st;
@@ -262,6 +277,7 @@ int count_main(int argc, char *argv[]) {
   arguments.out_buffer_size = 20000000UL;
   arguments.no_write        = false;
   arguments.raw             = false;
+  arguments.fastq           = false;
   arguments.both_strands    = false;
   arguments.timing          = NULL;
   arguments.matrix          = NULL;
@@ -281,7 +297,9 @@ int count_main(int argc, char *argv[]) {
 
   Time start;
   mer_counting_base *counter;
-  if(ceilLog2(arguments.size) > 2 * arguments.mer_len) {
+  if(arguments.fastq) {
+    counter = new mer_counting_fastq(arg_st, argc, argv, arguments);
+  } else if(ceilLog2(arguments.size) > 2 * arguments.mer_len) {
     counter = new mer_counting_fasta_direct(arg_st, argc, argv, arguments);
   } else {
     counter = new mer_counting_fasta_hash(arg_st, argc, argv, arguments);

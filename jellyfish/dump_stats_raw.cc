@@ -21,9 +21,9 @@
 #include <argp.h>
 #include <iostream>
 #include <fstream>
-#include "misc.hpp"
-#include "mer_counting.hpp"
-#include "compacted_hash.hpp"
+#include <jellyfish/misc.hpp>
+#include <jellyfish/mer_counting.hpp>
+#include <jellyfish/compacted_hash.hpp>
 
 /*
  * Option parsing

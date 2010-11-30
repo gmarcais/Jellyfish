@@ -30,6 +30,7 @@
 #include <jellyfish/square_binary_matrix.hpp>
 #include <jellyfish/storage.hpp>
 #include <jellyfish/offsets_key_value.hpp>
+#include <jellyfish/fasta_parser.hpp>
 
 namespace jellyfish {
   namespace invertible_hash {
@@ -97,6 +98,8 @@ namespace jellyfish {
                                        div_ceil(size, (size_t)offsets.get_block_len()) * offsets.get_block_word_len() * sizeof(word));
       }
       
+      // TODO: This parsing should be done in another class and use
+      // the following constructor.
       array(char *map, size_t length) :
         hash_matrix(0), hash_inverse_matrix(0) {
         if(length < sizeof(struct header))
@@ -134,6 +137,22 @@ namespace jellyfish {
         data = (word *)map;
       }
 
+      // Assume _size is already a power of 2
+      // map must point to a memory area written by "write_blocks". No header
+      array(char *map, size_t _size, uint_t _key_len, uint_t _val_len,
+            uint_t _reprobe_limit, size_t *_reprobes,
+            SquareBinaryMatrix &_hash_matrix, 
+            SquareBinaryMatrix &_hash_inverse_matrix) :
+        lsize(ceilLog2(_size)), size(_size), size_mask(size-1),
+        reprobe_limit(_reprobe_limit), key_len(_key_len),
+        key_mask(key_len <= lsize ? 0 : (((word)1) << (key_len - lsize)) - 1),
+        key_off(key_len <= lsize ? 0 : key_len - lsize),
+        offsets(key_off + bitsize(_reprobe_limit + 1), _val_len,
+                _reprobe_limit + 1),
+        data((word *)map), reprobes(_reprobes),
+        hash_matrix(_hash_matrix), hash_inverse_matrix(_hash_inverse_matrix)
+      { }
+
       ~array() { }
 
       void set_matrix(SquareBinaryMatrix &m) {
@@ -145,6 +164,7 @@ namespace jellyfish {
       }
 
       size_t get_size() const { return size; }
+      size_t get_lsize() const { return lsize; }
       uint_t get_key_len() const { return key_len; }
       uint_t get_val_len() const { return offsets.get_val_len(); }
       
@@ -161,7 +181,8 @@ namespace jellyfish {
       }
 
     private:
-      void block_to_ptr(size_t start, size_t blen, char **start_ptr, size_t *memlen) const {
+      void block_to_ptr(const size_t start, const size_t blen,
+                        char **start_ptr, size_t *memlen) const {
 	*start_ptr = (char *)(data + start * offsets.get_block_word_len());
 	char *end_ptr = (char *)mem_block.get_ptr() + mem_block.get_size();
 
@@ -210,7 +231,9 @@ namespace jellyfish {
         uint64_t hash;
 
         iterator(const array *_ary, size_t start, size_t end) :
-          ary(_ary), start_id(start), nid(start), 
+          ary(_ary),
+          start_id(start > ary->get_size() ? ary->get_size() : start),
+          nid(start), 
 	  end_id(end > ary->get_size() ? ary->get_size() : end),
           mask(ary->get_size() - 1)
         {}
@@ -250,7 +273,8 @@ namespace jellyfish {
       iterator iterator_all() const { return iterator(this, 0, get_size()); }
       iterator iterator_slice(size_t slice_number, size_t number_of_slice) const {
         size_t slice_size = get_size() / number_of_slice;
-        return iterator(this, slice_number * slice_size, (slice_number + 1) * slice_size);
+        size_t start = slice_number * slice_size;
+        return iterator(this, start, start + slice_size);
       }
 
       /* Why on earth doesn't inheritance with : public iterator work
@@ -635,10 +659,9 @@ namespace jellyfish {
         // TODO: Lots of copy from other add. Factorize.
         uint_t		 reprobe     = 0;
         const offset_t	*o, *lo, *ao;
-        word		*w, *kw, *vw, nkey;
+        word		*w, *kw, nkey;
         bool		 key_claimed = false;
         size_t		 cid         = *id;
-        word		 cary;
         word		 akey        = key | ((word)1 << key_off);
 
         // Claim key
@@ -674,6 +697,8 @@ namespace jellyfish {
             akey = key | ((reprobe + 1) << key_off);
           }
         } while(!key_claimed);
+
+        *id = cid;
         return true;
       }
 

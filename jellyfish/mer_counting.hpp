@@ -45,9 +45,19 @@ typedef jellyfish::hash< uint64_t,uint64_t,inv_hash_storage_t,atomic::gcc<uint64
 // Direct indexing types
 #include <jellyfish/direct_indexing_array.hpp>
 #include <jellyfish/direct_sorted_dumper.hpp>
-typedef jellyfish::direct_indexing::array<uint64_t,uint32_t,atomic::gcc<uint32_t>,allocators::mmap> direct_index_storage_t;
+#include <jellyfish/capped_integer.hpp>
+typedef jellyfish::direct_indexing::array<uint64_t,jellyfish::capped_integer<uint32_t>,atomic::gcc<uint32_t>,allocators::mmap> direct_index_storage_t;
 typedef jellyfish::direct_sorted_dumper< direct_index_storage_t, atomic::gcc<uint64_t> > direct_index_dumper_t;
 typedef jellyfish::hash< uint64_t,uint32_t,direct_index_storage_t,atomic::gcc<uint64_t> > direct_index_t;
+
+// Fastq types
+#include <jellyfish/aligned_values_array.hpp>
+#include <jellyfish/floats.hpp>
+#include <jellyfish/fastq_parser.hpp>
+#include <jellyfish/fastq_dumper.hpp>
+typedef jellyfish::aligned_values::array<uint64_t,jellyfish::Float,atomic::gcc<uint64_t>,atomic::gcc<jellyfish::Float::bits_t>,allocators::mmap> fastq_storage_t;
+typedef jellyfish::hash<uint64_t,jellyfish::Float,fastq_storage_t,atomic::gcc<uint64_t> > fastq_hash_t;
+typedef jellyfish::fastq_hash::raw_dumper<fastq_storage_t> raw_fastq_dumper_t;
 
 typedef jellyfish::compacted_hash::reader<uint64_t,uint64_t> hash_reader_t;
 typedef jellyfish::compacted_hash::query<uint64_t,uint64_t> hash_query_t;

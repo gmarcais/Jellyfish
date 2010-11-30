@@ -44,10 +44,10 @@ namespace jellyfish {
 
       header() { }
       header(char *ptr) {
-        if(memcmp(ptr, file_type, sizeof(file_type)))
+        if(memcmp(ptr, file_type, sizeof(type)))
           throw_error<ErrorReading>("Bad file type '%.*s', expected '%.*s'",
-                                    sizeof(file_type), ptr,
-                                    sizeof(file_type), file_type);
+                                    sizeof(type), ptr,
+                                    sizeof(type), file_type);
         memcpy((void *)this, ptr, sizeof(struct header));
       }
     };
@@ -111,7 +111,7 @@ namespace jellyfish {
       void write_header(std::ostream *out) const {
         struct header head;
         memset(&head, '\0', sizeof(head));
-        memcpy(&head.type, file_type, sizeof(file_type));
+        memcpy(&head.type, file_type, sizeof(head.type));
         head.key_len = klen;
         head.val_len = val_len;
         head.size = ary->get_size();
@@ -127,7 +127,7 @@ namespace jellyfish {
       void update_stats_with(std::ostream *out, uint64_t _unique, uint64_t _distinct,
                              uint64_t _total, uint64_t _max_count) const {
         struct header head;
-        memcpy(&head.type, file_type, sizeof(file_type));
+        memcpy(&head.type, file_type, sizeof(head.type));
         head.key_len     = klen;
         head.val_len     = val_len;
         head.size        = ary->get_size();
@@ -176,10 +176,10 @@ namespace jellyfish {
         io->read((char *)&header, sizeof(header));
         if(!io->good())
           throw_error<ErrorReading>("File truncated");
-        if(memcmp(header.type, file_type, sizeof(file_type)))
+        if(memcmp(header.type, file_type, sizeof(header.type)))
           throw_error<ErrorReading>("Bad file type '%.*s', expected '%.*s'",
-                                    sizeof(file_type), header.type,
-                                    sizeof(file_type), file_type);
+                                    sizeof(header.type), header.type,
+                                    sizeof(header.type), file_type);
         if(header.key_len > 64 || header.key_len == 0)
           throw_error<ErrorReading>("Invalid key length '%ld'", header.key_len);
         if(header.size != (1UL << floorLog2(header.size)))

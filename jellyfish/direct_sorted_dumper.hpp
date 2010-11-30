@@ -104,7 +104,7 @@ namespace jellyfish {
     for(i = id; i * nb_records < ary->get_size(); i += threads) {
       iterator it(ary, i * nb_records, (i + 1) * nb_records);
       while(it.next())
-        my_info->writer.append(it.key, it.val);
+        my_info->writer.append(it.get_key(), it.get_val().bits());
       my_info->token->wait();
       my_info->writer.dump(out);
       my_info->token->pass();

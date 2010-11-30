@@ -17,7 +17,8 @@
 #ifndef __JELLYFISH_DUMPER_HPP__
 #define __JELLYFISH_DUMPER_HPP__
 
-#include <jellyfish/mer_counting.hpp>
+#include <iostream>
+#include <fstream>
 #include <jellyfish/time.hpp>
 
 /**
@@ -54,7 +55,7 @@ namespace jellyfish {
     }
 
   public:
-    dumper_t() : writing_time(Time::zero) {}
+    dumper_t() : writing_time(::Time::zero) {}
     void dump() {
       Time start;
       _dump();

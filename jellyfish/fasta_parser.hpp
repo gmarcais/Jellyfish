@@ -101,7 +101,6 @@ namespace jellyfish {
       uint64_t        kmer, rkmer;
       const uint64_t  masq;
       uint_t          cmlen;
-      bool            done;
       seq_queue      *rq;
       seq_queue      *wq;
       const bool      canonical;
@@ -111,7 +110,7 @@ namespace jellyfish {
         parser(_parser), sequence(0),
         mer_len(_parser->mer_len), lshift(2 * (mer_len - 1)),
         kmer(0), rkmer(0), masq((1UL << (2 * mer_len)) - 1),
-        cmlen(0), done(false), rq(&parser->rq), wq(&parser->wq),
+        cmlen(0), rq(&parser->rq), wq(&parser->wq),
         canonical(parser->canonical) { }
 
       template<typename T>

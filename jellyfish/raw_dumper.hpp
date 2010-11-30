@@ -14,9 +14,13 @@
     along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef __RAW_DUMPER_HPP__
+#define __RAW_DUMPER_HPP__
+
 #include <jellyfish/dumper.hpp>
 #include <jellyfish/thread_exec.hpp>
 #include <jellyfish/token_ring.hpp>
+#include <jellyfish/locks_pthread.hpp>
 
 namespace jellyfish {
   template<typename storage_t>
@@ -109,3 +113,5 @@ namespace jellyfish {
     ary->write_ary_header(out);
   }
 }
+
+#endif
