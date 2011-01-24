@@ -33,13 +33,15 @@ static char args_doc[] = "database";
 
 static struct argp_option options[] = {
   {"column",    'c',    0,      0,      "Print k-mers in column format (false)"},
+  {"tab",       't',    0,      0,      "Use tabs instead of spaces (false)"},
   {"verbose",   'v',    0,      0,      "Be verbose (false)"},
   { 0 }
 };
 
 struct arguments {
-  bool   column;
-  bool   verbose;
+  bool column;
+  bool tabs;
+  bool verbose;
 };
 
 static error_t parse_opt (int key, char *arg, struct argp_state *state)
@@ -55,6 +57,7 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state)
 
   switch(key) {
   case 'c': FLAG(column);
+  case 't': FLAG(tabs);
   case 'v': FLAG(verbose);
 
   default:
@@ -89,8 +92,9 @@ int dump_fastq_main(int argc, char *argv[])
   fastq_storage_t::iterator it = hash->iterator_all();
   std::cout << std::scientific;
   if(arguments.column) {
+    char spacer = arguments.tabs ? '\t' : ' ';
     while(it.next())
-      std::cout << it.get_dna_str() << " " << it.get_val().to_float() << "\n";
+      std::cout << it.get_dna_str() << spacer << it.get_val().to_float() << "\n";
   } else {
     while(it.next())
       std::cout << ">" << it.get_val().to_float() << "\n" << it.get_dna_str() << "\n";

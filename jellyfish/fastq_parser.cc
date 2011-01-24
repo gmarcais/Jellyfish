@@ -2,11 +2,11 @@
 
 namespace jellyfish {
   fastq_parser::fastq_parser(int nb_files, char *argv[], uint_t _mer_len,
-                             unsigned int nb_buffers) :
+                             unsigned int nb_buffers, const bool _qc) :
     mer_len(_mer_len), mapped_files(nb_files, argv, true),
     current_file(mapped_files.begin()),
     map_base(current_file->base()), current(map_base), map_end(current_file->end()),
-    rq(nb_buffers), wq(nb_buffers)
+    rq(nb_buffers), wq(nb_buffers), quality_control(_qc)
   {
     buffers = new seq[nb_buffers];
     memset(buffers, '\0', sizeof(struct seq) * nb_buffers);

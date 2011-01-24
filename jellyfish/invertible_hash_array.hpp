@@ -479,19 +479,26 @@ namespace jellyfish {
         return true;
       }
 
-      inline bool get_val(word key, word &val, bool full = false) const {
+      inline bool get_val(const word key, word &val, bool full = false) const {
         uint64_t hash = hash_matrix.times(key);
-        return get_val(hash & size_mask, (hash >> lsize) & key_mask, val, full);
+        size_t key_id;
+        return _get_val(hash & size_mask, key_id, (hash >> lsize) & key_mask, val, full);
       }
 
-      bool get_val(const size_t id, const word key, word &val, 
+      inline bool get_val(const word key, size_t &key_id, word &val, bool full = false) const {
+        uint64_t hash = hash_matrix.times(key);
+        return _get_val(hash & size_mask, key_id, (hash >> lsize) & key_mask, val, full);
+      }
+
+      bool _get_val(const size_t id, size_t &key_id, const word key, word &val, 
                    const bool full = false) const {
         word           *w, *kvw, nkey, nval;
         const offset_t *o, *lo;
-        uint_t          reprobe = 0;
         size_t          cid     = id;
+        uint_t          reprobe = 0;
         word            akey    = key | ((word)1 << key_off);
 
+        //        std::cout << "_get_val key" << key << std::endl;
         // Find key
         while(true) {
           w   = offsets.get_word_offset(cid, &o, &lo, data);
@@ -520,6 +527,7 @@ namespace jellyfish {
         if(o->val.mask2) {
           val |= ((*(kvw+1)) & o->val.mask2) << o->val.shift;
         }
+        key_id = cid;
 
         // Eventually get large values...
         if(full) {

@@ -49,7 +49,8 @@ enum {
   OPT_BUF_SIZE,
   OPT_TIMING,
   OPT_OBUF_SIZE,
-  OPT_MATRIX
+  OPT_MATRIX,
+  OPT_QUAL_CON
 };
 static struct argp_option options[] = {
   {"threads",           't',            "NB",   0, "Nb of threads"},
@@ -59,6 +60,7 @@ static struct argp_option options[] = {
   {"out-counter-len",   OPT_VAL_LEN,    "LEN",  0, "Length (in bytes) of counting field in output"},
   {"buffers",           'b',            "NB",   0, "Nb of buffers per thread"},
   {"fastq",             'q',            0,      0, "Fastq input files"},
+  {"quality-control",   OPT_QUAL_CON,   0,      0, "B quality in fastq is Read Segment Quality Control Indicator"},
   {"both-strands",      'C',            0,      0, "Count both strands, canonical representation"},
   {"buffer-size",       OPT_BUF_SIZE,   "SIZE", 0, "Size of a buffer"},
   {"out-buffer-size",   OPT_OBUF_SIZE,  "SIZE", 0, "Size of output buffer per thread"},
@@ -89,6 +91,7 @@ struct arguments {
   char          *output;
   char          *matrix;
   bool           fastq;
+  bool           quality_control;
 };
 
 static error_t parse_opt (int key, char *arg, struct argp_state *state)
@@ -121,6 +124,7 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state)
   case OPT_TIMING: STRING(timing);
   case OPT_OBUF_SIZE: ULONGP(out_buffer_size); 
   case OPT_MATRIX: STRING(matrix);
+  case OPT_QUAL_CON: FLAG(quality_control);
     
   default:
     return ARGP_ERR_UNKNOWN;
@@ -247,7 +251,8 @@ public:
     mer_counting<jellyfish::fastq_parser, fastq_hash_t>(_args)
   {
     parser = new jellyfish::fastq_parser(argc - arg_st, argv + arg_st,
-                                         arguments.mer_len, arguments.nb_buffers);
+                                         arguments.mer_len, arguments.nb_buffers, 
+                                         arguments.quality_control);
     ary = new fastq_hash_t::storage_t(arguments.size, 2*arguments.mer_len,
                                       arguments.reprobes, 
                                       jellyfish::quadratic_reprobes);

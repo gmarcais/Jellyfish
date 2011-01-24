@@ -35,6 +35,7 @@ static struct argp_option options[] = {
   {"buffer-size",       's',    "LEN",  0,      "Length in bytes of input buffer (10MB)"},
   {"fasta",             'f',    0,      0,      "Print k-mers in fasta format (false)"},
   {"column",            'c',    0,      0,      "Print k-mers in column format (false)"},
+  {"tab",               't',    0,      0,      "Use tabs instead of spaces (false)"},
   {"recompute",         'r',    0,      0,      "Recompute statistics"},
   {"verbose",           'v',    0,      0,      "Be verbose (false)"},
   { 0 }
@@ -43,6 +44,7 @@ static struct argp_option options[] = {
 struct arguments {
   bool   fasta;
   bool   column;
+  bool   tab;
   bool   verbose;
   bool   recompute;
   size_t buff_size;
@@ -63,6 +65,7 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state)
   case 's': ULONGP(buff_size);
   case 'f': FLAG(fasta);
   case 'c': FLAG(column);
+  case 't': FLAG(tab);
   case 'r': FLAG(recompute);
   case 'v': FLAG(verbose);
 
@@ -110,8 +113,9 @@ int raw_stats_main(int argc, char *argv[])
       std::cout << ">" << it.get_val() << "\n" << it.get_dna_str() << "\n";
     }
   } else if(arguments.column) {
+    char spacer = arguments.tab ? '\t' : ' ';
     while(it.next()) {
-      std::cout << it.get_dna_str() << " " << it.get_val() << "\n";
+      std::cout << it.get_dna_str() << spacer << it.get_val() << "\n";
     }
   } else {
     uint64_t unique = 0, distinct = 0, total = 0, max_count = 0;

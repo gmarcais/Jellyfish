@@ -121,7 +121,26 @@ int parse_long(char *arg, std::ostream *err, unsigned long *res)
     return errno;
   }
   if(*arg == '\0' || *endptr != '\0') {
-    (*err) << "Invalid integer argument '" << arg << "'" << std::endl;;
+    (*err) << "Invalid integer argument '" << arg << "'" << std::endl;
+    return EINVAL;
+  }
+  return 0;
+}
+
+int parse_float(char *arg, std::ostream *err, float *res)
+{
+  char *endptr;
+
+  errno = 0;
+  *res = strtof(arg, &endptr);
+  
+  if(errno) {
+    std::string error = strerror_string(errno);
+    (*err) << "Error parsing float string '" << arg << "': " << error << std::endl;
+    return errno;
+  }
+  if(*arg == '\0' || (*res == 0.0 && endptr == arg) || *endptr != '\0') {
+    (*err) << "Error parsing float string: '" << arg << "'" << std::endl;
     return EINVAL;
   }
   return 0;

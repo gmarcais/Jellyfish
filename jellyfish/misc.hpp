@@ -173,6 +173,7 @@ public:
 
 uint64_t bogus_sum(void *data, size_t len);
 int parse_long(char *arg, std::ostream *err, unsigned long *res);
+int parse_float(char *arg, std::ostream *err, float *res);
 
 template <typename T>
 size_t bits_to_bytes(T bits) {

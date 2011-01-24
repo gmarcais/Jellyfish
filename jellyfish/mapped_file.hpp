@@ -63,11 +63,17 @@ public:
   char *end() const { return _end; }
   size_t length() const { return _length; }
 
-  void will_need() const {
+  const mapped_file & will_need() const {
     madvise(_base, _length, MADV_WILLNEED);
+    return *this;
   }
-  void sequential() const {
+  const mapped_file & sequential() const {
     madvise(_base, _length, MADV_SEQUENTIAL);
+    return *this;
+  }
+  const mapped_file & random() const {
+    madvise(_base, _length, MADV_RANDOM);
+    return *this;
   }
 };
 

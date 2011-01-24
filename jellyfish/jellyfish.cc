@@ -20,7 +20,7 @@
 #include <string.h>
 #include "misc.hpp"
 
-const char *argp_program_version = "jellyfish 1.0rc1";
+const char *argp_program_version = "jellyfish 1.1rc1";
 const char *argp_program_bug_address = 
   "<guillaume@marcais.net> <carlk@umiacs.umd.edu>";
 
@@ -30,7 +30,9 @@ main_func_t count_main;
 main_func_t stats_main;
 main_func_t raw_stats_main;
 main_func_t raw_query_main;
+main_func_t raw_histo_main;
 main_func_t dump_fastq_main;
+main_func_t histo_fastq_main;
 main_func_t merge_main;
 main_func_t histo_main;
 main_func_t query_main;
@@ -46,7 +48,9 @@ cmd_func cmd_list[] = {
   {"stats",             &stats_main},
   {"rstats",            &raw_stats_main},
   {"rquery",            &raw_query_main},
+  {"rhisto",            &raw_histo_main},
   {"qdump",             &dump_fastq_main},
+  {"qhisto",            &histo_fastq_main},
   {"merge",             &merge_main},
   {"histo",             &histo_main},
   {"query",             &query_main},

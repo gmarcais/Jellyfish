@@ -19,7 +19,8 @@ bin_PROGRAMS = jellyfish
 jellyfish_SOURCES = jellyfish.cc dump_stats_compacted.cc hash_merge.cc	\
 storage.cc misc.cc mer_counter.cc histogram.cc time.cc thread_exec.cc	\
 query_main.cc square_binary_matrix.cc fasta_parser.cc			\
-dump_stats_raw.cc rquery_main.cc fastq_parser.cc dump_fastq_main.cc
+dump_stats_raw.cc rquery_main.cc rhisto_main.cc fastq_parser.cc		\
+dump_fastq_main.cc histo_fastq_main.cc
 # jellyfish_CPPFLAGS = $(AM_CPPFLAGS)
 
 
@@ -35,10 +36,11 @@ direct_indexing_array.hpp direct_sorted_dumper.hpp divisor.hpp		\
 dumper.hpp fasta_parser.hpp hash_function.hpp hash.hpp heap.hpp		\
 invertible_hash_array.hpp locking_hash_counters.hpp locks_pthread.hpp	\
 mapped_file.hpp mer_counting.hpp misc.hpp offsets_key_value.hpp		\
-packed_concurrent_hash_counters.hpp packed_key_value_array.hpp		\
-reversible_hash_function.hpp small_packed_array.hpp sorted_dumper.hpp	\
-square_binary_matrix.hpp storage.hpp thread_exec.hpp time.hpp		\
-token_ring.hpp
+packed_concurrent_hash_counters.hpp reversible_hash_function.hpp	\
+small_packed_array.hpp sorted_dumper.hpp square_binary_matrix.hpp	\
+storage.hpp thread_exec.hpp time.hpp token_ring.hpp raw_dumper.hpp	\
+capped_integer.hpp aligned_values_array.hpp fastq_parser.hpp		\
+fastq_dumper.hpp floats.hpp circular_buffer.hpp
 
 check_PROGRAMS = generate_sequence
 generate_sequence_SOURCES = generate_sequence.cc misc.cc mersenne.cpp	\

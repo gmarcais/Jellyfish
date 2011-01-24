@@ -85,8 +85,8 @@ namespace jellyfish {
 
     void write_raw(std::ostream &out) { ary->write_raw(out); }
 
-    iterator iterator_all() { return ary->iterator_all(); }
-    iterator iterator_slice(size_t slice_number, size_t number_of_slice) {
+    iterator iterator_all() const { return ary->iterator_all(); }
+    iterator iterator_slice(size_t slice_number, size_t number_of_slice) const {
       return ary->iterator_slice(slice_number, number_of_slice);
     }
 
