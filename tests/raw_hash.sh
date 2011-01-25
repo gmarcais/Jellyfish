@@ -5,8 +5,10 @@ pref=$(basename $0 .sh)
 echo "Counting 22-mers on ${nCPUs} CPU"
 ../jellyfish/jellyfish count --matrix seq10m_matrix_22 -m 22 -c 2 -t $nCPUs -o $pref -s 10000000 --raw \
     --timing ${pref}.timing seq10m.fa
-echo "b4aacdd081e328f74c7d1e6700752ec8  ${pref}_0" | md5sum -c
+echo "5c5d07dfb4e3de89b7fe4c72c714b921  -" > ${pref}.md5sum
+../jellyfish/jellyfish rstats ${pref}_0 | md5sum -c ${pref}.md5sum
 RET=$?
+rm ${pref}.md5sum
 
 if [ -f ${pref}.timing ]; then
     cat ${pref}.timing
@@ -14,5 +16,5 @@ if [ -f ${pref}.timing ]; then
 fi
 
 
-#rm -f ${pref}_*
+rm -f ${pref}_*
 exit $RET
