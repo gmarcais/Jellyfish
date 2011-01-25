@@ -36,6 +36,7 @@ main_func_t histo_fastq_main;
 main_func_t merge_main;
 main_func_t histo_main;
 main_func_t query_main;
+main_func_t cite_main;
 main_func_t sos;
 main_func_t version;
 
@@ -54,6 +55,7 @@ cmd_func cmd_list[] = {
   {"merge",             &merge_main},
   {"histo",             &histo_main},
   {"query",             &query_main},
+  {"cite",              &cite_main},
 
   /* help in all its form. Must be first non-command */
   {"help",              &sos},
