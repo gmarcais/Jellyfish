@@ -12,7 +12,7 @@
  * Option parsing
  */
 static char doc[] = "Generate random sequence";
-static char args_doc[] = "seed";
+static char args_doc[] = "seed length";
 
 static struct argp_option options[] = {
   {"mer",       'm',    "SIZE",         0,      "Mer size. Generate matrix of size 2*m"},

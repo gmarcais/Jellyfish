@@ -36,7 +36,8 @@ namespace jellyfish {
 #define BREAK_AT_END if(current >= map_end) break;
 
     while((new_seq = wq.dequeue()) != 0) {
-      for(nb_reads = 0; nb_reads < max_nb_reads && current < map_end; ++nb_reads) {
+      nb_reads = 0;
+      while(nb_reads < max_nb_reads && current < map_end) {
         read *cread = &new_seq->reads[nb_reads];
 
         while(true) {
@@ -62,8 +63,10 @@ namespace jellyfish {
           cread->qual_s = current;
           current += (cread->seq_e - cread->seq_s);
           BREAK_AT_END;
-          if(*current == '\n')
+          if(*current == '\n') {
+            nb_reads++;
             break; // Found a proper sequence/qual pair of lines
+          }
         }
       }      
       new_seq->nb_reads = nb_reads;
