@@ -9,7 +9,7 @@ echo "c448e173e5e18264ed00fad0008d5340  -" > ${pref}.md5sum
 ../jellyfish/jellyfish qhisto -h 3 -i 0.01 -l 0 ${pref}_0 | md5sum -c ${pref}.md5sum
 RET=$?
 
-rm ${pref}.md5sum
+rm ${pref}.md5sum ${pref}_0
 
 if [ -f ${pref}.timing ]; then
     cat ${pref}.timing

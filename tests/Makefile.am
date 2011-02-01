@@ -18,3 +18,4 @@ parallel_hashing.log: generate_sequence.log
 serial_direct_indexing.log: generate_sequence.log
 parallel_direct_indexing.log: generate_sequence.log
 raw_hash.log: generate_sequence.log
+parallel_fastq_hashing.log: generate_fastq_sequence.log

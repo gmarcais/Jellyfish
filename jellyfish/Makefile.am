@@ -40,7 +40,7 @@ packed_concurrent_hash_counters.hpp reversible_hash_function.hpp	\
 small_packed_array.hpp sorted_dumper.hpp square_binary_matrix.hpp	\
 storage.hpp thread_exec.hpp time.hpp token_ring.hpp raw_dumper.hpp	\
 capped_integer.hpp aligned_values_array.hpp fastq_parser.hpp		\
-fastq_dumper.hpp floats.hpp circular_buffer.hpp
+fastq_dumper.hpp floats.hpp circular_buffer.hpp counter.hpp
 
 check_PROGRAMS = generate_sequence
 generate_sequence_SOURCES = generate_sequence.cc misc.cc mersenne.cpp	\
