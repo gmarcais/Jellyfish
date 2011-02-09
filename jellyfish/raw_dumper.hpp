@@ -81,6 +81,7 @@ namespace jellyfish {
     open_next_file(file_prefix.c_str(), file_index, _out);
     out = &_out;
     tr.reset();
+    write_header();
     exec_join(threads);
     _out.close();
   }
@@ -90,9 +91,6 @@ namespace jellyfish {
     size_t i;
     struct thread_info_t *my_info = &thread_info[id];
     
-    if(my_info->token->is_active())
-      write_header();
-
     for(i = id; i * nb_records < ary->get_size(); i += threads) {
       my_info->token->wait();
       ary->write_blocks(out, i * nb_blocks, nb_blocks);

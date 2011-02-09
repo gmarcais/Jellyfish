@@ -96,6 +96,7 @@ namespace jellyfish {
     out = &_out;
     unique = distinct = total = max_count = 0;
     tr.reset();
+    thread_info[0].writer.write_header(out);
     exec_join(threads);
     ary->zero_blocks(0, nb_blocks); // zero out last group of blocks
     update_stats();
@@ -109,8 +110,6 @@ namespace jellyfish {
     atomic_t              atomic;
 
     my_info->writer.reset_counters();
-    if(my_info->token->is_active())
-      my_info->writer.write_header(out);
 
     for(i = id; i * nb_records < ary->get_size(); i += threads) {
       // fill up buffer

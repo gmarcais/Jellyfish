@@ -53,24 +53,24 @@ enum {
   OPT_QUAL_CON
 };
 static struct argp_option options[] = {
-  {"threads",           't',            "NB",   0, "Nb of threads"},
-  {"mer-len",           'm',            "LEN",  0, "Length of a mer"},
-  {"counter-len",       'c',            "LEN",  0, "Length (in bits) of counting field"},
-  {"output",            'o',            "FILE", 0, "Output file"},
-  {"out-counter-len",   OPT_VAL_LEN,    "LEN",  0, "Length (in bytes) of counting field in output"},
-  {"buffers",           'b',            "NB",   0, "Nb of buffers per thread"},
-  {"fastq",             'q',            0,      0, "Fastq input files"},
-  {"quality-control",   OPT_QUAL_CON,   0,      0, "B quality in fastq is Read Segment Quality Control Indicator"},
-  {"both-strands",      'C',            0,      0, "Count both strands, canonical representation"},
-  {"buffer-size",       OPT_BUF_SIZE,   "SIZE", 0, "Size of a buffer"},
-  {"out-buffer-size",   OPT_OBUF_SIZE,  "SIZE", 0, "Size of output buffer per thread"},
-  {"hash-size",         's',            "SIZE", 0, "Initial hash size"},
-  {"size",              's',            "SIZE", 0, "Initial hash size"},
-  {"reprobes",          'p',            "NB",   0, "Maximum number of reprobing"},
-  {"no-write",          'w',            0,      0, "Don't write hash to disk"},
-  {"raw",               'r',            0,      0, "Dump raw database"},
-  {"matrix",            OPT_MATRIX,     "FILE", 0, "Matrix for hash function"},
-  {"timing",            OPT_TIMING,     "FILE", 0, "Print timing information to FILE"},
+  {"threads",           't',            "NB",   0,              "Nb of threads", 1},
+  {"mer-len",           'm',            "LEN",  0,              "Length of a mer", 0},
+  {"counter-len",       'c',            "LEN",  0,              "Length (in bits) of counting field"},
+  {"output",            'o',            "FILE", 0,              "Output file", 1},
+  {"out-counter-len",   OPT_VAL_LEN,    "LEN",  0,              "Length (in bytes) of counting field in output", 1},
+  {"buffers",           'b',            "NB",   OPTION_HIDDEN,  "Nb of buffers per thread"},
+  {"fastq",             'q',            0,      0,              "Fastq input files", 2},
+  {"quality-control",   OPT_QUAL_CON,   0,      0,              "B quality in fastq is Read Segment Quality Control Indicator", 2},
+  {"both-strands",      'C',            0,      0,              "Count both strands, canonical representation", 1},
+  {"buffer-size",       OPT_BUF_SIZE,   "SIZE", OPTION_HIDDEN,  "Size of a buffer"},
+  {"out-buffer-size",   OPT_OBUF_SIZE,  "SIZE", 0,              "Size of output buffer per thread"},
+  {"hash-size",         's',            "SIZE", 0,              "Hash size", 0},
+  {"size",              's',            "SIZE", OPTION_ALIAS,   "Hash size"},
+  {"reprobes",          'p',            "NB",   0,              "Maximum number of reprobing", 1},
+  {"no-write",          'w',            0,      0,              "Don't write hash to disk", 3},
+  {"raw",               'r',            0,      0,              "Dump raw database", 2},
+  {"matrix",            OPT_MATRIX,     "FILE", 0,              "Matrix for hash function", 3},
+  {"timing",            OPT_TIMING,     "FILE", 0,              "Print timing information to FILE", 3},
   { 0 }
 };
 
@@ -272,10 +272,10 @@ int count_main(int argc, char *argv[]) {
   int arg_st;
 
   arguments.nb_threads      = 1;
-  arguments.mer_len         = 12;
-  arguments.counter_len     = 32;
+  arguments.mer_len         = 0;
+  arguments.counter_len     = 7;
   arguments.out_counter_len = 4;
-  arguments.size            = 1000000UL;
+  arguments.size            = 0;
   arguments.reprobes        = 50;
   arguments.nb_buffers      = 100;
   arguments.buffer_size     = 4096;
@@ -296,6 +296,18 @@ int count_main(int argc, char *argv[]) {
 
   if(arg_st == argc) {
     fprintf(stderr, "Missing arguments\n");
+    argp_help(&argp, stderr, ARGP_HELP_SEE, argv[0]);
+    exit(1);
+  }
+
+  if(arguments.mer_len == 0) {
+    fprintf(stderr, "Specifying the mer size (-m) is required.\n");
+    argp_help(&argp, stderr, ARGP_HELP_SEE, argv[0]);
+    exit(1);
+  }
+
+  if(arguments.size == 0) {
+    fprintf(stderr, "Specifying the hash table size (-s) is required.\nSee the man page for how to estimate this parameter.\n");
     argp_help(&argp, stderr, ARGP_HELP_SEE, argv[0]);
     exit(1);
   }
