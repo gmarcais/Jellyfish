@@ -193,6 +193,13 @@ namespace jellyfish {
 
         hash_matrix.load(io);
         hash_inverse_matrix.load(io);
+        streampos cpos = io->tellg();
+        io->seekg(0, ios::end);
+        streamoff list_size = io->tellg() - cpos;
+        io->seekg(cpos);
+        if(list_size - (header.distinct * record_len) != 0)
+          throw_error<ErrorReading>("Bad hash size '%ld', expected '%ld' bytes",
+                                    list_size, header.distinct * record_len);
         key = val = 0;
         size_mask = header.size - 1;
       }
@@ -282,6 +289,10 @@ namespace jellyfish {
         last_id((file.end() - base) / record_len),
         canonical(false)
       { 
+        if(file.end() - base - header.distinct * record_len != 0)
+          throw_error<ErrorReading>("Bad hash size '%ld', expected '%ld' bytes",
+                                    file.end() - base, header.distinct * record_len);
+          
         get_key(0, &first_key);
         first_pos = get_pos(first_key);
         get_key(last_id - 1, &last_key);
@@ -418,10 +429,10 @@ namespace jellyfish {
           if(*_id >= last_id)
             return false;
           char *ptr = base + (*_id) * record_len;
-          //          *_key = 0;
+          *_key = 0;
           memcpy(_key, ptr, key_len);
           ptr += key_len;
-          //          *_val = 0;
+          *_val = 0;
           memcpy(_val, ptr, val_len);
           return true;
         }
