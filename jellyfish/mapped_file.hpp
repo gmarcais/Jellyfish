@@ -24,20 +24,18 @@
 #include <sys/mman.h>
 #include <vector>
 #include <errno.h>
+#include <iostream>
 
 #include <jellyfish/misc.hpp>
+#include <jellyfish/atomic_gcc.hpp>
 
 class mapped_file {
+protected:
+  bool    _unmap;
   char   *_base, *_end;
   size_t  _length;
-  bool    unmap;
 
-public:
-  define_error_class(ErrorMMap);
-  mapped_file(char *__base, size_t __length) :
-    _base(__base), _end(__base + __length), _length(__length), unmap(false) {}
-
-  mapped_file(const char *filename) {
+  void map(const char *filename) {
     int fd = open(filename, O_RDONLY);
     struct stat stat;
 
@@ -53,11 +51,29 @@ public:
       throw_perror<ErrorMMap>("Can't mmap file '%s'", filename);
     close(fd);
     _end = _base + _length;
+  }
+  
+public:
+  define_error_class(ErrorMMap);
+  mapped_file(char *__base, size_t __length) :
+    _unmap(false), _base(__base), _end(__base + __length), _length(__length) {}
 
-    unmap = true;
+  mapped_file(const char *filename) : _unmap(false) {
+    map(filename);
   }
 
-  ~mapped_file() { }
+  ~mapped_file() {
+    if(_unmap)
+      unmap();
+  }
+
+  void unmap() {
+    if(!_base)
+      return;
+    munmap(_base, _length);
+    _base = 0;
+    _length = 0;
+  }
 
   char *base() const { return _base; }
   char *end() const { return _end; }
@@ -87,6 +103,54 @@ public:
   mapped_files_t(int nb_files, char *argv[], bool sequential) {
     for(int j = 0; j < nb_files; j++) {
       push_back(mapped_file(argv[j]));
+      if(sequential)
+        end()->sequential();
+    }
+  }
+};
+
+// File mapped on demand.
+class lazy_mapped_file_t : public mapped_file {
+  std::string       _path;
+  volatile bool     done;
+  volatile long     used_counter;
+  atomic::gcc<long> atomic;
+
+public:
+  lazy_mapped_file_t(const char *path) : 
+    mapped_file((char *)0, (size_t)0),
+    _path(path), done(false), used_counter(0) {}
+  
+  void map() {
+    used_counter = 1;
+    done = false;
+    mapped_file::map(_path.c_str());
+  }
+  void unmap() { 
+    done = true;
+    dec();
+  }
+
+  void inc() {
+    atomic.fetch_add(&used_counter, 1);
+  }
+  void dec() {
+    long val = atomic.add_fetch(&used_counter, (long)-1);
+    if(done && val == 0)
+      mapped_file::unmap();
+  }
+};
+
+class lazy_mapped_files_t : public std::vector<lazy_mapped_file_t> {
+public:
+  lazy_mapped_files_t(int nb_files, char *argv[]) {
+    for(int j = 0; j < nb_files; j++)
+      push_back(lazy_mapped_file_t(argv[j]));
+  }
+
+  lazy_mapped_files_t(int nb_files, char *argv[], bool sequential) {
+    for(int j = 0; j < nb_files; j++) {
+      push_back(lazy_mapped_file_t(argv[j]));
       if(sequential)
         end()->sequential();
     }

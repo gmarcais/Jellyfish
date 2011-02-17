@@ -28,13 +28,14 @@ namespace jellyfish {
       char *seq_s, *seq_e, *qual_s, *qual_e;
     };
     struct seq {
-      int         nb_reads;
-      struct read reads[max_nb_reads];
+      int                 nb_reads;
+      struct read         reads[max_nb_reads];
+      lazy_mapped_file_t *file;
     };
     typedef concurrent_queue<struct seq>  seq_queue;
     uint_t                                mer_len;
-    mapped_files_t                        mapped_files;
-    mapped_files_t::const_iterator        current_file;
+    lazy_mapped_files_t                   mapped_files;
+    lazy_mapped_files_t::iterator         current_file;
     char                                 *map_base, *current, *map_end;
     uint64_t volatile                     reader;
     seq_queue                             rq, wq;
@@ -114,6 +115,7 @@ namespace jellyfish {
               }
             }
           }
+          sequence->file->dec();
           wq->enqueue(sequence);
           sequence = 0;
         }

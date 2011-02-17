@@ -26,22 +26,23 @@
 namespace jellyfish {
   class fasta_parser {
     struct seq {
-      char *buffer;
-      char *end;
+      char               *buffer;
+      char               *end;
+      lazy_mapped_file_t *file;
     };
     typedef concurrent_queue<struct seq> seq_queue;
 
-    seq_queue                       rq, wq;
-    uint_t                          mer_len;
-    mapped_files_t                  mapped_files;
-    uint64_t volatile               reader;
-    char                           *current;
-    char                           *map_base;
-    char                           *map_end;
-    size_t                          buffer_size;
-    struct seq                     *buffers;
-    mapped_files_t::const_iterator  current_file;
-    bool                            canonical;
+    seq_queue                      rq, wq;
+    uint_t                         mer_len;
+    lazy_mapped_files_t            mapped_files;
+    uint64_t volatile              reader;
+    char                          *current;
+    char                          *map_base;
+    char                          *map_end;
+    size_t                         buffer_size;
+    struct seq                    *buffers;
+    lazy_mapped_files_t::iterator  current_file;
+    bool                           canonical;
 
   public:
     /* Action to take for a given letter in fasta file:
@@ -151,6 +152,7 @@ namespace jellyfish {
 
           // Buffer exhausted. Get a new one
           cmlen = kmer = rkmer = 0;
+          sequence->file->dec();
           wq->enqueue(sequence);
           sequence = 0;
         }

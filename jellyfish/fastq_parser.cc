@@ -1,3 +1,19 @@
+/*  This file is part of Jellyfish.
+
+    Jellyfish is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Jellyfish is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include <jellyfish/fastq_parser.hpp>
 
 namespace jellyfish {
@@ -5,7 +21,6 @@ namespace jellyfish {
                              unsigned int nb_buffers, const bool _qc) :
     mer_len(_mer_len), mapped_files(nb_files, argv, true),
     current_file(mapped_files.begin()),
-    map_base(current_file->base()), current(map_base), map_end(current_file->end()),
     rq(nb_buffers), wq(nb_buffers), quality_control(_qc)
   {
     buffers = new seq[nb_buffers];
@@ -13,7 +28,11 @@ namespace jellyfish {
     for(unsigned int i = 0; i < nb_buffers; i++)
       wq.enqueue(&buffers[i]);
 
+    current_file->map();
     current_file->will_need();
+    map_base = current_file->base();
+    current = map_base;
+    map_end = current_file->end();
   }
 
   bool fastq_parser::thread::next_sequence() {
@@ -34,7 +53,6 @@ namespace jellyfish {
 
     // New lines are not allowed in sequence or quals
 #define BREAK_AT_END if(current >= map_end) break;
-
     while((new_seq = wq.dequeue()) != 0) {
       nb_reads = 0;
       while(nb_reads < max_nb_reads && current < map_end) {
@@ -71,13 +89,17 @@ namespace jellyfish {
       }      
       new_seq->nb_reads = nb_reads;
       if(nb_reads > 0) {
+        new_seq->file = &*current_file;
+        current_file->inc();
         rq.enqueue(new_seq);
       }
       if(current >= map_end) {
+        current_file->unmap();
         if(++current_file == mapped_files.end()) {
           rq.close();
           break;
         }
+        current_file->map();
         current_file->will_need();
         map_base = current_file->base();
         current  = map_base;

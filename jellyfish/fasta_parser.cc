@@ -30,6 +30,7 @@ namespace jellyfish {
       wq.enqueue(&buffers[i]);
       
     current_file = mapped_files.begin();
+    current_file->map();
     current_file->will_need();
     map_base     = current_file->base();
     current      = current_file->base();
@@ -94,13 +95,17 @@ namespace jellyfish {
           }
         }
       }
+      new_seq->file = &*current_file;
+      current_file->inc();
       rq.enqueue(new_seq);
 
       if(current >= map_end) {
+        current_file->unmap();
         if(++current_file == mapped_files.end()) {
           rq.close();
           break;
         }
+        current_file->map();
         current_file->will_need();
         map_base   = current_file->base();
         current    = current_file->base();
