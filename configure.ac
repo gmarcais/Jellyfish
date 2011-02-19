@@ -1,13 +1,14 @@
 AC_INIT([jellyfish], [1.1], [guillaume@marcais.net])
 AC_CANONICAL_HOST
-AM_CONDITIONAL([MACOSX], [test x$host_vendor = xapple])
+#AM_CONDITIONAL([MACOSX], [test x$host_vendor = xapple])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign parallel-tests color-tests])
 AC_PROG_CXX
 
 AC_CONFIG_HEADERS([config.h])
 gl_EARLY 
 gl_INIT
-#    gnulib/Makefile
+
+#    gnulib/Makefile        
 AC_CONFIG_FILES([
     Makefile
     jellyfish/Makefile

@@ -337,6 +337,28 @@ namespace jellyfish {
       };
       friend class overlap_iterator;
 
+      /* Return whether the entry is empty and if not, it returns the
+       * key and if it has the large bit set.
+       */
+      void get_entry_stats(size_t id, bool &empty, word &key, bool &large) const {
+        word           *w, *kvw = NULL;
+        const offset_t *o, *lo  = NULL;
+
+        w = offsets.get_word_offset(id, &o, &lo, data);
+        kvw = w + o->key.woff;
+        key = *kvw;
+        large = key & o->key.lb_mask;
+        if(large)
+          o = lo;
+        if(o->key.mask2) {
+          key = (key & o->key.mask1 & ~o->key.sb_mask1) >> o->key.boff;
+          key |= ((*(kvw+1)) & o->key.mask2 & ~o->key.sb_mask2) << o->key.shift;
+        } else {
+          key = (key & o->key.mask1) >> o->key.boff;
+        }
+        empty = key == 0;
+      }
+
       /*
        * Return the key and value at position id. If the slot at id is
        * empty, returns false. If the slot at position id has the large
@@ -345,11 +367,11 @@ namespace jellyfish {
        * position id. No summation of the other entries for the key is
        * done.
        */
-      bool get_key_val(size_t id, word &key, word &val) {
-        word     *w, *kvw, *fw = NULL;
-        offset_t *o, *lo, *fo  = NULL;
-        bool      large;
-        uint_t    overflows;
+      bool get_key_val(size_t id, word &key, word &val) const {
+        word           *w, *kvw, *fw = NULL;
+        const offset_t *o, *lo, *fo  = NULL;
+        bool            large;
+        uint_t          overflows;
 
         overflows = 0;
         while(true) {

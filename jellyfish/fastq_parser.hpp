@@ -42,15 +42,16 @@ namespace jellyfish {
     struct seq                           *buffers;
     bool                                  canonical;
     bool                                  quality_control;
+    char                                  quality_start;
 
   public:
     static const uint_t codes[256];
     static const uint_t CODE_RESET = -1;
-    static const float proba_codes[256];
-    static const float one_minus_proba_codes[256];
+    static const float proba_codes[41];
+    static const float one_minus_proba_codes[41];
 
     fastq_parser(int nb_files, char *argv[], uint_t _mer_len, 
-                 unsigned int nb_buffers, const bool _qc);
+                 unsigned int nb_buffers, const bool _qc, const char _qs);
 
     ~fastq_parser() {
       delete [] buffers;
@@ -68,14 +69,15 @@ namespace jellyfish {
       seq_queue      *rq, *wq;
       const bool      canonical;
       const bool      quality_control;
+      const char      quality_start;
 
     public:
-      thread(fastq_parser *_parser, const bool _qc) :
+      thread(fastq_parser *_parser, const bool _qc, const char _qs) :
         parser(_parser), sequence(0),
         mer_len(parser->mer_len), lshift(2 * (mer_len - 1)),
         kmer(0), rkmer(0), masq((1UL << (2 * mer_len)) - 1),
         cmlen(0), rq(&parser->rq), wq(&parser->wq),
-        canonical(parser->canonical), quality_control(_qc) {}
+        canonical(parser->canonical), quality_control(_qc), quality_start(_qs) {}
 
       template<typename counter_t>
       void parse(counter_t &counter) {
@@ -104,7 +106,7 @@ namespace jellyfish {
 
               kmer = ((kmer << 2) & masq) | c;
               rkmer = (rkmer >> 2) | ((0x3 - c) << lshift);
-              const float  one_minus_p = one_minus_proba_codes[(uint_t)q];
+              const float  one_minus_p = one_minus_proba_codes[(uint_t)(q - quality_start)];
               quals.append(one_minus_p);
               if(++cmlen >= mer_len) {
                 cmlen = mer_len;
@@ -125,7 +127,7 @@ namespace jellyfish {
       bool next_sequence();
     };
     friend class thread;
-    thread new_thread() { return thread(this, quality_control); }
+    thread new_thread() { return thread(this, quality_control, quality_start); }
 
   private:
     void _read_sequence();

@@ -145,3 +145,31 @@ int parse_float(char *arg, std::ostream *err, float *res)
   }
   return 0;
 }
+
+#define def_parse_to_integer(type,fun)                                  \
+  error_t parse_to_num(const char *a, type &o) {                        \
+    char *e;                                                            \
+    errno = 0;                                                          \
+    o = fun(a, &e, 0);                                                  \
+    if(errno) return errno;                                             \
+    if(*a == '\0' || *e != '\0') return EINVAL;                         \
+    return 0;                                                           \
+  }
+
+#define def_parse_to_real(type,fun)                                     \
+  error_t parse_to_num(const char *a, type &o) {                        \
+    char *e;                                                            \
+    errno = 0;                                                          \
+    o = fun(a, &e);                                                     \
+    if(errno) return errno;                                             \
+    if(*a == '\0' || (o == (type)0.0 && e == a) || e != '\0') return EINVAL; \
+    return 0;                                                           \
+  }
+
+def_parse_to_integer(long, strtol)
+def_parse_to_integer(long long, strtoll)
+def_parse_to_integer(unsigned long, strtoul)
+def_parse_to_integer(unsigned long long, strtoull)
+def_parse_to_real(float, strtof)
+def_parse_to_real(double, strtod)
+def_parse_to_real(long double, strtold)

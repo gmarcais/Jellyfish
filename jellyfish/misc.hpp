@@ -175,6 +175,48 @@ uint64_t bogus_sum(void *data, size_t len);
 int parse_long(char *arg, std::ostream *err, unsigned long *res);
 int parse_float(char *arg, std::ostream *err, float *res);
 
+error_t parse_to_num(const char *a, long &o);
+error_t parse_to_num(const char *a, long long &o);
+error_t parse_to_num(const char *a, unsigned long &o);
+error_t parse_to_num(const char *a, unsigned long long &o);
+error_t parse_to_num(const char *a, float &o);
+error_t parse_to_num(const char *a, double &o);
+error_t parse_to_num(const char *a, long double &o);
+
+#define __2S__(x) #x
+#define DFTS(x) " (" __2S__(x) ")"
+
+
+#define PARSE_ARG_NUM(key,field)                                        \
+  case key:                                                             \
+  error = parse_to_num(arg, arguments->field);                          \
+  if(error)                                                             \
+    argp_error(state, "Invalid value '%s' to switch '%s'", arg, state->argv[state->next - 2]); \
+  else                                                                  \
+    break;
+
+#define PARSE_ARG_FLAG(key,field)               \
+  case key: arguments->field = true; break;
+
+#define PARSE_ARG_STRING(key,field)             \
+  case key: arguments->field = arg; break;
+ 
+
+// template <typename T>
+// void parse_to_num(char *arg, T &o) {
+//   char *endptr;
+
+//   errno = 0;
+//   *res = strtoul(arg, &endptr, 0);
+//   if(errno)
+//     throw_perror<ErrorParse>("Error parsing integer string '%s'", arg);
+//   if(*arg == '\0' || *endptr != '\0')
+//     throw_error<ErrorParse>("Invalid integer argument '%s'", arg);
+// }
+
+// long strtonum(const char *a, char **e, int b) { return strtol(a, e, b); }
+// long long strtonum(const char *a, char **e, int b) { return strtoll(a, e, b); }
+
 template <typename T>
 size_t bits_to_bytes(T bits) {
   return (size_t)((bits / 8) + (bits % 8 != 0));
