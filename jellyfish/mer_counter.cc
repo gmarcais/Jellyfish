@@ -39,7 +39,7 @@
 #include <jellyfish/square_binary_matrix.hpp>
 
 // Temporary
-#include <jellyfish/measure_dumper.hpp>
+//#include <jellyfish/measure_dumper.hpp>
 
 /*
  * Option parsing
@@ -267,9 +267,10 @@ public:
     hash = new inv_hash_t(ary);
 
     if(!arguments.no_write) {
-      if(arguments.measure) {
-        dumper = new jellyfish::measure_dumper<inv_hash_t::storage_t>(ary);
-      } else if(arguments.raw) {
+      // if(arguments.measure) {
+      //   dumper = new jellyfish::measure_dumper<inv_hash_t::storage_t>(ary);
+      // } else
+      if(arguments.raw) {
         dumper = new raw_inv_hash_dumper_t((uint_t)4, arguments.output, arguments.out_buffer_size, ary);
       } else {
         dumper = new inv_hash_dumper_t(arguments.nb_threads, arguments.output,
