@@ -244,14 +244,14 @@ public:
 };
 
 
-class mer_counting_fasta_hash : public mer_counting<jellyfish::fasta_parser, inv_hash_t> {
+class mer_counting_fasta_hash : public mer_counting<jellyfish::parse_dna, inv_hash_t> {
 public:
   mer_counting_fasta_hash(int arg_st, int argc, char *argv[], struct arguments &_args) :
-    mer_counting<jellyfish::fasta_parser, inv_hash_t>(_args)
+    mer_counting<jellyfish::parse_dna, inv_hash_t>(_args)
   {
-    parser = new jellyfish::fasta_parser(argc - arg_st, argv + arg_st, 
-                                         arguments.mer_len, arguments.nb_buffers,
-                                         arguments.buffer_size);
+    parser = new jellyfish::parse_dna(argc - arg_st, argv + arg_st, 
+                                      arguments.mer_len, arguments.nb_buffers,
+                                      arguments.buffer_size);
     ary = new inv_hash_t::storage_t(arguments.size, 2*arguments.mer_len,
                                     arguments.counter_len, 
                                     arguments.reprobes, 
@@ -284,14 +284,14 @@ public:
   }
 };
 
-class mer_counting_fasta_direct : public mer_counting<jellyfish::fasta_parser, direct_index_t> {
+class mer_counting_fasta_direct : public mer_counting<jellyfish::parse_dna, direct_index_t> {
 public:
   mer_counting_fasta_direct(int arg_st, int argc, char *argv[], struct arguments &_args) :
-    mer_counting<jellyfish::fasta_parser, direct_index_t>(_args)
+    mer_counting<jellyfish::parse_dna, direct_index_t>(_args)
   {
-    parser = new jellyfish::fasta_parser(argc - arg_st, argv + arg_st, 
-                                         arguments.mer_len, arguments.nb_buffers,
-                                         arguments.buffer_size);
+    parser = new jellyfish::parse_dna(argc - arg_st, argv + arg_st, 
+                                      arguments.mer_len, arguments.nb_buffers,
+                                      arguments.buffer_size);
     ary = new direct_index_t::storage_t(2 * arguments.mer_len);
     hash = new direct_index_t(ary);
     if(!arguments.no_write) {
@@ -307,27 +307,27 @@ public:
   }
 };
 
-class mer_counting_fastq : public mer_counting<jellyfish::fastq_parser, fastq_hash_t> {
-public:
-  mer_counting_fastq(int arg_st, int argc, char *argv[], struct arguments &_args) :
-    mer_counting<jellyfish::fastq_parser, fastq_hash_t>(_args)
-  {
-    parser = new jellyfish::fastq_parser(argc - arg_st, argv + arg_st,
-                                         arguments.mer_len, arguments.nb_buffers, 
-                                         arguments.quality_control, arguments.quality_start);
-    ary = new fastq_hash_t::storage_t(arguments.size, 2*arguments.mer_len,
-                                      arguments.reprobes, 
-                                      jellyfish::quadratic_reprobes);
-    hash = new fastq_hash_t(ary);
-    if(!arguments.no_write) {
-      dumper = new raw_fastq_dumper_t(arguments.nb_threads, arguments.output,
-                                      arguments.out_buffer_size,
-                                      ary);
-      hash->set_dumper(dumper);
-    }
-    parser->set_canonical(arguments.both_strands);
-  }
-};
+// class mer_counting_fastq : public mer_counting<jellyfish::fastq_parser, fastq_hash_t> {
+// public:
+//   mer_counting_fastq(int arg_st, int argc, char *argv[], struct arguments &_args) :
+//     mer_counting<jellyfish::fastq_parser, fastq_hash_t>(_args)
+//   {
+//     parser = new jellyfish::fastq_parser(argc - arg_st, argv + arg_st,
+//                                          arguments.mer_len, arguments.nb_buffers, 
+//                                          arguments.quality_control, arguments.quality_start);
+//     ary = new fastq_hash_t::storage_t(arguments.size, 2*arguments.mer_len,
+//                                       arguments.reprobes, 
+//                                       jellyfish::quadratic_reprobes);
+//     hash = new fastq_hash_t(ary);
+//     if(!arguments.no_write) {
+//       dumper = new raw_fastq_dumper_t(arguments.nb_threads, arguments.output,
+//                                       arguments.out_buffer_size,
+//                                       ary);
+//       hash->set_dumper(dumper);
+//     }
+//     parser->set_canonical(arguments.both_strands);
+//   }
+// };
 
 int count_main(int argc, char *argv[]) {
   struct arguments arguments;
@@ -339,9 +339,10 @@ int count_main(int argc, char *argv[]) {
 
   Time start;
   mer_counting_base *counter;
-  if(arguments.fastq) {
-    counter = new mer_counting_fastq(arg_st, argc, argv, arguments);
-  } else if(ceilLog2(arguments.size) > 2 * arguments.mer_len) {
+  // if(arguments.fastq) {
+  //   counter = new mer_counting_fastq(arg_st, argc, argv, arguments);
+  // } else
+  if(ceilLog2(arguments.size) > 2 * arguments.mer_len) {
     counter = new mer_counting_fasta_direct(arg_st, argc, argv, arguments);
   } else {
     counter = new mer_counting_fasta_hash(arg_st, argc, argv, arguments);

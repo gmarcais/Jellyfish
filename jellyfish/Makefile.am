@@ -20,7 +20,8 @@ jellyfish_SOURCES = jellyfish.cc dump_stats_compacted.cc hash_merge.cc	\
 storage.cc misc.cc mer_counter.cc histogram.cc time.cc thread_exec.cc	\
 query_main.cc square_binary_matrix.cc fasta_parser.cc			\
 dump_stats_raw.cc rquery_main.cc rhisto_main.cc fastq_parser.cc		\
-dump_fastq_main.cc histo_fastq_main.cc cite.cc
+dump_fastq_main.cc histo_fastq_main.cc cite.cc parse_dna.cc		\
+file_parser.cc
 # jellyfish_CPPFLAGS = $(AM_CPPFLAGS)
 
 

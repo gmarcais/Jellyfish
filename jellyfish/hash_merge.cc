@@ -30,10 +30,10 @@
 #include <unistd.h>
 #include <sys/mman.h>
 
-#include "misc.hpp"
-#include "mer_counting.hpp"
-#include "compacted_hash.hpp"
-#include "heap.hpp"
+#include <jellyfish/misc.hpp>
+#include <jellyfish/mer_counting.hpp>
+#include <jellyfish/compacted_hash.hpp>
+#include <jellyfish/heap.hpp>
 
 #define MAX_KMER_SIZE 32
 

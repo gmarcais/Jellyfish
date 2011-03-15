@@ -111,15 +111,15 @@ int raw_query_main(int argc, char *argv[])
     if(strlen(mer) != mer_len) {
       die("Invalid mer %s\n", mer);
     }
-    key = jellyfish::fasta_parser::mer_string_to_binary(mer, mer_len);
+    key = jellyfish::parse_dna::mer_string_to_binary(mer, mer_len);
     if(arguments.both_strands) {
-      uint64_t rev = jellyfish::fasta_parser::reverse_complement(key, mer_len);
+      uint64_t rev = jellyfish::parse_dna::reverse_complement(key, mer_len);
       if(rev < key)
         key = rev;
     }
     if(!hash.get_val(key, val, true))
       val = 0;
-    jellyfish::fasta_parser::mer_binary_to_string(key, mer_len, mer2);
+    jellyfish::parse_dna::mer_binary_to_string(key, mer_len, mer2);
     std::cout << mer << " " << mer2 << " " << val << "\n";
   }
 

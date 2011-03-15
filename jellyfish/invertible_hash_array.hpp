@@ -30,7 +30,7 @@
 #include <jellyfish/square_binary_matrix.hpp>
 #include <jellyfish/storage.hpp>
 #include <jellyfish/offsets_key_value.hpp>
-#include <jellyfish/fasta_parser.hpp>
+#include <jellyfish/parse_dna.hpp>
 
 namespace jellyfish {
   namespace invertible_hash {
@@ -239,7 +239,7 @@ namespace jellyfish {
         {}
         
         void get_string(char *out) const {
-          fasta_parser::mer_binary_to_string(key, ary->get_key_len() / 2, out);
+          parse_dna::mer_binary_to_string(key, ary->get_key_len() / 2, out);
         }
         uint64_t get_hash() const { return hash; }
         uint64_t get_pos() const { return hash & mask; }
@@ -249,7 +249,7 @@ namespace jellyfish {
 	word get_val() const { return val; }
 	size_t get_id() const { return id; }
 	char *get_dna_str() {
-	  ::jellyfish::fasta_parser::mer_binary_to_string(key, ary->get_key_len() / 2, dna_str);
+	  parse_dna::mer_binary_to_string(key, ary->get_key_len() / 2, dna_str);
 	  return dna_str;
 	}
 
@@ -310,7 +310,7 @@ namespace jellyfish {
         }
         
         void get_string(char *out) const {
-          fasta_parser::mer_binary_to_string(key, ary->get_key_len() / 2, out);
+          parse_dna::mer_binary_to_string(key, ary->get_key_len() / 2, out);
         }
         uint64_t get_hash() const { return hash; }
         uint64_t get_pos() const { return hash & mask; }

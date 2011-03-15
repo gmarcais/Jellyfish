@@ -87,7 +87,7 @@ namespace jellyfish {
         {}
 
         void get_string(char *out) const {
-          fasta_parser::mer_binary_to_string(key, ary->get_key_len() / 2, out);
+          parse_dna::mer_binary_to_string(key, ary->get_key_len() / 2, out);
         }
         uint64_t get_hash() const { return key; }
         uint64_t get_pos() const { return key; }

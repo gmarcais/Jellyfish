@@ -23,8 +23,8 @@
 #include <pthread.h>
 #include <jellyfish/mapped_file.hpp>
 #include <jellyfish/square_binary_matrix.hpp>
-#include <jellyfish/fasta_parser.hpp>
 #include <jellyfish/atomic_gcc.hpp>
+#include <jellyfish/parse_dna.hpp>
 
 namespace jellyfish {
   namespace compacted_hash {
@@ -229,7 +229,7 @@ namespace jellyfish {
       }
 
       void get_string(char *out) const {
-        fasta_parser::mer_binary_to_string(key, get_mer_len(), out);
+        parse_dna::mer_binary_to_string(key, get_mer_len(), out);
       }
       uint64_t get_hash() const { return hash_matrix.times(key); }
       uint64_t get_pos() const { return hash_matrix.times(key) & size_mask; }
@@ -318,7 +318,7 @@ namespace jellyfish {
       /* No check is made on the validity of the string passed. Should only contained [acgtACGT] to get a valid answer.
        */
       val_t operator[] (const char *key_s) {
-        return get_key_val(fasta_parser::mer_string_to_binary(key_s, get_mer_len()));
+        return get_key_val(parse_dna::mer_string_to_binary(key_s, get_mer_len()));
       }
       val_t operator[] (const key_t key) const { return get_key_val(key); }
 
@@ -347,7 +347,7 @@ namespace jellyfish {
                           uint64_t *id) const {
         key_t key;
         if(canonical) {
-          key = fasta_parser::reverse_complement(_key, get_mer_len());
+          key = parse_dna::reverse_complement(_key, get_mer_len());
           if(key > _key)
             key = _key;
         } else {
@@ -443,12 +443,12 @@ namespace jellyfish {
         }
 
         char *get_dna_str() {
-          ::jellyfish::fasta_parser::mer_binary_to_string(key, mer_len, dna_str);
+          parse_dna::mer_binary_to_string(key, mer_len, dna_str);
           return dna_str;
         }
 
         void get_dna_str(char *out) {
-          ::jellyfish::fasta_parser::mer_binary_to_string(key, mer_len, out);
+          parse_dna::mer_binary_to_string(key, mer_len, out);
         }
       };
 
