@@ -14,5 +14,5 @@ echo "Counting 22-mers on ${nCPUs} CPU" &&      \
 RET=$?
 
 [ -z "$NODEL" ] && \
-    rm -f ${pref}_* ${pref}.md5sum ${pref}.timing
+    rm -f ${pref}_* ${pref}.md5sum ${pref}.timing ${pref}.stats
 exit $RET

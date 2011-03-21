@@ -22,7 +22,7 @@
 #include <sys/mman.h>
 
 namespace jellyfish {
-  file_parser *file_parser::new_file_parser(const char *path) {
+  file_parser *file_parser::new_file_parser_sequence(const char *path) {
     int fd = open(path, O_RDONLY);
     if(fd == -1)
       throw_perror<FileParserError>("Error opening file '%s'", path);
@@ -30,20 +30,41 @@ namespace jellyfish {
     char peek;
     if(read(fd, &peek, 1) <= 0)
       throw_error<FileParserError>("Empty input file '%s'", path);
-    lseek(fd, 0, SEEK_SET);
 
     switch(peek) {
-    case '>': return new fasta_parser(fd, path);
-      //    case '@': return new fastq_sequence_parser(&is);
+    case '>': return new fasta_parser(fd, path, &peek, 1);
+    case '@': return new fastq_sequence_parser(fd, path, &peek, 1);
       
     default:
-      throw_error<FileParserError>("Invalid input file");
+      throw_error<FileParserError>("Invalid input file '%'", path);
     }
     // Should never be reached
     return 0;
   }
 
-  file_parser::file_parser(int fd, const char *path) : _fd(fd) {
+  file_parser *file_parser::new_file_parser_seq_qual(const char *path) {
+    int fd = open(path, O_RDONLY);
+    if(fd == -1)
+      throw_perror<FileParserError>("Error opening file '%s'", path);
+      
+    char peek;
+    if(read(fd, &peek, 1) <= 0)
+      throw_error<FileParserError>("Empty input file '%s'", path);
+
+    switch(peek) {
+    case '@': return new fastq_seq_qual_parser(fd, path, &peek, 1);
+      
+    default:
+      throw_error<FileParserError>("Invalid input file '%'", path);
+    }
+    // Should never be reached
+    return 0;
+  }
+
+
+  file_parser::file_parser(int fd, const char *path, 
+                           const char *str, size_t len, char pbase) : 
+    _fd(fd), _base(pbase), _pbase(pbase) {
     struct stat stat_buf;
     if(fstat(fd, &stat_buf) == -1)
       throw_perror<FileParserError>("Can't fstat '%s'", path);
@@ -54,10 +75,16 @@ namespace jellyfish {
       _end_buffer = _buffer + _size;
       _data       = _buffer;
       _end_data   = _end_buffer;
+      close(_fd);
     } else {
       _buffer     = new char[_buff_size];
       _end_buffer = _buffer + _buff_size;
       _data       = _end_data = _buffer;
+      // What if len > _buff_size!!!
+      if(str && len) {
+        memcpy(_buffer, str, len);
+        _end_data   = _buffer + len;
+      }        
     }
   }
 
@@ -66,19 +93,23 @@ namespace jellyfish {
       munmap(_buffer, _size);
     } else {
       delete _buffer;
+      close(_fd);
     }
   }
 
+  // Get next character in "stream"
   int file_parser::sbumpc() {
+    _pbase = _base;
     if(_data >= _end_data) {
       if(_is_mmapped)
-        return EOF;
+        return (_base = EOF);
       ssize_t gcount = read(_fd, _buffer, _buff_size);
       if(gcount <= 0)
-        return EOF;
+        return (_base = EOF);
       _data     = _buffer;
       _end_data = _buffer + gcount;
     }
-    return *_data++;
+    //    std::cerr << "sbumpc " << *_data << std::endl;
+    return (_base = *_data++);
   }
 }

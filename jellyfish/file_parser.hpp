@@ -24,8 +24,9 @@
 
 namespace jellyfish {
   class file_parser {
-    int _fd;
-    static const size_t  _buff_size = 8192;
+    int                  _fd;
+    char                 _base, _pbase;
+    static const size_t  _buff_size = 1024 * 1024;
     char                *_buffer;
     const char          *_end_buffer;
     const char          *_data;
@@ -38,9 +39,12 @@ namespace jellyfish {
     int sbumpc();
 
   public:
-    file_parser(int fd, const char *path);
+    // [str, str+len) is content on initial buffer
+    file_parser(int fd, const char *path, const char *str, size_t len,
+                char pbase = '\n');
     ~file_parser();
-    static file_parser *new_file_parser(const char *path);
+    static file_parser *new_file_parser_sequence(const char *path);
+    static file_parser *new_file_parser_seq_qual(const char *path);
 
     // parse some input data into the buffer [start, *end). Returns
     // false if there is no more data in the input. **end is an
@@ -48,11 +52,14 @@ namespace jellyfish {
     // when called and should point past the end of the data when
     // returned.
     virtual bool parse(char *start, char **end) = 0;
+
+    char base() const { return _base; }
+    char pbase() const { return _pbase; }
   };
 }
 
 #include <fasta_parser.hpp>
-// #include <fastq_sequence_parser.hpp>
-
+#include <fastq_sequence_parser.hpp>
+#include <fastq_seq_qual_parser.hpp>
 
 #endif

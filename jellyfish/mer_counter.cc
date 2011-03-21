@@ -34,7 +34,6 @@
 #include <jellyfish/time.hpp>
 #include <jellyfish/mer_counting.hpp>
 #include <jellyfish/locks_pthread.hpp>
-#include <jellyfish/fasta_parser.hpp>
 #include <jellyfish/thread_exec.hpp>
 #include <jellyfish/square_binary_matrix.hpp>
 
@@ -81,8 +80,8 @@ struct arguments {
   const char    *output;
 #define DFT_MATRIX 0
   char          *matrix;
-#define DFT_FASTQ false
-  bool           fastq;
+#define DFT_QUAKE false
+  bool           quake;
 #define DFT_QUALITY_CONTROL false
   bool           quality_control;
 #define DFT_QUALITY_START 64
@@ -105,7 +104,7 @@ struct arguments {
     timing(DFT_TIMING),
     output(DFT_OUTPUT),
     matrix(DFT_MATRIX),
-    fastq(DFT_FASTQ),
+    quake(DFT_QUAKE),
     quality_control(DFT_QUALITY_CONTROL),
     quality_start(DFT_QUALITY_START) {}
 
@@ -134,7 +133,7 @@ static struct argp_option options[] = {
   {"counter-len",       'c',            "LEN",  0,              "Length (in bits) of counting field" DFTS(DFT_COUNTER_LEN), 0},
   {"output",            'o',            "FILE", 0,              "Output file" DFTS(DFT_OUTPUT), 1},
   {"out-counter-len",   OPT_VAL_LEN,    "LEN",  0,              "Length (in bytes) of counting field in output" DFTS(DFT_OUT_COUNTER_LEN), 1},
-  {"fastq",             'q',            0,      0,              "Fastq input files", 2},
+  {"quake",             'q',            0,      0,              "Quake compatibility mode", 2},
   {"quality-control",   OPT_QUAL_CON,   0,      0,              "B quality in fastq is Read Segment Quality Control Indicator", 2},
   //  {"quality-start",     OPT_QUAL_START, VAL     0,              "Starting ASCII for quality values", 2},
   {"both-strands",      'C',            0,      0,              "Count both strands, canonical representation", 1},
@@ -168,7 +167,7 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state)
     PARSE_ARG_FLAG('w', no_write);
     PARSE_ARG_FLAG('r', raw);
     PARSE_ARG_FLAG('u', measure);
-    PARSE_ARG_FLAG('q', fastq);
+    PARSE_ARG_FLAG('q', quake);
     PARSE_ARG_FLAG('C', both_strands);
     PARSE_ARG_STRING('o', output);
     PARSE_ARG_NUM(OPT_VAL_LEN, out_counter_len);
@@ -230,7 +229,7 @@ public:
     typename parser_t::thread     mer_stream(parser->new_thread());
     typename hash_t::thread_ptr_t counter(hash->new_thread());
     mer_stream.parse(counter);
-    
+
     bool is_serial = sync_barrier.wait() == PTHREAD_BARRIER_SERIAL_THREAD;
     if(is_serial)
       hash->dump();
@@ -307,27 +306,28 @@ public:
   }
 };
 
-// class mer_counting_fastq : public mer_counting<jellyfish::fastq_parser, fastq_hash_t> {
-// public:
-//   mer_counting_fastq(int arg_st, int argc, char *argv[], struct arguments &_args) :
-//     mer_counting<jellyfish::fastq_parser, fastq_hash_t>(_args)
-//   {
-//     parser = new jellyfish::fastq_parser(argc - arg_st, argv + arg_st,
-//                                          arguments.mer_len, arguments.nb_buffers, 
-//                                          arguments.quality_control, arguments.quality_start);
-//     ary = new fastq_hash_t::storage_t(arguments.size, 2*arguments.mer_len,
-//                                       arguments.reprobes, 
-//                                       jellyfish::quadratic_reprobes);
-//     hash = new fastq_hash_t(ary);
-//     if(!arguments.no_write) {
-//       dumper = new raw_fastq_dumper_t(arguments.nb_threads, arguments.output,
-//                                       arguments.out_buffer_size,
-//                                       ary);
-//       hash->set_dumper(dumper);
-//     }
-//     parser->set_canonical(arguments.both_strands);
-//   }
-// };
+class mer_counting_quake : public mer_counting<jellyfish::parse_quake, fastq_hash_t> {
+public:
+  mer_counting_quake(int arg_st, int argc, char *argv[], struct arguments &_args) :
+    mer_counting<jellyfish::parse_quake, fastq_hash_t>(_args)
+  {
+    parser = new jellyfish::parse_quake(argc - arg_st, argv + arg_st,
+                                        arguments.mer_len, arguments.nb_buffers, 
+                                        arguments.buffer_size, 
+                                        arguments.quality_start);
+    ary = new fastq_hash_t::storage_t(arguments.size, 2*arguments.mer_len,
+                                      arguments.reprobes, 
+                                      jellyfish::quadratic_reprobes);
+    hash = new fastq_hash_t(ary);
+    if(!arguments.no_write) {
+      dumper = new raw_fastq_dumper_t(arguments.nb_threads, arguments.output,
+                                      arguments.out_buffer_size,
+                                      ary);
+      hash->set_dumper(dumper);
+    }
+    parser->set_canonical(arguments.both_strands);
+  }
+};
 
 int count_main(int argc, char *argv[]) {
   struct arguments arguments;
@@ -339,10 +339,9 @@ int count_main(int argc, char *argv[]) {
 
   Time start;
   mer_counting_base *counter;
-  // if(arguments.fastq) {
-  //   counter = new mer_counting_fastq(arg_st, argc, argv, arguments);
-  // } else
-  if(ceilLog2(arguments.size) > 2 * arguments.mer_len) {
+  if(arguments.quake) {
+    counter = new mer_counting_quake(arg_st, argc, argv, arguments);
+  } else if(ceilLog2(arguments.size) > 2 * arguments.mer_len) {
     counter = new mer_counting_fasta_direct(arg_st, argc, argv, arguments);
   } else {
     counter = new mer_counting_fasta_hash(arg_st, argc, argv, arguments);

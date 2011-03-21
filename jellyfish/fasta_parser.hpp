@@ -25,7 +25,8 @@ namespace jellyfish {
   class fasta_parser : public file_parser {
 
   public:
-    fasta_parser(int fd, const char *path) : file_parser(fd, path) {}
+    fasta_parser(int fd, const char *path, const char *str, size_t len) :
+      file_parser(fd, path, str, len) {}
     ~fasta_parser() {}
 
     // Parse fasta sequence into the buffer [start, end).

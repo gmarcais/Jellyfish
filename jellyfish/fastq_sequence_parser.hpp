@@ -14,37 +14,21 @@
     along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <jellyfish/fasta_parser.hpp>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/mman.h>
+#ifndef __JELLYFISH_FASTQ_SEQUENCE_PARSER_HPP__
+#define __JELLYFISH_FASTQ_SEQUENCE_PARSER_HPP__
+
+#include <jellyfish/file_parser.hpp>
 
 namespace jellyfish {
-  bool fasta_parser::parse(char *start, char **end) {
-    while(start < *end && base() != EOF) {
-      switch(sbumpc()) {
-      case EOF:
-        break;
+  class fastq_sequence_parser : public file_parser {
+    unsigned long seq_len;
 
-      case '>':
-        if(pbase() == '\n') {
-          while(base() != EOF && base() != '\n') { sbumpc(); }
-          *start++ = 'N';
-        } else
-          *start++ = base();
-        break;
+  public:
+    fastq_sequence_parser(int fd, const char *path, const char *str, size_t len) :
+      file_parser(fd, path, str, len), seq_len(0) {}
+    ~fastq_sequence_parser() {}
 
-      case '\n':
-        break;
-
-      default:
-        *start++ = base();
-      }
-    }
-
-    *end = start;
-    return base() != EOF;
-  }
+    virtual bool parse(char *start, char **end);
+  };
 }
+#endif

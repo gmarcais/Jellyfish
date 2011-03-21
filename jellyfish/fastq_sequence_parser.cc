@@ -14,24 +14,32 @@
     along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <jellyfish/fasta_parser.hpp>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/mman.h>
+#include <jellyfish/fastq_sequence_parser.hpp>
 
 namespace jellyfish {
-  bool fasta_parser::parse(char *start, char **end) {
+  bool fastq_sequence_parser::parse(char *start, char **end) {
     while(start < *end && base() != EOF) {
       switch(sbumpc()) {
       case EOF:
         break;
 
-      case '>':
+      case '@':
         if(pbase() == '\n') {
           while(base() != EOF && base() != '\n') { sbumpc(); }
           *start++ = 'N';
+          seq_len = 0;
+        } else
+          *start++ = base();
+        break;
+
+      case '+':
+        if(pbase() == '\n') { // Skip qual header & values
+          while(base() != EOF && base() != '\n') { sbumpc(); }
+          while(base() != EOF && seq_len > 0) {
+            if(base() != '\n')
+              --seq_len;
+            sbumpc();
+          }
         } else
           *start++ = base();
         break;
@@ -41,9 +49,10 @@ namespace jellyfish {
 
       default:
         *start++ = base();
+        ++seq_len;
       }
     }
-
+    
     *end = start;
     return base() != EOF;
   }

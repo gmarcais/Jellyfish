@@ -33,7 +33,7 @@ namespace jellyfish {
       wq.enqueue(&buffers[i]);
     }
 
-    fparser = jellyfish::file_parser::new_file_parser(*current_file);
+    fparser = jellyfish::file_parser::new_file_parser_sequence(*current_file);
   }
 
   bool parse_dna::thread::next_sequence() {
@@ -78,7 +78,7 @@ namespace jellyfish {
           rq.close();
           break;
         }
-        fparser = jellyfish::file_parser::new_file_parser(*current_file);
+        fparser = jellyfish::file_parser::new_file_parser_sequence(*current_file);
       }
     }
   }
