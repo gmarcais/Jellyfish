@@ -81,7 +81,7 @@ class small_packed_array {
 
 public:
   small_packed_array(uint32_t _item_len, uint64_t _size) :
-    item_len(_item_len), size(_size), item_mask((UINT64_C(1) << _item_len) - 1),
+    item_len(_item_len), size(_size), item_mask(((uint64_t)1 << _item_len) - 1),
     allocated(true)
   {
     initialize();
@@ -90,7 +90,7 @@ public:
   }
   
   small_packed_array(char *map, uint32_t _item_len, uint64_t _size) :
-    item_len(_item_len), size(_size), item_mask((UINT64_C(1) << _item_len) - 1),
+    item_len(_item_len), size(_size), item_mask(((uint64_t)1 << _item_len) - 1),
     allocated(false)
   {
     initialize();
@@ -116,7 +116,7 @@ public:
       eval = (oword >> off);
       if(eval & 0x1)
         return ((eval >> 1) & mask) == (val & mask); // val already in
-      nword = oword | (((val & mask) << 1 | UINT64_C(0x1)) << off);
+      nword = oword | (((val & mask) << 1 | (uint64_t)0x1) << off);
       nword = __sync_val_compare_and_swap(word, oword, nword);
       if(oword == nword)
         return true;    // Successfully added val
@@ -139,7 +139,7 @@ public:
       // Contain within one word
       return __set(word, item_mask, off, val);
     } else {
-      mask = (UINT64_C(1) << (63 - off)) - 1;
+      mask = ((uint64_t)1 << (63 - off)) - 1;
       if(__set(word, mask, off, val)) {
         mask = item_mask >> (63 - off);
         return __set(word+1, mask, 0, val >> (63 - off));
@@ -175,7 +175,7 @@ public:
     if(off + item_len < 64) {
       return __get(word, item_mask, off, val);
     } else {
-      mask = (UINT64_C(1) << (63 - off)) - 1;
+      mask = ((uint64_t)1 << (63 - off)) - 1;
       if(__get(word, mask, off, &ival)) {
         *val = ival;
         mask = item_mask >> (63 - off);

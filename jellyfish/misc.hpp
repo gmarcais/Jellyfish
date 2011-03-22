@@ -17,13 +17,6 @@
 #ifndef __JELLYFISH_MISC_HPP__
 #define __JELLYFISH_MISC_HPP__
 
-#ifndef __STDC_FORMAT_MACROS
-#define __STDC_FORMAT_MACROS
-#endif
-#ifndef __STDC_CONSTANT_MACROS
-#define __STDC_CONSTANT_MACROS
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>

@@ -74,7 +74,7 @@ namespace jellyfish {
       static const char table[4] = { 'A', 'C', 'G', 'T' };
       
       for(unsigned int i = 0 ; i < klen; i++) {
-        out[klen-1-i] = table[mer & UINT64_C(0x3)];
+        out[klen-1-i] = table[mer & (uint64_t)0x3];
         mer >>= 2;
       }
       out[klen] = '\0';

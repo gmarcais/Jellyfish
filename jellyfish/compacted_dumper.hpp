@@ -99,7 +99,7 @@ namespace jellyfish {
     if(off < 0)
       raise(ErrorWriting) << "Error creating output path" << err::no;
     if(off > 0 && off < file_len) {
-      int _off = snprintf(file + off, file_len - off, "_%" PRIUINTu, file_index++);
+      int _off = snprintf(file + off, file_len - off, "_%uld", file_index++);
       if(_off < 0)
         raise(ErrorWriting) << "Error creating output path" << err::no;
       off += _off;

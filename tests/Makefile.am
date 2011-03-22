@@ -5,7 +5,8 @@ AM_SH_LOG_FLAGS =
 TESTS = generate_sequence.sh serial_hashing.sh parallel_hashing.sh	\
 serial_direct_indexing.sh parallel_direct_indexing.sh raw_hash.sh	\
 generate_fastq_sequence.sh parallel_fastq_hashing.sh multi_file.sh	\
-multi_file_fastq.sh from_stream.sh parallel_fastq_sequence_hashing.sh
+multi_file_fastq.sh from_stream.sh parallel_fastq_sequence_hashing.sh	\
+from_stream_fastq.sh
 
 EXTRA_DIST = $(TESTS)
 clean-local: clean-local-check
@@ -23,3 +24,4 @@ from_stream.log: generate_sequence.log
 parallel_fastq_hashing.log: generate_fastq_sequence.log
 parallel_fastq_sequence_hashing.log: generate_fastq_sequence.log
 multi_file_fastq.log: generate_fastq_sequence.log
+from_stream_fastq.log: generate_fastq_sequence.log

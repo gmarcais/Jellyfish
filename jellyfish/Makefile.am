@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
 AM_LDFLAGS = -lpthread
-AM_CPPFLAGS = -Wall -Werror -g -O2 -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -I$(top_srcdir)
+AM_CPPFLAGS = -Wall -Werror -g -O2 -I$(top_srcdir)
 
 bin_PROGRAMS = jellyfish
 
