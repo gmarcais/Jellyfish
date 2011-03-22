@@ -20,6 +20,8 @@
 #include <iostream>
 #include <fstream>
 #include <unistd.h>
+
+#include <jellyfish/err.hpp>
 #include <jellyfish/misc.hpp>
 
 namespace jellyfish {

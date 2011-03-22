@@ -17,6 +17,7 @@
 #ifndef __FASTQ_DUMPER_HPP__
 #define __FASTQ_DUMPER_HPP__
 
+#include <jellyfish/err.hpp>
 #include <jellyfish/dumper.hpp>
 #include <jellyfish/thread_exec.hpp>
 #include <jellyfish/mapped_file.hpp>
@@ -42,9 +43,9 @@ namespace jellyfish {
 
       header(const char *ptr) {
         if(memcmp(ptr, file_type, sizeof(type)))
-          throw_error<ErrorReading>("Bad file type '%.*s', expected '%.*s'",
-                                    sizeof(type), ptr, sizeof(type), file_type);
-          memcpy((void *)this, ptr, sizeof(struct header));
+          raise(ErrorReading) << "Bad file type '" << err::substr(ptr, sizeof(type))
+                              << "', expected '" << err::substr(file_type, sizeof(type)) << "'";
+        memcpy((void *)this, ptr, sizeof(struct header));
       }
     };
 
@@ -92,8 +93,9 @@ namespace jellyfish {
     storage_t * raw_dumper<storage_t>::read(const std::string &file) {
       mapped_file mf(file.c_str());
       if(mf.length() < sizeof(struct header))
-        throw_error<ErrorReading>("File '%s' too short. Should be at least '%ld' bytes",
-                                  file.c_str(), sizeof(struct header));
+        raise(ErrorReading) << "File '" << file << "' too short. Should be at least '" 
+                            << sizeof(struct header) << "' bytes";
+
       struct header header(mf.base());
       size_t off = sizeof(header);
       SquareBinaryMatrix hash_matrix, hash_inv_matrix;

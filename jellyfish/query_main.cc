@@ -18,79 +18,40 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <argp.h>
 #include <iostream>
 #include <fstream>
-#include "misc.hpp"
-#include "mer_counting.hpp"
-#include "compacted_hash.hpp"
-
-/*
- * Option parsing
- */
-static char doc[] = "Query from a compacted database";
-static char args_doc[] = "database";
-
-enum {
-  OPT_BOTH = 1024
-};
-
-static struct argp_option options[] = {
-  {"both-strands",      OPT_BOTH,       0,      0,      "Both strands"},
-  {"verbose",           'v',            0,      0,      "Be verbose (false)"},
-  { 0 }
-};
-
-struct arguments {
-  bool both_strands;
-  bool verbose;
-};
-
-static error_t parse_opt (int key, char *arg, struct argp_state *state)
-{
-  struct arguments *arguments = (struct arguments *)state->input;
-  //  error_t error;
-
-#define ULONGP(field) \
-  error = parse_long(arg, &std::cerr, &arguments->field);       \
-  if(error) return(error); else break;
-
-#define FLAG(field) arguments->field = true; break;
-
-  switch(key) {
-  case OPT_BOTH: FLAG(both_strands);
-  case 'v': FLAG(verbose);
-
-  default:
-    return ARGP_ERR_UNKNOWN;
-  }
-  return 0;
-}
-static struct argp argp = { options, parse_opt, args_doc, doc };
+#include <jellyfish/misc.hpp>
+#include <jellyfish/mer_counting.hpp>
+#include <jellyfish/compacted_hash.hpp>
+#include <jellyfish/query_cmdline.hpp>
+#include <jellyfish/err.hpp>
+#include <jellyfish/misc.hpp>
 
 int query_main(int argc, char *argv[])
 {
-  struct arguments arguments;
-  int arg_st;
+  struct query_args args;
 
-  arguments.both_strands = false;
-  arguments.verbose      = false;
+  if(query_cmdline(argc, argv, &args) != 0)
+    die << "Command line parser failed";
 
-  argp_parse(&argp, argc, argv, 0, &arg_st, &arguments);
-  if(arg_st != argc - 1) {
-    fprintf(stderr, "Wrong number of argument\n");
-    argp_help(&argp, stderr, ARGP_HELP_SEE, argv[0]);
+  if(args.inputs_num != 1) {
+    std::cerr << "Wrong number of argument\n";
+    query_cmdline_print_help();
     exit(1);
   }
 
-  hash_query_t hash(argv[arg_st]);
-  hash.set_canonical(arguments.both_strands);
+  std::ofstream out(args.output_arg);
+  if(!out.good())
+    die << "Can't open output file '" << args.output_arg << "'" << err::no;
+
+  hash_query_t hash(args.inputs[0]);
+  hash.set_canonical(args.both_strands_flag);
   uint_t mer_len = hash.get_mer_len();
   const uint_t width = mer_len + 2;
-  if(arguments.verbose) {
-    std::cout << "k-mer length (bases):          " <<
+  if(args.verbose_flag) {
+    out << "k-mer length (bases):          " <<
       (hash.get_key_len() / 2) << "\n";
-    std::cout << "value length (bytes):  " <<
+    out << "value length (bytes):  " <<
       hash.get_val_len() << "\n";
   }
 
@@ -99,11 +60,12 @@ int query_main(int argc, char *argv[])
     std::cin >> std::setw(width) >> mer;
     if(!std::cin.good())
       break;
-    if(strlen(mer) != mer_len) {
-      die("Invalid mer %s\n", mer);
-    }
-    std::cout << mer << " " << hash[mer] << "\n";
+    if(strlen(mer) != mer_len)
+      die << "Invalid mer " << (char*)mer;
+
+    out << mer << " " << hash[mer] << "\n";
   }
+  out.close();
 
   return 0;
 }

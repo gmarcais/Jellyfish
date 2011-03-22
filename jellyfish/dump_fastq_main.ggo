@@ -1,0 +1,12 @@
+purpose "Dump k-mer from a qmer database"
+args "--show-required --default-option -c cc -H hpp -F dump_fastq_main_cmdline -f dump_fastq_main_cmdline -a dump_fastq_main_args --unamed-opts=database.jf"
+package "jellyfish qdump"
+
+option "column"         c "Print in column format"
+  flag off
+option "tab"            t "Use tabs separator"
+  flag off
+option "verbose"        v "Be verbose"
+  flag off
+option "output"         o "Output file"
+  string default="/dev/fd/1"

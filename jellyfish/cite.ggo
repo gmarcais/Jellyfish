@@ -1,0 +1,8 @@
+purpose "How to cite Jellyfish's paper"
+args "--show-required --default-option -c cc -H hpp -F cite_cmdline -f cite_cmdline -a cite_args"
+package "jellyfish cite"
+
+option "bibtex"         b "Bibtex format"
+  flag off
+option "output"         o "Output file"
+  string default="/dev/fd/1"

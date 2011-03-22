@@ -18,105 +18,50 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <argp.h>
 #include <iostream>
 #include <fstream>
+
+#include <jellyfish/err.hpp>
 #include <jellyfish/misc.hpp>
 #include <jellyfish/mer_counting.hpp>
 #include <jellyfish/compacted_hash.hpp>
-
-/*
- * Option parsing
- */
-static char doc[] = "Dump k-mer statistics from a raw hash database";
-static char args_doc[] = "database";
-
-static struct argp_option options[] = {
-  {"buffer-size",       's',    "LEN",  0,      "Length in bytes of input buffer (10MB)"},
-  {"fasta",             'f',    0,      0,      "Print k-mers in fasta format (false)"},
-  {"column",            'c',    0,      0,      "Print k-mers in column format (false)"},
-  {"tab",               't',    0,      0,      "Use tabs instead of spaces (false)"},
-  {"recompute",         'r',    0,      0,      "Recompute statistics"},
-  {"verbose",           'v',    0,      0,      "Be verbose (false)"},
-  { 0 }
-};
-
-struct arguments {
-  bool   fasta;
-  bool   column;
-  bool   tab;
-  bool   verbose;
-  bool   recompute;
-  size_t buff_size;
-};
-
-static error_t parse_opt (int key, char *arg, struct argp_state *state)
-{
-  struct arguments *arguments = (struct arguments *)state->input;
-  error_t error;
-
-#define ULONGP(field) \
-  error = parse_long(arg, &std::cerr, &arguments->field);       \
-  if(error) return(error); else break;
-
-#define FLAG(field) arguments->field = true; break;
-
-  switch(key) {
-  case 's': ULONGP(buff_size);
-  case 'f': FLAG(fasta);
-  case 'c': FLAG(column);
-  case 't': FLAG(tab);
-  case 'r': FLAG(recompute);
-  case 'v': FLAG(verbose);
-
-  default:
-    return ARGP_ERR_UNKNOWN;
-  }
-  return 0;
-}
-static struct argp argp = { options, parse_opt, args_doc, doc };
+#include <jellyfish/dump_stats_raw_cmdline.hpp>
 
 int raw_stats_main(int argc, char *argv[])
 {
-  struct arguments arguments;
-  int arg_st;
+  struct dump_stats_raw_args args;
 
-  arguments.buff_size = 10000000;
-  arguments.fasta = false;
-  arguments.column = false;
-  arguments.verbose = false;
-  arguments.recompute = false;
-  argp_parse(&argp, argc, argv, 0, &arg_st, &arguments);
-  if(arg_st != argc - 1) {
-    fprintf(stderr, "Wrong number of argument\n");
-    argp_help(&argp, stderr, ARGP_HELP_SEE, argv[0]);
-    exit(1);
-  }
+  if(dump_stats_raw_cmdline(argc, argv, &args) != 0)
+    die << "Command line parser failed";
 
-  mapped_file dbf(argv[arg_st]);
+  if(args.inputs_num != 1)
+    die << "Need 1 database\n"
+        << dump_stats_raw_args_usage << "\n" << dump_stats_raw_args_help;
+
+  mapped_file dbf(args.inputs[0]);
   char type[8];
   memcpy(type, dbf.base(), sizeof(type));
   if(strncmp(type, "JFRHSHDN", sizeof(8)))
-    die("Invalid database type '%.8s', expected '%.8s'",
-	dbf.base(), "JFRHSHDN");
+    die << "Invalid database type '" << err::substr(dbf.base(), 8) << "', expected 'JFRHSHDN'";
+
   inv_hash_t hash(dbf.base() + 8, dbf.length() - 8);
-  if(arguments.verbose) {
-    std::cout << "k-mer length (bases): " <<
-      (hash.get_key_len() / 2) << std::endl;
-    std::cout << "value length (bits):  " <<
-      hash.get_val_len() << std::endl;
-  }
+  if(args.verbose_flag)
+    std::cerr << "k-mer length (bases): " << (hash.get_key_len() / 2) << "\n"
+              << "value length (bits):  " << hash.get_val_len() << "\n";
+
+  std::ofstream out(args.output_arg);
+  if(!out.good())
+    die << "Error opening output file '" << args.output_arg << "'";
 
   inv_hash_t::iterator it = hash.iterator_all();
-  if(arguments.fasta) {
+  if(args.fasta_flag) {
     while(it.next()) {
-      std::cout << ">" << it.get_val() << "\n" << it.get_dna_str() << "\n";
+      out << ">" << it.get_val() << "\n" << it.get_dna_str() << "\n";
     }
-  } else if(arguments.column) {
-    char spacer = arguments.tab ? '\t' : ' ';
-    while(it.next()) {
-      std::cout << it.get_dna_str() << spacer << it.get_val() << "\n";
-    }
+  } else if(args.column_flag) {
+    char spacer = args.tab_flag ? '\t' : ' ';
+    while(it.next())
+      out << it.get_dna_str() << spacer << it.get_val() << "\n";
   } else {
     uint64_t unique = 0, distinct = 0, total = 0, max_count = 0;
     while(it.next()) {
@@ -126,12 +71,12 @@ int raw_stats_main(int argc, char *argv[])
       if(it.get_val() > max_count)
         max_count = it.get_val();
     }
-    std::cout << 
-      "Unique:    " << unique << "\n" <<
-      "Distinct:  " << distinct << "\n" <<
-      "Total:     " << total << "\n" <<
-      "Max_count: " << max_count << std::endl;
+    out << "Unique:    " << unique << "\n"
+        << "Distinct:  " << distinct << "\n"
+        << "Total:     " << total << "\n"
+        << "Max_count: " << max_count << "\n";
   }
+  out.close();
 
   return 0;
 }

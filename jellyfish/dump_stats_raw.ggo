@@ -1,0 +1,14 @@
+purpose "Dump k-mer statistics from a raw database"
+args "--show-required --default-option -c cc -H hpp -F dump_stats_raw_cmdline -f dump_stats_raw_cmdline -a dump_stats_raw_args --unamed-opts=database.jf"
+package "jellyfish rstats"
+
+option "fasta"          f "Dump in fasta format"
+  flag off
+option "column"         c "Dump in column format"
+  flag off
+option "tab"            t "Tab delimiter"
+  flag off
+option "verbose"        v "Verbose"
+  flag off
+option "output"        o "Output file"
+  string default="/dev/fd/1"

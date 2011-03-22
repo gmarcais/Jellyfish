@@ -21,6 +21,7 @@
 #include <fstream>
 #include <string.h>
 #include <pthread.h>
+#include <jellyfish/err.hpp>
 #include <jellyfish/mapped_file.hpp>
 #include <jellyfish/square_binary_matrix.hpp>
 #include <jellyfish/atomic_gcc.hpp>
@@ -45,9 +46,8 @@ namespace jellyfish {
       header() { }
       header(char *ptr) {
         if(memcmp(ptr, file_type, sizeof(type)))
-          throw_error<ErrorReading>("Bad file type '%.*s', expected '%.*s'",
-                                    sizeof(type), ptr,
-                                    sizeof(type), file_type);
+          raise(ErrorReading) << "Bad file type '" << err::substr(ptr, sizeof(type))
+                              << "', expected '" << err::substr(file_type, sizeof(type)) << "'";
         memcpy((void *)this, ptr, sizeof(struct header));
       }
     };
@@ -175,15 +175,16 @@ namespace jellyfish {
         io = new ifstream(filename.c_str());
         io->read((char *)&header, sizeof(header));
         if(!io->good())
-          throw_error<ErrorReading>("File truncated");
+          raise(ErrorReading) << "File truncated";
         if(memcmp(header.type, file_type, sizeof(header.type)))
-          throw_error<ErrorReading>("Bad file type '%.*s', expected '%.*s'",
-                                    sizeof(header.type), header.type,
-                                    sizeof(header.type), file_type);
+          raise(ErrorReading) << "Bad file type '" 
+                              << err::substr(header.type, sizeof(header.type)) << "', expected '"
+                              << err::substr(file_type, sizeof(header.type)) << "'";
+
         if(header.key_len > 64 || header.key_len == 0)
-          throw_error<ErrorReading>("Invalid key length '%ld'", header.key_len);
+          raise(ErrorReading) << "Invalid key length '" << header.key_len << "'";
         if(header.size != (1UL << floorLog2(header.size)))
-          throw_error<ErrorReading>("Size '%ld' is not a power of 2", header.size);
+          raise(ErrorReading) << "Size '" << header.size << "' is not a power of 2";
         key_len  = (header.key_len / 8) + (header.key_len % 8 != 0);
         record_len = key_len + header.val_len;
         buffer_len = record_len * (_buff_len / record_len);
@@ -198,8 +199,8 @@ namespace jellyfish {
         streamoff list_size = io->tellg() - cpos;
         io->seekg(cpos);
         if(list_size - (header.distinct * record_len) != 0)
-          throw_error<ErrorReading>("Bad hash size '%ld', expected '%ld' bytes",
-                                    list_size, header.distinct * record_len);
+          raise(ErrorReading) << "Bad hash size '" << list_size << "', expected '"
+                              << (header.distinct * record_len) << "' bytes";
         key = val = 0;
         size_mask = header.size - 1;
       }
@@ -290,8 +291,8 @@ namespace jellyfish {
         canonical(false)
       { 
         if(file.end() - base - header.distinct * record_len != 0)
-          throw_error<ErrorReading>("Bad hash size '%ld', expected '%ld' bytes",
-                                    file.end() - base, header.distinct * record_len);
+          raise(ErrorReading) << "Bad hash size '" << (file.end() - base)
+                              << "', expected '" << header.distinct * record_len << "' bytes";
           
         get_key(0, &first_key);
         first_pos = get_pos(first_key);

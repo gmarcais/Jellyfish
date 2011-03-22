@@ -1,0 +1,14 @@
+purpose "Merge jellyfish databases"
+args "--show-required --default-option -c cc -H hpp -F hash_merge_cmdline -f hash_merge_cmdline -a hash_merge_args --unamed-opts=database.jf"
+package "jellyfish merge"
+
+option "buffer-size"            s "Length in bytes of input buffer"
+  long default="10000000" typestr="Buffer length"
+option "output"                 o "Output file"
+  string default="mer_counts_merged.jf"
+option "out-counter-len"        - "Length (in bytes) of counting field in output"
+  int default="4"
+option "out-buffer-size"        - "Size of output buffer per thread"
+  long default="10000000"
+option "verbose"                v "Be verbose"
+  flag off

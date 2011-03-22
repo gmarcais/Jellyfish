@@ -1,0 +1,12 @@
+purpose "Create an histogram of k-mer occurences"
+args "--show-required --default-option -c cc -H hpp -F histogram_cmdline -f histogram_cmdline -a histogram_args --unamed-opts=database.jf"
+package "jellyfish histo"
+
+option "buffer-size"            s "Length in bytes of input buffer"
+  long default="10000000" typestr="Buffer length"
+option "low"                    l "Low count value of histogram"
+  long default="1"
+option "high"                   h "High count value of histogram"
+  long default="10000"
+option "increment"              i "Increment value for buckets"
+  long default="1"

@@ -15,70 +15,53 @@
 */
 
 const char *cite = 
-  "A fast, lock-free approach for efficient parallel counting ofoccurrences of k-mers\n"
+  "A fast, lock-free approach for efficient parallel counting of occurrences of k-mers\n"
   "Guillaume Marcais; Carl Kingsford\n"
-  "Bioinformatics 2011; doi: 10.1093/bioinformatics/btr011";
+  "Bioinformatics (2011) 27(6): 764-770 first published online January 7, 2011 doi:10.1093/bioinformatics/btr011\n";
 
 const char *url =
+  "http://www.cbcb.umd.edu/software/jellyfish\n"
   "http://bioinformatics.oxfordjournals.org/content/early/2011/01/07/bioinformatics.btr011";
 
 const char *bibtex = 
   "@article{Jellyfish2010,\n"
-  "  author = {Mar\\c{c}ais, Guillaume and Kingsford, Carl},\n"
-  "  title = {{A fast, lock-free approach for efficient parallel counting of occurrences of k-mers}},\n"
-  "  doi = {10.1093/bioinformatics/btr011},\n"
-  "  URL = {http://bioinformatics.oxfordjournals.org/content/early/2011/01/07/bioinformatics.btr011.abstract},\n"
-  "  eprint = {http://bioinformatics.oxfordjournals.org/content/early/2011/01/07/bioinformatics.btr011.full.pdf+html},\n"
-  "  journal = {Bioinformatics}}";
+  "         author = {Mar\\c{c}ais, Guillaume and Kingsford, Carl},\n"
+  "         title = {A fast, lock-free approach for efficient parallel counting of occurrences of k-mers},\n"
+  "         volume = {27},\n"
+  "         number = {6},\n"
+  "         pages = {764-770},\n"
+  "         year = {2011},\n"
+  "         doi = {10.1093/bioinformatics/btr011},\n"
+  "         URL = {http://bioinformatics.oxfordjournals.org/content/27/6/764.abstract},\n"
+  "         eprint = {http://bioinformatics.oxfordjournals.org/content/27/6/764.full.pdf+html},\n"
+  "         journal = {Bioinformatics}\n"
+  "}";
 
-#include <argp.h>
 #include <iostream>
-
-/*
- * Option parsing
- */
-static char doc[] = "Paper citation";
-static char args_doc[] = "";
-
-static struct argp_option options[] = {
-  {"bibtex",    'b',       0,      0,      "BibTeX format"},
-  { 0 }
-};
-
-struct arguments {
-  bool bibtex;
-};
-
-static error_t parse_opt (int key, char *arg, struct argp_state *state)
-{
-  struct arguments *arguments = (struct arguments *)state->input;
-
-#define FLAG(field) arguments->field = true; break;
-
-  switch(key) {
-  case 'b': FLAG(bibtex);
-
-  default:
-    return ARGP_ERR_UNKNOWN;
-  }
-  return 0;
-}
-static struct argp argp = { options, parse_opt, args_doc, doc };
+#include <fstream>
+#include <stdlib.h>
+#include <jellyfish/cite_cmdline.hpp>
+#include <jellyfish/err.hpp>
+#include <jellyfish/misc.hpp>
 
 int cite_main(int argc, char *argv[])
 {
-  struct arguments arguments;
-  int arg_st;
+  struct cite_args args;
 
-  arguments.bibtex = false;
-  argp_parse(&argp, argc, argv, 0, &arg_st, &arguments);
+  if(cite_cmdline(argc, argv, &args) != 0)
+    die << "Command line parser failed";
 
-  if(arguments.bibtex) {
-    std::cout << bibtex << std::endl;
+  std::ofstream out(args.output_arg);
+  if(!out.good())
+    die << "Can't open output file '" << args.output_arg << "'" << err::no;
+
+  if(args.bibtex_flag) {
+    out << bibtex << std::endl;
   } else {
-    std::cout << "This software has been published. If you use it for your research, cite:\n\n"
-              << cite << "\n\n" << url << std::endl;
+    out << "This software has been published. If you use it for your research, cite:\n\n"
+        << cite << "\n\n" << url << std::endl;
   }
+  out.close();
 
   return 0;
 }

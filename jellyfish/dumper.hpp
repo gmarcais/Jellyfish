@@ -19,6 +19,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <jellyfish/err.hpp>
 #include <jellyfish/time.hpp>
 
 /**
@@ -39,19 +40,20 @@ namespace jellyfish {
       file[file_len] = '\0';
       int off = snprintf(file, file_len, "%s", prefix);
       if(off < 0)
-        throw_perror<ErrorWriting>("Error creating output path");
+        raise(ErrorWriting) << "Error creating output path" << err::no;
       if(off > 0 && off < file_len) {
         int _off = snprintf(file + off, file_len - off, "_%d", index++);
         if(_off < 0)
-          throw_perror<ErrorWriting>("Error creating output path");
+          raise(ErrorWriting) << "Error creating output path" << err::no;
         off += _off;
       }
       if(off >= file_len)
-        throw_error<ErrorWriting>("Output path is longer than maximum path length (%ld > %ld)", off, file_len);
+        raise(ErrorWriting) << "Output path is longer than maximum path length (" 
+                            << off << " > " << file_len << ")";
       
       out.open(file);
       if(out.fail())
-        throw_perror<ErrorWriting>("Can't open file '%s' for writing", file);
+        raise(ErrorWriting) << "Can't open file '" << (char*)file << "' for writing" << err::no;
     }
 
   public:

@@ -1,0 +1,10 @@
+purpose "Create an histogram of k-mer occurences"
+args "--show-required --default-option -c cc -H hpp -F histo_fastq_main_cmdline -f histo_fastq_main_cmdline -a histo_fastq_main_args --unamed-opts=database.jf"
+package "jellyfish qhisto"
+
+option "low"                    l "Low count value of histogram"
+  float default="0.0"
+option "high"                   h "High count value of histogram"
+  float default="10000.0"
+option "increment"              i "Increment value for buckets"
+  float default="1.0"

@@ -1,8 +1,7 @@
 #! /bin/sh
 
-nCPUs=$(grep -c '^processor' /proc/cpuinfo 2>/dev/null || sysctl -n hw.ncpu)
-pref=$(basename $0 .sh)
-JF=../jellyfish/jellyfish
+. ./compat.sh
+
 cat > ${pref}.md5sum <<EOF
 8ebb01305cbb36754ef060c1e37d6e4d  ${pref}.histo
 EOF
@@ -10,8 +9,8 @@ set -x
 echo "Counting 22-mers on ${nCPUs} CPU" &&      \
     $JF count -q --matrix seq10m_matrix_22 -m 22 -t $nCPUs \
     -o $pref -s 5000000 --timing ${pref}.timing seq1m_*.fq && \
-    $JF qhisto -l 0.0 -h 2.0 -i 0.1 ${pref}_0 > ${pref}.histo &&
-    md5sum -c ${pref}.md5sum
+    $JF qhisto -l 0.0 -h 2.0 -i 0.1 ${pref}_0 > ${pref}.histo && \
+    ${MD5} -c ${pref}.md5sum
 RET=$?
 
 cat ${pref}.timing

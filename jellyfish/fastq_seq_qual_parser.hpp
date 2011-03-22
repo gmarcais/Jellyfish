@@ -52,7 +52,7 @@ private:
     _capacity *= 2;
     _data = (T *)realloc(_data, sizeof(T) * _capacity);
     if(_data == 0)
-      throw_perror<SimpleGrowingArrayError>("Out of memory");
+      raise(SimpleGrowingArrayError) << "Out of memory" << err::no;
   }
 };
 

@@ -3,31 +3,30 @@
 AM_LDFLAGS = -lpthread
 AM_CPPFLAGS = -Wall -Werror -g -O2 -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -I$(top_srcdir)
 
-#if MACOSX
-#AM_CPPFLAGS += -arch x86_64 -I../gnulib
-#endif
-
-
-#if MACOSX
-#jellyfish_LDADD = ../gnulib/libgnu.a libjellyfish-1.0.la
-#else
-#jellyfish_LDADD = libjellyfish-1.0.la
-#endif
-
 bin_PROGRAMS = jellyfish
 
 jellyfish_SOURCES = jellyfish.cc dump_stats_compacted.cc hash_merge.cc	\
-storage.cc misc.cc mer_counter.cc histogram.cc time.cc thread_exec.cc	\
-query_main.cc square_binary_matrix.cc fasta_parser.cc			\
+storage.cc misc.cc err.cc mer_counter.cc histogram.cc time.cc		\
+thread_exec.cc query_main.cc square_binary_matrix.cc fasta_parser.cc	\
 dump_stats_raw.cc rquery_main.cc rhisto_main.cc dump_fastq_main.cc	\
 histo_fastq_main.cc cite.cc parse_dna.cc file_parser.cc			\
-fastq_sequence_parser.cc parse_quake.cc fastq_seq_qual_parser.cc
+fastq_sequence_parser.cc parse_quake.cc fastq_seq_qual_parser.cc	\
+cite_cmdline.cc query_cmdline.cc hash_merge_cmdline.cc			\
+histogram_cmdline.cc histo_fastq_main_cmdline.cc			\
+dump_fastq_main_cmdline.cc rhisto_main_cmdline.cc			\
+rquery_main_cmdline.cc dump_stats_raw_cmdline.cc			\
+dump_stats_compacted_cmdline.cc mer_counter_cmdline.cc
 # jellyfish_CPPFLAGS = $(AM_CPPFLAGS)
 
+EXTRA_DIST = cite_cmdline.hpp query_cmdline.hpp hash_merge_cmdline.hpp	\
+histogram_cmdline.hpp histo_fastq_main_cmdline.hpp			\
+dump_fastq_main_cmdline.hpp rhisto_main_cmdline.hpp			\
+rquery_main_cmdline.hpp dump_stats_raw_cmdline.hpp			\
+dump_stats_compacted_cmdline.hpp mer_counter_cmdline.hpp
 
 lib_LTLIBRARIES = libjellyfish-1.0.la
 libjellyfish_1_0_la_SOURCES = square_binary_matrix.cc fasta_parser.cc	\
-misc.cc storage.cc thread_exec.cc time.cc
+err.cc misc.cc storage.cc thread_exec.cc time.cc
 libjellyfish_1_0_la_CPPFLAGS = $(AM_CPPFLAGS)
 library_includedir=$(includedir)/jellyfish-1.0/jellyfish
 library_include_HEADERS = allocators_malloc.hpp allocators_mmap.hpp	\
@@ -36,16 +35,17 @@ compacted_hash.hpp concurrent_hash_counters.hpp concurrent_queues.hpp	\
 direct_indexing_array.hpp direct_sorted_dumper.hpp divisor.hpp		\
 dumper.hpp fasta_parser.hpp hash_function.hpp hash.hpp heap.hpp		\
 invertible_hash_array.hpp locking_hash_counters.hpp locks_pthread.hpp	\
-mapped_file.hpp mer_counting.hpp misc.hpp offsets_key_value.hpp		\
-packed_concurrent_hash_counters.hpp reversible_hash_function.hpp	\
-small_packed_array.hpp sorted_dumper.hpp square_binary_matrix.hpp	\
-storage.hpp thread_exec.hpp time.hpp token_ring.hpp raw_dumper.hpp	\
-capped_integer.hpp aligned_values_array.hpp fastq_dumper.hpp		\
-floats.hpp circular_buffer.hpp counter.hpp parse_quake.hpp		\
-parse_dna.hpp fastq_sequence_parser.hpp fastq_seq_qual_parser.hpp	\
-file_parser.hpp
+mapped_file.hpp mer_counting.hpp err.hpp misc.hpp			\
+offsets_key_value.hpp packed_concurrent_hash_counters.hpp		\
+reversible_hash_function.hpp small_packed_array.hpp sorted_dumper.hpp	\
+square_binary_matrix.hpp storage.hpp thread_exec.hpp time.hpp		\
+token_ring.hpp raw_dumper.hpp capped_integer.hpp			\
+aligned_values_array.hpp fastq_dumper.hpp floats.hpp			\
+circular_buffer.hpp counter.hpp parse_quake.hpp parse_dna.hpp		\
+fastq_sequence_parser.hpp fastq_seq_qual_parser.hpp file_parser.hpp
 
 check_PROGRAMS = generate_sequence
-generate_sequence_SOURCES = generate_sequence.cc misc.cc mersenne.cpp	\
+generate_sequence_SOURCES = generate_sequence.cc	\
+generate_sequence_cmdline.cc misc.cc mersenne.cpp	\
 square_binary_matrix.cc
-EXTRA_DIST = randomc.h
+EXTRA_DIST += randomc.h generate_sequence_cmdline.hpp

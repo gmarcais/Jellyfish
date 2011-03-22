@@ -27,9 +27,8 @@ namespace jellyfish {
       // Copy the saved sequence, then the quality score for this
       // saved sequence. The stream is left at the first qual value.
       if((*end - start) / 2 < (ptrdiff_t)_read_buf.size())
-        throw_error<FastqSeqQualParserError>("Buffer is too small to "
-                                             "contain an entire read and "
-                                             "its qual values");
+        raise(FastqSeqQualParserError) << "Buffer is too small to "
+          "contain an entire read and its qual values";
       qual_start = start + 1;
       //      std::cerr << "copy data from read buffer" << std::endl;
       for(const char *b = _read_buf.begin(); b < _read_buf.end(); b++, start += 2)
@@ -54,8 +53,8 @@ namespace jellyfish {
             break;
           // fall through
         default:
-          throw_error<FastqSeqQualParserError>("Unexpected character '%c'. "
-                                               "Expected '@'", base());
+          raise(FastqSeqQualParserError) << "Unexpected character '" << base()
+                                         << "'. Expected '@'";
         }
       }
       // skip seq header
@@ -71,7 +70,7 @@ namespace jellyfish {
       while(start < *end && !found_qual_header) {
         switch(sbumpc()) {
         case EOF:
-          throw_error<FastqSeqQualParserError>("Truncated input file");
+          raise(FastqSeqQualParserError) << "Truncated input file";
         case '\n':
           break;
         case '+':
@@ -90,7 +89,7 @@ namespace jellyfish {
         while(!found_qual_header) {
           switch(sbumpc()) {
           case EOF:
-            throw_error<FastqSeqQualParserError>("Truncated input file");
+            raise(FastqSeqQualParserError) << "Truncated input file";
           case '\n':
             break;
           case '+':
@@ -116,13 +115,13 @@ namespace jellyfish {
     while(qual_start < start + 1) {
       switch(sbumpc()) {
       case EOF:
-        throw_error<FastqSeqQualParserError>("Truncated input file");
+        raise(FastqSeqQualParserError) << "Truncated input file";
       case '\n':
         break;
       case '@':
         if(pbase() == '\n')
-          throw_error<FastqSeqQualParserError>("Invalid input, short "
-                                               "on qual values");
+          raise(FastqSeqQualParserError) << "Invalid input, short "
+            "on qual values";
       default:
         *qual_start = base();
         qual_start += 2;

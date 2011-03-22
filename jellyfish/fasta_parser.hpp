@@ -18,8 +18,9 @@
 #define __JELLYFISH_FASTA_PARSER_HPP__
 
 #include <iostream>
+#include <jellyfish/err.hpp>
 #include <jellyfish/misc.hpp>
-#include <file_parser.hpp>
+#include <jellyfish/file_parser.hpp>
 
 namespace jellyfish {
   class fasta_parser : public file_parser {

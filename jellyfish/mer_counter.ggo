@@ -1,0 +1,40 @@
+purpose "Count k-mers or qmers in fasta or fastq files"
+args "--show-required --default-option -c cc -H hpp -F mer_counter_cmdline -f mer_counter_cmdline -a mer_counter_args --unamed-opts=file.f[aq]"
+package "jellyfish count"
+
+option "mer-len"                m "Length of mer"
+  int required
+option "size"                   s "Hash size"
+  long required
+option "threads"                t "Number of threads"
+  int default="1"
+option "output"                 o "Output prefix"
+  string default="mer_counts"
+option "counter-len"            c "Length of counting field"
+  int default="7" typestr="Length in bits"
+option "out-counter-len"        - "Length of counter field in output"
+  int default="4" typestr="Length in bytes"
+option "both-strands"           C "Count both strand, canonical representation"
+  flag off
+option "reprobes"               p "Maximum number of reprobes"
+  int default="62"
+option "raw"                    r "Write raw database"
+  flag off
+option "quake"                 q "Quake compatibility mode"
+  flag off
+option "quality-start"         - "Starting ASCII for quality values"
+  int default="64"
+option "matrix"                 - "Hash function binary matrix"
+  string typestr="Matrix file"
+option "timing"                - "Print timing information"
+  string typestr="Timing file"
+option "no-write"               w "Don't write database"
+  flag off hidden
+option "measure"                u "Write usage statistics"
+  flag off hidden
+option "buffers"                - "Number of buffers per thread"
+  long hidden
+option "buffer-size"            - "Size of buffers"
+  long hidden default="8192"
+option "out-buffer-size"        - "Size of output buffer per thread"
+  long hidden default="20000000"

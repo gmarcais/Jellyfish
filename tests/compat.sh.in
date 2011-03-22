@@ -1,0 +1,4 @@
+MD5=@MD5@
+nCPUs=$(grep -c '^processor' /proc/cpuinfo 2>/dev/null || sysctl -n hw.ncpu)
+pref=$(basename $0 .sh)
+JF=../jellyfish/jellyfish

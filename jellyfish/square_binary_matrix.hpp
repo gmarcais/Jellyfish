@@ -23,6 +23,8 @@
 #include <iostream>
 #include <exception>
 #include <assert.h>
+#include <config.h>
+#include <jellyfish/err.hpp>
 #include <jellyfish/misc.hpp>
 
 class SquareBinaryMatrix {

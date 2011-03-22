@@ -1,13 +1,19 @@
 #! /bin/sh
 
-pref=$(basename $0 .sh)
-echo "Counting 22-mers on 1 CPU"
-../jellyfish/jellyfish count --matrix seq10m_matrix_22 -m 22 -t 1 -o ${pref} \
+. ./compat.sh
+
+cat > ${pref}.md5sum <<EOF
+4fd24c05f7c18c47e7b69f77aa071f1f  ${pref}_0
+7059a4e90b6670b2d814e44e2bc7d429  ${pref}.histo
+EOF
+echo "Counting 22-mers on 1 CPU" && \
+    $JF count --matrix seq10m_matrix_22 -m 22 -t 1 -o ${pref} \
     --timing ${pref}.timing -s 10000000 seq10m.fa && \
-    echo "c52c09131223cad72d4417e3227f84fe  ${pref}_0" | md5sum -c
+    $JF histo ${pref}_0 > ${pref}.histo && \
+    $MD5 -c ${pref}.md5sum
 RET=$?
 
 cat ${pref}.timing
-[ -z "$NODEL" ] && rm -f ${pref}_* ${pref}.timing
+[ -z "$NODEL" ] && rm -f ${pref}_* ${pref}.timing ${pref}.md5sum ${pref}.histo
 
 exit $RET

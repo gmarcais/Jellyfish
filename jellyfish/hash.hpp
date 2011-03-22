@@ -26,6 +26,7 @@
 #include <sys/mman.h>
 #include <jellyfish/mapped_file.hpp>
 #include <jellyfish/locks_pthread.hpp>
+#include <jellyfish/err.hpp>
 #include <jellyfish/misc.hpp>
 #include <jellyfish/square_binary_matrix.hpp>
 #include <jellyfish/dumper.hpp>
@@ -153,7 +154,7 @@ namespace jellyfish {
       if(dumper)
         dumper->dump();
       else
-        throw_error<TableFull>("No dumper defined");
+        raise(TableFull) << "No dumper defined";
     }
 
   private:

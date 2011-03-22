@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <iostream>
 
+#include <jellyfish/err.hpp>
 #include <jellyfish/misc.hpp>
 #include <jellyfish/atomic_gcc.hpp>
 
@@ -38,17 +39,17 @@ protected:
   void map(const char *filename) {
     int fd = open(filename, O_RDONLY);
     struct stat stat;
-
+    
     if(fd < 0)
-      throw_perror<ErrorMMap>("Can't open file '%s'", filename);
+      raise(ErrorMMap) << "Can't open file '" << filename << "'" << err::no;
     
     if(fstat(fd, &stat) < 0)
-      throw_perror<ErrorMMap>("Can't stat file '%s'", filename);
+      raise(ErrorMMap) << "Can't stat file '" << filename << "'" << err::no;
 
     _length = stat.st_size;
     _base = (char *)mmap(NULL, _length, PROT_READ, MAP_SHARED, fd, 0);
     if(_base == MAP_FAILED)
-      throw_perror<ErrorMMap>("Can't mmap file '%s'", filename);
+      raise(ErrorMMap) << "Can't mmap file '" << filename << "'" << err::no;
     close(fd);
     _end = _base + _length;
   }

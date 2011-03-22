@@ -15,7 +15,7 @@
 */
 
 #include <config.h>
-#include "square_binary_matrix.hpp"
+#include <jellyfish/square_binary_matrix.hpp>
 #include <iostream>
 #include <sstream>
 
@@ -56,7 +56,9 @@ SquareBinaryMatrix SquareBinaryMatrix::operator*(const SquareBinaryMatrix &other
   SquareBinaryMatrix res(size);
 
   if(size != other.get_size()) 
-    throw_error<MismatchingSize>("Multiplication operator dimension mismatch: %1$ldx%1$ld != %2$ldx%2$lddoes not match", size, other.get_size());
+    raise(MismatchingSize) << "Multiplication operator dimension mismatch:" 
+                           << size << "x" << size << " != " 
+                           << other.get_size() << "x" << other.get_size();
   
   for(i = 0; i < size; i++) {
     res[i] = this->times(other[i]);
@@ -79,7 +81,7 @@ SquareBinaryMatrix SquareBinaryMatrix::inverse() const {
         if((pivot.columns[j] >> (size - i - 1)) & (uint64_t)0x1)
           break;
       if(j >= size)
-	throw_error<SingularMatrix>("Matrix is singular");
+	raise(SingularMatrix) << "Matrix is singular";
       pivot.columns[i] ^= pivot.columns[j];
       res.columns[i] ^= res.columns[j];
     }
@@ -146,8 +148,8 @@ size_t SquareBinaryMatrix::read(const char *map) {
   }
   memcpy(&nsize, map, sizeof(nsize));
   if(nsize <= 0 || nsize > 64)
-    throw_error<MismatchingSize>("Invalid matrix size '%d'. Must be between 1 and 64",
-				 nsize);
+    raise(MismatchingSize) << "Invalid matrix size '" << nsize << "'. Must be between 1 and 64";
+
   size = nsize;
   columns = new uint64_t[size];
   memcpy(columns, map + sizeof(size), sizeof(uint64_t) * size);

@@ -1,0 +1,10 @@
+purpose "Query from a raw database"
+args "--show-required --default-option -c cc -H hpp -F rquery_main_cmdline -f rquery_main_cmdline -a rquery_main_args --unamed-opts=database.jf"
+package "jellyfish rquery"
+
+option "both-strands"           C "Both strands"
+  flag off
+option "verbose"                v "Be verbose"
+  flag off
+option "output"                 o "Output file"
+  string default="/dev/fd/1"

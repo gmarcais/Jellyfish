@@ -23,7 +23,8 @@
 #include <stdexcept>
 #include <string>
 #include <string.h>
-#include "misc.hpp"
+#include <jellyfish/err.hpp>
+#include <jellyfish/misc.hpp>
 
 class thread_exec {
   struct thread_info {

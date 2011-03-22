@@ -97,24 +97,23 @@ namespace jellyfish {
     file[file_len] = '\0';
     int off = snprintf(file, file_len, "%s", file_prefix.c_str());
     if(off < 0)
-      throw_perror<ErrorWriting>("Error creating output path");
+      raise(ErrorWriting) << "Error creating output path" << err::no;
     if(off > 0 && off < file_len) {
       int _off = snprintf(file + off, file_len - off, "_%" PRIUINTu, file_index++);
       if(_off < 0)
-        throw_perror<ErrorWriting>("Error creating output path");
+        raise(ErrorWriting) << "Error creating output path" << err::no;
       off += _off;
     }
     if(off >= file_len)
-      throw_error<ErrorWriting>("File path is too long");
+      raise(ErrorWriting) << "File path is too long";
       
     
     //    out.exceptions(std::ios::eofbit|std::ios::failbit|std::ios::badbit);
     std::cerr << "Open " << file << std::endl;
     out.open(file);
-    if(!out.good()) {
-      std::cerr << "Throw ErrorWriting" << std::endl;
-      throw_perror<ErrorWriting>("Can't open file '%s' for writing", file);
-    }
+    if(!out.good())
+      raise(ErrorWriting) << "Can't open file '" << file << "' for writing";
+
 
     out.write("JFLISTDN", 8);
     unique = distinct = total = 0;

@@ -18,11 +18,7 @@
 #include <iostream>
 #include <string>
 #include <string.h>
-#include "misc.hpp"
-
-const char *argp_program_version = "jellyfish 1.1rc1";
-const char *argp_program_bug_address = 
-  "<guillaume@marcais.net> <carlk@umiacs.umd.edu>";
+#include <jellyfish/misc.hpp>
 
 typedef int (main_func_t)(int argc, char *argv[]);
 
@@ -91,7 +87,7 @@ int sos(int argc, char *argv[])
 
 int version(int argc, char *argv[])
 {
-  std::cout << argp_program_version << std::endl;
+  std::cout << PACKAGE_STRING << std::endl;
   return 0;
 }
 

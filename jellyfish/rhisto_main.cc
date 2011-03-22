@@ -18,62 +18,18 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <argp.h>
 #include <iostream>
 #include <fstream>
 #include <vector>
+
+#include <jellyfish/err.hpp>
 #include <jellyfish/misc.hpp>
 #include <jellyfish/mer_counting.hpp>
 #include <jellyfish/compacted_hash.hpp>
 #include <jellyfish/thread_exec.hpp>
 #include <jellyfish/atomic_gcc.hpp>
 #include <jellyfish/counter.hpp>
-
-/*
- * Option parsing
- */
-static char doc[] = "Create an histogram of k-mer occurences";
-static char args_doc[] = "database";
-
-static struct argp_option options[] = {
-  {"buffer-size",       's',    "LEN",  0,      "Length in bytes of input buffer (10MB)"},
-  {"low",               'l',    "LOW",  0,      "Low count value of histogram (1)"},
-  {"high",              'h',    "HIGH", 0,      "High count value of histogram (10000)"},
-  {"increment",         'i',    "INC",  0,      "Increment for value of histogram"},
-  {"threads",           't',    "NB",   0,      "Number of threads (1)"},
-  { 0 }
-};
-
-struct arguments {
-  uint64_t low, high, increment;
-  size_t   buff_size;
-  uint64_t threads;
-};
-
-static error_t parse_opt (int key, char *arg, struct argp_state *state)
-{
-  struct arguments *arguments = (struct arguments *)state->input;
-  error_t error;
-
-#define ULONGP(field) \
-  error = parse_long(arg, &std::cerr, &arguments->field);       \
-  if(error) return(error); else break;
-
-#define FLAG(field) arguments->field = true; break;
-
-  switch(key) {
-  case 's': ULONGP(buff_size);
-  case 'l': ULONGP(low);
-  case 'h': ULONGP(high);
-  case 'i': ULONGP(increment);
-  case 't': ULONGP(threads);
-
-  default:
-    return ARGP_ERR_UNKNOWN;
-  }
-  return 0;
-}
-static struct argp argp = { options, parse_opt, args_doc, doc };
+#include <jellyfish/rhisto_main_cmdline.hpp>
 
 class histogram : public thread_exec {
   const inv_hash_t *hash;
@@ -129,40 +85,33 @@ public:
 
 int raw_histo_main(int argc, char *argv[])
 {
-  struct arguments arguments;
-  int arg_st;
+  struct rhisto_main_args args;
 
-  arguments.buff_size = 10000000;
-  arguments.low       = 1;
-  arguments.high      = 10000;
-  arguments.increment = 1;
-  arguments.threads   = 1;
-  argp_parse(&argp, argc, argv, 0, &arg_st, &arguments);
-  if(arg_st != argc - 1) {
-    fprintf(stderr, "Wrong number of argument\n");
-    argp_help(&argp, stderr, ARGP_HELP_SEE, argv[0]);
-    exit(1);
-  }
-  if(arguments.low < 1) {
-    fprintf(stderr, "Low count value must be >= 1\n");
-    argp_help(&argp, stderr, ARGP_HELP_SEE, argv[0]);
-    exit(1);
-  }
+  if(rhisto_main_cmdline(argc, argv, &args) != 0)
+    die << "Command line parser failed";
 
-  mapped_file dbf(argv[arg_st]);
+  if(args.inputs_num != 1)
+    die << "Need 1 database\n"
+        << rhisto_main_args_usage << "\n" << rhisto_main_args_help;
+
+  if(args.low_arg < 1)
+    die << "Low count value must be >= 1\n"
+        << rhisto_main_args_usage << "\n" << rhisto_main_args_help;
+
+  mapped_file dbf(args.inputs[0]);
   char type[8];
   memcpy(type, dbf.base(), sizeof(type));
   if(strncmp(type, "JFRHSHDN", sizeof(8)))
-    die("Invalid database type '%.8s', expected '%.8s'",
-        dbf.base(), "JFRHSHDN");
+    die << "Invalid database type '" << err::substr(dbf.base(), 8)
+        << "', expected 'JFRHSHDN'";
   dbf.sequential().will_need();
   inv_hash_t hash(dbf.base() + 8, dbf.length() - 8);
 
   const uint64_t base = 
-    arguments.low > 1 ? (arguments.increment >= arguments.low ? 1 : arguments.low - arguments.increment) : 1;
-  const uint64_t ceil = arguments.high + arguments.increment;
+    args.low_arg > 1 ? (args.increment_arg >= args.low_arg ? 1 : args.low_arg - args.increment_arg) : 1;
+  const uint64_t ceil = args.high_arg + args.increment_arg;
 
-  histogram histo(&hash, arguments.threads, base, ceil, arguments.increment);
+  histogram histo(&hash, args.threads_arg, base, ceil, args.increment_arg);
   histo.do_it();
   histo.print(std::cout);
   std::cout << std::flush;

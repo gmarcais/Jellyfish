@@ -18,87 +18,48 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <argp.h>
 #include <iostream>
 #include <fstream>
+
+#include <jellyfish/err.hpp>
 #include <jellyfish/misc.hpp>
 #include <jellyfish/mer_counting.hpp>
 #include <jellyfish/fastq_dumper.hpp>
-
-/*
- * Option parsing
- */
-static char doc[] = "Dump k-mer from a raw hash fastq database";
-static char args_doc[] = "database";
-
-static struct argp_option options[] = {
-  {"column",    'c',    0,      0,      "Print k-mers in column format (false)"},
-  {"tab",       't',    0,      0,      "Use tabs instead of spaces (false)"},
-  {"verbose",   'v',    0,      0,      "Be verbose (false)"},
-  { 0 }
-};
-
-struct arguments {
-  bool column;
-  bool tabs;
-  bool verbose;
-};
-
-static error_t parse_opt (int key, char *arg, struct argp_state *state)
-{
-  struct arguments *arguments = (struct arguments *)state->input;
-  //  error_t error;
-
-#define ULONGP(field) \
-  error = parse_long(arg, &std::cerr, &arguments->field);       \
-  if(error) return(error); else break;
-
-#define FLAG(field) arguments->field = true; break;
-
-  switch(key) {
-  case 'c': FLAG(column);
-  case 't': FLAG(tabs);
-  case 'v': FLAG(verbose);
-
-  default:
-    return ARGP_ERR_UNKNOWN;
-  }
-  return 0;
-}
-static struct argp argp = { options, parse_opt, args_doc, doc };
+#include <dump_fastq_main_cmdline.hpp>
 
 int dump_fastq_main(int argc, char *argv[])
 {
-  struct arguments arguments;
-  int arg_st;
+  struct dump_fastq_main_args args;
 
-  arguments.column    = false;
-  arguments.verbose   = false;
-  argp_parse(&argp, argc, argv, 0, &arg_st, &arguments);
-  if(arg_st != argc - 1) {
-    fprintf(stderr, "Wrong number of argument\n");
-    argp_help(&argp, stderr, ARGP_HELP_SEE, argv[0]);
-    exit(1);
-  }
+  if(dump_fastq_main_cmdline(argc, argv, &args) != 0)
+    die << "Command line parser failed";
 
-  fastq_storage_t *hash = raw_fastq_dumper_t::read(argv[arg_st]);
-  if(arguments.verbose) {
-    std::cout << 
-      "k-mer length (bases): " << (hash->get_key_len() / 2) << 
-      "\nentries             : " << hash->get_size() <<
-      "\n";
-  }
+  if(args.inputs_num != 1)
+    die << "Need 1 database\n"
+        << dump_fastq_main_args_usage << "\n"
+        << dump_fastq_main_args_help;
+
+  std::ofstream out(args.output_arg);
+  if(!out.good())
+    die << "Error opening output file '" << args.output_arg << "'" << err::no;
+
+  fastq_storage_t *hash = raw_fastq_dumper_t::read(args.inputs[0]);
+  if(args.verbose_flag)
+    std::cerr << 
+      "k-mer length (bases): " << (hash->get_key_len() / 2) << "\n"
+      "entries             : " << hash->get_size() << "\n";
 
   fastq_storage_t::iterator it = hash->iterator_all();
-  std::cout << std::scientific;
-  if(arguments.column) {
-    char spacer = arguments.tabs ? '\t' : ' ';
+  out << std::scientific;
+  if(args.column_flag) {
+    char spacer = args.tab_flag ? '\t' : ' ';
     while(it.next())
-      std::cout << it.get_dna_str() << spacer << it.get_val().to_float() << "\n";
+      out << it.get_dna_str() << spacer << it.get_val().to_float() << "\n";
   } else {
     while(it.next())
-      std::cout << ">" << it.get_val().to_float() << "\n" << it.get_dna_str() << "\n";
+      out << ">" << it.get_val().to_float() << "\n" << it.get_dna_str() << "\n";
   }
+  out.close();
 
   return 0;
 }
