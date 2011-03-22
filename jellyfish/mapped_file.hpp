@@ -115,7 +115,6 @@ class lazy_mapped_file_t : public mapped_file {
   std::string       _path;
   volatile bool     done;
   volatile long     used_counter;
-  atomic::gcc<long> atomic;
 
 public:
   lazy_mapped_file_t(const char *path) : 
@@ -133,10 +132,10 @@ public:
   }
 
   void inc() {
-    atomic.fetch_add(&used_counter, 1);
+    atomic::gcc::fetch_add(&used_counter, (typeof(used_counter))1);
   }
   void dec() {
-    long val = atomic.add_fetch(&used_counter, (long)-1);
+    long val = atomic::gcc::add_fetch(&used_counter, (typeof(used_counter))-1);
     if(done && val == 0)
       mapped_file::unmap();
   }

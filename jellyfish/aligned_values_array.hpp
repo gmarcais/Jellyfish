@@ -22,15 +22,15 @@
 
 namespace jellyfish {
   namespace aligned_values {
-    template<typename _key_t, typename _val_t, typename key_atomic_t, typename val_atomic_t, typename mem_block_t>
+    template<typename _key_t, typename _val_t, typename atomic, typename mem_block_t>
     class array : public storage_t {
     public:
       typedef _key_t key_t;
       typedef _val_t val_t;
 
     private:
-      typedef typename ::jellyfish::invertible_hash::array<key_t, key_atomic_t, mem_block_t> key_ary_t;
-      typedef typename ::jellyfish::direct_indexing::array<size_t, val_t, val_atomic_t, mem_block_t> val_ary_t;
+      typedef typename ::jellyfish::invertible_hash::array<key_t, atomic, mem_block_t> key_ary_t;
+      typedef typename ::jellyfish::direct_indexing::array<size_t, val_t, atomic, mem_block_t> val_ary_t;
       
       key_ary_t keys;
       val_ary_t vals;

@@ -19,20 +19,21 @@
 
 namespace atomic
 {
-  template<typename T>
   class gcc
   {
   public:
-    typedef T type;
-    inline T cas(volatile T *ptr, T oval, T nval) {
+    template<typename T>
+    static inline T cas(volatile T *ptr, T oval, T nval) {
       return __sync_val_compare_and_swap(ptr, oval, nval);
     }
 
-    inline T set(T *ptr, T nval) {
+    template<typename T>
+    static inline T set(T *ptr, T nval) {
       return __sync_lock_test_and_set(ptr, nval);
     }
 
-    inline T add_fetch(volatile T *ptr, T x) {
+    template<typename T>
+    static inline T add_fetch(volatile T *ptr, T x) {
       T ncount = *ptr, count;
       do {
 	count = ncount;
@@ -41,7 +42,8 @@ namespace atomic
       return count + x;
     }
 
-    inline T fetch_add(volatile T *ptr, T x) {
+    template<typename T>
+    static inline T fetch_add(volatile T *ptr, T x) {
       T ncount = *ptr, count;
       do {
 	count = ncount;
@@ -50,7 +52,8 @@ namespace atomic
       return count;
     }
 
-    inline T set_to_max(volatile T *ptr, T x) {
+    template<typename T>
+    static inline T set_to_max(volatile T *ptr, T x) {
       T count = *ptr;
       while(x > count) {
         T ncount = cas(ptr, count, x);

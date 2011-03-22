@@ -399,7 +399,7 @@ namespace jellyfish {
         val_t val;
 
         char                   dna_str[33];
-        atomic::gcc<uint64_t>  atomic;
+
       public:
         iterator(char *_base, uint64_t _last_id, uint_t _key_len, uint_t _val_len, uint_t _mer_len) :
           base(_base), ptr(_base), last_id(_last_id), key_len(_key_len), val_len(_val_len),
@@ -426,7 +426,7 @@ namespace jellyfish {
         bool next(uint64_t *_id, key_t *_key, val_t *_val) {
           if(id >= last_id)
             return false;
-          *_id = atomic.add_fetch(&id, 1) - 1;
+          *_id = atomic::gcc::add_fetch(&id, (typeof(id))1) - 1;
           if(*_id >= last_id)
             return false;
           char *ptr = base + (*_id) * record_len;

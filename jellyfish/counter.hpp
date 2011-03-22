@@ -18,16 +18,15 @@
 
 class counter_t {
   volatile uint64_t     count;
-  atomic::gcc<uint64_t> atomic;
 
 public:
   counter_t() : count(0) {}
 
   inline uint64_t operator++(int) {
-    return atomic.fetch_add(&count, (uint64_t)1);
+    return atomic::gcc::fetch_add(&count, (typeof(count))1);
   }
   inline uint64_t inc(uint64_t x) {
-    return atomic.fetch_add(&count, x);
+    return atomic::gcc::fetch_add(&count, x);
   }
   inline uint64_t get() { return count; }
 

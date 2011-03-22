@@ -45,7 +45,7 @@ namespace jellyfish {
     virtual ~hash_t() {}
   };
 
-  template<typename key_t, typename val_t, typename ary_t, typename atomic_t>
+  template<typename key_t, typename val_t, typename ary_t, typename atomic>
   class hash : public hash_t {
   public:
     define_error_class(TableFull);
@@ -96,12 +96,11 @@ namespace jellyfish {
      */
     enum status_t { FREE, INUSE, BLOCKED };
     class thread {
-      ary_t                 *ary;
-      size_t                     hsize_mask;
-      typename atomic_t::type    status;
-      typename atomic_t::type    ostatus;
-      hash                      *my_hash;
-      atomic_t                   atomic;
+      ary_t    *ary;
+      size_t    hsize_mask;
+      status_t  status;
+      status_t  ostatus;
+      hash     *my_hash;
     
     public:
       thread(ary_t *_ary, hash *_my_hash) :
@@ -110,7 +109,7 @@ namespace jellyfish {
 
       inline void add(key_t key, const val_t &val) {
         while(true) {
-          while(atomic.cas(&status, FREE, INUSE) != FREE)
+          while(atomic::cas(&status, FREE, INUSE) != FREE)
             my_hash->wait_event_is_done();
 
           if(ary->add(key, val))
@@ -123,7 +122,7 @@ namespace jellyfish {
           }
         }
         
-        if(atomic.cas(&status, INUSE, FREE) != INUSE)
+        if(atomic::cas(&status, INUSE, FREE) != INUSE)
           my_hash->signal_not_in_use();
       }
 
@@ -208,7 +207,7 @@ namespace jellyfish {
       for(thread_ptr_t it = user_thread_list.begin(); 
           it != user_thread_list.end();
           it++) {
-        it->ostatus = atomic.set(&it->status, BLOCKED);
+        it->ostatus = atomic::set(&it->status, BLOCKED);
         if(it->ostatus == INUSE)
           inuse_thread_count++;
       }
@@ -225,7 +224,7 @@ namespace jellyfish {
       for(thread_ptr_t it = user_thread_list.begin(); 
           it != user_thread_list.end();
           it++) {
-        atomic.set(&it->status, FREE);
+        atomic::set(&it->status, FREE);
       }
       user_thread_lock.unlock();
       event_lock.unlock();
@@ -239,7 +238,6 @@ namespace jellyfish {
     locks::pthread::mutex  event_lock;
     locks::pthread::cond   inuse_thread_cond;
     volatile uint_t        inuse_thread_count;
-    atomic_t               atomic;
   };
 }
 
