@@ -741,7 +741,7 @@ namespace jellyfish {
 
       void write_raw(std::ostream *out) const {
         if(out->tellp() & 0x7) { // Make sure aligned
-          string padding(0x8 - (out->tellp() & 0x7), '\0');
+          std::string padding(0x8 - (out->tellp() & 0x7), '\0');
           out->write(padding.c_str(), padding.size());
         }
         out->write((char *)mem_block.get_ptr(), mem_block.get_size());

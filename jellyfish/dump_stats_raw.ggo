@@ -8,6 +8,10 @@ option "column"         c "Dump in column format"
   flag off
 option "tab"            t "Tab delimiter"
   flag off
+option "lower-count"            L "Don't output k-mer with count < lower-count"
+  long
+option "upper-count"            U "Don't output k-mer with count > upper-count"
+  long
 option "verbose"        v "Verbose"
   flag off
 option "output"        o "Output file"

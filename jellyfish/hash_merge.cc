@@ -119,7 +119,7 @@ int merge_main(int argc, char *argv[])
     db_file = args.inputs[i];
     try {
       iters[i].initialize(db_file, args.out_buffer_size_arg);
-    } catch(exception *e) {
+    } catch(std::exception *e) {
       die << "Can't open k-mer database: " << e;
     }
 

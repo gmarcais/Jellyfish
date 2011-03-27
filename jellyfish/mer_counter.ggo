@@ -20,10 +20,14 @@ option "reprobes"               p "Maximum number of reprobes"
   int default="62"
 option "raw"                    r "Write raw database"
   flag off
-option "quake"                 q "Quake compatibility mode"
+option "quake"                  q "Quake compatibility mode"
   flag off
-option "quality-start"         - "Starting ASCII for quality values"
+option "quality-start"          - "Starting ASCII for quality values"
   int default="64"
+option "lower-count"            L "Don't output k-mer with count < lower-count"
+  long
+option "upper-count"            U "Don't output k-mer with count > upper-count"
+  long
 option "matrix"                 - "Hash function binary matrix"
   string typestr="Matrix file"
 option "timing"                - "Print timing information"

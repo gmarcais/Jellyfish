@@ -26,23 +26,24 @@ dump_stats_compacted_cmdline.hpp mer_counter_cmdline.hpp
 
 lib_LTLIBRARIES = libjellyfish-1.0.la
 libjellyfish_1_0_la_SOURCES = square_binary_matrix.cc fasta_parser.cc	\
-err.cc misc.cc storage.cc thread_exec.cc time.cc
+err.cc misc.cc storage.cc thread_exec.cc time.cc file_parser.cc		\
+fastq_seq_qual_parser.cc fastq_sequence_parser.cc
 libjellyfish_1_0_la_CPPFLAGS = $(AM_CPPFLAGS)
 library_includedir=$(includedir)/jellyfish-1.0/jellyfish
 library_include_HEADERS = allocators_malloc.hpp allocators_mmap.hpp	\
 allocators_shm.hpp atomic_gcc.hpp compacted_dumper.hpp			\
-compacted_hash.hpp concurrent_hash_counters.hpp concurrent_queues.hpp	\
-direct_indexing_array.hpp direct_sorted_dumper.hpp divisor.hpp		\
-dumper.hpp fasta_parser.hpp hash_function.hpp hash.hpp heap.hpp		\
-invertible_hash_array.hpp locking_hash_counters.hpp locks_pthread.hpp	\
-mapped_file.hpp mer_counting.hpp err.hpp misc.hpp			\
-offsets_key_value.hpp packed_concurrent_hash_counters.hpp		\
-reversible_hash_function.hpp small_packed_array.hpp sorted_dumper.hpp	\
+compacted_hash.hpp concurrent_queues.hpp direct_indexing_array.hpp	\
+direct_sorted_dumper.hpp divisor.hpp dumper.hpp fasta_parser.hpp	\
+hash_function.hpp hash.hpp heap.hpp invertible_hash_array.hpp		\
+locking_hash_counters.hpp locks_pthread.hpp mapped_file.hpp		\
+mer_counting.hpp err.hpp misc.hpp offsets_key_value.hpp			\
+reversible_hash_function.hpp sorted_dumper.hpp				\
 square_binary_matrix.hpp storage.hpp thread_exec.hpp time.hpp		\
 token_ring.hpp raw_dumper.hpp capped_integer.hpp			\
 aligned_values_array.hpp fastq_dumper.hpp floats.hpp			\
 circular_buffer.hpp counter.hpp parse_quake.hpp parse_dna.hpp		\
-fastq_sequence_parser.hpp fastq_seq_qual_parser.hpp file_parser.hpp
+fastq_sequence_parser.hpp fastq_seq_qual_parser.hpp file_parser.hpp	\
+fasta_parser.hpp fastq_sequence_parser.hpp
 
 check_PROGRAMS = generate_sequence
 generate_sequence_SOURCES = generate_sequence.cc	\

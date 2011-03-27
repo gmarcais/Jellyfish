@@ -46,6 +46,8 @@ const char *mer_counter_args_full_help[] = {
   "  -r, --raw                     Write raw database  (default=off)",
   "  -q, --quake                   Quake compatibility mode  (default=off)",
   "      --quality-start=INT       Starting ASCII for quality values  \n                                  (default=`64')",
+  "  -L, --lower-count=LONG        Don't output k-mer with count < lower-count",
+  "  -U, --upper-count=LONG        Don't output k-mer with count > upper-count",
   "      --matrix=Matrix file      Hash function binary matrix",
   "      --timing=Timing file      Print timing information",
   "  -w, --no-write                Don't write database  (default=off)",
@@ -75,11 +77,13 @@ init_help_array(void)
   mer_counter_args_help[13] = mer_counter_args_full_help[13];
   mer_counter_args_help[14] = mer_counter_args_full_help[14];
   mer_counter_args_help[15] = mer_counter_args_full_help[15];
-  mer_counter_args_help[16] = 0; 
+  mer_counter_args_help[16] = mer_counter_args_full_help[16];
+  mer_counter_args_help[17] = mer_counter_args_full_help[17];
+  mer_counter_args_help[18] = 0; 
   
 }
 
-const char *mer_counter_args_help[17];
+const char *mer_counter_args_help[19];
 
 typedef enum {ARG_NO
   , ARG_FLAG
@@ -120,6 +124,8 @@ void clear_given (struct mer_counter_args *args_info)
   args_info->raw_given = 0 ;
   args_info->quake_given = 0 ;
   args_info->quality_start_given = 0 ;
+  args_info->lower_count_given = 0 ;
+  args_info->upper_count_given = 0 ;
   args_info->matrix_given = 0 ;
   args_info->timing_given = 0 ;
   args_info->no_write_given = 0 ;
@@ -150,6 +156,8 @@ void clear_args (struct mer_counter_args *args_info)
   args_info->quake_flag = 0;
   args_info->quality_start_arg = 64;
   args_info->quality_start_orig = NULL;
+  args_info->lower_count_orig = NULL;
+  args_info->upper_count_orig = NULL;
   args_info->matrix_arg = NULL;
   args_info->matrix_orig = NULL;
   args_info->timing_arg = NULL;
@@ -183,13 +191,15 @@ void init_args_info(struct mer_counter_args *args_info)
   args_info->raw_help = mer_counter_args_full_help[11] ;
   args_info->quake_help = mer_counter_args_full_help[12] ;
   args_info->quality_start_help = mer_counter_args_full_help[13] ;
-  args_info->matrix_help = mer_counter_args_full_help[14] ;
-  args_info->timing_help = mer_counter_args_full_help[15] ;
-  args_info->no_write_help = mer_counter_args_full_help[16] ;
-  args_info->measure_help = mer_counter_args_full_help[17] ;
-  args_info->buffers_help = mer_counter_args_full_help[18] ;
-  args_info->buffer_size_help = mer_counter_args_full_help[19] ;
-  args_info->out_buffer_size_help = mer_counter_args_full_help[20] ;
+  args_info->lower_count_help = mer_counter_args_full_help[14] ;
+  args_info->upper_count_help = mer_counter_args_full_help[15] ;
+  args_info->matrix_help = mer_counter_args_full_help[16] ;
+  args_info->timing_help = mer_counter_args_full_help[17] ;
+  args_info->no_write_help = mer_counter_args_full_help[18] ;
+  args_info->measure_help = mer_counter_args_full_help[19] ;
+  args_info->buffers_help = mer_counter_args_full_help[20] ;
+  args_info->buffer_size_help = mer_counter_args_full_help[21] ;
+  args_info->out_buffer_size_help = mer_counter_args_full_help[22] ;
   
 }
 
@@ -291,6 +301,8 @@ mer_counter_cmdline_release (struct mer_counter_args *args_info)
   free_string_field (&(args_info->out_counter_len_orig));
   free_string_field (&(args_info->reprobes_orig));
   free_string_field (&(args_info->quality_start_orig));
+  free_string_field (&(args_info->lower_count_orig));
+  free_string_field (&(args_info->upper_count_orig));
   free_string_field (&(args_info->matrix_arg));
   free_string_field (&(args_info->matrix_orig));
   free_string_field (&(args_info->timing_arg));
@@ -361,6 +373,10 @@ mer_counter_cmdline_dump(FILE *outfile, struct mer_counter_args *args_info)
     write_into_file(outfile, "quake", 0, 0 );
   if (args_info->quality_start_given)
     write_into_file(outfile, "quality-start", args_info->quality_start_orig, 0);
+  if (args_info->lower_count_given)
+    write_into_file(outfile, "lower-count", args_info->lower_count_orig, 0);
+  if (args_info->upper_count_given)
+    write_into_file(outfile, "upper-count", args_info->upper_count_orig, 0);
   if (args_info->matrix_given)
     write_into_file(outfile, "matrix", args_info->matrix_orig, 0);
   if (args_info->timing_given)
@@ -681,6 +697,8 @@ mer_counter_cmdline_internal (
         { "raw",	0, NULL, 'r' },
         { "quake",	0, NULL, 'q' },
         { "quality-start",	1, NULL, 0 },
+        { "lower-count",	1, NULL, 'L' },
+        { "upper-count",	1, NULL, 'U' },
         { "matrix",	1, NULL, 0 },
         { "timing",	1, NULL, 0 },
         { "no-write",	0, NULL, 'w' },
@@ -691,7 +709,7 @@ mer_counter_cmdline_internal (
         { 0,  0, 0, 0 }
       };
 
-      c = getopt_long (argc, argv, "hVm:s:t:o:c:Cp:rqwu", long_options, &option_index);
+      c = getopt_long (argc, argv, "hVm:s:t:o:c:Cp:rqL:U:wu", long_options, &option_index);
 
       if (c == -1) break;	/* Exit from `while (1)' loop.  */
 
@@ -805,6 +823,30 @@ mer_counter_cmdline_internal (
           if (update_arg((void *)&(args_info->quake_flag), 0, &(args_info->quake_given),
               &(local_args_info.quake_given), optarg, 0, 0, ARG_FLAG,
               check_ambiguity, override, 1, 0, "quake", 'q',
+              additional_error))
+            goto failure;
+        
+          break;
+        case 'L':	/* Don't output k-mer with count < lower-count.  */
+        
+        
+          if (update_arg( (void *)&(args_info->lower_count_arg), 
+               &(args_info->lower_count_orig), &(args_info->lower_count_given),
+              &(local_args_info.lower_count_given), optarg, 0, 0, ARG_LONG,
+              check_ambiguity, override, 0, 0,
+              "lower-count", 'L',
+              additional_error))
+            goto failure;
+        
+          break;
+        case 'U':	/* Don't output k-mer with count > upper-count.  */
+        
+        
+          if (update_arg( (void *)&(args_info->upper_count_arg), 
+               &(args_info->upper_count_orig), &(args_info->upper_count_given),
+              &(local_args_info.upper_count_given), optarg, 0, 0, ARG_LONG,
+              check_ambiguity, override, 0, 0,
+              "upper-count", 'U',
               additional_error))
             goto failure;
         

@@ -107,7 +107,8 @@ namespace jellyfish {
         ary(_ary), hsize_mask(ary->get_size() - 1), status(FREE), my_hash(_my_hash)
       { }
 
-      inline void add(key_t key, const val_t &val) {
+      template<typename add_t>
+      inline void add(key_t key, const add_t &val) {
         while(true) {
           while(atomic::cas(&status, FREE, INUSE) != FREE)
             my_hash->wait_event_is_done();

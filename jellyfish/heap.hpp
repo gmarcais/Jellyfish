@@ -92,7 +92,7 @@ namespace jellyfish {
         elts[h] = &storage[h];
         h++;
       }
-      make_heap(elts, elts + h, compare);
+      std::make_heap(elts, elts + h, compare);
     }
     template<typename ForwardIterator>
     void fill(ForwardIterator first, ForwardIterator last) {
@@ -104,7 +104,7 @@ namespace jellyfish {
         elts[h] = &storage[h];
         h++;
       }
-      make_heap(elts, elts + h, compare);
+      std::make_heap(elts, elts + h, compare);
     }
     
     bool is_empty() const { return h == 0; }
@@ -113,10 +113,10 @@ namespace jellyfish {
 
     // The following 3 should only be used after fill has been called
     const_item_t head() const { return elts[0]; }
-    void pop() { pop_heap(elts, elts + h--, compare); }
+    void pop() { std::pop_heap(elts, elts + h--, compare); }
     void push(iterator &item) {
       elts[h]->initialize(item);
-      push_heap(elts, elts + ++h, compare);
+      std::push_heap(elts, elts + ++h, compare);
     }
   };
 }

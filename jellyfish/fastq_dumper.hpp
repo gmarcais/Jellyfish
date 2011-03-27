@@ -78,7 +78,7 @@ namespace jellyfish {
       ary->write_matrices(&_out);
       // Write key set
       ary->write_keys_blocks(&_out, 0, ary->get_size());
-      streampos pos = _out.tellp();
+      std::streampos pos = _out.tellp();
       // Write values array
       ary->write_values(&_out, 0, ary->get_size());
       // Update header

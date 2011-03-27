@@ -53,18 +53,28 @@ int raw_stats_main(int argc, char *argv[])
   if(!out.good())
     die << "Error opening output file '" << args.output_arg << "'";
 
+  uint64_t lower_count = args.lower_count_given ? args.lower_count_arg : 1;
+  uint64_t upper_count = args.upper_count_given ? args.upper_count_arg : (uint64_t)-1;
+
   inv_hash_t::iterator it = hash.iterator_all();
   if(args.fasta_flag) {
     while(it.next()) {
+      if(it.val < lower_count || it.val > upper_count)
+        continue;
       out << ">" << it.get_val() << "\n" << it.get_dna_str() << "\n";
     }
   } else if(args.column_flag) {
     char spacer = args.tab_flag ? '\t' : ' ';
-    while(it.next())
+    while(it.next()) {
+      if(it.val < lower_count || it.val > upper_count)
+        continue;
       out << it.get_dna_str() << spacer << it.get_val() << "\n";
+    }
   } else {
     uint64_t unique = 0, distinct = 0, total = 0, max_count = 0;
     while(it.next()) {
+      if(it.val < lower_count || it.val > upper_count)
+        continue;
       unique += it.get_val() == 1;
       distinct++;
       total += it.get_val();

@@ -60,8 +60,8 @@ namespace jellyfish {
   };
 }
 
-#include <fasta_parser.hpp>
-#include <fastq_sequence_parser.hpp>
-#include <fastq_seq_qual_parser.hpp>
+#include <jellyfish/fasta_parser.hpp>
+#include <jellyfish/fastq_sequence_parser.hpp>
+#include <jellyfish/fastq_seq_qual_parser.hpp>
 
 #endif

@@ -172,7 +172,7 @@ namespace jellyfish {
       }
 
       void initialize(std::string filename, size_t _buff_len) {
-        io = new ifstream(filename.c_str());
+        io = new std::ifstream(filename.c_str());
         io->read((char *)&header, sizeof(header));
         if(!io->good())
           raise(ErrorReading) << "File truncated";
@@ -194,9 +194,9 @@ namespace jellyfish {
 
         hash_matrix.load(io);
         hash_inverse_matrix.load(io);
-        streampos cpos = io->tellg();
-        io->seekg(0, ios::end);
-        streamoff list_size = io->tellg() - cpos;
+        std::streampos cpos = io->tellg();
+        io->seekg(0, std::ios::end);
+        std::streamoff list_size = io->tellg() - cpos;
         io->seekg(cpos);
         if(list_size - (header.distinct * record_len) != 0)
           raise(ErrorReading) << "Bad hash size '" << list_size << "', expected '"

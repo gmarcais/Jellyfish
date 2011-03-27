@@ -56,9 +56,13 @@ int stats_main(int argc, char *argv[])
     return 0;
   }
 
+  uint64_t lower_count = args.lower_count_given ? args.lower_count_arg : 1;
+  uint64_t upper_count = args.upper_count_given ? args.upper_count_arg : (uint64_t)-1;
   if(args.fasta_flag) {
     char key[hash.get_mer_len() + 1];
     while(hash.next()) {
+      if(hash.val < lower_count || hash.val > upper_count)
+        continue;
       hash.get_string(key);
       out << ">" << hash.val << "\n" << key << "\n";
     }
@@ -66,12 +70,16 @@ int stats_main(int argc, char *argv[])
     char key[hash.get_mer_len() + 1];
     char spacer = args.tab_flag ? '\t' : ' ';
     while(hash.next()) {
+      if(hash.val < lower_count || hash.val > upper_count)
+        continue;
       hash.get_string(key);
       out << key << spacer << hash.val << "\n";
     }
   } else {
     uint64_t unique = 0, distinct = 0, total = 0, max_count = 0;
     while(hash.next()) {
+      if(hash.val < lower_count || hash.val > upper_count)
+        continue;
       unique += hash.val == 1;
       distinct++;
       total += hash.val;

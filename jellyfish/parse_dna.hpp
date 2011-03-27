@@ -58,7 +58,7 @@ namespace jellyfish {
     static const uint_t CODE_RESET = -1;
     static const uint_t CODE_IGNORE = -2;
     static const uint_t CODE_COMMENT = -3;
-    static const uint_t CODE_NOT_DNA = ((uint_t)1) << (sizeof(uint_t) - 1);
+    static const uint_t CODE_NOT_DNA = ((uint_t)1) << (bsizeof(uint_t) - 1);
 
     static uint64_t mer_string_to_binary(const char *in, uint_t klen) {
       uint64_t res = 0;

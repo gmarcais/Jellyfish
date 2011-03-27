@@ -84,9 +84,9 @@ namespace jellyfish {
         keys.write_ary_header(out);
       }
 
-
-      bool add(key_t key, val_t val) {
-        bool is_new;
+      template<typename add_t>
+      bool add(key_t key, const add_t &val) {
+        bool   is_new;
         size_t id;
         
         if(!keys.add(key, &is_new, &id))

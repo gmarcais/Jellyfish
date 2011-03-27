@@ -43,6 +43,12 @@ struct dump_fastq_main_args
   const char *column_help; /**< @brief Print in column format help description.  */
   int tab_flag;	/**< @brief Use tabs separator (default=off).  */
   const char *tab_help; /**< @brief Use tabs separator help description.  */
+  float lower_count_arg;	/**< @brief Don't output k-mer with count < lower-count.  */
+  char * lower_count_orig;	/**< @brief Don't output k-mer with count < lower-count original value given at command line.  */
+  const char *lower_count_help; /**< @brief Don't output k-mer with count < lower-count help description.  */
+  float upper_count_arg;	/**< @brief Don't output k-mer with count > upper-count.  */
+  char * upper_count_orig;	/**< @brief Don't output k-mer with count > upper-count original value given at command line.  */
+  const char *upper_count_help; /**< @brief Don't output k-mer with count > upper-count help description.  */
   int verbose_flag;	/**< @brief Be verbose (default=off).  */
   const char *verbose_help; /**< @brief Be verbose help description.  */
   char * output_arg;	/**< @brief Output file (default='/dev/fd/1').  */
@@ -53,6 +59,8 @@ struct dump_fastq_main_args
   unsigned int version_given ;	/**< @brief Whether version was given.  */
   unsigned int column_given ;	/**< @brief Whether column was given.  */
   unsigned int tab_given ;	/**< @brief Whether tab was given.  */
+  unsigned int lower_count_given ;	/**< @brief Whether lower-count was given.  */
+  unsigned int upper_count_given ;	/**< @brief Whether upper-count was given.  */
   unsigned int verbose_given ;	/**< @brief Whether verbose was given.  */
   unsigned int output_given ;	/**< @brief Whether output was given.  */
 

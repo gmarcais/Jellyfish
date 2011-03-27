@@ -45,33 +45,23 @@ namespace jellyfish {
         start = buffer;
     }
 
-    T sum() const {
+    template<typename U>
+    T op(U o) const {
       T *c = start;
       T acc = *c++;
       if(c == end)
         c = buffer;
 
       do {
-        acc += *c++;
+        acc = o(acc, *c++);
         if(c == end)
           c = buffer;
       } while(c != start);
       return acc;
     }
-    T prod() const {
-      T *c = start;
-      T acc = *c++;
-      if(c == end)
-        c = buffer;
 
-      do {
-        acc *= *c++;
-        if(c == end)
-          c = buffer;
-      } while(c != start);
-      //      std::cerr << "prod " << acc << std::endl;
-      return acc;
-    }
+    static T T_times(T &x, T &y) { return x * y; }
+    T prod() const { return op(T_times); }
   };
 }
 

@@ -124,10 +124,15 @@ public:
         dumper = new raw_inv_hash_dumper_t((uint_t)4, args->output_arg,
                                            args->out_buffer_size_arg, ary);
       } else {
-        dumper = new inv_hash_dumper_t(args->threads_arg, args->output_arg,
-                                       args->out_buffer_size_arg,
-                                       8*args->out_counter_len_arg,
-                                       ary);
+        inv_hash_dumper_t *_dumper =
+          new inv_hash_dumper_t(args->threads_arg, args->output_arg,
+                                args->out_buffer_size_arg, 
+                                8*args->out_counter_len_arg, ary);
+        if(args->lower_count_given)
+          _dumper->set_lower_count(args->lower_count_arg);
+        if(args->upper_count_given)
+          _dumper->set_upper_count(args->upper_count_arg);
+        dumper = _dumper;
       }
       hash->set_dumper(dumper);
     }

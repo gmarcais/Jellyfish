@@ -32,19 +32,22 @@ const char *dump_stats_raw_args_usage = "Usage: jellyfish rstats [OPTIONS]... [d
 const char *dump_stats_raw_args_description = "";
 
 const char *dump_stats_raw_args_help[] = {
-  "  -h, --help           Print help and exit",
-  "  -V, --version        Print version and exit",
-  "  -f, --fasta          Dump in fasta format  (default=off)",
-  "  -c, --column         Dump in column format  (default=off)",
-  "  -t, --tab            Tab delimiter  (default=off)",
-  "  -v, --verbose        Verbose  (default=off)",
-  "  -o, --output=STRING  Output file  (default=`/dev/fd/1')",
+  "  -h, --help              Print help and exit",
+  "  -V, --version           Print version and exit",
+  "  -f, --fasta             Dump in fasta format  (default=off)",
+  "  -c, --column            Dump in column format  (default=off)",
+  "  -t, --tab               Tab delimiter  (default=off)",
+  "  -L, --lower-count=LONG  Don't output k-mer with count < lower-count",
+  "  -U, --upper-count=LONG  Don't output k-mer with count > upper-count",
+  "  -v, --verbose           Verbose  (default=off)",
+  "  -o, --output=STRING     Output file  (default=`/dev/fd/1')",
     0
 };
 
 typedef enum {ARG_NO
   , ARG_FLAG
   , ARG_STRING
+  , ARG_LONG
 } dump_stats_raw_cmdline_arg_type;
 
 static
@@ -68,6 +71,8 @@ void clear_given (struct dump_stats_raw_args *args_info)
   args_info->fasta_given = 0 ;
   args_info->column_given = 0 ;
   args_info->tab_given = 0 ;
+  args_info->lower_count_given = 0 ;
+  args_info->upper_count_given = 0 ;
   args_info->verbose_given = 0 ;
   args_info->output_given = 0 ;
 }
@@ -79,6 +84,8 @@ void clear_args (struct dump_stats_raw_args *args_info)
   args_info->fasta_flag = 0;
   args_info->column_flag = 0;
   args_info->tab_flag = 0;
+  args_info->lower_count_orig = NULL;
+  args_info->upper_count_orig = NULL;
   args_info->verbose_flag = 0;
   args_info->output_arg = gengetopt_strdup ("/dev/fd/1");
   args_info->output_orig = NULL;
@@ -95,8 +102,10 @@ void init_args_info(struct dump_stats_raw_args *args_info)
   args_info->fasta_help = dump_stats_raw_args_help[2] ;
   args_info->column_help = dump_stats_raw_args_help[3] ;
   args_info->tab_help = dump_stats_raw_args_help[4] ;
-  args_info->verbose_help = dump_stats_raw_args_help[5] ;
-  args_info->output_help = dump_stats_raw_args_help[6] ;
+  args_info->lower_count_help = dump_stats_raw_args_help[5] ;
+  args_info->upper_count_help = dump_stats_raw_args_help[6] ;
+  args_info->verbose_help = dump_stats_raw_args_help[7] ;
+  args_info->output_help = dump_stats_raw_args_help[8] ;
   
 }
 
@@ -180,6 +189,8 @@ static void
 dump_stats_raw_cmdline_release (struct dump_stats_raw_args *args_info)
 {
   unsigned int i;
+  free_string_field (&(args_info->lower_count_orig));
+  free_string_field (&(args_info->upper_count_orig));
   free_string_field (&(args_info->output_arg));
   free_string_field (&(args_info->output_orig));
   
@@ -227,6 +238,10 @@ dump_stats_raw_cmdline_dump(FILE *outfile, struct dump_stats_raw_args *args_info
     write_into_file(outfile, "column", 0, 0 );
   if (args_info->tab_given)
     write_into_file(outfile, "tab", 0, 0 );
+  if (args_info->lower_count_given)
+    write_into_file(outfile, "lower-count", args_info->lower_count_orig, 0);
+  if (args_info->upper_count_given)
+    write_into_file(outfile, "upper-count", args_info->upper_count_orig, 0);
   if (args_info->verbose_given)
     write_into_file(outfile, "verbose", 0, 0 );
   if (args_info->output_given)
@@ -400,6 +415,9 @@ int update_arg(void *field, char **orig_field,
   case ARG_FLAG:
     *((int *)field) = !*((int *)field);
     break;
+  case ARG_LONG:
+    if (val) *((long *)field) = (long)strtol (val, &stop_char, 0);
+    break;
   case ARG_STRING:
     if (val) {
       string_field = (char **)field;
@@ -412,6 +430,17 @@ int update_arg(void *field, char **orig_field,
     break;
   };
 
+  /* check numeric conversion */
+  switch(arg_type) {
+  case ARG_LONG:
+    if (val && !(stop_char && *stop_char == '\0')) {
+      fprintf(stderr, "%s: invalid numeric value: %s\n", package_name, val);
+      return 1; /* failure */
+    }
+    break;
+  default:
+    ;
+  };
 
   /* store the original value */
   switch(arg_type) {
@@ -476,12 +505,14 @@ dump_stats_raw_cmdline_internal (
         { "fasta",	0, NULL, 'f' },
         { "column",	0, NULL, 'c' },
         { "tab",	0, NULL, 't' },
+        { "lower-count",	1, NULL, 'L' },
+        { "upper-count",	1, NULL, 'U' },
         { "verbose",	0, NULL, 'v' },
         { "output",	1, NULL, 'o' },
         { 0,  0, 0, 0 }
       };
 
-      c = getopt_long (argc, argv, "hVfctvo:", long_options, &option_index);
+      c = getopt_long (argc, argv, "hVfctL:U:vo:", long_options, &option_index);
 
       if (c == -1) break;	/* Exit from `while (1)' loop.  */
 
@@ -523,6 +554,30 @@ dump_stats_raw_cmdline_internal (
           if (update_arg((void *)&(args_info->tab_flag), 0, &(args_info->tab_given),
               &(local_args_info.tab_given), optarg, 0, 0, ARG_FLAG,
               check_ambiguity, override, 1, 0, "tab", 't',
+              additional_error))
+            goto failure;
+        
+          break;
+        case 'L':	/* Don't output k-mer with count < lower-count.  */
+        
+        
+          if (update_arg( (void *)&(args_info->lower_count_arg), 
+               &(args_info->lower_count_orig), &(args_info->lower_count_given),
+              &(local_args_info.lower_count_given), optarg, 0, 0, ARG_LONG,
+              check_ambiguity, override, 0, 0,
+              "lower-count", 'L',
+              additional_error))
+            goto failure;
+        
+          break;
+        case 'U':	/* Don't output k-mer with count > upper-count.  */
+        
+        
+          if (update_arg( (void *)&(args_info->upper_count_arg), 
+               &(args_info->upper_count_orig), &(args_info->upper_count_given),
+              &(local_args_info.upper_count_given), optarg, 0, 0, ARG_LONG,
+              check_ambiguity, override, 0, 0,
+              "upper-count", 'U',
               additional_error))
             goto failure;
         

@@ -6,6 +6,10 @@ option "column"         c "Print in column format"
   flag off
 option "tab"            t "Use tabs separator"
   flag off
+option "lower-count"            L "Don't output k-mer with count < lower-count"
+  float
+option "upper-count"            U "Don't output k-mer with count > upper-count"
+  float
 option "verbose"        v "Be verbose"
   flag off
 option "output"         o "Output file"

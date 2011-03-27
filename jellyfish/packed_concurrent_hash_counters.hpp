@@ -27,7 +27,6 @@
 #include <pthread.h>
 #include <stdint.h>
 #include <jellyfish/small_packed_array.hpp>
-using namespace std;
 
 struct stats {
   unsigned int  key_conflicts;

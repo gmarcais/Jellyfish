@@ -56,7 +56,8 @@ namespace jellyfish {
       }
       void write_raw(std::ostream *out) const {}
 
-      bool add(key_t key, val_t val) {
+      template<typename add_t>
+      bool add(key_t key, const add_t &val) {
         bits_t oval = data[key];
         bits_t nval = (val_t(oval) + val).bits();
         //        std::cerr << "key " << key << " oval " << (val_t(oval).to_float()) << " val " << val.to_float() << " nval " << (val_t(nval).to_float()) << std::endl;

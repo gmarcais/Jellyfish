@@ -22,9 +22,10 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-using namespace std;
 #include <new>
 #include <stdio.h>
+
+#include <jellyfish/atomic_gcc.hpp>
 
 /* Concurrent queue. No check whether enqueue would overflow the queue.
  */
@@ -66,8 +67,8 @@ void concurrent_queue<Val>::enqueue(Val *v) {
     unsigned int chead = head;
     unsigned int nhead = (chead + 1) % size;
 
-    done = __sync_bool_compare_and_swap(&queue[chead], 0, v);
-    __sync_bool_compare_and_swap(&head, chead, nhead);
+    done = (atomic::gcc::cas(&queue[chead], (Val*)0, v) == (Val*)0);
+    atomic::gcc::cas(&head, chead, nhead);
   }
 }
 

@@ -16,7 +16,12 @@ AC_CONFIG_FILES([
 ])
 
 AC_ARG_VAR([MD5], [Path to md5 hashing program])
-AC_CHECK_PROGS([MD5], [md5sum md5])
+if test "x$MD5" = "x"; then
+  AC_CHECK_PROG([MD5], [md5sum], [md5sum])
+fi
+if test "x$MD5" = "x"; then
+   AC_CHECK_PROG([MD5], [md5], [md5 -r])
+fi
 if test "x$MD5" = "x"; then
    AC_MSG_ERROR([Could not find md5 hashing program in your path])
 fi

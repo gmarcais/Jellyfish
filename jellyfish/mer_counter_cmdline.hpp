@@ -70,6 +70,12 @@ struct mer_counter_args
   int quality_start_arg;	/**< @brief Starting ASCII for quality values (default='64').  */
   char * quality_start_orig;	/**< @brief Starting ASCII for quality values original value given at command line.  */
   const char *quality_start_help; /**< @brief Starting ASCII for quality values help description.  */
+  long lower_count_arg;	/**< @brief Don't output k-mer with count < lower-count.  */
+  char * lower_count_orig;	/**< @brief Don't output k-mer with count < lower-count original value given at command line.  */
+  const char *lower_count_help; /**< @brief Don't output k-mer with count < lower-count help description.  */
+  long upper_count_arg;	/**< @brief Don't output k-mer with count > upper-count.  */
+  char * upper_count_orig;	/**< @brief Don't output k-mer with count > upper-count original value given at command line.  */
+  const char *upper_count_help; /**< @brief Don't output k-mer with count > upper-count help description.  */
   char * matrix_arg;	/**< @brief Hash function binary matrix.  */
   char * matrix_orig;	/**< @brief Hash function binary matrix original value given at command line.  */
   const char *matrix_help; /**< @brief Hash function binary matrix help description.  */
@@ -104,6 +110,8 @@ struct mer_counter_args
   unsigned int raw_given ;	/**< @brief Whether raw was given.  */
   unsigned int quake_given ;	/**< @brief Whether quake was given.  */
   unsigned int quality_start_given ;	/**< @brief Whether quality-start was given.  */
+  unsigned int lower_count_given ;	/**< @brief Whether lower-count was given.  */
+  unsigned int upper_count_given ;	/**< @brief Whether upper-count was given.  */
   unsigned int matrix_given ;	/**< @brief Whether matrix was given.  */
   unsigned int timing_given ;	/**< @brief Whether timing was given.  */
   unsigned int no_write_given ;	/**< @brief Whether no-write was given.  */

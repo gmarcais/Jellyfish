@@ -75,7 +75,7 @@ namespace err {
     }
     die_t & operator<<(const char *a[]) {
       for(int i = 0; a[i]; i++)
-        std::cerr << a[i] << "\n";
+        std::cerr << (i ? "\n" : "") << a[i];
       return *this;
     }
     die_t & operator<<(const std::exception &e) {

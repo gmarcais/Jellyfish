@@ -29,8 +29,6 @@
 
 #include <jellyfish/locks_pthread.hpp>
 
-using namespace std;
-
 struct stats {
   unsigned int  key_conflicts;
   unsigned int  val_conflicts;

@@ -42,6 +42,7 @@ namespace jellyfish {
     storage_t            *ary;
     int                   file_index;
     token_ring_t          tr;
+    uint64_t              lower_count, upper_count;
     struct thread_info_t *thread_info;
     uint64_t volatile     unique, distinct, total, max_count;
     std::ofstream        *out;
@@ -53,7 +54,7 @@ namespace jellyfish {
                      uint_t _vlen, storage_t *_ary) :
       threads(_threads), file_prefix(_file_prefix), buffer_size(_buffer_size),
       klen(_ary->get_key_len()), vlen(_vlen), ary(_ary), file_index(0),
-      tr()
+      tr(), lower_count(0), upper_count((uint64_t)-1)
     {
       key_len    = bits_to_bytes(klen);
       val_len    = bits_to_bytes(vlen);
@@ -79,6 +80,9 @@ namespace jellyfish {
       }
     }
     
+    void set_lower_count(uint64_t l) { lower_count = l; }
+    void set_upper_count(uint64_t u) { upper_count = u; }
+
     virtual void start(int i) { dump_to_file(i); }
     void dump_to_file(int i);
 
@@ -118,14 +122,16 @@ namespace jellyfish {
 
       while(it.next()) {
         typename oheap_t::const_item_t item = my_info->heap.head();
-        my_info->writer.append(item->key, item->val);
+        if(item->val >= lower_count && item->val <= upper_count)
+          my_info->writer.append(item->key, item->val);
         my_info->heap.pop();
         my_info->heap.push(it);
       }
 
       while(my_info->heap.is_not_empty()) {
         typename oheap_t::const_item_t item = my_info->heap.head();
-        my_info->writer.append(item->key, item->val);
+        if(item->val >= lower_count && item->val <= upper_count)
+          my_info->writer.append(item->key, item->val);
         my_info->heap.pop();
       }
 

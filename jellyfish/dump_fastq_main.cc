@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <float.h>
 #include <iostream>
 #include <fstream>
 
@@ -25,7 +26,7 @@
 #include <jellyfish/misc.hpp>
 #include <jellyfish/mer_counting.hpp>
 #include <jellyfish/fastq_dumper.hpp>
-#include <dump_fastq_main_cmdline.hpp>
+#include <jellyfish/dump_fastq_main_cmdline.hpp>
 
 int dump_fastq_main(int argc, char *argv[])
 {
@@ -48,16 +49,27 @@ int dump_fastq_main(int argc, char *argv[])
     std::cerr << 
       "k-mer length (bases): " << (hash->get_key_len() / 2) << "\n"
       "entries             : " << hash->get_size() << "\n";
+  
+  float lower_count = args.lower_count_given ? args.lower_count_arg : 0;
+  float upper_count = args.upper_count_given ? args.upper_count_arg : FLT_MAX;
 
   fastq_storage_t::iterator it = hash->iterator_all();
   out << std::scientific;
   if(args.column_flag) {
     char spacer = args.tab_flag ? '\t' : ' ';
-    while(it.next())
-      out << it.get_dna_str() << spacer << it.get_val().to_float() << "\n";
+    while(it.next()) {
+      float val = it.get_val().to_float();
+      if(val < lower_count || val > upper_count)
+        continue;
+      out << it.get_dna_str() << spacer << val << "\n";
+    }
   } else {
-    while(it.next())
-      out << ">" << it.get_val().to_float() << "\n" << it.get_dna_str() << "\n";
+    while(it.next()) {
+      float val = it.get_val().to_float();
+      if(val < lower_count || val > upper_count)
+        continue;
+      out << ">" << val << "\n" << it.get_dna_str() << "\n";
+    }
   }
   out.close();
 

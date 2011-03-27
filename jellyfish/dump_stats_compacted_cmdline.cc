@@ -32,15 +32,17 @@ const char *dump_stats_compacted_args_usage = "Usage: jellyfish stats [OPTIONS].
 const char *dump_stats_compacted_args_description = "";
 
 const char *dump_stats_compacted_args_full_help[] = {
-  "  -h, --help           Print help and exit",
-  "      --full-help      Print help, including hidden options, and exit",
-  "  -V, --version        Print version and exit",
-  "  -f, --fasta          Dump in fasta format  (default=off)",
-  "  -c, --column         Dump in column format  (default=off)",
-  "  -t, --tab            Tab delimiter  (default=off)",
-  "  -r, --recompute      Recompute  (default=off)",
-  "  -v, --verbose        Verbose  (default=off)",
-  "  -o, --output=STRING  Output file  (default=`/dev/fd/1')",
+  "  -h, --help              Print help and exit",
+  "      --full-help         Print help, including hidden options, and exit",
+  "  -V, --version           Print version and exit",
+  "  -f, --fasta             Dump in fasta format  (default=off)",
+  "  -c, --column            Dump in column format  (default=off)",
+  "  -t, --tab               Tab delimiter  (default=off)",
+  "  -r, --recompute         Recompute  (default=off)",
+  "  -L, --lower-count=LONG  Don't output k-mer with count < lower-count  \n                            (default=`1')",
+  "  -U, --upper-count=LONG  Don't output k-mer with count > upper-count  \n                            (default=`4294967296')",
+  "  -v, --verbose           Verbose  (default=off)",
+  "  -o, --output=STRING     Output file  (default=`/dev/fd/1')",
     0
 };
 
@@ -55,15 +57,18 @@ init_help_array(void)
   dump_stats_compacted_args_help[5] = dump_stats_compacted_args_full_help[5];
   dump_stats_compacted_args_help[6] = dump_stats_compacted_args_full_help[7];
   dump_stats_compacted_args_help[7] = dump_stats_compacted_args_full_help[8];
-  dump_stats_compacted_args_help[8] = 0; 
+  dump_stats_compacted_args_help[8] = dump_stats_compacted_args_full_help[9];
+  dump_stats_compacted_args_help[9] = dump_stats_compacted_args_full_help[10];
+  dump_stats_compacted_args_help[10] = 0; 
   
 }
 
-const char *dump_stats_compacted_args_help[9];
+const char *dump_stats_compacted_args_help[11];
 
 typedef enum {ARG_NO
   , ARG_FLAG
   , ARG_STRING
+  , ARG_LONG
 } dump_stats_compacted_cmdline_arg_type;
 
 static
@@ -89,6 +94,8 @@ void clear_given (struct dump_stats_compacted_args *args_info)
   args_info->column_given = 0 ;
   args_info->tab_given = 0 ;
   args_info->recompute_given = 0 ;
+  args_info->lower_count_given = 0 ;
+  args_info->upper_count_given = 0 ;
   args_info->verbose_given = 0 ;
   args_info->output_given = 0 ;
 }
@@ -101,6 +108,10 @@ void clear_args (struct dump_stats_compacted_args *args_info)
   args_info->column_flag = 0;
   args_info->tab_flag = 0;
   args_info->recompute_flag = 0;
+  args_info->lower_count_arg = 1;
+  args_info->lower_count_orig = NULL;
+  args_info->upper_count_arg = 4294967296;
+  args_info->upper_count_orig = NULL;
   args_info->verbose_flag = 0;
   args_info->output_arg = gengetopt_strdup ("/dev/fd/1");
   args_info->output_orig = NULL;
@@ -119,8 +130,10 @@ void init_args_info(struct dump_stats_compacted_args *args_info)
   args_info->column_help = dump_stats_compacted_args_full_help[4] ;
   args_info->tab_help = dump_stats_compacted_args_full_help[5] ;
   args_info->recompute_help = dump_stats_compacted_args_full_help[6] ;
-  args_info->verbose_help = dump_stats_compacted_args_full_help[7] ;
-  args_info->output_help = dump_stats_compacted_args_full_help[8] ;
+  args_info->lower_count_help = dump_stats_compacted_args_full_help[7] ;
+  args_info->upper_count_help = dump_stats_compacted_args_full_help[8] ;
+  args_info->verbose_help = dump_stats_compacted_args_full_help[9] ;
+  args_info->output_help = dump_stats_compacted_args_full_help[10] ;
   
 }
 
@@ -213,6 +226,8 @@ static void
 dump_stats_compacted_cmdline_release (struct dump_stats_compacted_args *args_info)
 {
   unsigned int i;
+  free_string_field (&(args_info->lower_count_orig));
+  free_string_field (&(args_info->upper_count_orig));
   free_string_field (&(args_info->output_arg));
   free_string_field (&(args_info->output_orig));
   
@@ -264,6 +279,10 @@ dump_stats_compacted_cmdline_dump(FILE *outfile, struct dump_stats_compacted_arg
     write_into_file(outfile, "tab", 0, 0 );
   if (args_info->recompute_given)
     write_into_file(outfile, "recompute", 0, 0 );
+  if (args_info->lower_count_given)
+    write_into_file(outfile, "lower-count", args_info->lower_count_orig, 0);
+  if (args_info->upper_count_given)
+    write_into_file(outfile, "upper-count", args_info->upper_count_orig, 0);
   if (args_info->verbose_given)
     write_into_file(outfile, "verbose", 0, 0 );
   if (args_info->output_given)
@@ -437,6 +456,9 @@ int update_arg(void *field, char **orig_field,
   case ARG_FLAG:
     *((int *)field) = !*((int *)field);
     break;
+  case ARG_LONG:
+    if (val) *((long *)field) = (long)strtol (val, &stop_char, 0);
+    break;
   case ARG_STRING:
     if (val) {
       string_field = (char **)field;
@@ -449,6 +471,17 @@ int update_arg(void *field, char **orig_field,
     break;
   };
 
+  /* check numeric conversion */
+  switch(arg_type) {
+  case ARG_LONG:
+    if (val && !(stop_char && *stop_char == '\0')) {
+      fprintf(stderr, "%s: invalid numeric value: %s\n", package_name, val);
+      return 1; /* failure */
+    }
+    break;
+  default:
+    ;
+  };
 
   /* store the original value */
   switch(arg_type) {
@@ -515,12 +548,14 @@ dump_stats_compacted_cmdline_internal (
         { "column",	0, NULL, 'c' },
         { "tab",	0, NULL, 't' },
         { "recompute",	0, NULL, 'r' },
+        { "lower-count",	1, NULL, 'L' },
+        { "upper-count",	1, NULL, 'U' },
         { "verbose",	0, NULL, 'v' },
         { "output",	1, NULL, 'o' },
         { 0,  0, 0, 0 }
       };
 
-      c = getopt_long (argc, argv, "hVfctrvo:", long_options, &option_index);
+      c = getopt_long (argc, argv, "hVfctrL:U:vo:", long_options, &option_index);
 
       if (c == -1) break;	/* Exit from `while (1)' loop.  */
 
@@ -572,6 +607,30 @@ dump_stats_compacted_cmdline_internal (
           if (update_arg((void *)&(args_info->recompute_flag), 0, &(args_info->recompute_given),
               &(local_args_info.recompute_given), optarg, 0, 0, ARG_FLAG,
               check_ambiguity, override, 1, 0, "recompute", 'r',
+              additional_error))
+            goto failure;
+        
+          break;
+        case 'L':	/* Don't output k-mer with count < lower-count.  */
+        
+        
+          if (update_arg( (void *)&(args_info->lower_count_arg), 
+               &(args_info->lower_count_orig), &(args_info->lower_count_given),
+              &(local_args_info.lower_count_given), optarg, 0, "1", ARG_LONG,
+              check_ambiguity, override, 0, 0,
+              "lower-count", 'L',
+              additional_error))
+            goto failure;
+        
+          break;
+        case 'U':	/* Don't output k-mer with count > upper-count.  */
+        
+        
+          if (update_arg( (void *)&(args_info->upper_count_arg), 
+               &(args_info->upper_count_orig), &(args_info->upper_count_given),
+              &(local_args_info.upper_count_given), optarg, 0, "4294967296", ARG_LONG,
+              check_ambiguity, override, 0, 0,
+              "upper-count", 'U',
               additional_error))
             goto failure;
         
