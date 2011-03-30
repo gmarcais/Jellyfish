@@ -1,0 +1,17 @@
+purpose "Merge quake databases"
+args "--show-required --default-option -c cc -H hpp -F hash_fastq_merge_cmdline -f hash_fastq_merge_cmdline -a hash_fastq_merge_args --unamed-opts=database.jf"
+package "jellyfish merge"
+
+option "size"                   s "Merged hash table size"
+  long required
+option "mer-len"                m "Mer length"
+  int required
+option "output"                 o "Output file"
+  string default="merged.jf"
+option "threads"                t "Number of threads"
+  int default="1"
+option "reprobes"               p "Maximum number of reprobes"
+  int default="62"
+option "out-buffer-size"        - "Size of output buffer per thread"
+  long hidden default="20000000"
+
