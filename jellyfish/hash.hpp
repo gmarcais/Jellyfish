@@ -53,11 +53,11 @@ namespace jellyfish {
     typedef ary_t storage_t;
     typedef typename ary_t::iterator iterator;
 
-    hash() : ary(NULL), dumper(NULL) {}
-    hash(ary_t *_ary) : ary(_ary), dumper(NULL) {}
+    hash() : ary(NULL), dumper(NULL), dumping_initiated(false) {}
+    hash(ary_t *_ary) : ary(_ary), dumper(NULL), dumping_initiated(false) {}
     hash(char *map, size_t length) : 
       ary(new ary_t(map, length)),
-      dumper(NULL) { }
+      dumper(NULL), dumping_initiated(false) { }
     hash(const char *filename, bool sequential) {
       dumper = NULL;
       open(filename, sequential);
@@ -170,8 +170,9 @@ namespace jellyfish {
      * is free. This method returns after the signaling and does not
      * wait for the handling of the event to be over.
      **/
-    void signal_not_in_use() {
-      inuse_thread_cond.lock();
+    void signal_not_in_use(bool take_inuse_lock = true) {
+      if(take_inuse_lock)
+        inuse_thread_cond.lock();
       if(--inuse_thread_count == 0)
         inuse_thread_cond.signal();
       inuse_thread_cond.unlock();
@@ -182,9 +183,12 @@ namespace jellyfish {
      * to INUSE. An event management has been initiated. This call
      * waits for the event handling to be over.
      **/
-    void wait_event_is_done() {
-      event_lock.lock();
-      event_lock.unlock();
+    void wait_event_is_done(bool take_event_lock = true) {
+      if(take_event_lock)
+        event_cond.lock();
+      while(dumping_initiated)
+        event_cond.wait();
+      event_cond.unlock();
     }
 
     /**
@@ -195,13 +199,19 @@ namespace jellyfish {
      **/
     bool get_event_locks() {
       inuse_thread_cond.lock();
-      if(!event_lock.try_lock()) {
-        inuse_thread_cond.unlock();
-        signal_not_in_use();
-        wait_event_is_done();
+      event_cond.lock();
+      if(dumping_initiated) {
+        // Another thread is doing the dumping
+        signal_not_in_use(false);
+        wait_event_is_done(false);
         return false;
       }
+
+      // I am the thread doing the dumping
       user_thread_lock.lock();
+      dumping_initiated = true;
+      event_cond.unlock();
+
       inuse_thread_count = 0;
       
       // Block access to hash and wait for threads with INUSE state
@@ -222,21 +232,25 @@ namespace jellyfish {
     }    
 
     void release_event_locks() {
+      event_cond.lock();
       for(thread_ptr_t it = user_thread_list.begin(); 
           it != user_thread_list.end();
           it++) {
         atomic::set(&it->status, FREE);
       }
       user_thread_lock.unlock();
-      event_lock.unlock();
+      dumping_initiated = false;
+      event_cond.broadcast();
+      event_cond.unlock();
     }
 
   private:
     ary_t                 *ary;
     dumper_t              *dumper;
+    volatile bool          dumping_initiated;
     thread_list_t          user_thread_list;
     locks::pthread::mutex  user_thread_lock;
-    locks::pthread::mutex  event_lock;
+    locks::pthread::cond   event_cond;
     locks::pthread::cond   inuse_thread_cond;
     volatile uint_t        inuse_thread_count;
   };

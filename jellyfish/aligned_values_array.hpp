@@ -70,10 +70,12 @@ namespace jellyfish {
       size_t floor_block(size_t entries, size_t &blocks) const {
         return keys.floor_block(entries, blocks);
       }
-      // void zero_blocks(const size_t start, const size_t length) {
-      //   keys.zero_blocks(start, length);
-
-      // }
+      void zero_keys(const size_t start, const size_t length) {
+        keys.zero_blocks(start, length);
+      }
+      void zero_values(const size_t start, const size_t length) {
+        vals.zero(start, length);
+      }
       void write_keys_blocks(std::ostream *out, size_t start, size_t length) const {
         keys.write_blocks(out, start, length);
       }
@@ -91,7 +93,7 @@ namespace jellyfish {
         
         if(!keys.add(key, &is_new, &id))
           return false;
-       
+
         vals.add(id, val);
         return true;
       }

@@ -41,6 +41,7 @@ namespace locks {
       inline void unlock() { pthread_mutex_unlock(&_mutex); }
       inline void wait() { pthread_cond_wait(&_cond, &_mutex); }
       inline void signal() { pthread_cond_signal(&_cond); }
+      inline void broadcast() { pthread_cond_broadcast(&_cond); }
     };
     
     class mutex

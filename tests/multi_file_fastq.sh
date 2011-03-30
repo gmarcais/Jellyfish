@@ -5,7 +5,6 @@
 sort > ${pref}.md5sum <<EOF
 8ebb01305cbb36754ef060c1e37d6e4d ${pref}.histo
 EOF
-set -x
 echo "Counting 22-mers on ${nCPUs} CPU" &&      \
     $JF count -q --matrix seq10m_matrix_22 -m 22 -t $nCPUs \
     -o $pref -s 5000000 --timing ${pref}.timing seq1m_*.fq && \

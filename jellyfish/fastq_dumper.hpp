@@ -72,6 +72,8 @@ namespace jellyfish {
       std::ofstream _out;
       open_next_file(file_prefix.c_str(), file_index, _out);
 
+      // TODO: the zeroing out of the hash is not parallelized.
+
       // Skip header
       _out.seekp(sizeof(struct header));
       // Write matrices
@@ -79,9 +81,11 @@ namespace jellyfish {
       // Write key set
       ary->write_keys_blocks(&_out, 0, ary->get_size());
       std::streampos pos = _out.tellp();
+      ary->zero_keys(0, ary->get_size());
       // Write values array
       ary->write_values(&_out, 0, ary->get_size());
-      // Update header
+      ary->zero_values(0, ary->get_size());
+      // Update header      
       _out.seekp(0);
       struct header header(ary->get_key_len(), ary->get_size(),
                            ary->get_max_reprobe(), pos);

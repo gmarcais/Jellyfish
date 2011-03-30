@@ -81,8 +81,9 @@ public:
     mer_stream.parse(counter);
 
     bool is_serial = sync_barrier.wait() == PTHREAD_BARRIER_SERIAL_THREAD;
-    if(is_serial)
+    if(is_serial) {
       hash->dump();
+    }
   }
   
   void count() {

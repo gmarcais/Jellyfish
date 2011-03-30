@@ -264,6 +264,7 @@ public:
                           : "=&r" (res), "=r" (c), "=r" (v)
                           : "1" (c), "2" (v), "r" (smear)
                           : "xmm0", "xmm1");
+
     return res;
   }
   inline uint64_t times(uint64_t v) const { return times_sse(v); }

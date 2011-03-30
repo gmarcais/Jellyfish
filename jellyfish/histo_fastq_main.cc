@@ -23,6 +23,7 @@
 #include <fstream>
 #include <vector>
 
+#include <jellyfish/err.hpp>
 #include <jellyfish/misc.hpp>
 #include <jellyfish/mer_counting.hpp>
 #include <jellyfish/fastq_dumper.hpp>
