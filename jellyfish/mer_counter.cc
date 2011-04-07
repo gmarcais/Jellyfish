@@ -196,6 +196,10 @@ int count_main(int argc, char *argv[])
   if(mer_counter_cmdline(argc, argv, &args) != 0)
     die << "Command line parser failed";
 
+  if(args.mer_len_arg < 2 || args.mer_len_arg > 31)
+    die << "Invalid mer length '" << args.mer_len_arg
+        << "'. It must be in [2, 31].";
+
   Time start;
   mer_counting_base *counter;
   if(!args.buffers_given)

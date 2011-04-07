@@ -51,6 +51,12 @@ struct histogram_args
   long increment_arg;	/**< @brief Increment value for buckets (default='1').  */
   char * increment_orig;	/**< @brief Increment value for buckets original value given at command line.  */
   const char *increment_help; /**< @brief Increment value for buckets help description.  */
+  int threads_arg;	/**< @brief Number of threads (default='1').  */
+  char * threads_orig;	/**< @brief Number of threads original value given at command line.  */
+  const char *threads_help; /**< @brief Number of threads help description.  */
+  char * output_arg;	/**< @brief Output file (default='/dev/fd/1').  */
+  char * output_orig;	/**< @brief Output file original value given at command line.  */
+  const char *output_help; /**< @brief Output file help description.  */
   
   unsigned int help_given ;	/**< @brief Whether help was given.  */
   unsigned int version_given ;	/**< @brief Whether version was given.  */
@@ -58,6 +64,8 @@ struct histogram_args
   unsigned int low_given ;	/**< @brief Whether low was given.  */
   unsigned int high_given ;	/**< @brief Whether high was given.  */
   unsigned int increment_given ;	/**< @brief Whether increment was given.  */
+  unsigned int threads_given ;	/**< @brief Whether threads was given.  */
+  unsigned int output_given ;	/**< @brief Whether output was given.  */
 
   char **inputs ; /**< @brief unamed options (options without names) */
   unsigned inputs_num ; /**< @brief unamed options number */

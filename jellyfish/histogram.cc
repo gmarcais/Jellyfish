@@ -26,7 +26,63 @@
 #include <jellyfish/misc.hpp>
 #include <jellyfish/mer_counting.hpp>
 #include <jellyfish/compacted_hash.hpp>
+#include <jellyfish/thread_exec.hpp>
+#include <jellyfish/atomic_gcc.hpp>
+#include <jellyfish/counter.hpp>
 #include <jellyfish/histogram_cmdline.hpp>
+
+template<typename hash_t>
+class histogram : public thread_exec {
+  const hash_t   *hash;
+  const uint_t    threads;
+  const uint64_t  base, ceil, inc, nb_buckets, nb_slices;
+  uint64_t       *data;
+  counter_t       slice_id;
+
+public:
+  histogram(const hash_t *_hash, uint_t _threads, uint64_t _base,
+            uint64_t _ceil, uint64_t _inc) :
+    hash(_hash), threads(_threads), base(_base), ceil(_ceil), inc(_inc), 
+    nb_buckets((ceil + inc - base) / inc), nb_slices(threads * 100)
+  {
+    data = new uint64_t[threads * nb_buckets];
+    memset(data, '\0', threads * nb_buckets * sizeof(uint64_t));
+  }
+
+  ~histogram() {
+    if(data)
+      delete [] data;
+  }
+
+  void do_it() {
+    exec_join(threads);
+  }
+
+  void start(int th_id) {
+    uint64_t *hist = &data[th_id * nb_buckets];
+    for(size_t i = slice_id++; i <= nb_slices; i = slice_id++) {
+      typename hash_t::iterator it = hash->iterator_slice(i, nb_slices);
+      while(it.next()) {
+        if(it.get_val() < base)
+          hist[0]++;
+        else if(it.get_val() > ceil)
+          hist[nb_buckets - 1]++;
+        else
+          hist[(it.get_val() - base) / inc]++;
+      }
+    }
+  }
+
+  void print(std::ostream &out) {
+    uint64_t col = base;
+    for(uint64_t i = 0; i < nb_buckets; i++, col += inc) {
+      uint64_t count = 0;
+      for(uint_t j = 0; j < threads; j++)
+        count += data[j * nb_buckets + i];
+      out << col << " " << count << "\n";
+    }
+  }
+};
 
 int histo_main(int argc, char *argv[])
 {
@@ -42,29 +98,30 @@ int histo_main(int argc, char *argv[])
     die << "Low count value must be >= 1\n"
         << histogram_args_usage << "\n" << histogram_args_help;
 
-  hash_reader_t hash(args.inputs[0]);
+  std::ofstream out(args.output_arg);
+  if(!out.good())
+    die << "Error opening output file '" << args.output_arg << "'" << err::no;
+
   const uint64_t base = 
     args.low_arg > 1 ? (args.increment_arg >= args.low_arg ? 1 : args.low_arg - args.increment_arg) : 1;
   const uint64_t ceil = args.high_arg + args.increment_arg;
-  const uint64_t nb_buckets = (ceil + args.increment_arg - base) / args.increment_arg;
-  const uint64_t last_bucket = nb_buckets - 1;
-  std::vector<uint64_t> histogram(nb_buckets, 0UL);
 
-  while(hash.next()) {
-    if(hash.val < base) {
-      histogram[0]++;
-    } else if(hash.val > ceil) {
-      histogram[last_bucket]++;
-    } else {
-      histogram[(hash.val - base) / args.increment_arg]++;
-    }
+  mapped_file dbf(args.inputs[0]);
+  char type[8];
+  memcpy(type, dbf.base(), sizeof(type));
+  if(!strncmp(type, "JFRHSHDN", 8)) {
+    dbf.sequential().will_need();
+    inv_hash_t hash(dbf.base() + 8, dbf.length() - 8);
+    histogram<inv_hash_t> histo(&hash, args.threads_arg, base, ceil, args.increment_arg);
+    histo.do_it();
+    histo.print(out);
+  } else if(!strncmp(type, jellyfish::compacted_hash::file_type, 8)) {
+    hash_query_t hash(dbf);
+    histogram<hash_query_t> histo(&hash, args.threads_arg, base, ceil, args.increment_arg);
+    histo.do_it();
+    histo.print(out);
   }
-
-  for(uint64_t i = 0; i < nb_buckets; i++)
-    std::cout << (base + i * args.increment_arg) 
-              << " " << histogram[i] << "\n";
-
-  std::cout << std::flush;
+  out.close();
 
   return 0;
 }

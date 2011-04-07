@@ -62,6 +62,8 @@ public:
   mapped_file(const char *filename) : _unmap(false) {
     map(filename);
   }
+  mapped_file(const mapped_file &mf) : 
+    _unmap(false), _base(mf._base), _end(mf._end), _length(mf._length) {}
 
   ~mapped_file() {
     if(_unmap)

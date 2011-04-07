@@ -276,6 +276,32 @@ namespace jellyfish {
       bool                canonical;
 
     public:
+      /* Can't wait for C++0x to be finalized and call constructor
+         from constructor!
+       */
+      query(mapped_file &map) :
+        file(map),
+        header(file.base()), 
+        key_len((header.key_len / 8) + (header.key_len % 8 != 0)),
+        val_len(header.val_len),
+        record_len(key_len + header.val_len),
+        hash_matrix(file.base() + sizeof(header)),
+        hash_inverse_matrix(file.base() + sizeof(header) + hash_matrix.dump_size()),
+        base(file.base() + sizeof(header) + hash_matrix.dump_size() + hash_inverse_matrix.dump_size()),
+        size(header.size),
+        size_mask(header.size - 1),
+        last_id((file.end() - base) / record_len),
+        canonical(false)
+      {
+        if(file.end() - base - header.distinct * record_len != 0)
+          raise(ErrorReading) << "Bad hash size '" << (file.end() - base)
+                              << "', expected '" << header.distinct * record_len << "' bytes";
+          
+        get_key(0, &first_key);
+        first_pos = get_pos(first_key);
+        get_key(last_id - 1, &last_key);
+        last_pos = get_pos(last_key);
+      }
       query(std::string filename) : 
         file(filename.c_str()), 
         header(file.base()), 
@@ -453,7 +479,21 @@ namespace jellyfish {
         }
       };
 
-      iterator get_iterator() { return iterator(base, last_id, key_len, val_len, get_mer_len()); }
+      iterator get_iterator() const { return iterator(base, last_id, key_len, val_len, get_mer_len()); }
+      iterator iterator_slice(size_t slice_number, size_t number_of_slice) const {
+        size_t  slice_size = get_size() / number_of_slice;
+        size_t  start      = slice_number * slice_size;
+        char   *it_base    = base + start * record_len;
+        size_t  last_id    = slice_size;
+
+        if(it_base >= file.end()) {
+          it_base = base;
+          last_id = 0;
+        } else if(it_base + last_id * record_len > file.end())
+          last_id = (file.end() - it_base) / record_len;
+
+        return iterator(it_base, last_id, key_len, val_len, get_mer_len()); 
+      }
     };
   }
 }

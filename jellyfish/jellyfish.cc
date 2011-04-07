@@ -26,7 +26,6 @@ main_func_t count_main;
 main_func_t stats_main;
 main_func_t raw_stats_main;
 main_func_t raw_query_main;
-main_func_t raw_histo_main;
 main_func_t dump_fastq_main;
 main_func_t histo_fastq_main;
 main_func_t merge_main;
@@ -44,16 +43,15 @@ struct cmd_func {
 cmd_func cmd_list[] = {
   {"count",             &count_main},
   {"stats",             &stats_main},
-  {"rstats",            &raw_stats_main},
-  {"rquery",            &raw_query_main},
-  {"rhisto",            &raw_histo_main},
-  {"qdump",             &dump_fastq_main},
-  {"qhisto",            &histo_fastq_main},
-  {"merge",             &merge_main},
-  {"qmerge",            &hash_fastq_merge_main},
   {"histo",             &histo_main},
+  {"merge",             &merge_main},
   {"query",             &query_main},
   {"cite",              &cite_main},
+  {"rstats",            &raw_stats_main},
+  {"rquery",            &raw_query_main},
+  {"qdump",             &dump_fastq_main},
+  {"qhisto",            &histo_fastq_main},
+  {"qmerge",            &hash_fastq_merge_main},
 
   /* help in all its form. Must be first non-command */
   {"help",              &sos},
