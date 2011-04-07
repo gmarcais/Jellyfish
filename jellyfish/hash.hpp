@@ -75,6 +75,7 @@ namespace jellyfish {
     size_t get_size() const { return ary->get_size(); }
     uint_t get_key_len() const { return ary->get_key_len(); }
     uint_t get_val_len() const { return ary->get_val_len(); }
+    uint_t get_max_reprobe() const { return ary->get_max_reprobe(); }
     size_t get_max_reprobe_offset() const { return ary->get_max_reprobe_offset(); }
     
     void set_dumper(dumper_t *new_dumper) { dumper = new_dumper; }

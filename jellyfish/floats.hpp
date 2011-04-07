@@ -18,24 +18,33 @@
 #define __JELLYFISH_FLOATS_HPP__
 
 #include <stdint.h>
+#ifdef HALF_FLOATS
+#include <jellyfish/half.h>
+#endif
 
 namespace jellyfish {
   class Float {
   public:
+#ifdef HALF_FLOATS
+    typedef uint16_t bits_t;
+    typedef half     float_t;
+#else
     typedef uint32_t bits_t;
+    typedef float    float_t;
+#endif
 
   private:
     union float_int {
-      float      fv;
+      float_t      fv;
       bits_t     iv;
-      float_int(float v) : fv(v) {}
+      float_int(float_t v) : fv(v) {}
       float_int(bits_t v) : iv(v) {}
     };
     float_int v;
 
   public:
     Float() : v(0.0f) {}
-    Float(float _v) : v(_v) {}
+    Float(float_t _v) : v(_v) {}
     Float(bits_t _v) : v(_v) {}
 
     static const Float zero;
@@ -46,7 +55,7 @@ namespace jellyfish {
     }
 
     bits_t bits() const { return v.iv; };
-    float to_float() const { return v.fv; };
+    float_t to_float() const { return v.fv; };
   };
 }
 

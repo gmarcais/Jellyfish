@@ -12,7 +12,7 @@ EXTRA_DIST = $(TESTS)
 clean-local: clean-local-check
 .PHONY: clean-local-check
 clean-local-check:
-	-rm -f seq10m* seq1m* *_0 *.md5sum *.histo *.stats *.timing *.query
+	-rm -f seq10m* seq1m* *_0 *_1 *_2 *.md5sum *.histo *.stats *.timing *.query *.dump
 
 serial_hashing.log: generate_sequence.log
 parallel_hashing.log: generate_sequence.log

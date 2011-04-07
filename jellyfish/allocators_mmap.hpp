@@ -21,6 +21,7 @@
 #include <sys/mman.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <unistd.h>
 
 namespace allocators {
   class mmap

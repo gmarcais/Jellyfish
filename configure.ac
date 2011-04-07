@@ -7,30 +7,34 @@ AC_CONFIG_HEADERS([config.h])
 gl_EARLY 
 gl_INIT
 
+define([concat], $1$2$3)dnl
+define([PC_FILE], concat([jellyfish-],AC_PACKAGE_VERSION,[.pc]))
 AC_CONFIG_FILES([
     Makefile
     jellyfish/Makefile
     tests/Makefile
     tests/compat.sh
-    jellyfish-1.0.pc
-])
+]
+    PC_FILE
+)
 
 AC_ARG_VAR([MD5], [Path to md5 hashing program])
-if test "x$MD5" = "x"; then
-  AC_CHECK_PROG([MD5], [md5sum], [md5sum])
-fi
-if test "x$MD5" = "x"; then
-   AC_CHECK_PROG([MD5], [md5], [md5 -r])
-fi
-if test "x$MD5" = "x"; then
-   AC_MSG_ERROR([Could not find md5 hashing program in your path])
-fi
+AS_IF([test "x$MD5" = "x"], AC_CHECK_PROG([MD5], [md5sum], [md5sum]), [])
+AS_IF([test "x$MD5" = "x"], AC_CHECK_PROG([MD5], [md5], [md5 -r]), [])
+AS_IF([test "x$MD5" = "x"], AC_MSG_ERROR([Could not find md5 hashing program in your path]), [])
 
 AC_ARG_WITH([sse],
             [AS_HELP_STRING([--without-sse], [disable SSE])],
             [], [with_sse=yes])
 AS_IF([test "x$with_sse" != xno],
       [AC_DEFINE([HAVE_SSE], [1], [Define if you have SSE])],
+      [])
+
+AC_ARG_WITH([half],
+            [AS_HELP_STRING([--with-half], [enable half float (16 bits)])],
+            [], [with_half=no])
+AS_IF([test "x$with_half" = "xyes"],
+      [AC_DEFINE([HALF_FLOATS], [1], [Define if you use half floats for qmer counting])],
       [])
 
 # Check the version of strerror_r

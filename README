@@ -35,6 +35,10 @@ License
   and distributed under the GPL version 3 or
   higher. http://www.agner.org.
 
+* The Half float implementation is copyrighted by Industrial Light &
+  Magic and is distributed under the license described in the
+  HalfLICENSE file.
+
 *   This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
