@@ -39,10 +39,10 @@ struct dump_fastq_main_args
 {
   const char *help_help; /**< @brief Print help and exit help description.  */
   const char *version_help; /**< @brief Print version and exit help description.  */
-  int column_flag;	/**< @brief Print in column format (default=off).  */
-  const char *column_help; /**< @brief Print in column format help description.  */
-  int tab_flag;	/**< @brief Use tabs separator (default=off).  */
-  const char *tab_help; /**< @brief Use tabs separator help description.  */
+  int column_flag;	/**< @brief Column format (default=off).  */
+  const char *column_help; /**< @brief Column format help description.  */
+  int tab_flag;	/**< @brief Tab separator (default=off).  */
+  const char *tab_help; /**< @brief Tab separator help description.  */
   float lower_count_arg;	/**< @brief Don't output k-mer with count < lower-count.  */
   char * lower_count_orig;	/**< @brief Don't output k-mer with count < lower-count original value given at command line.  */
   const char *lower_count_help; /**< @brief Don't output k-mer with count < lower-count help description.  */

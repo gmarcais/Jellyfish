@@ -41,7 +41,8 @@
 #include <jellyfish/sorted_dumper.hpp>
 typedef jellyfish::invertible_hash::array<uint64_t,atomic::gcc,allocators::mmap> inv_hash_storage_t;
 typedef jellyfish::sorted_dumper< inv_hash_storage_t,atomic::gcc> inv_hash_dumper_t;
-typedef jellyfish::raw_hash_dumper<inv_hash_storage_t> raw_inv_hash_dumper_t;
+typedef jellyfish::raw_hash::dumper<inv_hash_storage_t> raw_inv_hash_dumper_t;
+typedef jellyfish::raw_hash::query<inv_hash_storage_t> raw_inv_hash_query_t;
 typedef jellyfish::hash< uint64_t,uint64_t,inv_hash_storage_t,atomic::gcc > inv_hash_t;
 
 // Direct indexing types

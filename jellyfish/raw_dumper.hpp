@@ -21,12 +21,11 @@
 #include <jellyfish/thread_exec.hpp>
 #include <jellyfish/token_ring.hpp>
 #include <jellyfish/locks_pthread.hpp>
+#include <jellyfish/square_binary_matrix.hpp>
 
 namespace jellyfish {
-  template<typename storage_t>
-  class raw_hash_dumper : public dumper_t, public thread_exec {
-    typedef token_ring<locks::pthread::cond> token_ring_t;
-
+  namespace raw_hash {
+    static const char *file_type = "JFRHSHDN";
     struct header {
       char     type[8];
       uint64_t key_len;
@@ -34,81 +33,168 @@ namespace jellyfish {
       uint64_t size;
       uint64_t max_reprobe;
     };
-    struct thread_info_t {
-      token_ring_t::token *token;
+    define_error_class(ErrorReading);
+    template<typename storage_t>
+    class dumper : public dumper_t, public thread_exec {
+      typedef token_ring<locks::pthread::cond> token_ring_t;
+      struct thread_info_t {
+        token_ring_t::token *token;
+      };
+      const uint_t         threads;
+      const std::string    file_prefix;
+      storage_t     *const ary;
+      int                  file_index;
+      token_ring_t         tr;
+    
+      struct thread_info_t *thread_info;
+      size_t                nb_records, nb_blocks;
+      std::ofstream        *out;
+
+    public:
+      dumper(uint_t _threads, const char *_file_prefix, size_t chunk_size, storage_t *_ary) :
+        threads(_threads), file_prefix(_file_prefix),
+        ary(_ary), file_index(0), tr()
+      {
+        nb_records = ary->floor_block(chunk_size / ary->get_block_len(), nb_blocks);
+        while(nb_records < ary->get_max_reprobe_offset()) {
+          nb_records = ary->floor_block(2 * nb_records, nb_blocks);
+        }
+        thread_info = new struct thread_info_t[threads];
+        for(uint_t i = 0; i < threads; i++) {
+          thread_info[i].token = tr.new_token();
+        }
+      }
+    
+      ~dumper() {
+        if(thread_info) {
+          delete[] thread_info;
+        }
+      }
+    
+      virtual void start(int i) { dump_to_file(i); }
+      void dump_to_file(int i);
+      void write_header();
+
+      virtual void _dump();
     };
-    const uint_t         threads;
-    const std::string    file_prefix;
-    storage_t     *const ary;
-    int                  file_index;
-    token_ring_t         tr;
-    
-    struct thread_info_t *thread_info;
-    size_t                nb_records, nb_blocks;
-    std::ofstream        *out;
 
-  public:
-    raw_hash_dumper(uint_t _threads, const char *_file_prefix, size_t chunk_size, storage_t *_ary) :
-      threads(_threads), file_prefix(_file_prefix),
-      ary(_ary), file_index(0), tr()
-    {
-      nb_records = ary->floor_block(chunk_size / ary->get_block_len(), nb_blocks);
-      while(nb_records < ary->get_max_reprobe_offset()) {
-        nb_records = ary->floor_block(2 * nb_records, nb_blocks);
+    template<typename storage_t>
+    class query {
+      mapped_file  _file;
+      storage_t   *_ary;
+      bool         _canonical;
+
+    public:
+      query(mapped_file &map) : 
+        _file(map), _ary(0), _canonical(false) { init(); }
+      query(std::string filename) : 
+        _file(filename), _ary(0), _canonical(false) { init(); }
+
+      ~query() {
+        if(_ary)
+          delete _ary;
       }
-      thread_info = new struct thread_info_t[threads];
-      for(uint_t i = 0; i < threads; i++) {
-        thread_info[i].token = tr.new_token();
+
+      size_t get_size() const { return _ary->get_size(); }
+      size_t get_key_len() const { return _ary->get_key_len(); }
+      uint_t get_mer_len() const { return _ary->get_key_len() / 2; }
+      uint_t get_val_len() const { return _ary->get_val_len(); }
+      uint_t get_max_reprobe() const { return _ary->get_max_reprobe(); }
+      size_t get_max_reprobe_offset() const { return _ary->get_max_reprobe_offset(); }
+      bool   get_canonical() const { return _canonical; }
+      void   set_canonical(bool v) { _canonical = v; }
+
+      typedef typename storage_t::iterator iterator;
+      iterator iterator_all() const { return _ary->iterator_all(); }
+      iterator iterator_slice(size_t slice_number, size_t number_of_slice) const {
+        return _ary->iterator_slice(slice_number, number_of_slice);
+      }
+
+      typename storage_t::val_t operator[](const char *key_s) const {
+        typename storage_t::key_t key = parse_dna::mer_string_to_binary(key_s, get_mer_len());
+        return (*this)[key];
+      }
+      typename storage_t::val_t operator[](const typename storage_t::key_t &key) const { 
+        typename storage_t::val_t res = 0;
+        bool success;
+        if(_canonical) {
+          typename storage_t::key_t key2 = parse_dna::reverse_complement(key, get_mer_len());
+          success = _ary->get_val(key2 < key ? key2 : key, res, true);
+        } else
+          success = _ary->get_val(key, res, true);
+        return success ? res : 0;
+      }
+
+    private:
+      void init() {
+        if(_file.length() < sizeof(struct header))
+          raise(ErrorReading) << "File truncated";
+        char *map = _file.base();
+        struct header *header = (struct header *)map;
+        map += sizeof(struct header);
+        if(strncmp(header->type, file_type, sizeof(header->type)))
+           raise(ErrorReading) << "Invalid file format '" 
+                               << err::substr(header->type, sizeof(header->type))
+                               << "'. Expected '" << file_type << "'.";
+        if(header->size != (1UL << floorLog2(header->size)))
+          raise(ErrorReading) << "Size '" << header->size << "' is not a power of 2";
+        if(header->key_len > 64 || header->key_len == 0)
+          raise(ErrorReading) << "Invalid key length '" << header->key_len << "'";
+        // TODO: Should that be in the file instead?
+        // reprobes = jellyfish::quadratic_reprobes;
+        SquareBinaryMatrix hash_matrix, hash_inverse_matrix;
+        map += hash_matrix.read(map);
+        if((uint_t)hash_matrix.get_size() != header->key_len)
+          raise(ErrorReading) << "Size of hash matrix '" << hash_matrix.get_size() 
+                              << "' not equal to key length '" << header->key_len << "'";
+        map += hash_inverse_matrix.read(map);
+        if((uint_t)hash_inverse_matrix.get_size() != header->key_len)
+          raise(ErrorReading) << "Size of inverse hash matrix '" << hash_inverse_matrix.get_size()
+                              << "' not equal to key length '" << header->key_len << "'";
+        if((size_t)map & 0x7)
+          map += 0x8 - ((size_t)map & 0x7); // Make sure aligned for 64bits word. TODO: use alignof?
+        _ary = new storage_t(map, header->size, header->key_len, header->val_len,
+                             header->max_reprobe, jellyfish::quadratic_reprobes,
+                             hash_matrix, hash_inverse_matrix);
+      }
+    };
+
+    template<typename storage_t>
+    void dumper<storage_t>::_dump() {
+      std::ofstream _out;
+      open_next_file(file_prefix.c_str(), file_index, _out);
+      out = &_out;
+      tr.reset();
+      write_header();
+      exec_join(threads);
+      _out.close();
+    }
+
+    template<typename storage_t>
+    void dumper<storage_t>::dump_to_file(int id) {
+      size_t i;
+      struct thread_info_t *my_info = &thread_info[id];
+    
+      for(i = id; i * nb_records < ary->get_size(); i += threads) {
+        my_info->token->wait();
+        ary->write_blocks(out, i * nb_blocks, nb_blocks);
+        my_info->token->pass();
+        ary->zero_blocks(i * nb_blocks, nb_blocks);
       }
     }
-    
-    ~raw_hash_dumper() {
-      if(thread_info) {
-        delete[] thread_info;
-      }
+
+    template<typename storage_t>
+    void dumper<storage_t>::write_header() {
+      struct header header;
+      memcpy(&header.type, file_type, sizeof(header.type));
+      header.key_len = ary->get_key_len();
+      header.val_len = ary->get_val_len();
+      header.size = ary->get_size();
+      header.max_reprobe = ary->get_max_reprobe();
+      out->write((char *)&header, sizeof(header));
+      ary->write_ary_header(out);
     }
-    
-    virtual void start(int i) { dump_to_file(i); }
-    void dump_to_file(int i);
-    void write_header();
 
-    virtual void _dump();
-  };
-
-  template<typename storage_t>
-  void raw_hash_dumper<storage_t>::_dump() {
-    std::ofstream _out;
-    open_next_file(file_prefix.c_str(), file_index, _out);
-    out = &_out;
-    tr.reset();
-    write_header();
-    exec_join(threads);
-    _out.close();
-  }
-
-  template<typename storage_t>
-  void raw_hash_dumper<storage_t>::dump_to_file(int id) {
-    size_t i;
-    struct thread_info_t *my_info = &thread_info[id];
-    
-    for(i = id; i * nb_records < ary->get_size(); i += threads) {
-      my_info->token->wait();
-      ary->write_blocks(out, i * nb_blocks, nb_blocks);
-      my_info->token->pass();
-      ary->zero_blocks(i * nb_blocks, nb_blocks);
-    }
-  }
-
-  template<typename storage_t>
-  void raw_hash_dumper<storage_t>::write_header() {
-    struct header header;
-    memcpy(&header.type, "JFRHSHDN", sizeof(header.type));
-    header.key_len = ary->get_key_len();
-    header.val_len = ary->get_val_len();
-    header.size = ary->get_size();
-    header.max_reprobe = ary->get_max_reprobe();
-    out->write((char *)&header, sizeof(header));
-    ary->write_ary_header(out);
   }
 }
 

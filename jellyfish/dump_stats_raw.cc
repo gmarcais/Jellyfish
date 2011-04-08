@@ -38,55 +38,55 @@ int raw_stats_main(int argc, char *argv[])
     die << "Need 1 database\n"
         << dump_stats_raw_args_usage << "\n" << dump_stats_raw_args_help;
 
-  mapped_file dbf(args.inputs[0]);
-  char type[8];
-  memcpy(type, dbf.base(), sizeof(type));
-  if(strncmp(type, "JFRHSHDN", sizeof(8)))
-    die << "Invalid database type '" << err::substr(dbf.base(), 8) << "', expected 'JFRHSHDN'";
+  // mapped_file dbf(args.inputs[0]);
+  // char type[8];
+  // memcpy(type, dbf.base(), sizeof(type));
+  // if(strncmp(type, "JFRHSHDN", sizeof(8)))
+  //   die << "Invalid database type '" << err::substr(dbf.base(), 8) << "', expected 'JFRHSHDN'";
 
-  inv_hash_t hash(dbf.base() + 8, dbf.length() - 8);
-  if(args.verbose_flag)
-    std::cerr << "k-mer length (bases): " << (hash.get_key_len() / 2) << "\n"
-              << "value length (bits):  " << hash.get_val_len() << "\n";
+  // inv_hash_t hash(dbf.base() + 8, dbf.length() - 8);
+  // if(args.verbose_flag)
+  //   std::cerr << "k-mer length (bases): " << (hash.get_key_len() / 2) << "\n"
+  //             << "value length (bits):  " << hash.get_val_len() << "\n";
 
-  std::ofstream out(args.output_arg);
-  if(!out.good())
-    die << "Error opening output file '" << args.output_arg << "'";
+  // std::ofstream out(args.output_arg);
+  // if(!out.good())
+  //   die << "Error opening output file '" << args.output_arg << "'";
 
-  uint64_t lower_count = args.lower_count_given ? args.lower_count_arg : 1;
-  uint64_t upper_count = args.upper_count_given ? args.upper_count_arg : (uint64_t)-1;
+  // uint64_t lower_count = args.lower_count_given ? args.lower_count_arg : 1;
+  // uint64_t upper_count = args.upper_count_given ? args.upper_count_arg : (uint64_t)-1;
 
-  inv_hash_t::iterator it = hash.iterator_all();
-  if(args.fasta_flag) {
-    while(it.next()) {
-      if(it.val < lower_count || it.val > upper_count)
-        continue;
-      out << ">" << it.get_val() << "\n" << it.get_dna_str() << "\n";
-    }
-  } else if(args.column_flag) {
-    char spacer = args.tab_flag ? '\t' : ' ';
-    while(it.next()) {
-      if(it.val < lower_count || it.val > upper_count)
-        continue;
-      out << it.get_dna_str() << spacer << it.get_val() << "\n";
-    }
-  } else {
-    uint64_t unique = 0, distinct = 0, total = 0, max_count = 0;
-    while(it.next()) {
-      if(it.val < lower_count || it.val > upper_count)
-        continue;
-      unique += it.get_val() == 1;
-      distinct++;
-      total += it.get_val();
-      if(it.get_val() > max_count)
-        max_count = it.get_val();
-    }
-    out << "Unique:    " << unique << "\n"
-        << "Distinct:  " << distinct << "\n"
-        << "Total:     " << total << "\n"
-        << "Max_count: " << max_count << "\n";
-  }
-  out.close();
+  // inv_hash_t::iterator it = hash.iterator_all();
+  // if(args.fasta_flag) {
+  //   while(it.next()) {
+  //     if(it.val < lower_count || it.val > upper_count)
+  //       continue;
+  //     out << ">" << it.get_val() << "\n" << it.get_dna_str() << "\n";
+  //   }
+  // } else if(args.column_flag) {
+  //   char spacer = args.tab_flag ? '\t' : ' ';
+  //   while(it.next()) {
+  //     if(it.val < lower_count || it.val > upper_count)
+  //       continue;
+  //     out << it.get_dna_str() << spacer << it.get_val() << "\n";
+  //   }
+  // } else {
+  //   uint64_t unique = 0, distinct = 0, total = 0, max_count = 0;
+  //   while(it.next()) {
+  //     if(it.val < lower_count || it.val > upper_count)
+  //       continue;
+  //     unique += it.get_val() == 1;
+  //     distinct++;
+  //     total += it.get_val();
+  //     if(it.get_val() > max_count)
+  //       max_count = it.get_val();
+  //   }
+  //   out << "Unique:    " << unique << "\n"
+  //       << "Distinct:  " << distinct << "\n"
+  //       << "Total:     " << total << "\n"
+  //       << "Max_count: " << max_count << "\n";
+  // }
+  // out.close();
 
   return 0;
 }

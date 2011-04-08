@@ -24,15 +24,14 @@ typedef int (main_func_t)(int argc, char *argv[]);
 
 main_func_t count_main;
 main_func_t stats_main;
-main_func_t raw_stats_main;
-main_func_t raw_query_main;
-main_func_t dump_fastq_main;
-main_func_t histo_fastq_main;
 main_func_t merge_main;
-main_func_t hash_fastq_merge_main;
 main_func_t histo_main;
 main_func_t query_main;
+main_func_t dump_main;
 main_func_t cite_main;
+main_func_t dump_fastq_main;
+main_func_t histo_fastq_main;
+main_func_t hash_fastq_merge_main;
 main_func_t sos;
 main_func_t version;
 
@@ -44,13 +43,12 @@ cmd_func cmd_list[] = {
   {"count",             &count_main},
   {"stats",             &stats_main},
   {"histo",             &histo_main},
+  {"dump",              &dump_main},
   {"merge",             &merge_main},
   {"query",             &query_main},
   {"cite",              &cite_main},
-  {"rstats",            &raw_stats_main},
-  {"rquery",            &raw_query_main},
-  {"qdump",             &dump_fastq_main},
   {"qhisto",            &histo_fastq_main},
+  {"qdump",             &dump_fastq_main},
   {"qmerge",            &hash_fastq_merge_main},
 
   /* help in all its form. Must be first non-command */

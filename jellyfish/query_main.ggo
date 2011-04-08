@@ -4,7 +4,7 @@ package "jellyfish query"
 
 option "both-strands"           C "Both strands"
   flag off
-option "verbose"                v "Be verbose"
-  flag off
+option "input"                  i "Input file"
+  string default="/dev/fd/0" typestr="file"
 option "output"                 o "Output file"
   string default="/dev/fd/1" typestr="file"

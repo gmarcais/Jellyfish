@@ -55,22 +55,8 @@ namespace jellyfish {
 
     hash() : ary(NULL), dumper(NULL), dumping_initiated(false) {}
     hash(ary_t *_ary) : ary(_ary), dumper(NULL), dumping_initiated(false) {}
-    hash(char *map, size_t length) : 
-      ary(new ary_t(map, length)),
-      dumper(NULL), dumping_initiated(false) { }
-    hash(const char *filename, bool sequential) {
-      dumper = NULL;
-      open(filename, sequential);
-    }
 
     virtual ~hash() {}
-
-    void open(const char *filename, bool sequential) {
-      mapped_file mf(filename);
-      if(sequential)
-        mf.sequential();
-      ary = new ary_t(mf.base(), mf.length());
-    }
 
     size_t get_size() const { return ary->get_size(); }
     uint_t get_key_len() const { return ary->get_key_len(); }

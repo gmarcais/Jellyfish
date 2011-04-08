@@ -41,8 +41,9 @@ struct query_args
   const char *version_help; /**< @brief Print version and exit help description.  */
   int both_strands_flag;	/**< @brief Both strands (default=off).  */
   const char *both_strands_help; /**< @brief Both strands help description.  */
-  int verbose_flag;	/**< @brief Be verbose (default=off).  */
-  const char *verbose_help; /**< @brief Be verbose help description.  */
+  char * input_arg;	/**< @brief Input file (default='/dev/fd/0').  */
+  char * input_orig;	/**< @brief Input file original value given at command line.  */
+  const char *input_help; /**< @brief Input file help description.  */
   char * output_arg;	/**< @brief Output file (default='/dev/fd/1').  */
   char * output_orig;	/**< @brief Output file original value given at command line.  */
   const char *output_help; /**< @brief Output file help description.  */
@@ -50,7 +51,7 @@ struct query_args
   unsigned int help_given ;	/**< @brief Whether help was given.  */
   unsigned int version_given ;	/**< @brief Whether version was given.  */
   unsigned int both_strands_given ;	/**< @brief Whether both-strands was given.  */
-  unsigned int verbose_given ;	/**< @brief Whether verbose was given.  */
+  unsigned int input_given ;	/**< @brief Whether input was given.  */
   unsigned int output_given ;	/**< @brief Whether output was given.  */
 
   char **inputs ; /**< @brief unamed options (options without names) */

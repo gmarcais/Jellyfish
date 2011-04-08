@@ -27,6 +27,23 @@
 #include <jellyfish/err.hpp>
 #include <jellyfish/misc.hpp>
 
+template<typename hash_t>
+void print_mer_counts(const hash_t &h, std::istream &in, std::ostream &out) {
+  uint_t mer_len = h.get_mer_len();
+  uint_t width = mer_len + 2;
+  char mer[width + 1];
+
+  while(true) {
+    in >> std::setw(width) >> mer;
+    if(!in.good())
+      break;
+    if(strlen(mer) != mer_len)
+      die << "Invalid mer " << (char*)mer;
+
+    out << mer << " " << h[mer] << "\n";
+  }
+}
+
 int query_main(int argc, char *argv[])
 {
   struct query_args args;
@@ -40,31 +57,26 @@ int query_main(int argc, char *argv[])
     exit(1);
   }
 
+  std::ifstream in(args.input_arg);
+  if(!in.good())
+    die << "Can't open input file '" << args.input_arg << "'" << err::no;
   std::ofstream out(args.output_arg);
   if(!out.good())
     die << "Can't open output file '" << args.output_arg << "'" << err::no;
 
-  hash_query_t hash(args.inputs[0]);
-  hash.set_canonical(args.both_strands_flag);
-  uint_t mer_len = hash.get_mer_len();
-  const uint_t width = mer_len + 2;
-  if(args.verbose_flag) {
-    out << "k-mer length (bases):          " <<
-      (hash.get_key_len() / 2) << "\n";
-    out << "value length (bytes):  " <<
-      hash.get_val_len() << "\n";
+  mapped_file dbf(args.inputs[0]);
+  char type[8];
+  memcpy(type, dbf.base(), sizeof(type));
+  if(!strncmp(type, jellyfish::raw_hash::file_type, sizeof(type))) {
+    raw_inv_hash_query_t hash(dbf);
+    hash.set_canonical(args.both_strands_flag);
+    print_mer_counts(hash, in, out);
+  } else if(!strncmp(type, jellyfish::compacted_hash::file_type, sizeof(type))) {
+    hash_query_t hash(dbf);
+    hash.set_canonical(args.both_strands_flag);
+    print_mer_counts(hash, in, out);
   }
 
-  char mer[width + 2];
-  while(true) {
-    std::cin >> std::setw(width) >> mer;
-    if(!std::cin.good())
-      break;
-    if(strlen(mer) != mer_len)
-      die << "Invalid mer " << (char*)mer;
-
-    out << mer << " " << hash[mer] << "\n";
-  }
   out.close();
 
   return 0;

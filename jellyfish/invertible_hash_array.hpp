@@ -102,42 +102,42 @@ namespace jellyfish {
       
       // TODO: This parsing should be done in another class and use
       // the following constructor.
-      array(char *map, size_t length) :
-        hash_matrix(0), hash_inverse_matrix(0) {
-        if(length < sizeof(struct header))
-          raise(InvalidMap) << "File truncated";
-        struct header *header = (struct header *)map;
-        size = header->size;
-        if(size != (1UL << floorLog2(size)))
-          raise(InvalidMap) << "Size '" << size << "' is not a power of 2";
-        lsize = ceilLog2(size);
-        size_mask = size - 1;
-        reprobe_limit = header->reprobe_limit;
-        key_len = header->klen;
-        if(key_len > 64 || key_len == 0)
-          raise(InvalidMap) << "Invalid key length '" << key_len << "'";
-        offsets.init(key_len + bitsize(reprobe_limit + 1) - lsize, header->clen,
-                     reprobe_limit);
-        key_mask = (((word)1) << (key_len - lsize)) - 1;
-        key_off = key_len - lsize;
-        map += sizeof(struct header);
-        // reprobes = new size_t[header->reprobe_limit + 1];
-	// TODO: should that be in the database file?
-	reprobes = jellyfish::quadratic_reprobes;
-        // memcpy(reprobes, map, sizeof(size_t) * (header->reprobe_limit + 1));
-        // map += sizeof(size_t) * (header->reprobe_limit + 1);
-        map += hash_matrix.read(map);
-        if((uint_t)hash_matrix.get_size() != key_len)
-          raise(InvalidMatrix) << "Size of hash matrix '" << hash_matrix.get_size() 
-                               << "' not equal to key length '" << key_len << "'";
-        map += hash_inverse_matrix.read(map);
-        if((uint_t)hash_inverse_matrix.get_size() != key_len)
-          raise(InvalidMatrix) << "Size of inverse hash matrix '" << hash_inverse_matrix.get_size()
-                               << "' not equal to key length '" << key_len << "'";
-        if((size_t)map & 0x7)
-          map += 0x8 - ((size_t)map & 0x7); // Make sure aligned for 64bits word. TODO: use alignof?
-        data = (word *)map;
-      }
+      // array(char *map, size_t length) :
+      //   hash_matrix(0), hash_inverse_matrix(0) {
+      //   if(length < sizeof(struct header))
+      //     raise(InvalidMap) << "File truncated";
+      //   struct header *header = (struct header *)map;
+      //   size = header->size;
+      //   if(size != (1UL << floorLog2(size)))
+      //     raise(InvalidMap) << "Size '" << size << "' is not a power of 2";
+      //   lsize = ceilLog2(size);
+      //   size_mask = size - 1;
+      //   reprobe_limit = header->reprobe_limit;
+      //   key_len = header->klen;
+      //   if(key_len > 64 || key_len == 0)
+      //     raise(InvalidMap) << "Invalid key length '" << key_len << "'";
+      //   offsets.init(key_len + bitsize(reprobe_limit + 1) - lsize, header->clen,
+      //                reprobe_limit);
+      //   key_mask = (((word)1) << (key_len - lsize)) - 1;
+      //   key_off = key_len - lsize;
+      //   map += sizeof(struct header);
+      //   // reprobes = new size_t[header->reprobe_limit + 1];
+      //   // TODO: should that be in the database file?
+      //   reprobes = jellyfish::quadratic_reprobes;
+      //   // memcpy(reprobes, map, sizeof(size_t) * (header->reprobe_limit + 1));
+      //   // map += sizeof(size_t) * (header->reprobe_limit + 1);
+      //   map += hash_matrix.read(map);
+      //   if((uint_t)hash_matrix.get_size() != key_len)
+      //     raise(InvalidMatrix) << "Size of hash matrix '" << hash_matrix.get_size() 
+      //                          << "' not equal to key length '" << key_len << "'";
+      //   map += hash_inverse_matrix.read(map);
+      //   if((uint_t)hash_inverse_matrix.get_size() != key_len)
+      //     raise(InvalidMatrix) << "Size of inverse hash matrix '" << hash_inverse_matrix.get_size()
+      //                          << "' not equal to key length '" << key_len << "'";
+      //   if((size_t)map & 0x7)
+      //     map += 0x8 - ((size_t)map & 0x7); // Make sure aligned for 64bits word. TODO: use alignof?
+      //   data = (word *)map;
+      // }
 
       // Assume _size is already a power of 2
       // map must point to a memory area written by "write_blocks". No header

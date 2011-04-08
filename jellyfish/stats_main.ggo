@@ -1,0 +1,14 @@
+purpose "Statistics"
+args "--show-required --default-option -c cc -H hpp -F stats_cmdline -f stats_cmdline -a stats_args --unamed-opts=database.jf"
+package "jellyfish stats"
+
+option "recompute"      r "Recompute"
+  flag off hidden
+option "lower-count"    L "Don't output k-mer with count < lower-count"
+  long
+option "upper-count"    U "Don't output k-mer with count > upper-count"
+  long
+option "verbose"        v "Verbose"
+  flag off
+option "output"         o "Output file"
+  string default="/dev/fd/1"

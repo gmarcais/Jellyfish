@@ -344,7 +344,7 @@ namespace jellyfish {
 
       /* No check is made on the validity of the string passed. Should only contained [acgtACGT] to get a valid answer.
        */
-      val_t operator[] (const char *key_s) {
+      val_t operator[] (const char *key_s) const {
         return get_key_val(parse_dna::mer_string_to_binary(key_s, get_mer_len()));
       }
       val_t operator[] (const key_t key) const { return get_key_val(key); }
@@ -479,7 +479,8 @@ namespace jellyfish {
         }
       };
 
-      iterator get_iterator() const { return iterator(base, last_id, key_len, val_len, get_mer_len()); }
+      iterator get_iterator() const { return iterator_all(); }
+      iterator iterator_all() const { return iterator(base, last_id, key_len, val_len, get_mer_len()); }
       iterator iterator_slice(size_t slice_number, size_t number_of_slice) const {
         size_t  slice_size = get_size() / number_of_slice;
         size_t  start      = slice_number * slice_size;

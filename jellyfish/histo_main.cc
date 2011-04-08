@@ -29,7 +29,7 @@
 #include <jellyfish/thread_exec.hpp>
 #include <jellyfish/atomic_gcc.hpp>
 #include <jellyfish/counter.hpp>
-#include <jellyfish/histogram_cmdline.hpp>
+#include <jellyfish/histo_cmdline.hpp>
 
 template<typename hash_t>
 class histogram : public thread_exec {
@@ -86,17 +86,17 @@ public:
 
 int histo_main(int argc, char *argv[])
 {
-  struct histogram_args args;
+  struct histo_args args;
 
-  if(histogram_cmdline(argc, argv, &args) != 0)
+  if(histo_cmdline(argc, argv, &args) != 0)
     die << "Command line parser failed";
   if(args.inputs_num != 1)
     die << "Need 1 database\n"
-        << histogram_args_usage << "\n" << histogram_args_help;
+        << histo_args_usage << "\n" << histo_args_help;
 
   if(args.low_arg < 1)
     die << "Low count value must be >= 1\n"
-        << histogram_args_usage << "\n" << histogram_args_help;
+        << histo_args_usage << "\n" << histo_args_help;
 
   std::ofstream out(args.output_arg);
   if(!out.good())
@@ -107,19 +107,21 @@ int histo_main(int argc, char *argv[])
   const uint64_t ceil = args.high_arg + args.increment_arg;
 
   mapped_file dbf(args.inputs[0]);
+  dbf.sequential().will_need();
   char type[8];
   memcpy(type, dbf.base(), sizeof(type));
-  if(!strncmp(type, "JFRHSHDN", 8)) {
-    dbf.sequential().will_need();
-    inv_hash_t hash(dbf.base() + 8, dbf.length() - 8);
-    histogram<inv_hash_t> histo(&hash, args.threads_arg, base, ceil, args.increment_arg);
+  if(!strncmp(type, jellyfish::raw_hash::file_type, sizeof(type))) {
+    raw_inv_hash_query_t hash(dbf);
+    histogram<raw_inv_hash_query_t> histo(&hash, args.threads_arg, base, ceil, args.increment_arg);
     histo.do_it();
     histo.print(out);
-  } else if(!strncmp(type, jellyfish::compacted_hash::file_type, 8)) {
+  } else if(!strncmp(type, jellyfish::compacted_hash::file_type, sizeof(type))) {
     hash_query_t hash(dbf);
     histogram<hash_query_t> histo(&hash, args.threads_arg, base, ceil, args.increment_arg);
     histo.do_it();
     histo.print(out);
+  } else {
+    die << "Invalid file type '" << err::substr(type, sizeof(type)) << "'.";
   }
   out.close();
 

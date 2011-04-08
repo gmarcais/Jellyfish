@@ -96,9 +96,9 @@ int merge_main(int argc, char *argv[])
     die << "Command line parser failed";
 
   int i;
-  unsigned int rklen = 0;
-  size_t max_reprobe = 0;
-  size_t hash_size = 0;
+  unsigned int rklen       = 0;
+  size_t       max_reprobe = 0;
+  size_t       hash_size   = 0;
   SquareBinaryMatrix hash_matrix;
   SquareBinaryMatrix hash_inverse_matrix;
 
