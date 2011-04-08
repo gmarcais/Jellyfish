@@ -17,7 +17,6 @@
 #ifndef __ERR_HPP__
 #define __ERR_HPP__
 
-#include <config.h>
 #include <iostream>
 #include <iomanip>
 #include <sstream>

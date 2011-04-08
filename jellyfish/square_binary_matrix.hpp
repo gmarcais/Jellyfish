@@ -23,7 +23,6 @@
 #include <iostream>
 #include <exception>
 #include <assert.h>
-#include <config.h>
 #include <jellyfish/err.hpp>
 #include <jellyfish/misc.hpp>
 
@@ -155,123 +154,9 @@ public:
     return res;
   }
 
-  uint64_t times_unrolled(uint64_t v) const {
-    uint64_t res = 0, *c = columns+(size-1);
-
-    switch(size) {
-    case 64: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 63: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 62: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 61: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 60: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 59: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 58: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 57: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 56: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 55: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 54: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 53: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 52: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 51: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 50: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 49: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 48: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 47: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 46: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 45: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 44: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 43: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 42: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 41: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 40: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 39: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 38: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 37: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 36: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 35: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 34: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 33: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 32: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 31: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 30: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 29: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 28: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 27: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 26: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 25: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 24: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 23: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 22: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 21: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 20: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 19: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 18: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 17: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 16: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 15: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 14: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 13: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 12: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 11: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case 10: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case  9: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case  8: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case  7: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case  6: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case  5: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case  4: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case  3: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case  2: res ^= (-(v & 1)) & *c--; v >>= 1;
-    case  1: res ^= (-(v & 1)) & *c;
-    }
-    return res;
-  }
-
-#ifdef HAVE_SSE
-  uint64_t times_sse(uint64_t v) const {
-#define FFs ((uint64_t)-1)
-    static const uint64_t smear[8] asm("smear") __attribute__ ((aligned(16),used)) =
-      {0, 0, 0, FFs, FFs, 0, FFs, FFs};
-
-    uint64_t *c = columns + (size - 2);
-    uint64_t res;
-    // How do I make sure that gcc does not use the smear register for something else?
-    // Is the & constraint for res enough?
-
-    __asm__ __volatile__ ("pxor %%xmm0, %%xmm0\n"
-                          "times_sse_loop%=:\n\t"
-                          "movq %2, %0\n\t"
-                          "andq $3, %0\n\t"
-                          "shlq $4, %0\n\t"
-                          "movdqa (%5,%0), %%xmm1\n\t"
-                          "pand (%1), %%xmm1\n\t"
-                          "pxor %%xmm1, %%xmm0\n\t"
-                          "subq $0x10, %1\n\t"
-                          "shrq $2, %2\n\t"
-                          "movq %2, %0\n\t"
-                          "andq $3, %0\n\t"
-                          "shlq $4, %0\n\t"
-                          "movdqa (%5,%0), %%xmm1\n\t"
-                          "pand (%1), %%xmm1\n\t"
-                          "pxor %%xmm1, %%xmm0\n\t"
-                          "subq $0x10, %1\n\t"
-                          "shrq $2, %2\n\t"
-                          "jnz times_sse_loop%=\n\t"
-                          "movd %%xmm0, %0\n\t"
-                          "psrldq $8, %%xmm0\n\t"
-                          "movd %%xmm0, %1\n\t"
-                          "xorq %1, %0\n\t"
-                          : "=&r" (res), "=r" (c), "=r" (v)
-                          : "1" (c), "2" (v), "r" (smear)
-                          : "xmm0", "xmm1");
-
-    return res;
-  }
-  inline uint64_t times(uint64_t v) const { return times_sse(v); }
-#else
-  inline uint64_t times(uint64_t v) const { return times_unrolled(v); }
-#endif
-
+  uint64_t times_unrolled(uint64_t v) const;
+  uint64_t times_sse(uint64_t v) const;
+  uint64_t times(uint64_t v) const;
 
   SquareBinaryMatrix transpose() const;
   SquareBinaryMatrix operator*(const SquareBinaryMatrix &other) const;

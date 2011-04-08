@@ -3,7 +3,7 @@
 . ./compat.sh
 
 sort > ${pref}.md5sum <<EOF
-641f95f9e8b11523379c832f44ed037e ${pref}.stats
+0e2705617b44144daedc5f9e35ba7b93 ${pref}.stats
 EOF
 echo "Counting 22-mers on ${nCPUs} CPU" &&      \
     $JF count --matrix seq10m_matrix_22 -m 22 -t $nCPUs \

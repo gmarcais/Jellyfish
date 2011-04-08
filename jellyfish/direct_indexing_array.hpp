@@ -59,14 +59,14 @@ namespace jellyfish {
       template<typename add_t>
       bool add(key_t key, const add_t &val) {
         bits_t oval = data[key];
-        bits_t nval = (val_t(oval) + val).bits();
+        val_t nval = val_t(oval) + val;
 
         while(true) {
-          bits_t noval = atomic.cas(&data[key], oval, nval);
+          bits_t noval = atomic.cas(&data[key], oval, nval.bits());
           if(noval == oval)
             return true;
           oval = noval;
-          nval = (val_t(oval) + val).bits();
+          nval = val_t(oval) + val;
         }
         return true;
       }

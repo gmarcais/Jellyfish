@@ -26,7 +26,8 @@ lib_LTLIBRARIES = libjellyfish.la
 libjellyfish_la_LDFLAGS = -version-info 1:0:0
 libjellyfish_la_SOURCES = square_binary_matrix.cc fasta_parser.cc	\
 err.cc misc.cc storage.cc thread_exec.cc time.cc file_parser.cc		\
-fastq_seq_qual_parser.cc fastq_sequence_parser.cc half.cpp
+fastq_seq_qual_parser.cc fastq_sequence_parser.cc fastq_read_parser.cc	\
+half.cpp
 libjellyfish_la_CPPFLAGS = $(AM_CPPFLAGS)
 library_includedir=$(includedir)/jellyfish-@PACKAGE_VERSION@/jellyfish
 library_include_HEADERS = allocators_malloc.hpp allocators_mmap.hpp	\
@@ -42,7 +43,8 @@ token_ring.hpp raw_dumper.hpp capped_integer.hpp			\
 aligned_values_array.hpp fastq_dumper.hpp floats.hpp			\
 circular_buffer.hpp counter.hpp parse_quake.hpp parse_dna.hpp		\
 fastq_sequence_parser.hpp fastq_seq_qual_parser.hpp file_parser.hpp	\
-fasta_parser.hpp fastq_sequence_parser.hpp half.h toFloat.h eLut.h
+fasta_parser.hpp fastq_sequence_parser.hpp fastq_read_parser.hpp	\
+half.h toFloat.h eLut.h
 
 check_PROGRAMS = generate_sequence
 generate_sequence_SOURCES = generate_sequence.cc	\
