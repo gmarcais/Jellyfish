@@ -10,11 +10,11 @@ storage.cc misc.cc err.cc mer_counter.cc histo_main.cc dump_main.cc	\
 time.cc thread_exec.cc query_main.cc square_binary_matrix.cc		\
 fasta_parser.cc dump_fastq_main.cc histo_fastq_main.cc cite.cc		\
 parse_dna.cc file_parser.cc fastq_sequence_parser.cc parse_quake.cc	\
-fastq_seq_qual_parser.cc half.cpp hash_fastq_merge.cc cite_cmdline.cc	\
-query_cmdline.cc hash_merge_cmdline.cc histo_cmdline.cc			\
-stats_cmdline.cc histo_fastq_main_cmdline.cc				\
-dump_fastq_main_cmdline.cc mer_counter_cmdline.cc			\
-hash_fastq_merge_cmdline.cc dump_cmdline.cc
+parse_qual_dna.cc fastq_seq_qual_parser.cc half.cpp			\
+hash_fastq_merge.cc cite_cmdline.cc query_cmdline.cc			\
+hash_merge_cmdline.cc histo_cmdline.cc stats_cmdline.cc			\
+histo_fastq_main_cmdline.cc dump_fastq_main_cmdline.cc			\
+mer_counter_cmdline.cc hash_fastq_merge_cmdline.cc dump_cmdline.cc
 # jellyfish_CPPFLAGS = $(AM_CPPFLAGS)
 
 EXTRA_DIST = cite_cmdline.hpp query_cmdline.hpp hash_merge_cmdline.hpp	\
@@ -42,9 +42,9 @@ square_binary_matrix.hpp storage.hpp thread_exec.hpp time.hpp		\
 token_ring.hpp raw_dumper.hpp capped_integer.hpp			\
 aligned_values_array.hpp fastq_dumper.hpp floats.hpp			\
 circular_buffer.hpp counter.hpp parse_quake.hpp parse_dna.hpp		\
-fastq_sequence_parser.hpp fastq_seq_qual_parser.hpp file_parser.hpp	\
-fasta_parser.hpp fastq_sequence_parser.hpp fastq_read_parser.hpp	\
-half.h toFloat.h eLut.h
+parse_qual_dna.hpp fastq_sequence_parser.hpp fastq_seq_qual_parser.hpp	\
+file_parser.hpp fasta_parser.hpp fastq_read_parser.hpp half.h		\
+toFloat.h eLut.h
 
 check_PROGRAMS = generate_sequence
 generate_sequence_SOURCES = generate_sequence.cc	\

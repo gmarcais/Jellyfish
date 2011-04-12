@@ -35,6 +35,7 @@
 #include <jellyfish/fasta_parser.hpp>
 #include <jellyfish/fastq_sequence_parser.hpp>
 #include <jellyfish/parse_dna.hpp>
+#include <jellyfish/parse_qual_dna.hpp>
 
 // Invertible hash types
 #include <jellyfish/invertible_hash_array.hpp>

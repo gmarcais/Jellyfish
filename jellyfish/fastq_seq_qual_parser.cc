@@ -21,8 +21,6 @@ namespace jellyfish {
     char *qual_start = start + 1;
     // Make sure even length
     *end -= (*end - start) & 0x1;
-    // std::cerr << (void*)start << " " << (void*)*end << " "
-    //           << _read_buf.empty() << std::endl;
     if(!_read_buf.empty()) {
       // Copy the saved sequence, then the quality score for this
       // saved sequence. The stream is left at the first qual value.
@@ -30,7 +28,6 @@ namespace jellyfish {
         raise(FastqSeqQualParserError) << "Buffer is too small to "
           "contain an entire read and its qual values";
       qual_start = start + 1;
-      //      std::cerr << "copy data from read buffer" << std::endl;
       for(const char *b = _read_buf.begin(); b < _read_buf.end(); b++, start += 2)
         *start = *b;
       _read_buf.reset();
@@ -39,7 +36,6 @@ namespace jellyfish {
       
     while(start < *end) {
       // Read sequence header
-      //      std::cerr << "Look for sequence header" << std::endl;
       bool found_seq_header = false;
       while(!found_seq_header) {
         switch(sbumpc()) {
@@ -82,8 +78,6 @@ namespace jellyfish {
           start += 2;
         }
       }
-      // std::cerr << "length_sequence " << ((start - save_start) / 2) << " "
-      //           << found_qual_header << std::endl;
       
       if(!found_qual_header) { // copy extra sequence to read buffer
         while(!found_qual_header) {

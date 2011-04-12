@@ -78,8 +78,13 @@ namespace jellyfish {
       virtual void _dump();
     };
 
-    template<typename storage_t>
+    template<typename _storage_t>
     class query {
+    public:
+      typedef _storage_t storage_t;
+      typedef typename storage_t::iterator iterator;
+
+    private:
       mapped_file  _file;
       storage_t   *_ary;
       bool         _canonical;
@@ -103,8 +108,8 @@ namespace jellyfish {
       size_t get_max_reprobe_offset() const { return _ary->get_max_reprobe_offset(); }
       bool   get_canonical() const { return _canonical; }
       void   set_canonical(bool v) { _canonical = v; }
+      storage_t *get_ary() const { return _ary; }
 
-      typedef typename storage_t::iterator iterator;
       iterator iterator_all() const { return _ary->iterator_all(); }
       iterator iterator_slice(size_t slice_number, size_t number_of_slice) const {
         return _ary->iterator_slice(slice_number, number_of_slice);
@@ -123,6 +128,19 @@ namespace jellyfish {
         } else
           success = _ary->get_val(key, res, true);
         return success ? res : 0;
+      }
+
+      bool has_key(const char *key_s) const {
+        return hash_key(parse_dna::mer_string_to_binary(key_s, get_mer_len()));
+      }
+      bool hash_key(const typename storage_t::key_t &key) const {
+        typename storage_t::val_t res = 0;
+        if(_canonical) {
+          typename storage_t::key_t key2 = parse_dna::reverse_complement(key, get_mer_len());
+          return _ary->get_val(key2 < key ? key2 : key, res, false);
+        } else {
+          return _ary->get_val(key, res, false);
+        }
       }
 
     private:

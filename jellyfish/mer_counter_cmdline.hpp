@@ -70,6 +70,9 @@ struct mer_counter_args
   int quality_start_arg;	/**< @brief Starting ASCII for quality values (default='64').  */
   char * quality_start_orig;	/**< @brief Starting ASCII for quality values original value given at command line.  */
   const char *quality_start_help; /**< @brief Starting ASCII for quality values help description.  */
+  int min_quality_arg;	/**< @brief Minimum quality. A base with lesser quality becomes an N (default='0').  */
+  char * min_quality_orig;	/**< @brief Minimum quality. A base with lesser quality becomes an N original value given at command line.  */
+  const char *min_quality_help; /**< @brief Minimum quality. A base with lesser quality becomes an N help description.  */
   long lower_count_arg;	/**< @brief Don't output k-mer with count < lower-count.  */
   char * lower_count_orig;	/**< @brief Don't output k-mer with count < lower-count original value given at command line.  */
   const char *lower_count_help; /**< @brief Don't output k-mer with count < lower-count help description.  */
@@ -110,6 +113,7 @@ struct mer_counter_args
   unsigned int raw_given ;	/**< @brief Whether raw was given.  */
   unsigned int quake_given ;	/**< @brief Whether quake was given.  */
   unsigned int quality_start_given ;	/**< @brief Whether quality-start was given.  */
+  unsigned int min_quality_given ;	/**< @brief Whether min-quality was given.  */
   unsigned int lower_count_given ;	/**< @brief Whether lower-count was given.  */
   unsigned int upper_count_given ;	/**< @brief Whether upper-count was given.  */
   unsigned int matrix_given ;	/**< @brief Whether matrix was given.  */

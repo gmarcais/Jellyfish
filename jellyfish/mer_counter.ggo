@@ -24,6 +24,8 @@ option "quake"                  q "Quake compatibility mode"
   flag off
 option "quality-start"          - "Starting ASCII for quality values"
   int default="64"
+option "min-quality"            - "Minimum quality. A base with lesser quality becomes an N"
+  int default="0"
 option "lower-count"            L "Don't output k-mer with count < lower-count"
   long
 option "upper-count"            U "Don't output k-mer with count > upper-count"
