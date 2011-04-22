@@ -52,6 +52,9 @@ struct generate_sequence_args
   const char *output_help; /**< @brief Output prefix help description.  */
   int fastq_flag;	/**< @brief Generate fastq file (default=off).  */
   const char *fastq_help; /**< @brief Generate fastq file help description.  */
+  int read_length_arg;	/**< @brief Read length for fasta format (default=size of sequence).  */
+  char * read_length_orig;	/**< @brief Read length for fasta format (default=size of sequence) original value given at command line.  */
+  const char *read_length_help; /**< @brief Read length for fasta format (default=size of sequence) help description.  */
   int verbose_flag;	/**< @brief Be verbose (default=off).  */
   const char *verbose_help; /**< @brief Be verbose help description.  */
   
@@ -61,6 +64,7 @@ struct generate_sequence_args
   unsigned int mer_given ;	/**< @brief Whether mer was given.  */
   unsigned int output_given ;	/**< @brief Whether output was given.  */
   unsigned int fastq_given ;	/**< @brief Whether fastq was given.  */
+  unsigned int read_length_given ;	/**< @brief Whether read-length was given.  */
   unsigned int verbose_given ;	/**< @brief Whether verbose was given.  */
 
   char **inputs ; /**< @brief unamed options (options without names) */

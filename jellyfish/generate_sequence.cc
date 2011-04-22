@@ -146,14 +146,23 @@ int main(int argc, char *argv[])
         die << "Can't open fasta file '" << path << err::no;
       if(args.verbose_flag)
         std::cout << "Creating fasta file '" << path << "'\n";
-      fd << ">read\n";
+
+      size_t read_length = args.read_length_given ? args.read_length_arg : length;
       size_t total_len = 0;
+      size_t read = 0;
+      long rid = 0;
+      fd << ">read" << ++rid << "\n";
       while(total_len < length) {
-        for(int i = 0; i < 70 && total_len < length; i++) {
+        for(i = 0; i < 70 && total_len < length && read < read_length; i++) {
           fd << rDNAg.letter();
           total_len++;
+          read++;
         }
         fd << "\n";
+        if(read >= read_length) {
+          fd << ">read" << ++rid << "\n";
+          read = 0;
+        }
       }
       if(!fd.good())
         die << "Error while writing fasta file '" << path << err::no;

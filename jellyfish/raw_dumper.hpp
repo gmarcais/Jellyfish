@@ -131,9 +131,9 @@ namespace jellyfish {
       }
 
       bool has_key(const char *key_s) const {
-        return hash_key(parse_dna::mer_string_to_binary(key_s, get_mer_len()));
+        return has_key(parse_dna::mer_string_to_binary(key_s, get_mer_len()));
       }
-      bool hash_key(const typename storage_t::key_t &key) const {
+      bool has_key(const typename storage_t::key_t &key) const {
         typename storage_t::val_t res = 0;
         if(_canonical) {
           typename storage_t::key_t key2 = parse_dna::reverse_complement(key, get_mer_len());

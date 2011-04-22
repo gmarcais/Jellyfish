@@ -10,5 +10,7 @@ option "output"         o "Output prefix"
   string default="output"
 option "fastq"          q "Generate fastq file"
   flag off
+option "read-length"    r "Read length for fasta format (default=size of sequence)"
+  int
 option "verbose"        v "Be verbose"
   flag off

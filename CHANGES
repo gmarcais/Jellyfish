@@ -1,0 +1,11 @@
+Version 1.1
+===========
+
+* Read input from pipes. For example, to count DNA from zipped files, run:
+
+% gunzip -c *.fa.gz | jellyfish [options] /dev/fd/0
+
+* Support fasta and fastq formats.
+
+* Support for counting 'q-mers', as defined by the Quake error
+  correcting software (http://www.cbcb.umd.edu/software/quake/).

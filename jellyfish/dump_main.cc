@@ -69,7 +69,7 @@ int dump_main(int argc, char *argv[])
   char type[8];
   memcpy(type, dbf.base(), sizeof(type));
 
-  uint64_t lower_count = args.lower_count_given ? args.lower_count_arg : 1;
+  uint64_t lower_count = args.lower_count_given ? args.lower_count_arg : 0;
   uint64_t upper_count = args.upper_count_given ? args.upper_count_arg : (uint64_t)-1;
 
   if(!strncmp(type, jellyfish::compacted_hash::file_type, sizeof(type))) {

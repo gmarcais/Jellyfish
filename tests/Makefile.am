@@ -6,13 +6,13 @@ TESTS = generate_sequence.sh serial_hashing.sh parallel_hashing.sh	\
 serial_direct_indexing.sh parallel_direct_indexing.sh raw_hash.sh	\
 generate_fastq_sequence.sh parallel_fastq_hashing.sh multi_file.sh	\
 multi_file_fastq.sh from_stream.sh parallel_fastq_sequence_hashing.sh	\
-from_stream_fastq.sh merge.sh min_qual.sh
+from_stream_fastq.sh merge.sh min_qual.sh big.sh
 
 EXTRA_DIST = $(TESTS)
 clean-local: clean-local-check
 .PHONY: clean-local-check
 clean-local-check:
-	-rm -f seq10m* seq1m* *_0 *_1 *_2 *.md5sum *.histo *.stats *.timing *.query *.dump
+	-rm -f seq10m* seq1m* *_0 *_1 *_2 *.md5sum *.histo *.stats *.timing *.query *.dump *.fa
 
 serial_hashing.log: generate_sequence.log
 parallel_hashing.log: generate_sequence.log

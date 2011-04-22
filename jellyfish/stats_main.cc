@@ -66,7 +66,7 @@ int stats_main(int argc, char *argv[])
   memcpy(type, dbf.base(), sizeof(type));
 
   args.recompute_flag |= args.lower_count_given | args.upper_count_given;
-  uint64_t lower_count = args.lower_count_given ? args.lower_count_arg : 1;
+  uint64_t lower_count = args.lower_count_given ? args.lower_count_arg : 0;
   uint64_t upper_count = args.upper_count_given ? args.upper_count_arg : (uint64_t)-1;
 
   uint64_t unique = 0, distinct = 0, total = 0, max_count = 0;

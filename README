@@ -20,13 +20,38 @@ LD_LIBRARY_PATH -> /my/dir/lib
 MANPATH         -> /my/dir/share/man
 PKG_CONFIG_PATH -> /my/dir/lib/pkgconfig
 
+Only the PATH environment variables is necessary to run
+jellyfish. MANPATH is used by the man command. PKG_CONFIG_PATH and
+LD_LIBRARY_PATH are used to compile software against the jellyfish
+shared library.
+
+Tests
+=====
+
+To run the built-in tests, do:
+
+% make check
+
+All tests should pass and 1 test should be skipped (big.sh). Running
+'make check' will use about 50MB of disk space and will use every CPUs
+found on the machine. On our test machine with 32 cores, it takes a
+few minutes to run.
+
+To tests also on large data set, do:
+
+% make check BIG=1
+
+WARNING: this uses >40GB of disk space and takes 30 minutes to run (20
+to create the data, 10 to run jellyfish).
+
 Notes
 =====
 
 * Jellyfish has been devellopped and tested on x86-64 GNU/Linux. It
-  should be fairly easy to port on other *NIX platform with the gcc
-  compiler, but no guarantee is made. Support for 32-bits platform has
-  not been tested.
+  compiles and runs correctly the tests on MacOS X (Intel) and
+  FreeBSD. It should be fairly easy to port on other *NIX platform
+  with the gcc compiler, but no guarantee is made. Support for 32-bits
+  platform has not been tested.
 
 License
 =======
