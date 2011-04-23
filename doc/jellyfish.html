@@ -1,5 +1,5 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-<!-- Manual page created with latex2man on Mon Nov 15 14:10:34 EST 2010 --
+<!-- Manual page created with latex2man on Sat Apr 23 05:46:00 EDT 2011 --
 -- Author of latex2man: Juergen.Vollmer@informatik-vollmer.de --
 -- NOTE: This file is generated, DO NOT EDIT. -->
 <html>
@@ -10,7 +10,7 @@ Jellyfish: A fast k-mer counter
 </h1>
 <h4 align=center>G. Marcais </h4>
 <h4 align=center>2010/10/1</h4>
-<h4 align=center>Version 1.0</h4>
+<h4 align=center>Version 1.1</h4>
 <p>
 <tt>Jellyfish</tt>
 is a software to count k-mers in DNA sequences. 
@@ -22,14 +22,16 @@ is a software to count k-mers in DNA sequences.
 <li><a href="#section_3">Options </a>
 <ul>
 <li><a href="#section_4">count </a></li>
-<li><a href="#section_5">stats </a></li>
-<li><a href="#section_6">histo </a></li>
-<li><a href="#section_7">query </a></li>
+<li><a href="#section_5">histo </a></li>
+<li><a href="#section_6">dump </a></li>
+<li><a href="#section_7">stats </a></li>
+<li><a href="#section_8">merge </a></li>
+<li><a href="#section_9">cite </a></li>
 </ul>
-<li><a href="#section_8">Version </a></li>
-<li><a href="#section_9">Bugs </a></li>
-<li><a href="#section_10">Copyright &amp; License </a></li>
-<li><a href="#section_11">Authors </a></li>
+<li><a href="#section_10">Version </a></li>
+<li><a href="#section_11">Bugs </a></li>
+<li><a href="#section_12">Copyright &amp; License </a></li>
+<li><a href="#section_13">Authors </a></li>
 </ul>
 <p>
 <h2><a name="section_1">Synopsis</a></h2>
@@ -47,9 +49,10 @@ is a software to count k-mers in DNA sequences.
 <i>hash1</i>
 <i>hash2</i>
 ...<br>
+<tt>jellyfish dump</tt>
+<i>hash</i>
+<br>
 <tt>jellyfish stats</tt>
-[<b>--fasta</b>]
-[<b>-c</b>]
 <i>hash</i>
 <br>
 <tt>jellyfish histo</tt>
@@ -77,7 +80,8 @@ jellyfish count -m 22 -o output -c 3 -s 10000000 -t 32 input.fasta
 This will count the the 22-mers in species.fasta with 32 threads. The 
 counter field in the hash uses only 3 bits and the hash has at least 
 10 million entries. Let the size of the table be s=2^l and the max 
-reprobe value is less than 2^r, then the memory usage per entry in the hash is (in bits, not bytes) 2k-l+r+1. 
+reprobe value is less than 2^r, then the memory usage per entry in 
+the hash is (in bits, not bytes) 2k-l+r+1. 
 <p>
 To save space, the hash table supports variable length counter, i.e. a 
 k-mer occurring only a few times will use a small counter, a k-mer 
@@ -98,174 +102,318 @@ large enough to counts up to twice the coverage.
 <p>
 When the orientation of the sequences in the input fasta file is not 
 known, e.g. in sequencing reads, using <b>--both-strands</b>
+(<b>-C</b>)
 makes the most sense. 
+<p>
+The following subcommand are used to look at the result: histo, dump, stats. 
 <p>
 <h2><a name="section_3">Options</a></h2>
 
-<p>
 <h4><a name="section_4">count</a></h4>
 
 <p>
-Count k-mers in one or many fasta file(s). There is no restriction 
-in the size of the fasta file, the number of sequences or the size of 
-the sequences in the fasta files. On the other hand, they must be 
-files on and not pipes, as the files are memory mapped into memory. 
+Count k-mers or qmers in fasta or fastq files 
+<p>
+Usage: jellyfish count [OPTIONS]... [file.f[aq]]... 
 <p>
 <dl compact>
-<dt><b>-o</b>,
-<b>--output=</b><i>prefix</i>
+<dt><b>-h</b>,<b>--help</b>
 </dt>
-<dd> Output file prefix. Results will be store 
-in files with the format <tt>prefix_#</tt>,
-where # is a number 
-starting at 0. More than one file will be written if all the 
-k-mers could not be counted in the given size. 
+<dd> Print help and exit 
+</dd>
+<dt><b>--full-help</b>
+</dt>
+<dd> Print help, including hidden options, and exit 
+</dd>
+<dt><b>-V</b>,<b>--version</b>
+</dt>
+<dd> Print version and exit 
 </dd>
 <dt><b>-m</b>,
-<b>--mer-len=</b><i>merlength</i>
+<b>--mer-len</b><i>=INT</i>
 </dt>
-<dd> Length of mer to 
-count. I.e. value of k in k-mer. 
-</dd>
-<dt><b>-t</b>,
-<b>--threads=</b><i>NB</i>
-</dt>
-<dd> Number of threads. 
+<dd> Length of mer (mandatory) 
 </dd>
 <dt><b>-s</b>,
-<b>--size=</b><i>hashsize</i>
+<b>--size</b><i>=LONG</i>
 </dt>
-<dd> Size of hash table. This 
-will be rounded up to the next power of two. 
+<dd> Hash size (mandatory) 
 </dd>
-<dt><b>--both-strands</b>
+<dt><b>-t</b>,
+<b>--threads</b><i>=INT</i>
 </dt>
-<dd> Collapse counters for a k-mer and its 
-reverse complement. I.e., when <tt>jellyfish</tt>
-encounters a k-mer 
-m, it checks which of m or the reverse complement of m comes 
-first in lexicographic order (call it the canonical representation) 
-and increments the counter for this canonical representation. 
+<dd> Number of threads (default=1) 
+</dd>
+<dt><b>-o</b>,
+<b>--output</b><i>=STRING</i>
+</dt>
+<dd> Output prefix (default=mer_counts) 
+</dd>
+<dt><b>-c</b>,
+<b>--counter-len</b><i>=Length</i>
+</dt>
+<dd> in bits 
+Length of counting field (default=7) 
+</dd>
+<dt><b>--out-counter-len</b><i>=Length</i>
+</dt>
+<dd> in bytes 
+Length of counter field in output 
+(default=4) 
+</dd>
+<dt><b>-C</b>,<b>--both-strands</b>
+</dt>
+<dd> Count both strand, canonical representation 
+(default=off) 
 </dd>
 <dt><b>-p</b>,
-<b>--reprobes=</b><i>NB</i>
+<b>--reprobes</b><i>=INT</i>
 </dt>
-<dd> Maximum reprobe 
-value. This determine the usage of the hash table (i.e. % of 
-entries used in hash) before being deemed full and written to disk. 
+<dd> Maximum number of reprobes (default=62) 
 </dd>
-<dt><b>--timing=</b><i>file</i>
+<dt><b>-r</b>,<b>--raw</b>
 </dt>
-<dd> Write detailed timing information to 
-<tt>file</tt>.
+<dd> Write raw database (default=off) 
 </dd>
-<dt><b>--no-write</b>
+<dt><b>-q</b>,<b>--quake</b>
 </dt>
-<dd> Do not write result file. Used for timing only. 
+<dd> Quake compatibility mode (default=off) 
 </dd>
-<dt><b>--out-counter-len=</b><i>LEN</i>
+<dt><b>--quality-start</b><i>=INT</i>
 </dt>
-<dd> Length of the counter field in 
-the output (in bytes). The value of the counter for any k-mer is 
-capped at the maximum value that can be encoded in this number of 
-bytes. 
+<dd> Starting ASCII for quality values 
+(default=64) 
+</dd>
+<dt><b>--min-quality</b><i>=INT</i>
+</dt>
+<dd> Minimum quality. A base with lesser quality 
+becomes an N (default=0) 
+</dd>
+<dt><b>-L</b>,
+<b>--lower-count</b><i>=LONG</i>
+</dt>
+<dd> Don't output k-mer with count < lower-count 
+</dd>
+<dt><b>-U</b>,
+<b>--upper-count</b><i>=LONG</i>
+</dt>
+<dd> Don't output k-mer with count > upper-count 
+</dd>
+<dt><b>--matrix</b><i>=Matrix</i>
+</dt>
+<dd> file Hash function binary matrix 
+</dd>
+<dt><b>--timing</b><i>=Timing</i>
+</dt>
+<dd> file Print timing information 
 </dd>
 </dl>
-<p>
-<h4><a name="section_5">stats</a></h4>
+<h4><a name="section_5">histo</a></h4>
 
 <p>
-Display statistics or dump full content of hash table in an easily 
-parsable text format. 
+Create an histogram of k-mer occurrences 
+<p>
+Usage: jellyfish histo [OPTIONS]... [database.jf]... 
 <p>
 <dl compact>
-<dt><b>-c</b>,<b>--column</b>
+<dt><b>--help</b>
 </dt>
-<dd> Print k-mers counts in column format: sequence count. 
+<dd> Print help and exit 
 </dd>
-<dt><b>-f</b>,<b>--fasta</b>
+<dt><b>-V</b>,<b>--version</b>
 </dt>
-<dd> Print k-mers counts in fasta format. The header is the count. 
+<dd> Print version and exit 
 </dd>
-<dt><b>-r</b>,<b>--recompute</b>
+<dt><b>-s</b>,
+<b>--buffer-size</b><i>=Buffer</i>
 </dt>
-<dd> Recompute statistics from the hash 
-table instead of the statistics in the header. 
-</dd>
-</dl>
-<p>
-By default, it displays the statistics in the header of the file. These are: 
-<p>
-<dl compact>
-<dt>Unique:</dt>
-<dd> Number of k-mers which occur only once. 
-</dd>
-<dt>Distinct:</dt>
-<dd> Number of k-mers, not counting multiplicity. 
-</dd>
-<dt>Total:</dt>
-<dd> Number of k-mers including multiplicity. 
-</dd>
-<dt>Max_count:</dt>
-<dd> Maximum number of occurrence of a k-mer. 
-</dd>
-</dl>
-<p>
-<h4><a name="section_6">histo</a></h4>
-
-<p>
-Create an histogram with the number of k-mers having a given count. In bucket i are tallied the k-mers which have a count c satisfying low+i*inc<=c<low+(i+1)*inc. Buckets in the output are labeled by the low end point (low+i*inc). 
-<p>
-The last bucket in the output behaves as a catchall: it tallies all 
-k-mers with a count greater or equal to the low end point of this 
-bucket. 
-<p>
-<dl compact>
-<dt><b>-h</b>,
-<b>--high=</b><i>HIGH</i>
-</dt>
-<dd> High count bucket value. 
-</dd>
-<dt><b>-i</b>,
-<b>--increment=</b><i>INC</i>
-</dt>
-<dd> Increment for bucket value. 
+<dd> length 
+Length in bytes of input buffer 
+(default=10000000) 
 </dd>
 <dt><b>-l</b>,
-<b>--low=</b><i>LOW</i>
+<b>--low</b><i>=LONG</i>
 </dt>
-<dd> Low count bucket value. 
+<dd> Low count value of histogram (default=1) 
+</dd>
+<dt><b>-h</b>,
+<b>--high</b><i>=LONG</i>
+</dt>
+<dd> High count value of histogram 
+(default=10000) 
+</dd>
+<dt><b>-i</b>,
+<b>--increment</b><i>=LONG</i>
+</dt>
+<dd> Increment value for buckets (default=1) 
+</dd>
+<dt><b>-t</b>,
+<b>--threads</b><i>=INT</i>
+</dt>
+<dd> Number of threads (default=1) 
+</dd>
+<dt><b>-o</b>,
+<b>--output</b><i>=STRING</i>
+</dt>
+<dd> Output file (default=/dev/fd/1) 
 </dd>
 </dl>
-<p>
-<h4><a name="section_7">query</a></h4>
+<h4><a name="section_6">dump</a></h4>
 
 <p>
-Query a database created with <tt>jellyfish count</tt>.
-It reads 
-k-mers from the standard input and write the counts on the standard 
-output. For example: 
+Dump k-mer counts 
 <p>
-<pre>
-$ echo "AAAAA ACGTA" | jellyfish query database
-AAAAA 12
-ACGTA 3
-</pre>
+Usage: jellyfish stats [OPTIONS]... [database.jf]... 
 <p>
 <dl compact>
-<dt><b>--both-strands</b>
+<dt><b>-h</b>,<b>--help</b>
 </dt>
-<dd> Report the count for the canonical version of 
-the k-mers read from standard input. 
+<dd> Print help and exit 
+</dd>
+<dt><b>-V</b>,<b>--version</b>
+</dt>
+<dd> Print version and exit 
+</dd>
+<dt><b>-c</b>,<b>--column</b>
+</dt>
+<dd> Column format (default=off) 
+</dd>
+<dt><b>-t</b>,<b>--tab</b>
+</dt>
+<dd> Tab separator (default=off) 
+</dd>
+<dt><b>-L</b>,
+<b>--lower-count</b><i>=LONG</i>
+</dt>
+<dd> Don't output k-mer with count < lower-count 
+</dd>
+<dt><b>-U</b>,
+<b>--upper-count</b><i>=LONG</i>
+</dt>
+<dd> Don't output k-mer with count > upper-count 
+</dd>
+<dt><b>-o</b>,
+<b>--output</b><i>=STRING</i>
+</dt>
+<dd> Output file (default=/dev/fd/1) 
+</dd>
+</dl>
+<h4><a name="section_7">stats</a></h4>
+
+<p>
+Statistics 
+<p>
+Usage: jellyfish stats [OPTIONS]... [database.jf]... 
+<p>
+<dl compact>
+<dt><b>-h</b>,<b>--help</b>
+</dt>
+<dd> Print help and exit 
+</dd>
+<dt><b>--full-help</b>
+</dt>
+<dd> Print help, including hidden options, and exit 
+</dd>
+<dt><b>-V</b>,<b>--version</b>
+</dt>
+<dd> Print version and exit 
+</dd>
+<dt><b>-L</b>,
+<b>--lower-count</b><i>=LONG</i>
+</dt>
+<dd> Don't output k-mer with count < lower-count 
+</dd>
+<dt><b>-U</b>,
+<b>--upper-count</b><i>=LONG</i>
+</dt>
+<dd> Don't output k-mer with count > upper-count 
+</dd>
+<dt><b>-v</b>,<b>--verbose</b>
+</dt>
+<dd> Verbose (default=off) 
+</dd>
+<dt><b>-o</b>,
+<b>--output</b><i>=STRING</i>
+</dt>
+<dd> Output file (default=/dev/fd/1) 
+</dd>
+</dl>
+<h4><a name="section_8">merge</a></h4>
+
+<p>
+Merge jellyfish databases 
+<p>
+Usage: jellyfish merge [OPTIONS]... [database.jf]... 
+<p>
+<dl compact>
+<dt><b>-h</b>,<b>--help</b>
+</dt>
+<dd> Print help and exit 
+</dd>
+<dt><b>-V</b>,<b>--version</b>
+</dt>
+<dd> Print version and exit 
+</dd>
+<dt><b>-s</b>,
+<b>--buffer-size</b><i>=Buffer</i>
+</dt>
+<dd> length 
+Length in bytes of input buffer 
+(default=10000000) 
+</dd>
+<dt><b>-o</b>,
+<b>--output</b><i>=STRING</i>
+</dt>
+<dd> Output file (default=mer_counts_merged.jf) 
+</dd>
+<dt><b>--out-counter-len</b><i>=INT</i>
+</dt>
+<dd> Length (in bytes) of counting field in output 
+(default=4) 
+</dd>
+<dt><b>--out-buffer-size</b><i>=LONG</i>
+</dt>
+<dd> Size of output buffer per thread 
+(default=10000000) 
+</dd>
+<dt><b>-v</b>,<b>--verbose</b>
+</dt>
+<dd> Be verbose (default=off) 
+</dd>
+</dl>
+<h4><a name="section_9">cite</a></h4>
+
+<p>
+How to cite Jellyfish's paper 
+<p>
+Usage: jellyfish cite [OPTIONS]... 
+<p>
+<dl compact>
+<dt><b>-h</b>,<b>--help</b>
+</dt>
+<dd> Print help and exit 
+</dd>
+<dt><b>-V</b>,<b>--version</b>
+</dt>
+<dd> Print version and exit 
+</dd>
+<dt><b>-b</b>,<b>--bibtex</b>
+</dt>
+<dd> Bibtex format (default=off) 
+</dd>
+<dt><b>-o</b>,
+<b>--output</b><i>=STRING</i>
+</dt>
+<dd> Output file (default=/dev/fd/1) 
 </dd>
 </dl>
 <p>
-<h2><a name="section_8">Version</a></h2>
+<h2><a name="section_10">Version</a></h2>
 
 <p>
-Version: 1.0 of 2010/10/1
+Version: 1.1 of 2010/10/1
 <p>
-<h2><a name="section_9">Bugs</a></h2>
+<h2><a name="section_11">Bugs</a></h2>
 
 <p>
 <ul compact>
@@ -274,7 +422,7 @@ slow.
 </li>
 </ul>
 <p>
-<h2><a name="section_10">Copyright &amp; License</a></h2>
+<h2><a name="section_12">Copyright &amp; License</a></h2>
 
 <dl compact>
 <dt>Copyright</dt>
@@ -299,7 +447,7 @@ along with this program. If not, see
 </dd>
 </dl>
 <p>
-<h2><a name="section_11">Authors</a></h2>
+<h2><a name="section_13">Authors</a></h2>
 
 Guillaume Marcais <br>
 
