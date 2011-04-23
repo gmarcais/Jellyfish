@@ -1,0 +1,26 @@
+#! /usr/bin/env ruby
+
+require 'rubygems'
+require 'treetop'
+require 'help_parse.rb'
+
+class IsOpen
+  attr_accessor :is_open
+  def initialize
+    @is_open = false
+  end
+end
+opened = IsOpen.new
+
+parser = HelpGrammarParser.new
+open(ARGV[0]) { |fd|
+  fd.each { |l| 
+    r = parser.parse(l)
+    if r.nil?
+      raise "Got nil for: #{l}"
+    else
+      puts r.to_tex(opened)
+    end
+  }
+  puts("\\end{description}") if opened.is_open
+}

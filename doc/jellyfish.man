@@ -1,5 +1,5 @@
 '\" t
-.\" Manual page created with latex2man on Mon Nov 15 14:11:33 EST 2010
+.\" Manual page created with latex2man on Sat Apr 23 05:39:15 EDT 2011
 .\" NOTE: This file is generated, DO NOT EDIT.
 .de Vb
 .ft CW
@@ -34,9 +34,10 @@ jellyfish merge
 \fIhash2\fP
 \&...
 .br
+jellyfish dump
+\fIhash\fP
+.br
 jellyfish stats
-[\fB--fasta\fP]
-[\fB\-c\fP]
 \fIhash\fP
 .br
 jellyfish histo
@@ -64,7 +65,8 @@ jellyfish count \-m 22 \-o output \-c 3 \-s 10000000 \-t 32 input.fasta
 This will count the the 22\-mers in species.fasta with 32 threads. The 
 counter field in the hash uses only 3 bits and the hash has at least 
 10 million entries. Let the size of the table be s=2^l and the max 
-reprobe value is less than 2^r, then the memory usage per entry in the hash is (in bits, not bytes) 2k\-l+r+1\&. 
+reprobe value is less than 2^r, then the memory usage per entry in 
+the hash is (in bits, not bytes) 2k\-l+r+1\&. 
 .PP
 To save space, the hash table supports variable length counter, i.e. a 
 k\-mer occurring only a few times will use a small counter, a k\-mer 
@@ -85,142 +87,251 @@ large enough to counts up to twice the coverage.
 .PP
 When the orientation of the sequences in the input fasta file is not 
 known, e.g. in sequencing reads, using \fB--both\-strands\fP
+(\fB\-C\fP)
 makes the most sense. 
+.PP
+The following subcommand are used to look at the result: histo, dump, stats. 
 .PP
 .SH OPTIONS
 
-.PP
 .SS COUNT
 .PP
-Count k\-mers in one or many fasta file(s). There is no restriction 
-in the size of the fasta file, the number of sequences or the size of 
-the sequences in the fasta files. On the other hand, they must be 
-files on and not pipes, as the files are memory mapped into memory. 
+Count k\-mers or qmers in fasta or fastq files 
+.PP
+Usage: jellyfish count [OPTIONS]... [file.f[aq]]... 
 .PP
 .TP
-\fB\-o\fP,
-\fB--output=\fP\fIprefix\fP
- Output file prefix. Results will be store 
-in files with the format prefix_#,
-where # is a number 
-starting at 0. More than one file will be written if all the 
-k\-mers could not be counted in the given size. 
+\fB\-h\fP,\fB--help\fP
+ Print help and exit 
+.TP
+\fB--full\-help\fP
+ Print help, including hidden options, and exit 
+.TP
+\fB\-V\fP,\fB--version\fP
+ Print version and exit 
 .TP
 \fB\-m\fP,
-\fB--mer\-len=\fP\fImerlength\fP
- Length of mer to 
-count. I.e. value of k in k\-mer. 
-.TP
-\fB\-t\fP,
-\fB--threads=\fP\fINB\fP
- Number of threads. 
+\fB--mer\-len\fP\fI=INT\fP
+ Length of mer (mandatory) 
 .TP
 \fB\-s\fP,
-\fB--size=\fP\fIhashsize\fP
- Size of hash table. This 
-will be rounded up to the next power of two. 
+\fB--size\fP\fI=LONG\fP
+ Hash size (mandatory) 
 .TP
-\fB--both\-strands\fP
- Collapse counters for a k\-mer and its 
-reverse complement. I.e., when jellyfish
-encounters a k\-mer 
-m, it checks which of m or the reverse complement of m comes 
-first in lexicographic order (call it the canonical representation) 
-and increments the counter for this canonical representation. 
+\fB\-t\fP,
+\fB--threads\fP\fI=INT\fP
+ Number of threads (default=1) 
+.TP
+\fB\-o\fP,
+\fB--output\fP\fI=STRING\fP
+ Output prefix (default=mer_counts) 
+.TP
+\fB\-c\fP,
+\fB--counter\-len\fP\fI=Length\fP
+ in bits 
+Length of counting field (default=7) 
+.TP
+\fB--out\-counter\-len\fP\fI=Length\fP
+ in bytes 
+Length of counter field in output 
+(default=4) 
+.TP
+\fB\-C\fP,\fB--both\-strands\fP
+ Count both strand, canonical representation 
+(default=off) 
 .TP
 \fB\-p\fP,
-\fB--reprobes=\fP\fINB\fP
- Maximum reprobe 
-value. This determine the usage of the hash table (i.e. % of 
-entries used in hash) before being deemed full and written to disk. 
+\fB--reprobes\fP\fI=INT\fP
+ Maximum number of reprobes (default=62) 
 .TP
-\fB--timing=\fP\fIfile\fP
- Write detailed timing information to 
-file\&.
+\fB\-r\fP,\fB--raw\fP
+ Write raw database (default=off) 
 .TP
-\fB--no\-write\fP
- Do not write result file. Used for timing only. 
+\fB\-q\fP,\fB--quake\fP
+ Quake compatibility mode (default=off) 
 .TP
-\fB--out\-counter\-len=\fP\fILEN\fP
- Length of the counter field in 
-the output (in bytes). The value of the counter for any k\-mer is 
-capped at the maximum value that can be encoded in this number of 
-bytes. 
-.PP
-.SS STATS
-.PP
-Display statistics or dump full content of hash table in an easily 
-parsable text format. 
-.PP
+\fB--quality\-start\fP\fI=INT\fP
+ Starting ASCII for quality values 
+(default=64) 
 .TP
-\fB\-c\fP,\fB--column\fP
- Print k\-mers counts in column format: sequence count. 
+\fB--min\-quality\fP\fI=INT\fP
+ Minimum quality. A base with lesser quality 
+becomes an N (default=0) 
 .TP
-\fB\-f\fP,\fB--fasta\fP
- Print k\-mers counts in fasta format. The header is the count. 
+\fB\-L\fP,
+\fB--lower\-count\fP\fI=LONG\fP
+ Don\&'t output k\-mer with count < lower\-count 
 .TP
-\fB\-r\fP,\fB--recompute\fP
- Recompute statistics from the hash 
-table instead of the statistics in the header. 
-.PP
-By default, it displays the statistics in the header of the file. These are: 
-.PP
+\fB\-U\fP,
+\fB--upper\-count\fP\fI=LONG\fP
+ Don\&'t output k\-mer with count > upper\-count 
 .TP
-Unique: 
-Number of k\-mers which occur only once. 
+\fB--matrix\fP\fI=Matrix\fP
+ file Hash function binary matrix 
 .TP
-Distinct: 
-Number of k\-mers, not counting multiplicity. 
-.TP
-Total: 
-Number of k\-mers including multiplicity. 
-.TP
-Max_count: 
-Maximum number of occurrence of a k\-mer. 
+\fB--timing\fP\fI=Timing\fP
+ file Print timing information 
 .PP
 .SS HISTO
 .PP
-Create an histogram with the number of k\-mers having a given count. In bucket i are tallied the k\-mers which have a count c satisfying low+i*inc<=c<low+(i+1)*inc\&. Buckets in the output are labeled by the low end point (low+i*inc). 
+Create an histogram of k\-mer occurrences 
 .PP
-The last bucket in the output behaves as a catchall: it tallies all 
-k\-mers with a count greater or equal to the low end point of this 
-bucket. 
+Usage: jellyfish histo [OPTIONS]... [database.jf]... 
 .PP
 .TP
-\fB\-h\fP,
-\fB--high=\fP\fIHIGH\fP
- High count bucket value. 
+\fB--help\fP
+ Print help and exit 
 .TP
-\fB\-i\fP,
-\fB--increment=\fP\fIINC\fP
- Increment for bucket value. 
+\fB\-V\fP,\fB--version\fP
+ Print version and exit 
+.TP
+\fB\-s\fP,
+\fB--buffer\-size\fP\fI=Buffer\fP
+ length 
+Length in bytes of input buffer 
+(default=10000000) 
 .TP
 \fB\-l\fP,
-\fB--low=\fP\fILOW\fP
- Low count bucket value. 
+\fB--low\fP\fI=LONG\fP
+ Low count value of histogram (default=1) 
+.TP
+\fB\-h\fP,
+\fB--high\fP\fI=LONG\fP
+ High count value of histogram 
+(default=10000) 
+.TP
+\fB\-i\fP,
+\fB--increment\fP\fI=LONG\fP
+ Increment value for buckets (default=1) 
+.TP
+\fB\-t\fP,
+\fB--threads\fP\fI=INT\fP
+ Number of threads (default=1) 
+.TP
+\fB\-o\fP,
+\fB--output\fP\fI=STRING\fP
+ Output file (default=/dev/fd/1) 
 .PP
-.SS QUERY
+.SS DUMP
 .PP
-Query a database created with jellyfish count\&.
-It reads 
-k\-mers from the standard input and write the counts on the standard 
-output. For example: 
+Dump k\-mer counts 
 .PP
-.Vb
-$ echo "AAAAA ACGTA" | jellyfish query database
-AAAAA 12
-ACGTA 3
-.Ve
+Usage: jellyfish stats [OPTIONS]... [database.jf]... 
 .PP
 .TP
-\fB--both\-strands\fP
- Report the count for the canonical version of 
-the k\-mers read from standard input. 
+\fB\-h\fP,\fB--help\fP
+ Print help and exit 
+.TP
+\fB\-V\fP,\fB--version\fP
+ Print version and exit 
+.TP
+\fB\-c\fP,\fB--column\fP
+ Column format (default=off) 
+.TP
+\fB\-t\fP,\fB--tab\fP
+ Tab separator (default=off) 
+.TP
+\fB\-L\fP,
+\fB--lower\-count\fP\fI=LONG\fP
+ Don\&'t output k\-mer with count < lower\-count 
+.TP
+\fB\-U\fP,
+\fB--upper\-count\fP\fI=LONG\fP
+ Don\&'t output k\-mer with count > upper\-count 
+.TP
+\fB\-o\fP,
+\fB--output\fP\fI=STRING\fP
+ Output file (default=/dev/fd/1) 
+.PP
+.SS STATS
+.PP
+Statistics 
+.PP
+Usage: jellyfish stats [OPTIONS]... [database.jf]... 
+.PP
+.TP
+\fB\-h\fP,\fB--help\fP
+ Print help and exit 
+.TP
+\fB--full\-help\fP
+ Print help, including hidden options, and exit 
+.TP
+\fB\-V\fP,\fB--version\fP
+ Print version and exit 
+.TP
+\fB\-L\fP,
+\fB--lower\-count\fP\fI=LONG\fP
+ Don\&'t output k\-mer with count < lower\-count 
+.TP
+\fB\-U\fP,
+\fB--upper\-count\fP\fI=LONG\fP
+ Don\&'t output k\-mer with count > upper\-count 
+.TP
+\fB\-v\fP,\fB--verbose\fP
+ Verbose (default=off) 
+.TP
+\fB\-o\fP,
+\fB--output\fP\fI=STRING\fP
+ Output file (default=/dev/fd/1) 
+.PP
+.SS MERGE
+.PP
+Merge jellyfish databases 
+.PP
+Usage: jellyfish merge [OPTIONS]... [database.jf]... 
+.PP
+.TP
+\fB\-h\fP,\fB--help\fP
+ Print help and exit 
+.TP
+\fB\-V\fP,\fB--version\fP
+ Print version and exit 
+.TP
+\fB\-s\fP,
+\fB--buffer\-size\fP\fI=Buffer\fP
+ length 
+Length in bytes of input buffer 
+(default=10000000) 
+.TP
+\fB\-o\fP,
+\fB--output\fP\fI=STRING\fP
+ Output file (default=mer_counts_merged.jf) 
+.TP
+\fB--out\-counter\-len\fP\fI=INT\fP
+ Length (in bytes) of counting field in output 
+(default=4) 
+.TP
+\fB--out\-buffer\-size\fP\fI=LONG\fP
+ Size of output buffer per thread 
+(default=10000000) 
+.TP
+\fB\-v\fP,\fB--verbose\fP
+ Be verbose (default=off) 
+.PP
+.SS CITE
+.PP
+How to cite Jellyfish\&'s paper 
+.PP
+Usage: jellyfish cite [OPTIONS]... 
+.PP
+.TP
+\fB\-h\fP,\fB--help\fP
+ Print help and exit 
+.TP
+\fB\-V\fP,\fB--version\fP
+ Print version and exit 
+.TP
+\fB\-b\fP,\fB--bibtex\fP
+ Bibtex format (default=off) 
+.TP
+\fB\-o\fP,
+\fB--output\fP\fI=STRING\fP
+ Output file (default=/dev/fd/1) 
 .PP
 .SH VERSION
 
 .PP
-Version: 1.0 of 2010/10/1
+Version: 1.1 of 2010/10/1
 .PP
 .SH BUGS
 

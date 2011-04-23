@@ -1,0 +1,125 @@
+\documentclass[english]{article}
+\usepackage[latin1]{inputenc}
+\usepackage{babel}
+\usepackage{verbatim}
+
+%% do we have the hyperref package?
+\IfFileExists{hyperref.sty}{
+   \usepackage[bookmarksopen,bookmarksnumbered]{hyperref}
+}{}
+
+%% do we have the fancyhdr package?
+\IfFileExists{fancyhdr.sty}{
+\usepackage[fancyhdr]{latex2man}
+}{
+%% do we have the fancyheadings package?
+\IfFileExists{fancyheadings.sty}{
+\usepackage[fancy]{latex2man}
+}{
+\usepackage[nofancy]{latex2man}
+\message{no fancyhdr or fancyheadings package present, discard it}
+}}
+
+\newcommand{\ddash}[1]{-\,-#1}
+\newcommand{\LOpt}[1]{\Opt{\ddash{#1}}}
+\newcommand{\LoOpt}[1]{\oOpt{\ddash{#1}}}
+\newcommand{\LOptArg}[2]{\OptArg{\ddash{#1}}{#2}}
+\newcommand{\LoOptArg}[2]{\oOptArg{\ddash{#1}}{#2}}
+\newcommand{\LoOptoArg}[2]{\oOptoArg{\ddash{#1}}{#2}}
+
+\setVersion{1.1}
+\setDate{2010/10/1}
+
+\begin{document}
+
+\begin{Name}{1}{jellyfish}{G. Marcais}{k-mer counter}{Jellyfish: A fast k-mer counter}
+
+\Prog{Jellyfish} is a software to count $k$-mers in DNA sequences.
+
+\end{Name}
+
+\section{Synopsis}
+\Prog{jellyfish count} \oOptArg{-o}{prefix} \oOptArg{-m}{merlength} \oOptArg{-t}{threads} \oOptArg{-s}{hashsize} \LoOpt{both-strands} \Arg{fasta} \oArg{fasta \Dots} \\
+\Prog{jellyfish merge} \Arg{hash1} \Arg{hash2} \Dots \\
+\Prog{jellyfish dump}  \Arg{hash} \\
+\Prog{jellyfish stats} \Arg{hash} \\
+\Prog{jellyfish histo} \oOptArg{-h}{high} \oOptArg{-l}{low} \oOptArg{-i}{increment} \Arg{hash} \\
+\Prog{jellyfish query} \Arg{hash}
+
+\section{Description}
+
+\Prog{Jellyfish} is a $k$-mer counter based on a multi-threaded hash
+table implementation.
+
+To count $k$-mers, use a command like:
+
+\begin{verbatim}
+jellyfish count -m 22 -o output -c 3 -s 10000000 -t 32 input.fasta
+\end{verbatim}
+
+This will count the the 22-mers in species.fasta with 32 threads. The
+counter field in the hash uses only 3 bits and the hash has at least
+10 million entries. Let the size of the table be $s=2^l$ and the max
+reprobe value is less than $2^r$, then the memory usage per entry in
+the hash is (in bits, not bytes) $2k-l+r+1$.
+
+To save space, the hash table supports variable length counter, i.e. a
+$k$-mer occurring only a few times will use a small counter, a $k$-mer
+occurring many times will used multiple entries in the hash. The
+\Opt{-c} specify the length of the small counter. The tradeoff is: a
+low value will save space per entry in the hash but will increase the
+number of entries used, hence maybe requiring a larger hash. In
+practice, use a value for \Opt{-c} so that most of you $k$-mers
+require only 1 entry. For example, to count $k$-mers in a genome,
+where most of the sequence is unique, use \OptArg{-c}{1} or
+\OptArg{-c}{2}. For sequencing reads, use a value for
+\Opt{-c} large enough to counts up to twice the coverage.
+
+When the orientation of the sequences in the input fasta file is not
+known, e.g. in sequencing reads, using \LOpt{both-strands} (\Opt{-C})
+makes the most sense.
+
+The following subcommand are used to look at the result: histo, dump, stats.
+
+\section{Options}
+include(options.tex)
+\section{Version}
+
+Version: \Version\ of \Date
+
+\section{Bugs}
+
+\begin{itemize}
+\item \Prog{jellyfish merge} has not been parallelized and is very
+  slow.
+\end{itemize}
+
+\section{Copyright \& License}
+\begin{description}
+\item[Copyright] \copyright\ 2010, Guillaume Marcais \Email{guillaume@marcais.net} and Carl Kingsford \Email{carlk@umiacs.umd.edu}.
+
+\item[License] This program is free software: you can redistribute it
+  and/or modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation, either version 3 of
+  the License, or (at your option) any later version. \\
+  This program is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  General Public License for more details. \\
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see
+  <\URL{http://www.gnu.org/licenses/}>.
+\end{description}
+
+\section{Authors}
+\noindent
+Guillaume Marcais \\
+University of Maryland \\
+\Email{gmarcais@umd.edu}
+
+Carl Kingsford \\
+University of Maryland \\
+\Email{carlk@umiacs.umd.edu}
+
+\LatexManEnd
+\end{document}

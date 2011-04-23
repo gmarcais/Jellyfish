@@ -1,0 +1,113 @@
+\subsection{count}
+
+Count k-mers or qmers in fasta or fastq files
+
+Usage: jellyfish count [OPTIONS]... [file.f[aq]]...
+
+\begin{description}
+\item[\Opt{-h},\LOpt{help}] Print help and exit
+\item[\LOpt{full-help}] Print help, including hidden options, and exit
+\item[\Opt{-V},\LOpt{version}] Print version and exit
+\item[\Opt{-m},\LOptArg{mer-len}{=INT}] Length of mer (mandatory)
+\item[\Opt{-s},\LOptArg{size}{=LONG}] Hash size (mandatory)
+\item[\Opt{-t},\LOptArg{threads}{=INT}] Number of threads  (default=`1')
+\item[\Opt{-o},\LOptArg{output}{=STRING}] Output prefix  (default=`mer\_counts')
+\item[\Opt{-c},\LOptArg{counter-len}{=Length}] in bits
+Length of counting field  (default=`7')
+\item[\LOptArg{out-counter-len}{=Length}] in bytes
+Length of counter field in output  
+(default=`4')
+\item[\Opt{-C},\LOpt{both-strands}] Count both strand, canonical representation  
+(default=off)
+\item[\Opt{-p},\LOptArg{reprobes}{=INT}] Maximum number of reprobes  (default=`62')
+\item[\Opt{-r},\LOpt{raw}] Write raw database  (default=off)
+\item[\Opt{-q},\LOpt{quake}] Quake compatibility mode  (default=off)
+\item[\LOptArg{quality-start}{=INT}] Starting ASCII for quality values  
+(default=`64')
+\item[\LOptArg{min-quality}{=INT}] Minimum quality. A base with lesser quality 
+becomes an N  (default=`0')
+\item[\Opt{-L},\LOptArg{lower-count}{=LONG}] Don't output k-mer with count < lower-count
+\item[\Opt{-U},\LOptArg{upper-count}{=LONG}] Don't output k-mer with count > upper-count
+\item[\LOptArg{matrix}{=Matrix}] file      Hash function binary matrix
+\item[\LOptArg{timing}{=Timing}] file      Print timing information
+\end{description}
+\subsection{histo}
+
+Create an histogram of k-mer occurrences
+
+Usage: jellyfish histo [OPTIONS]... [database.jf]...
+
+\begin{description}
+\item[\LOpt{help}] Print help and exit
+\item[\Opt{-V},\LOpt{version}] Print version and exit
+\item[\Opt{-s},\LOptArg{buffer-size}{=Buffer}] length
+Length in bytes of input buffer  
+(default=`10000000')
+\item[\Opt{-l},\LOptArg{low}{=LONG}] Low count value of histogram  (default=`1')
+\item[\Opt{-h},\LOptArg{high}{=LONG}] High count value of histogram  
+(default=`10000')
+\item[\Opt{-i},\LOptArg{increment}{=LONG}] Increment value for buckets  (default=`1')
+\item[\Opt{-t},\LOptArg{threads}{=INT}] Number of threads  (default=`1')
+\item[\Opt{-o},\LOptArg{output}{=STRING}] Output file  (default=`/dev/fd/1')
+\end{description}
+\subsection{dump}
+
+Dump k-mer counts
+
+Usage: jellyfish stats [OPTIONS]... [database.jf]...
+
+\begin{description}
+\item[\Opt{-h},\LOpt{help}] Print help and exit
+\item[\Opt{-V},\LOpt{version}] Print version and exit
+\item[\Opt{-c},\LOpt{column}] Column format  (default=off)
+\item[\Opt{-t},\LOpt{tab}] Tab separator  (default=off)
+\item[\Opt{-L},\LOptArg{lower-count}{=LONG}] Don't output k-mer with count < lower-count
+\item[\Opt{-U},\LOptArg{upper-count}{=LONG}] Don't output k-mer with count > upper-count
+\item[\Opt{-o},\LOptArg{output}{=STRING}] Output file  (default=`/dev/fd/1')
+\end{description}
+\subsection{stats}
+
+Statistics
+
+Usage: jellyfish stats [OPTIONS]... [database.jf]...
+
+\begin{description}
+\item[\Opt{-h},\LOpt{help}] Print help and exit
+\item[\LOpt{full-help}] Print help, including hidden options, and exit
+\item[\Opt{-V},\LOpt{version}] Print version and exit
+\item[\Opt{-L},\LOptArg{lower-count}{=LONG}] Don't output k-mer with count < lower-count
+\item[\Opt{-U},\LOptArg{upper-count}{=LONG}] Don't output k-mer with count > upper-count
+\item[\Opt{-v},\LOpt{verbose}] Verbose  (default=off)
+\item[\Opt{-o},\LOptArg{output}{=STRING}] Output file  (default=`/dev/fd/1')
+\end{description}
+\subsection{merge}
+
+Merge jellyfish databases
+
+Usage: jellyfish merge [OPTIONS]... [database.jf]...
+
+\begin{description}
+\item[\Opt{-h},\LOpt{help}] Print help and exit
+\item[\Opt{-V},\LOpt{version}] Print version and exit
+\item[\Opt{-s},\LOptArg{buffer-size}{=Buffer}] length
+Length in bytes of input buffer  
+(default=`10000000')
+\item[\Opt{-o},\LOptArg{output}{=STRING}] Output file  (default=`mer\_counts\_merged.jf')
+\item[\LOptArg{out-counter-len}{=INT}] Length (in bytes) of counting field in output  
+(default=`4')
+\item[\LOptArg{out-buffer-size}{=LONG}] Size of output buffer per thread  
+(default=`10000000')
+\item[\Opt{-v},\LOpt{verbose}] Be verbose  (default=off)
+\end{description}
+\subsection{cite}
+
+How to cite Jellyfish's paper
+
+Usage: jellyfish cite [OPTIONS]...
+
+\begin{description}
+\item[\Opt{-h},\LOpt{help}] Print help and exit
+\item[\Opt{-V},\LOpt{version}] Print version and exit
+\item[\Opt{-b},\LOpt{bibtex}] Bibtex format  (default=off)
+\item[\Opt{-o},\LOptArg{output}{=STRING}] Output file  (default=`/dev/fd/1')
+\end{description}

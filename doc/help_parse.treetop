@@ -1,0 +1,51 @@
+grammar HelpGrammar
+  rule line
+    spaces sws:switches* text [\n]? {
+      def to_tex(opened)
+        res = ""
+        unless sws.empty?
+          if !opened.is_open
+            res << "\\begin{description}\n"
+            opened.is_open = true
+          end
+          res << "\\item["
+          res << sws.elements.map { |s| s.to_tex }.join(",")
+          res << "] "
+        end
+        res << text.text_value
+      end
+    }
+  end
+
+  rule spaces
+    [\s]*
+  end
+
+  rule switches
+    "-" sw:( short_switch / long_switch ) {
+      def to_tex
+        sw.to_tex
+      end
+    }
+  end
+
+  rule short_switch
+    name:[a-zA-Z] ","? spaces {
+      def to_tex
+        "\\Opt{-#{name.text_value}}"
+      end
+    }
+  end
+
+  rule long_switch
+    "-" name:[^,\s=]+ val:("=" [^,\s]+)? ","? spaces {
+      def to_tex
+        val.empty? ? "\\LOpt{#{name.text_value}}" : "\\LOptArg{#{name.text_value}}{#{val.text_value}}"
+      end
+    }
+  end
+
+  rule text
+    [^\n]*
+  end
+end
