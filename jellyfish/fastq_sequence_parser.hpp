@@ -26,7 +26,7 @@ namespace jellyfish {
   public:
     fastq_sequence_parser(int fd, const char *path, const char *str, size_t len) :
       file_parser(fd, path, str, len), seq_len(0) {}
-    ~fastq_sequence_parser() {}
+    virtual ~fastq_sequence_parser() {}
 
     virtual bool parse(char *start, char **end);
   };

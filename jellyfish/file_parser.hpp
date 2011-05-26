@@ -44,7 +44,7 @@ namespace jellyfish {
     // [str, str+len) is content on initial buffer
     file_parser(int fd, const char *path, const char *str, size_t len,
                 char pbase = '\n');
-    ~file_parser();
+    virtual ~file_parser();
     static file_parser *new_file_parser_sequence(const char *path);
     static file_parser *new_file_parser_seq_qual(const char *path);
 

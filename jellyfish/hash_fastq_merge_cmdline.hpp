@@ -49,9 +49,6 @@ struct hash_fastq_merge_args
   char * output_arg;	/**< @brief Output file (default='merged.jf').  */
   char * output_orig;	/**< @brief Output file original value given at command line.  */
   const char *output_help; /**< @brief Output file help description.  */
-  int threads_arg;	/**< @brief Number of threads (default='1').  */
-  char * threads_orig;	/**< @brief Number of threads original value given at command line.  */
-  const char *threads_help; /**< @brief Number of threads help description.  */
   int reprobes_arg;	/**< @brief Maximum number of reprobes (default='62').  */
   char * reprobes_orig;	/**< @brief Maximum number of reprobes original value given at command line.  */
   const char *reprobes_help; /**< @brief Maximum number of reprobes help description.  */
@@ -65,7 +62,6 @@ struct hash_fastq_merge_args
   unsigned int size_given ;	/**< @brief Whether size was given.  */
   unsigned int mer_len_given ;	/**< @brief Whether mer-len was given.  */
   unsigned int output_given ;	/**< @brief Whether output was given.  */
-  unsigned int threads_given ;	/**< @brief Whether threads was given.  */
   unsigned int reprobes_given ;	/**< @brief Whether reprobes was given.  */
   unsigned int out_buffer_size_given ;	/**< @brief Whether out-buffer-size was given.  */
 

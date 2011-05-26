@@ -9,3 +9,5 @@ Version 1.1
 
 * Support for counting 'q-mers', as defined by the Quake error
   correcting software (http://www.cbcb.umd.edu/software/quake/).
+
+* New dump subcommands which replaces 'stats -f' and 'stats -c'.

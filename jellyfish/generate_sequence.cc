@@ -115,8 +115,8 @@ int main(int argc, char *argv[])
   bool many = args.inputs_num > 1;
   
   for(unsigned int i = 0; i < args.inputs_num; ++i) {
-    size_t length = atol(args.inputs[i]);;
-
+    size_t length = atol(args.inputs[i]);
+  
     if(args.fastq_flag) {
       create_path(path, sizeof(path), "fq", many, i);
       std::ofstream fd(path);
@@ -128,11 +128,11 @@ int main(int argc, char *argv[])
       unsigned long read_id = 0;
       while(total_len < length) {
         fd << "@read_" << (read_id++) << "\n";
-        int i;
-        for(i = 0; i < 70 && total_len < length; i++, total_len++)
+        int base;
+        for(base = 0; base < 70 && total_len < length; base++, total_len++)
           fd << rDNAg.letter();
         fd << "\n+\n";
-        for(int j = 0; j < i; j++)
+        for(int j = 0; j < base; j++)
           fd << rDNAg.qual_Illumina();
         fd << "\n";
       }
@@ -153,7 +153,8 @@ int main(int argc, char *argv[])
       long rid = 0;
       fd << ">read" << ++rid << "\n";
       while(total_len < length) {
-        for(i = 0; i < 70 && total_len < length && read < read_length; i++) {
+        for(int base = 0; base < 70 && total_len < length && read < read_length; 
+            base++) {
           fd << rDNAg.letter();
           total_len++;
           read++;

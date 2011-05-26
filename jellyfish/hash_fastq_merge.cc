@@ -49,7 +49,7 @@ int hash_fastq_merge_main(int argc, char *argv[])
     delete ihash;
   }
 
-  raw_fastq_dumper_t dumper(args.threads_arg, args.output_arg, 
+  raw_fastq_dumper_t dumper(4, args.output_arg, 
                             args.out_buffer_size_arg, &ary);
   hash.set_dumper(&dumper);
   hash.dump();

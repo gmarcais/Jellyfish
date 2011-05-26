@@ -29,7 +29,7 @@ public:
   simple_growing_array(size_t capacity = 100) : 
     _capacity(capacity / 2), _size(0), _data(0) { resize(); }
 
-  ~simple_growing_array() {
+  virtual ~simple_growing_array() {
     free(_data);
   }
 

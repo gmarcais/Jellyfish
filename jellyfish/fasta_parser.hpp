@@ -28,7 +28,7 @@ namespace jellyfish {
   public:
     fasta_parser(int fd, const char *path, const char *str, size_t len) :
       file_parser(fd, path, str, len) {}
-    ~fasta_parser() {}
+    virtual ~fasta_parser() {}
 
     // Parse fasta sequence into the buffer [start, end).
     virtual bool parse(char *start, char **end);
