@@ -29,15 +29,15 @@ const char *stats_args_purpose = "Statistics";
 
 const char *stats_args_usage = "Usage: jellyfish stats [OPTIONS]... [database.jf]...";
 
-const char *stats_args_description = "";
+const char *stats_args_description = "Display some statistics about the k-mers in the hash:\n\nUnique:    Number of k-mers which occur only once.\nDistinct:  Number of k-mers, not counting multiplicity.\nTotal:     Number of k-mers, including multiplicity.\nMax_count: Maximum number of occurrence of a k-mer.\n";
 
 const char *stats_args_full_help[] = {
   "  -h, --help              Print help and exit",
   "      --full-help         Print help, including hidden options, and exit",
   "  -V, --version           Print version and exit",
   "  -r, --recompute         Recompute  (default=off)",
-  "  -L, --lower-count=LONG  Don't output k-mer with count < lower-count",
-  "  -U, --upper-count=LONG  Don't output k-mer with count > upper-count",
+  "  -L, --lower-count=LONG  Don't consider k-mer with count < lower-count",
+  "  -U, --upper-count=LONG  Don't consider k-mer with count > upper-count",
   "  -v, --verbose           Verbose  (default=off)",
   "  -o, --output=STRING     Output file  (default=`/dev/fd/1')",
     0
@@ -555,7 +555,7 @@ stats_cmdline_internal (
             goto failure;
         
           break;
-        case 'L':	/* Don't output k-mer with count < lower-count.  */
+        case 'L':	/* Don't consider k-mer with count < lower-count.  */
         
         
           if (update_arg( (void *)&(args_info->lower_count_arg), 
@@ -567,7 +567,7 @@ stats_cmdline_internal (
             goto failure;
         
           break;
-        case 'U':	/* Don't output k-mer with count > upper-count.  */
+        case 'U':	/* Don't consider k-mer with count > upper-count.  */
         
         
           if (update_arg( (void *)&(args_info->upper_count_arg), 

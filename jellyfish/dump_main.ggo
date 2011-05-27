@@ -2,6 +2,10 @@ purpose "Dump k-mer counts"
 args "--show-required --default-option -c cc -H hpp -F dump_cmdline -f dump_cmdline -a dump_args --unamed-opts=database.jf"
 package "jellyfish stats"
 
+description "By default, dump in a fasta format where the header is
+the count and the sequence is the sequence of the k-mer. The column
+format is a 2 column output: k-mer count."
+
 option "column"         c "Column format"
   flag off
 option "tab"            t "Tab separator"

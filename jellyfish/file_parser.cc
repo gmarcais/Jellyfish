@@ -72,7 +72,6 @@ namespace jellyfish {
     _size       = stat_buf.st_size;
     _buffer     = (char *)mmap(0, _size , PROT_READ, MAP_SHARED, fd, 0);
     _is_mmapped = _buffer != MAP_FAILED;
-    std::cerr << "file_parser.ctor " << pthread_self() << " " << path << " " << _is_mmapped << " " << (void*)_buffer << std::endl;
     if(_is_mmapped) {
       _end_buffer = _buffer + _size;
       _data       = _buffer;
@@ -91,7 +90,6 @@ namespace jellyfish {
   }
 
   file_parser::~file_parser() {
-    std::cerr << "file_parser.dtor " << pthread_self() << " " << _is_mmapped << " " << (void*)_buffer << std::endl;
     if(_is_mmapped) {
       munmap(_buffer, _size);
     } else {

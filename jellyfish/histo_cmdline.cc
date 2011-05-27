@@ -29,7 +29,7 @@ const char *histo_args_purpose = "Create an histogram of k-mer occurrences";
 
 const char *histo_args_usage = "Usage: jellyfish histo [OPTIONS]... [database.jf]...";
 
-const char *histo_args_description = "";
+const char *histo_args_description = "Create an histogram with the number of k-mers having a\ngiven count. In bucket 'i' are tallied the k-mers which have a count\n'c' satisfying 'low+i*inc <= c < low+(i+1)*inc'. Buckets in the output are\nlabeled by the low end point (low+i*inc).\n\nThe last bucket in the output behaves as a catchall: it tallies all\nk-mers with a count greater or equal to the low end point of this\nbucket.";
 
 const char *histo_args_help[] = {
   "      --help                    Print help and exit",

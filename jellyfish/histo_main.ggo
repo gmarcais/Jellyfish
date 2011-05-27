@@ -2,6 +2,15 @@ purpose "Create an histogram of k-mer occurrences"
 args "--show-required --default-option -c cc -H hpp -F histo_cmdline -f histo_cmdline -a histo_args --unamed-opts=database.jf"
 package "jellyfish histo"
 
+description "Create an histogram with the number of k-mers having a
+given count. In bucket 'i' are tallied the k-mers which have a count
+'c' satisfying 'low+i*inc <= c < low+(i+1)*inc'. Buckets in the output are
+labeled by the low end point (low+i*inc).
+
+The last bucket in the output behaves as a catchall: it tallies all
+k-mers with a count greater or equal to the low end point of this
+bucket."
+
 option "buffer-size"            s "Length in bytes of input buffer"
   long default="10000000" typestr="Buffer length"
 option "low"                    l "Low count value of histogram"

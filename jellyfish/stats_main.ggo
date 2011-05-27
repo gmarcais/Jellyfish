@@ -2,11 +2,19 @@ purpose "Statistics"
 args "--show-required --default-option -c cc -H hpp -F stats_cmdline -f stats_cmdline -a stats_args --unamed-opts=database.jf"
 package "jellyfish stats"
 
+description "Display some statistics about the k-mers in the hash:
+
+Unique:    Number of k-mers which occur only once.
+Distinct:  Number of k-mers, not counting multiplicity.
+Total:     Number of k-mers, including multiplicity.
+Max_count: Maximum number of occurrence of a k-mer.
+"
+
 option "recompute"      r "Recompute"
   flag off hidden
-option "lower-count"    L "Don't output k-mer with count < lower-count"
+option "lower-count"    L "Don't consider k-mer with count < lower-count"
   long
-option "upper-count"    U "Don't output k-mer with count > upper-count"
+option "upper-count"    U "Don't consider k-mer with count > upper-count"
   long
 option "verbose"        v "Verbose"
   flag off

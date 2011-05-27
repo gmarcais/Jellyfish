@@ -42,12 +42,12 @@ struct stats_args
   const char *version_help; /**< @brief Print version and exit help description.  */
   int recompute_flag;	/**< @brief Recompute (default=off).  */
   const char *recompute_help; /**< @brief Recompute help description.  */
-  long lower_count_arg;	/**< @brief Don't output k-mer with count < lower-count.  */
-  char * lower_count_orig;	/**< @brief Don't output k-mer with count < lower-count original value given at command line.  */
-  const char *lower_count_help; /**< @brief Don't output k-mer with count < lower-count help description.  */
-  long upper_count_arg;	/**< @brief Don't output k-mer with count > upper-count.  */
-  char * upper_count_orig;	/**< @brief Don't output k-mer with count > upper-count original value given at command line.  */
-  const char *upper_count_help; /**< @brief Don't output k-mer with count > upper-count help description.  */
+  long lower_count_arg;	/**< @brief Don't consider k-mer with count < lower-count.  */
+  char * lower_count_orig;	/**< @brief Don't consider k-mer with count < lower-count original value given at command line.  */
+  const char *lower_count_help; /**< @brief Don't consider k-mer with count < lower-count help description.  */
+  long upper_count_arg;	/**< @brief Don't consider k-mer with count > upper-count.  */
+  char * upper_count_orig;	/**< @brief Don't consider k-mer with count > upper-count original value given at command line.  */
+  const char *upper_count_help; /**< @brief Don't consider k-mer with count > upper-count help description.  */
   int verbose_flag;	/**< @brief Verbose (default=off).  */
   const char *verbose_help; /**< @brief Verbose help description.  */
   char * output_arg;	/**< @brief Output file (default='/dev/fd/1').  */

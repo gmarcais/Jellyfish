@@ -29,7 +29,7 @@ const char *dump_args_purpose = "Dump k-mer counts";
 
 const char *dump_args_usage = "Usage: jellyfish stats [OPTIONS]... [database.jf]...";
 
-const char *dump_args_description = "";
+const char *dump_args_description = "By default, dump in a fasta format where the header is\nthe count and the sequence is the sequence of the k-mer. The column\nformat is a 2 column output: k-mer count.";
 
 const char *dump_args_help[] = {
   "  -h, --help              Print help and exit",

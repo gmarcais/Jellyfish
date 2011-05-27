@@ -29,7 +29,7 @@ const char *query_args_purpose = "Query from a compacted database";
 
 const char *query_args_usage = "Usage: jellyfish query [OPTIONS]... [database.jf]...";
 
-const char *query_args_description = "";
+const char *query_args_description = "Query a hash. It reads k-mers from the standard input\nand write the counts on the standard output.";
 
 const char *query_args_help[] = {
   "  -h, --help          Print help and exit",
