@@ -145,12 +145,12 @@ namespace jellyfish {
     void _read_sequence();
     void read_sequence() {
       static struct timespec time_sleep = { 0, 10000000 };
-      if(!__sync_bool_compare_and_swap(&reader, 0, 1)) {
+      if(atomic::gcc::cas(&reader, (uint64_t)0, (uint64_t)1) != 0) {
         nanosleep(&time_sleep, NULL);
         return;
       }
       _read_sequence();
-      reader = 0;
+      atomic::gcc::cas(&reader, (uint64_t)1, (uint64_t)0);
     }
   };
 }
