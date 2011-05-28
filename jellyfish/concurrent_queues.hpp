@@ -33,10 +33,10 @@
 template<class Val>
 class concurrent_queue {
   Val                   **queue;
-  unsigned int          size;
-  unsigned int          volatile head;
-  unsigned int          volatile tail;
-  bool                  volatile closed;
+  unsigned int            size;
+  unsigned int volatile   head;
+  unsigned int volatile   tail;
+  bool volatile           closed;
   
 public:
   concurrent_queue(unsigned int _size) : size(_size + 1), head(0), tail(0) { 
@@ -62,13 +62,14 @@ public:
 template<class Val>
 void concurrent_queue<Val>::enqueue(Val *v) {
   int done = 0;
+  unsigned int chead;
 
+  chead = head;
   while(!done) {
-    unsigned int chead = head;
     unsigned int nhead = (chead + 1) % size;
 
     done = (atomic::gcc::cas(&queue[chead], (Val*)0, v) == (Val*)0);
-    atomic::gcc::cas(&head, chead, nhead);
+    chead = atomic::gcc::cas(&head, chead, nhead);
   }
 }
 
@@ -76,15 +77,16 @@ template<class Val>
 Val *concurrent_queue<Val>::dequeue() {
   int done = 0;
   Val *res;
-  unsigned int chead, ctail, ntail;
+  unsigned int ctail, ntail;
 
+  ctail = tail;
+  __sync_synchronize();
   while(!done) {
-    ctail = tail;
-    chead = head;
-
-    if(ctail != chead) {
+    if(ctail != head) {
       ntail = (ctail + 1) % size;
-      done = __sync_bool_compare_and_swap(&tail, ctail, ntail);
+      ntail = atomic::gcc::cas(&tail, ctail, ntail);
+      done = ntail == ctail;
+      ctail = ntail;
     } else {
       return NULL;
     }
