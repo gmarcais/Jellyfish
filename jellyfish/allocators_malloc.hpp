@@ -52,6 +52,10 @@ namespace allocators
         ::memset((char *)ptr + old_size, '\0', new_size - old_size);
       return ptr;
     }
+
+    // NOOP
+    int lock() { return 0; }
+    int unlock() { return 0; }
   };
 }
 #endif

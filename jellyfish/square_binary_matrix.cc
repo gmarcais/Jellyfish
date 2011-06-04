@@ -56,7 +56,7 @@ SquareBinaryMatrix SquareBinaryMatrix::operator*(const SquareBinaryMatrix &other
   SquareBinaryMatrix res(size);
 
   if(size != other.get_size()) 
-    raise(MismatchingSize) << "Multiplication operator dimension mismatch:" 
+    eraise(MismatchingSize) << "Multiplication operator dimension mismatch:" 
                            << size << "x" << size << " != " 
                            << other.get_size() << "x" << other.get_size();
   
@@ -81,7 +81,7 @@ SquareBinaryMatrix SquareBinaryMatrix::inverse() const {
         if((pivot.columns[j] >> (size - i - 1)) & (uint64_t)0x1)
           break;
       if(j >= size)
-	raise(SingularMatrix) << "Matrix is singular";
+	eraise(SingularMatrix) << "Matrix is singular";
       pivot.columns[i] ^= pivot.columns[j];
       res.columns[i] ^= res.columns[j];
     }
@@ -148,7 +148,7 @@ size_t SquareBinaryMatrix::read(const char *map) {
   }
   memcpy(&nsize, map, sizeof(nsize));
   if(nsize <= 0 || nsize > 64)
-    raise(MismatchingSize) << "Invalid matrix size '" << nsize << "'. Must be between 1 and 64";
+    eraise(MismatchingSize) << "Invalid matrix size '" << nsize << "'. Must be between 1 and 64";
 
   size = nsize;
   columns = new uint64_t[size];

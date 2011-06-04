@@ -31,7 +31,6 @@
 #include <ostream>
 
 #define bsizeof(v)      (8 * sizeof(v))
-#define PRINTVAR(v) {std::cout << __LINE__ << " " #v ": " << v << std::endl; }
 typedef uint_fast16_t uint_t;
 //#define UINT_C(x)       
 #define PRIUINTu PRIuFAST16

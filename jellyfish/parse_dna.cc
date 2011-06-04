@@ -17,40 +17,10 @@
 #include <jellyfish/parse_dna.hpp>
 
 namespace jellyfish {
-  parse_dna::parse_dna(int nb_files, char *argv[], uint_t _mer_len,
-                       unsigned int nb_buffers, size_t _buffer_size) :
-    rq(nb_buffers), wq(nb_buffers), mer_len(_mer_len), 
-    reader(0), buffer_size(_buffer_size), files(argv, argv + nb_files),
-    current_file(files.begin()), have_seam(false)
-  {
-    buffer_data = new char[nb_buffers * buffer_size];
-    buffers     = new seq[nb_buffers];
-    seam        = new char[mer_len];
-    
-    for(unsigned int i = 0; i < nb_buffers; i++) {
-      buffers[i].start = buffer_data + i * _buffer_size;
-      buffers[i].end   = buffers[i].start;
-      wq.enqueue(&buffers[i]);
-    }
-
-    fparser = jellyfish::file_parser::new_file_parser_sequence(*current_file);
-  }
-
-  bool parse_dna::thread::next_sequence() {
-    if(rq->is_low() && !rq->is_closed()) {
-      parser->read_sequence();
-    }
-    while(!(sequence = rq->dequeue())) {
-      if(rq->is_closed())
-        return false;
-      parser->read_sequence();
-    }
-    return true;
-  }
-
-  void parse_dna::_read_sequence() {
-    seq *new_seq = 0;
+  void parse_dna::fill() {
+    sequence_t *new_seq = 0;
   
+    DBG;
     while(true) {
       if(!new_seq) {
         new_seq = wq.dequeue();
@@ -65,6 +35,7 @@ namespace jellyfish {
         start += mer_len - 1;
       }
       bool input_eof = !fparser->parse(start, &new_seq->end);
+
       if(new_seq->end > new_seq->start + mer_len) {
         have_seam = true;
         memcpy(seam, new_seq->end - mer_len + 1, mer_len - 1);
@@ -78,9 +49,30 @@ namespace jellyfish {
           rq.close();
           break;
         }
-        fparser = jellyfish::file_parser::new_file_parser_sequence(*current_file);
+        fparser =
+          jellyfish::file_parser::new_file_parser_sequence(*current_file);
       }
     }
+  }
+
+  parse_dna::parse_dna(int nb_files, const char *argv[], uint_t _mer_len,
+                       unsigned int nb_buffers, size_t _buffer_size) :
+    double_fifo_input(nb_buffers), mer_len(_mer_len), 
+    buffer_size(_buffer_size), files(argv, argv + nb_files),
+    current_file(files.begin()), have_seam(false), canonical(false)
+  {
+    buffer_data = new char[nb_buffers * buffer_size];
+    seam        = new char[mer_len];
+    
+    unsigned long i = 0;
+    for(bucket_iterator it = bucket_begin();
+        it != bucket_end(); ++it, ++i) {
+      it->end = it->start = buffer_data + i * buffer_size;
+    }
+    assert(i == nb_buffers);
+
+    fparser = jellyfish::file_parser::new_file_parser_sequence(*current_file);
+    DBG << V(fparser);
   }
 
   const uint_t parse_dna::codes[256] = {

@@ -44,3 +44,7 @@ option "buffer-size"            - "Size of buffers"
   long hidden default="8192"
 option "out-buffer-size"        - "Size of output buffer per thread"
   long hidden default="20000000"
+option "lock"                   - "Lock hash in memory (no swapping)"
+  flag off hidden
+option "stream"                 - "Read from stream, not memory map"
+  flag off hidden

@@ -25,7 +25,7 @@ void thread_exec::exec(int nb_threads) {
     infos[i].self = this;
     int err = pthread_create(&infos[i].thid, NULL, start_routine, &infos[i]);
     if(err)
-      raise(Error) << "Can't create thread" << err::no;
+      eraise(Error) << "Can't create thread" << err::no;
   }
 }
 
@@ -33,7 +33,7 @@ void thread_exec::join() {
   for(unsigned int i = 0; i < infos.size(); i++) {
     int err = pthread_join(infos[i].thid, NULL);
     if(err)
-      raise(Error) << "Can't join thread '" << infos[i].thid << "'" << err::no;
+      eraise(Error) << "Can't join thread '" << infos[i].thid << "'" << err::no;
   }
 }
 

@@ -14,16 +14,10 @@
     along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <jellyfish/double_fifo_input.hpp>
 #include <jellyfish/err.hpp>
+#include <pthread.h>
+#include <assert.h>
 
-namespace err {
-  std::ostream &operator<<(std::ostream &os, const err::substr &ss) {
-    os.write(ss._s, ss._l);
-    return os;
-  }
-
-  std::ostream &operator<<(std::ostream &os, const err::no_t &x) {
-    x.write(os, errno);
-    return os;
-  }
+namespace jellyfish {
 }

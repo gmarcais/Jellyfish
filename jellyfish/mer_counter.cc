@@ -99,7 +99,7 @@ public:
 
 class mer_counting_fasta_hash : public mer_counting<jellyfish::parse_dna, inv_hash_t> {
 public:
-  mer_counting_fasta_hash(int argc, char *argv[], 
+  mer_counting_fasta_hash(int argc, const char *argv[], 
                           struct mer_counter_args &_args) :
     mer_counting<jellyfish::parse_dna, inv_hash_t>(_args)
   {
@@ -192,7 +192,7 @@ public:
 
 class mer_counting_fasta_direct : public mer_counting<jellyfish::parse_dna, direct_index_t> {
 public:
-  mer_counting_fasta_direct(int argc, char *argv[], 
+  mer_counting_fasta_direct(int argc, const char *argv[], 
                             struct mer_counter_args &_args) :
     mer_counting<jellyfish::parse_dna, direct_index_t>(_args)
   {
@@ -256,11 +256,15 @@ int count_main(int argc, char *argv[])
   if(args.quake_flag) {
     counter = new mer_counting_quake(args.inputs_num, args.inputs, args);
   } else if(ceilLog2((unsigned long)args.size_arg) > 2 * (unsigned long)args.mer_len_arg) {
-    counter = new mer_counting_fasta_direct(args.inputs_num, args.inputs, args);
+    counter = new mer_counting_fasta_direct(args.inputs_num, 
+                                            (const char **)args.inputs, args);
   } else if(args.min_quality_given) {
-    counter = new mer_counting_qual_fasta_hash(args.inputs_num, args.inputs, args);
+    counter = new mer_counting_qual_fasta_hash(args.inputs_num, 
+                                               args.inputs,
+                                               args);
   } else {
-    counter = new mer_counting_fasta_hash(args.inputs_num, args.inputs, args);
+    counter = new mer_counting_fasta_hash(args.inputs_num,
+                                          (const char **)args.inputs, args);
   }
   Time after_init;
   counter->count();

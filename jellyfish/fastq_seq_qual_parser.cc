@@ -25,7 +25,7 @@ namespace jellyfish {
       // Copy the saved sequence, then the quality score for this
       // saved sequence. The stream is left at the first qual value.
       if((*end - start) / 2 < (ptrdiff_t)_read_buf.size())
-        raise(FastqSeqQualParserError) << "Buffer is too small to "
+        eraise(FastqSeqQualParserError) << "Buffer is too small to "
           "contain an entire read and its qual values";
       qual_start = start + 1;
       for(const char *b = _read_buf.begin(); b < _read_buf.end(); b++, start += 2)
@@ -49,7 +49,7 @@ namespace jellyfish {
             break;
           // fall through
         default:
-          raise(FastqSeqQualParserError) << "Unexpected character '" << base()
+          eraise(FastqSeqQualParserError) << "Unexpected character '" << base()
                                          << "'. Expected '@'";
         }
       }
@@ -66,7 +66,7 @@ namespace jellyfish {
       while(start < *end && !found_qual_header) {
         switch(sbumpc()) {
         case EOF:
-          raise(FastqSeqQualParserError) << "Truncated input file";
+          eraise(FastqSeqQualParserError) << "Truncated input file";
         case '\n':
           break;
         case '+':
@@ -83,7 +83,7 @@ namespace jellyfish {
         while(!found_qual_header) {
           switch(sbumpc()) {
           case EOF:
-            raise(FastqSeqQualParserError) << "Truncated input file";
+            eraise(FastqSeqQualParserError) << "Truncated input file";
           case '\n':
             break;
           case '+':
@@ -109,12 +109,12 @@ namespace jellyfish {
     while(qual_start < start + 1) {
       switch(sbumpc()) {
       case EOF:
-        raise(FastqSeqQualParserError) << "Truncated input file";
+        eraise(FastqSeqQualParserError) << "Truncated input file";
       case '\n':
         break;
       case '@':
         if(pbase() == '\n')
-          raise(FastqSeqQualParserError) << "Invalid input, short "
+          eraise(FastqSeqQualParserError) << "Invalid input, short "
             "on qual values";
       default:
         *qual_start = base();

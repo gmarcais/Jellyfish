@@ -16,47 +16,50 @@
 
 #include <jellyfish/err.hpp>
 #include <jellyfish/file_parser.hpp>
+#include <jellyfish/dbg.hpp>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <assert.h>
 
 namespace jellyfish {
   file_parser *file_parser::new_file_parser_sequence(const char *path) {
     int fd = open(path, O_RDONLY);
     if(fd == -1)
-      raise(FileParserError) << "Error opening file '" << path << "'" << err::no;
+      eraise(FileParserError) << "Error opening file '" << path << "'" << err::no;
       
     char peek;
     if(read(fd, &peek, 1) <= 0)
-      raise(FileParserError) << "Empty input file '" << path << "'";
-
+      eraise(FileParserError) << "Empty input file '" << path << "'";
+    DBG << V(path) << " " << V(peek);
     switch(peek) {
     case '>': return new fasta_parser(fd, path, &peek, 1);
     case '@': return new fastq_sequence_parser(fd, path, &peek, 1);
       
     default:
-      raise(FileParserError) << "Invalid input file '" << path << "'" << err::no;
+      eraise(FileParserError) << "Invalid input file '" << path << "'" << err::no;
     }
     // Should never be reached
+    assert(0);
     return 0;
   }
 
   file_parser *file_parser::new_file_parser_seq_qual(const char *path) {
     int fd = open(path, O_RDONLY);
     if(fd == -1)
-      raise(FileParserError) << "Error opening file '" << path << "'" << err::no;
+      eraise(FileParserError) << "Error opening file '" << path << "'" << err::no;
       
     char peek;
     if(read(fd, &peek, 1) <= 0)
-      raise(FileParserError) << "Empty input file '" << path << "'";
+      eraise(FileParserError) << "Empty input file '" << path << "'";
 
     switch(peek) {
     case '@': return new fastq_seq_qual_parser(fd, path, &peek, 1);
       
     default:
-      raise(FileParserError) << "Invalid input file '" << path << "'";
+      eraise(FileParserError) << "Invalid input file '" << path << "'";
     }
     // Should never be reached
     return 0;
@@ -68,10 +71,14 @@ namespace jellyfish {
     _fd(fd), _base(pbase), _pbase(pbase) {
     struct stat stat_buf;
     if(fstat(fd, &stat_buf) == -1)
-      raise(FileParserError) << "Can't fstat '" << path << "'" << err::no;
+      eraise(FileParserError) << "Can't fstat '" << path << "'" << err::no;
     _size       = stat_buf.st_size;
-    _buffer     = (char *)mmap(0, _size , PROT_READ, MAP_SHARED, fd, 0);
-    _is_mmapped = _buffer != MAP_FAILED;
+    if(_do_mmap) {
+      _buffer     = (char *)mmap(0, _size , PROT_READ, MAP_SHARED, fd, 0);
+      _is_mmapped = _buffer != MAP_FAILED;
+    } else {
+      _is_mmapped  = false;
+    }
     if(_is_mmapped) {
       _end_buffer = _buffer + _size;
       _data       = _buffer;
@@ -113,4 +120,13 @@ namespace jellyfish {
     //    std::cerr << "sbumpc " << *_data << std::endl;
     return (_base = *_data++);
   }
+
+  bool file_parser::do_mmap() { return _do_mmap; }
+  bool file_parser::do_mmap(bool new_value) {
+    bool old_value = _do_mmap;
+    _do_mmap = new_value;
+    return old_value;
+  }
+
+  bool file_parser::_do_mmap = true;
 }

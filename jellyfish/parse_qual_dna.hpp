@@ -19,23 +19,16 @@
 
 #include <iostream>
 #include <vector>
-#include <jellyfish/concurrent_queues.hpp>
+#include <jellyfish/double_fifo_input.hpp>
 #include <jellyfish/atomic_gcc.hpp>
 #include <jellyfish/misc.hpp>
 #include <jellyfish/file_parser.hpp>
 
 namespace jellyfish {
-  class parse_qual_dna {
-    struct seq {
-      char *start;
-      char *end;
-    };
-    typedef concurrent_queue<struct seq> seq_queue;
+  class parse_qual_dna : public double_fifo_input<sequence_t> {
     typedef std::vector<const char *> fary_t;
 
-    seq_queue               rq, wq;
     uint_t                  mer_len;
-    uint64_t volatile       reader;
     size_t                  buffer_size;
     fary_t                  files;
     fary_t::const_iterator  current_file;
@@ -43,10 +36,8 @@ namespace jellyfish {
     const char              quality_start;
     const char              min_q;
     char                   *buffer_data;
-    struct seq             *buffers;
     char                   *seam;
     bool                    canonical;
-    std::ifstream           fd;
     jellyfish::file_parser *fparser;
 
   public:
@@ -64,20 +55,19 @@ namespace jellyfish {
                    const char _qs, const char _min_q); 
 
     ~parse_qual_dna() {
-      delete [] buffers;
+      delete [] buffer_data;
     }
 
     void set_canonical(bool v = true) { canonical = v; }
+    virtual void fill();
 
     class thread {
       parse_qual_dna         *parser;
-      struct seq             *sequence;
+      sequence_t             *sequence;
       const uint_t            mer_len, lshift;
       uint64_t                kmer, rkmer;
       const uint64_t          masq;
       uint_t                  cmlen;
-      seq_queue              *rq;
-      seq_queue              *wq;
       const bool              canonical;
       const char              quality_start;
       const char              min_q;
@@ -87,25 +77,20 @@ namespace jellyfish {
         parser(_parser), sequence(0),
         mer_len(_parser->mer_len), lshift(2 * (mer_len - 1)),
         kmer(0), rkmer(0), masq((1UL << (2 * mer_len)) - 1),
-        cmlen(0), rq(&parser->rq), wq(&parser->wq),
-        canonical(parser->canonical),
+        cmlen(0), canonical(parser->canonical),
         quality_start(_qs), min_q(_min_q) { }
 
       template<typename T>
       void parse(T &counter) {
         cmlen = kmer = rkmer = 0;
-        while(true) {
-          while(!sequence) {
-            if(!next_sequence())
-              return;
-          }
+        while((sequence = parser->next())) {
           const char         *start = sequence->start;
           const char * const  end   = sequence->end;
           while(start < end) {
             // std::cerr << *start << " " << *(start + 1) << " "
             //           << (void*)start << " " << (void*)end << std::endl;
-                  uint_t c = codes[(uint_t)*start++];
-            const char   q = *start++ - quality_start;
+            uint_t     c = codes[(uint_t)*start++];
+            const char q = *start++ - quality_start;
             if(q < min_q)
               c = CODE_RESET;
 
@@ -129,29 +114,12 @@ namespace jellyfish {
 
           // Buffer exhausted. Get a new one
           cmlen = kmer = rkmer = 0;
-          wq->enqueue(sequence);
-          sequence = 0;
+          parser->release(sequence);
         }
       }
-
-
-    private:
-      bool next_sequence();
     };
     friend class thread;
     thread new_thread() { return thread(this, quality_start, min_q); }
-
-  private:
-    void _read_sequence();
-    void read_sequence() {
-      static struct timespec time_sleep = { 0, 10000000 };
-      if(atomic::gcc::cas(&reader, (uint64_t)0, (uint64_t)1) != 0) {
-        nanosleep(&time_sleep, NULL);
-        return;
-      }
-      _read_sequence();
-      atomic::gcc::cas(&reader, (uint64_t)1, (uint64_t)0);
-    }
   };
 }
 

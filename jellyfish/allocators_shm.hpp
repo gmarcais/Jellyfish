@@ -85,6 +85,10 @@ namespace allocators {
       size = new_size;
       return ptr;
     }
+
+    // Not yet implemented
+    int lock() { return 0; }
+    int unlock() { return 0; }
   };
 };
 #endif

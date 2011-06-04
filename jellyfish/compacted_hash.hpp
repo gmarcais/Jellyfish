@@ -46,7 +46,7 @@ namespace jellyfish {
       header() { }
       header(char *ptr) {
         if(memcmp(ptr, file_type, sizeof(type)))
-          raise(ErrorReading) << "Bad file type '" << err::substr(ptr, sizeof(type))
+          eraise(ErrorReading) << "Bad file type '" << err::substr(ptr, sizeof(type))
                               << "', expected '" << err::substr(file_type, sizeof(type)) << "'";
         memcpy((void *)this, ptr, sizeof(struct header));
       }
@@ -175,16 +175,16 @@ namespace jellyfish {
         io = new std::ifstream(filename.c_str());
         io->read((char *)&header, sizeof(header));
         if(!io->good())
-          raise(ErrorReading) << "File truncated";
+          eraise(ErrorReading) << "File truncated";
         if(memcmp(header.type, file_type, sizeof(header.type)))
-          raise(ErrorReading) << "Bad file type '" 
+          eraise(ErrorReading) << "Bad file type '" 
                               << err::substr(header.type, sizeof(header.type)) << "', expected '"
                               << err::substr(file_type, sizeof(header.type)) << "'";
 
         if(header.key_len > 64 || header.key_len == 0)
-          raise(ErrorReading) << "Invalid key length '" << header.key_len << "'";
+          eraise(ErrorReading) << "Invalid key length '" << header.key_len << "'";
         if(header.size != (1UL << floorLog2(header.size)))
-          raise(ErrorReading) << "Size '" << header.size << "' is not a power of 2";
+          eraise(ErrorReading) << "Size '" << header.size << "' is not a power of 2";
         key_len  = (header.key_len / 8) + (header.key_len % 8 != 0);
         record_len = key_len + header.val_len;
         buffer_len = record_len * (_buff_len / record_len);
@@ -199,7 +199,7 @@ namespace jellyfish {
         std::streamoff list_size = io->tellg() - cpos;
         io->seekg(cpos);
         if(list_size - (header.distinct * record_len) != 0)
-          raise(ErrorReading) << "Bad hash size '" << list_size << "', expected '"
+          eraise(ErrorReading) << "Bad hash size '" << list_size << "', expected '"
                               << (header.distinct * record_len) << "' bytes";
         key = val = 0;
         size_mask = header.size - 1;
@@ -294,7 +294,7 @@ namespace jellyfish {
         canonical(false)
       {
         if(file.end() - base - header.distinct * record_len != 0)
-          raise(ErrorReading) << "Bad hash size '" << (file.end() - base)
+          eraise(ErrorReading) << "Bad hash size '" << (file.end() - base)
                               << "', expected '" << header.distinct * record_len << "' bytes";
           
         get_key(0, &first_key);
@@ -317,7 +317,7 @@ namespace jellyfish {
         canonical(false)
       { 
         if(file.end() - base - header.distinct * record_len != 0)
-          raise(ErrorReading) << "Bad hash size '" << (file.end() - base)
+          eraise(ErrorReading) << "Bad hash size '" << (file.end() - base)
                               << "', expected '" << header.distinct * record_len << "' bytes";
           
         get_key(0, &first_key);

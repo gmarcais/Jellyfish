@@ -14,16 +14,12 @@
     along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <jellyfish/err.hpp>
+#include <jellyfish/mapped_file.hpp>
 
-namespace err {
-  std::ostream &operator<<(std::ostream &os, const err::substr &ss) {
-    os.write(ss._s, ss._l);
-    return os;
-  }
-
-  std::ostream &operator<<(std::ostream &os, const err::no_t &x) {
-    x.write(os, errno);
-    return os;
-  }
+char mapped_file::load() const {
+  long sz     = sysconf(_SC_PAGESIZE);
+  char unused = 0;
+  for(char *w = _base; w < _base + _length; w += sz)
+    unused ^= *w;
+  return unused;
 }

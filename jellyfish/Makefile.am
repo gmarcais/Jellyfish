@@ -14,20 +14,21 @@ parse_qual_dna.cc fastq_seq_qual_parser.cc half.cpp			\
 hash_fastq_merge.cc cite_cmdline.cc query_cmdline.cc			\
 hash_merge_cmdline.cc histo_cmdline.cc stats_cmdline.cc			\
 histo_fastq_main_cmdline.cc dump_fastq_main_cmdline.cc			\
-mer_counter_cmdline.cc hash_fastq_merge_cmdline.cc dump_cmdline.cc
+mer_counter_cmdline.cc hash_fastq_merge_cmdline.cc dump_cmdline.cc	\
+dbg.cc mapped_file.cc
 # jellyfish_CPPFLAGS = $(AM_CPPFLAGS)
 
 EXTRA_DIST = cite_cmdline.hpp query_cmdline.hpp hash_merge_cmdline.hpp	\
 histo_cmdline.hpp stats_cmdline.hpp histo_fastq_main_cmdline.hpp	\
 dump_fastq_main_cmdline.hpp mer_counter_cmdline.hpp			\
-hash_fastq_merge_cmdline.hpp dump_cmdline.hpp
+hash_fastq_merge_cmdline.hpp dump_cmdline.hpp double_fifo_input.hpp
 
 lib_LTLIBRARIES = libjellyfish.la
 libjellyfish_la_LDFLAGS = -version-info 1:0:0
 libjellyfish_la_SOURCES = square_binary_matrix.cc fasta_parser.cc	\
 err.cc misc.cc storage.cc thread_exec.cc time.cc file_parser.cc		\
 fastq_seq_qual_parser.cc fastq_sequence_parser.cc fastq_read_parser.cc	\
-half.cpp
+half.cpp mapped_file.cc
 libjellyfish_la_CPPFLAGS = $(AM_CPPFLAGS)
 library_includedir=$(includedir)/jellyfish-@PACKAGE_VERSION@/jellyfish
 library_include_HEADERS = allocators_malloc.hpp allocators_mmap.hpp	\
@@ -46,8 +47,11 @@ parse_qual_dna.hpp fastq_sequence_parser.hpp fastq_seq_qual_parser.hpp	\
 file_parser.hpp fasta_parser.hpp fastq_read_parser.hpp half.h		\
 toFloat.h eLut.h
 
-check_PROGRAMS = generate_sequence
+check_PROGRAMS = generate_sequence test_double_fifo_input
 generate_sequence_SOURCES = generate_sequence.cc	\
 generate_sequence_cmdline.cc misc.cc mersenne.cpp	\
 square_binary_matrix.cc
+test_double_fifo_input_SOURCES = test_double_fifo_input.cc		\
+parse_dna.cc file_parser.cc fasta_parser.cc fastq_sequence_parser.cc	\
+fastq_seq_qual_parser.cc backtrace.cc thread_exec.cc dbg.cc
 EXTRA_DIST += randomc.h generate_sequence_cmdline.hpp

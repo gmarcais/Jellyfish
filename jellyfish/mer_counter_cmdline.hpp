@@ -98,6 +98,10 @@ struct mer_counter_args
   long out_buffer_size_arg;	/**< @brief Size of output buffer per thread (default='20000000').  */
   char * out_buffer_size_orig;	/**< @brief Size of output buffer per thread original value given at command line.  */
   const char *out_buffer_size_help; /**< @brief Size of output buffer per thread help description.  */
+  int lock_flag;	/**< @brief Lock hash in memory (no swapping) (default=off).  */
+  const char *lock_help; /**< @brief Lock hash in memory (no swapping) help description.  */
+  int stream_flag;	/**< @brief Read from stream, not memory map (default=off).  */
+  const char *stream_help; /**< @brief Read from stream, not memory map help description.  */
   
   unsigned int help_given ;	/**< @brief Whether help was given.  */
   unsigned int full_help_given ;	/**< @brief Whether full-help was given.  */
@@ -123,6 +127,8 @@ struct mer_counter_args
   unsigned int buffers_given ;	/**< @brief Whether buffers was given.  */
   unsigned int buffer_size_given ;	/**< @brief Whether buffer-size was given.  */
   unsigned int out_buffer_size_given ;	/**< @brief Whether out-buffer-size was given.  */
+  unsigned int lock_given ;	/**< @brief Whether lock was given.  */
+  unsigned int stream_given ;	/**< @brief Whether stream was given.  */
 
   char **inputs ; /**< @brief unamed options (options without names) */
   unsigned inputs_num ; /**< @brief unamed options number */

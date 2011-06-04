@@ -61,6 +61,13 @@ namespace allocators {
       ptr = new_ptr;
       return ptr;
     }
+
+    int lock() {
+      return mlock(ptr, size);
+    }
+    int unlock() {
+      return munlock(ptr, size);
+    }
     
   private:
     static const int nb_threads = 4;

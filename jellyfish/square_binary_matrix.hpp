@@ -36,17 +36,20 @@ private:
   void alloc_columns() {
     if(columns)
       free(columns);
-    columns = calloc_align<uint64_t>((size_t)size, (size_t)16);
+    if(size < 0)
+      columns = 0;
+    else
+      columns = calloc_align<uint64_t>((size_t)size, (size_t)16);
   }
 
 public:
-  SquareBinaryMatrix() : columns(NULL), size(-1) { }
+  SquareBinaryMatrix() : columns(0), size(-1) { }
 
-  SquareBinaryMatrix(int _size) :columns(NULL), size(_size) {
+  SquareBinaryMatrix(int _size) :columns(0), size(_size) {
     alloc_columns();
     memset(columns, '\0', sizeof(uint64_t) * _size);
   }
-  SquareBinaryMatrix(const SquareBinaryMatrix &rhs) : columns(NULL) {
+  SquareBinaryMatrix(const SquareBinaryMatrix &rhs) : columns(0) {
     int i;
     
     size = rhs.get_size();
@@ -55,7 +58,7 @@ public:
     for(i = 0; i < size; i++)
       columns[i] = rhs.columns[i] & _mask;
   }
-  SquareBinaryMatrix(const uint64_t *_columns, int _size) : columns(NULL), size(_size) {
+  SquareBinaryMatrix(const uint64_t *_columns, int _size) : columns(0), size(_size) {
     int i;
     uint64_t _mask = mask();
     alloc_columns();
@@ -63,10 +66,10 @@ public:
     for(i = 0; i < size; i++)
       columns[i] = _columns[i] & _mask;
   }
-  SquareBinaryMatrix(const char *map) : columns(NULL), size(0) {
+  SquareBinaryMatrix(const char *map) : columns(0), size(0) {
     read(map);
   }
-  SquareBinaryMatrix(std::istream *is) : columns(NULL), size(0) {
+  SquareBinaryMatrix(std::istream *is) : columns(0), size(0) {
     load(is);
   }
 
@@ -121,6 +124,7 @@ public:
     return true;
   }
 
+  void resize(int ns) { size = ns; alloc_columns(); }
   int get_size() const { return size; }
 
   bool operator==(const SquareBinaryMatrix &other) const {

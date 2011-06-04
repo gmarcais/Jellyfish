@@ -25,6 +25,11 @@
 #include <jellyfish/misc.hpp>
 
 namespace jellyfish {
+  struct sequence_t {
+    char *start;
+    char *end;
+  };
+
   class file_parser {
     int                  _fd;
     char                 _base, _pbase;
@@ -35,6 +40,8 @@ namespace jellyfish {
     const char          *_end_data;
     size_t               _size;
     bool                 _is_mmapped;
+
+    static bool          _do_mmap;
 
   protected:
     define_error_class(FileParserError);
@@ -47,6 +54,8 @@ namespace jellyfish {
     virtual ~file_parser();
     static file_parser *new_file_parser_sequence(const char *path);
     static file_parser *new_file_parser_seq_qual(const char *path);
+    static bool do_mmap();
+    static bool do_mmap(bool new_value);
 
     // parse some input data into the buffer [start, *end). Returns
     // false if there is no more data in the input. **end is an

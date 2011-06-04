@@ -14,16 +14,22 @@
     along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <jellyfish/err.hpp>
+#include <jellyfish/dbg.hpp>
 
-namespace err {
-  std::ostream &operator<<(std::ostream &os, const err::substr &ss) {
+namespace dbg {
+#ifdef DEBUG
+
+  pthread_mutex_t print_t::_lock = PTHREAD_MUTEX_INITIALIZER;
+  std::ostream &operator<<(std::ostream &os, const dbg::substr &ss) {
     os.write(ss._s, ss._l);
     return os;
   }
 
-  std::ostream &operator<<(std::ostream &os, const err::no_t &x) {
-    x.write(os, errno);
+#else
+
+  std::ostream &operator<<(std::ostream &os, const dbg::substr &ss) {
     return os;
   }
+
+#endif
 }

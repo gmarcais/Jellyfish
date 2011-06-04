@@ -20,38 +20,26 @@ namespace jellyfish {
   parse_qual_dna::parse_qual_dna(int nb_files, char *argv[], uint_t _mer_len,
                                  unsigned int nb_buffers, size_t _buffer_size,
                                  const char _qs, const char _min_q) :
-    rq(nb_buffers), wq(nb_buffers), mer_len(_mer_len), 
-    reader(0), buffer_size(_buffer_size), files(argv, argv + nb_files),
+    double_fifo_input(nb_buffers), mer_len(_mer_len), 
+    buffer_size(_buffer_size), files(argv, argv + nb_files),
     current_file(files.begin()), have_seam(false), quality_start(_qs),
     min_q(_min_q)
   {
     buffer_data = new char[nb_buffers * buffer_size];
-    buffers     = new seq[nb_buffers];
     seam        = new char[2*mer_len];
-    
-    for(unsigned int i = 0; i < nb_buffers; i++) {
-      buffers[i].start = buffer_data + i * _buffer_size;
-      buffers[i].end   = buffers[i].start;
-      wq.enqueue(&buffers[i]);
+
+    unsigned long i = 0;
+    for(bucket_iterator it = bucket_begin();
+        it != bucket_end(); ++it, ++i) {
+      it->end = it->start = buffer_data + i * buffer_size;
     }
 
-    fparser = jellyfish::file_parser::new_file_parser_seq_qual(*current_file);
+    fparser =
+      jellyfish::file_parser::new_file_parser_seq_qual(*current_file);
   }
 
-  bool parse_qual_dna::thread::next_sequence() {
-    if(rq->is_low() && !rq->is_closed()) {
-      parser->read_sequence();
-    }
-    while(!(sequence = rq->dequeue())) {
-      if(rq->is_closed())
-        return false;
-      parser->read_sequence();
-    }
-    return true;
-  }
-
-  void parse_qual_dna::_read_sequence() {
-    seq *new_seq = 0;
+  void parse_qual_dna::fill() {
+    sequence_t *new_seq = 0;
   
     while(true) {
       if(!new_seq) {
@@ -80,7 +68,8 @@ namespace jellyfish {
           rq.close();
           break;
         }
-        fparser = jellyfish::file_parser::new_file_parser_seq_qual(*current_file);
+        fparser = 
+          jellyfish::file_parser::new_file_parser_seq_qual(*current_file);
       }
     }
   }

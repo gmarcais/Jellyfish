@@ -56,6 +56,8 @@ const char *mer_counter_args_full_help[] = {
   "      --buffers=LONG            Number of buffers per thread",
   "      --buffer-size=LONG        Size of buffers  (default=`8192')",
   "      --out-buffer-size=LONG    Size of output buffer per thread  \n                                  (default=`20000000')",
+  "      --lock                    Lock hash in memory (no swapping)  \n                                  (default=off)",
+  "      --stream                  Read from stream, not memory map  (default=off)",
     0
 };
 
@@ -136,6 +138,8 @@ void clear_given (struct mer_counter_args *args_info)
   args_info->buffers_given = 0 ;
   args_info->buffer_size_given = 0 ;
   args_info->out_buffer_size_given = 0 ;
+  args_info->lock_given = 0 ;
+  args_info->stream_given = 0 ;
 }
 
 static
@@ -174,6 +178,8 @@ void clear_args (struct mer_counter_args *args_info)
   args_info->buffer_size_orig = NULL;
   args_info->out_buffer_size_arg = 20000000;
   args_info->out_buffer_size_orig = NULL;
+  args_info->lock_flag = 0;
+  args_info->stream_flag = 0;
   
 }
 
@@ -206,6 +212,8 @@ void init_args_info(struct mer_counter_args *args_info)
   args_info->buffers_help = mer_counter_args_full_help[21] ;
   args_info->buffer_size_help = mer_counter_args_full_help[22] ;
   args_info->out_buffer_size_help = mer_counter_args_full_help[23] ;
+  args_info->lock_help = mer_counter_args_full_help[24] ;
+  args_info->stream_help = mer_counter_args_full_help[25] ;
   
 }
 
@@ -400,6 +408,10 @@ mer_counter_cmdline_dump(FILE *outfile, struct mer_counter_args *args_info)
     write_into_file(outfile, "buffer-size", args_info->buffer_size_orig, 0);
   if (args_info->out_buffer_size_given)
     write_into_file(outfile, "out-buffer-size", args_info->out_buffer_size_orig, 0);
+  if (args_info->lock_given)
+    write_into_file(outfile, "lock", 0, 0 );
+  if (args_info->stream_given)
+    write_into_file(outfile, "stream", 0, 0 );
   
 
   i = EXIT_SUCCESS;
@@ -716,6 +728,8 @@ mer_counter_cmdline_internal (
         { "buffers",	1, NULL, 0 },
         { "buffer-size",	1, NULL, 0 },
         { "out-buffer-size",	1, NULL, 0 },
+        { "lock",	0, NULL, 0 },
+        { "stream",	0, NULL, 0 },
         { 0,  0, 0, 0 }
       };
 
@@ -997,6 +1011,30 @@ mer_counter_cmdline_internal (
                 &(local_args_info.out_buffer_size_given), optarg, 0, "20000000", ARG_LONG,
                 check_ambiguity, override, 0, 0,
                 "out-buffer-size", '-',
+                additional_error))
+              goto failure;
+          
+          }
+          /* Lock hash in memory (no swapping).  */
+          else if (strcmp (long_options[option_index].name, "lock") == 0)
+          {
+          
+          
+            if (update_arg((void *)&(args_info->lock_flag), 0, &(args_info->lock_given),
+                &(local_args_info.lock_given), optarg, 0, 0, ARG_FLAG,
+                check_ambiguity, override, 1, 0, "lock", '-',
+                additional_error))
+              goto failure;
+          
+          }
+          /* Read from stream, not memory map.  */
+          else if (strcmp (long_options[option_index].name, "stream") == 0)
+          {
+          
+          
+            if (update_arg((void *)&(args_info->stream_flag), 0, &(args_info->stream_given),
+                &(local_args_info.stream_given), optarg, 0, 0, ARG_FLAG,
+                check_ambiguity, override, 1, 0, "stream", '-',
                 additional_error))
               goto failure;
           

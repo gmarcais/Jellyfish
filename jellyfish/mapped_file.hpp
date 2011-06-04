@@ -41,15 +41,15 @@ protected:
     struct stat stat;
     
     if(fd < 0)
-      raise(ErrorMMap) << "Can't open file '" << filename << "'" << err::no;
+      eraise(ErrorMMap) << "Can't open file '" << filename << "'" << err::no;
     
     if(fstat(fd, &stat) < 0)
-      raise(ErrorMMap) << "Can't stat file '" << filename << "'" << err::no;
+      eraise(ErrorMMap) << "Can't stat file '" << filename << "'" << err::no;
 
     _length = stat.st_size;
     _base = (char *)mmap(NULL, _length, PROT_READ, MAP_SHARED, fd, 0);
     if(_base == MAP_FAILED)
-      raise(ErrorMMap) << "Can't mmap file '" << filename << "'" << err::no;
+      eraise(ErrorMMap) << "Can't mmap file '" << filename << "'" << err::no;
     close(fd);
     _end = _base + _length;
   }
@@ -82,6 +82,7 @@ public:
   char *end() const { return _end; }
   size_t length() const { return _length; }
 
+  // No error checking here. Should I throw something?
   const mapped_file & will_need() const {
     madvise(_base, _length, MADV_WILLNEED);
     return *this;
@@ -94,6 +95,15 @@ public:
     madvise(_base, _length, MADV_RANDOM);
     return *this;
   }
+  const mapped_file & lock() const {
+    if(mlock(_base, _length) < 0)
+      eraise(ErrorMMap) << "Can't lock map in memory" << err::no;
+    return *this;
+  }
+
+  // Do not optimize. Side effect is that every page is accessed and should now be in cache.
+  // The flagg __attribute__((optimize(0))) does not compile, so return a useless char argument
+  char load() const;
 };
 
 class mapped_files_t : public std::vector<mapped_file> {

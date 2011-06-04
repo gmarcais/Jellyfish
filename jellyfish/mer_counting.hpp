@@ -26,7 +26,6 @@
 #include <jellyfish/misc.hpp>
 #include <jellyfish/storage.hpp>
 #include <jellyfish/hash.hpp>
-#include <jellyfish/concurrent_queues.hpp>
 #include <jellyfish/atomic_gcc.hpp>
 #include <jellyfish/allocators_mmap.hpp>
 #include <jellyfish/compacted_hash.hpp>
