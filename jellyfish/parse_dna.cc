@@ -20,7 +20,6 @@ namespace jellyfish {
   void parse_dna::fill() {
     bucket_t *new_seq = 0;
   
-    DBG;
     while(true) {
       if(!new_seq) {
         new_seq = wq.dequeue();
@@ -56,7 +55,7 @@ namespace jellyfish {
 
   parse_dna::parse_dna(int nb_files, const char *argv[], uint_t _mer_len,
                        unsigned int nb_buffers, size_t _buffer_size) :
-    double_fifo_input(nb_buffers), mer_len(_mer_len), 
+    double_fifo_input<sequence_parser::sequence_t>(nb_buffers), mer_len(_mer_len), 
     buffer_size(_buffer_size), files(argv, argv + nb_files),
     current_file(files.begin()), have_seam(false), canonical(false)
   {
@@ -71,7 +70,6 @@ namespace jellyfish {
     assert(i == nb_buffers);
 
     fparser = sequence_parser::new_parser(*current_file);
-    DBG << V(fparser);
   }
 
   const uint_t parse_dna::codes[256] = {

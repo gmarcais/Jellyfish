@@ -38,24 +38,24 @@ namespace jellyfish {
     virtual ~read_parser() {}
 
     static read_parser *new_parser(const char *path);
-    virtual bool next_reads(reads_t *rs);
+    virtual bool next_reads(reads_t *rs) = 0;
   };
 
-  class fasta_read_parser : read_parser {
+  class fasta_read_parser : public read_parser {
   public:
     fasta_read_parser(int fd, const char *path, const char *str, size_t len) :
-      read_parser(int fd, const char *path, const char *str, size_t len) {}
+      read_parser(fd, path, str, len) {}
 
     virtual ~fasta_read_parser() {}
     virtual bool next_reads(reads_t *rs);
   };
 
-  class fastq_read_parser : read_parser {
+  class fastq_read_parser : public read_parser {
   public:
     fastq_read_parser(int fd, const char *path, const char *str, size_t len) :
-      read_parser(int fd, const char *path, const char *str, size_t len) {}
+      read_parser(fd, path, str, len) {}
     virtual ~fastq_read_parser() {}
-    virtual bool next_reads();
-  }
+    virtual bool next_reads(reads_t *rs);
+  };
 }
 #endif

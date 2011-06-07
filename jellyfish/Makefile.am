@@ -26,8 +26,8 @@ simple_growing_array.hpp
 lib_LTLIBRARIES = libjellyfish.la
 libjellyfish_la_LDFLAGS = -version-info 1:0:0
 libjellyfish_la_SOURCES = square_binary_matrix.cc err.cc misc.cc	\
-storage.cc thread_exec.cc time.cc file_parser.cc half.cpp		\
-mapped_file.cc
+storage.cc thread_exec.cc time.cc file_parser.cc read_parser.cc		\
+parse_read.cc half.cpp mapped_file.cc
 libjellyfish_la_CPPFLAGS = $(AM_CPPFLAGS)
 library_includedir=$(includedir)/jellyfish-@PACKAGE_VERSION@/jellyfish
 library_include_HEADERS = allocators_malloc.hpp allocators_mmap.hpp	\
@@ -42,7 +42,8 @@ token_ring.hpp raw_dumper.hpp capped_integer.hpp			\
 aligned_values_array.hpp fastq_dumper.hpp floats.hpp			\
 circular_buffer.hpp counter.hpp parse_quake.hpp parse_dna.hpp		\
 parse_qual_dna.hpp file_parser.hpp sequence_parser.hpp			\
-seq_qual_parser.hpp toFloat.h eLut.h
+seq_qual_parser.hpp double_fifo_input.hpp read_parser.hpp		\
+parse_read.hpp simple_growing_array.hpp toFloat.h eLut.h
 
 check_PROGRAMS = generate_sequence test_double_fifo_input
 generate_sequence_SOURCES = generate_sequence.cc	\

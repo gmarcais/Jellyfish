@@ -18,7 +18,9 @@
 #define __JELLYFISH_FASTQ_READ_PARSER_HPP__
 
 #include <jellyfish/double_fifo_input.hpp>
+#include <jellyfish/read_parser.hpp>
 #include <jellyfish/misc.hpp>
+#include <vector>
 
 namespace jellyfish {
   class parse_read : public double_fifo_input<read_parser::reads_t> {
@@ -35,10 +37,7 @@ namespace jellyfish {
     static const uint_t CODE_RESET = -1;
 
     parse_read(int nb_files, char *argv[], unsigned int nb_buffers);
-
-    ~parse_read() {
-      delete [] buffer_data;
-    }
+    ~parse_read() {}
 
     void set_canonical(bool v = true) { canonical = v; }
     virtual void fill();
@@ -49,11 +48,11 @@ namespace jellyfish {
       int         current_read;
 
     public:
-      thread(fastq_read_parser *_parser) :
+      thread(parse_read *_parser) :
         parser(_parser), sequence(parser->next()),
         current_read(0) {}
 
-      read_t * next_read() {
+      read_parser::read_t * next_read() {
         while(sequence) {
           if(current_read < sequence->nb_reads)
             return &sequence->reads[current_read++];

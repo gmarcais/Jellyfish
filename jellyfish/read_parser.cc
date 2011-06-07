@@ -16,6 +16,22 @@
 
 #include <jellyfish/read_parser.hpp>
 
+jellyfish::read_parser *
+jellyfish::read_parser::new_parser(const char *path) {
+  int fd;
+  char peek;
+  fd = file_peek(path, &peek);
+
+  switch(peek) {
+  case '>': return new fasta_read_parser(fd, path, &peek, 1);
+  case '@': return new fastq_read_parser(fd, path, &peek, 1);
+  default:
+    eraise(FileParserError) << "Invalid input file '"
+                            << path << "'" << err::no;
+  }
+  return 0;
+}
+
 #define BREAK_AT_END if(eof()) break;
 namespace jellyfish {
   bool fasta_read_parser::next_reads(read_parser::reads_t *rs) {
@@ -24,11 +40,11 @@ namespace jellyfish {
         ++rs->nb_reads) {
       read_t *r = &rs->reads[rs->nb_reads];
       r->qual_s = r->qual_e = 0;
-      while(sbumpc != '>')
+      while(sbumpc() != '>')
         BREAK_AT_END;
       BREAK_AT_END;
       r->header = ptr();
-      while(sbumpc != '\n')
+      while(sbumpc() != '\n')
         BREAK_AT_END;
       BREAK_AT_END;
       r->hlen  = ptr() - r->header;
@@ -40,7 +56,7 @@ namespace jellyfish {
             break;
       r->seq_e = ptr();
     }
-    return eof();
+    return !eof();
   }
 
 
@@ -49,11 +65,11 @@ namespace jellyfish {
         rs->nb_reads < read_parser::reads_t::max_nb_reads && !eof();
         ++rs->nb_reads) {
       read_t *r = &rs->reads[rs->nb_reads];
-      while(sbumpc != '@')
+      while(sbumpc() != '@')
         BREAK_AT_END;
       BREAK_AT_END;
       r->header = ptr();
-      while(sbumpc != '\n')
+      while(sbumpc() != '\n')
         BREAK_AT_END;
       BREAK_AT_END;
       r->hlen  = ptr() - r->header;

@@ -19,7 +19,6 @@
 
 #include <jellyfish/concurrent_queues.hpp>
 #include <jellyfish/locks_pthread.hpp>
-#include <jellyfish/dbg.hpp>
 #include <err.hpp>
 #include <pthread.h>
 #include <assert.h>
@@ -91,17 +90,14 @@ namespace jellyfish {
 
     if(pthread_create(&input_id, 0, static_input_routine, (void *)this) != 0)
       eraise(Error) << "Failed creating input thread" << err::no;
-    DBG << "Started input thread " << V(input_id);
   }
 
   template<typename T>
   double_fifo_input<T>::~double_fifo_input() {
-    DBG << V(input_id);
     if(input_id)
       if(pthread_cancel(input_id)) {
         void *input_return;
         pthread_join(input_id, &input_return);
-        DBG << "input joined " << V(input_return);
       }
     delete buckets;
   }
@@ -118,7 +114,6 @@ namespace jellyfish {
   void double_fifo_input<T>::input_routine() {
     state_t prev_state;
 
-    DBG;
     while(!rq.is_closed()) {
       // The write queue is full or this is the first iteration, sleep
       // until it become less than some threshold
@@ -126,10 +121,8 @@ namespace jellyfish {
       prev_state = atomic::gcc::cas(&state, WORKING, SLEEPING);
       assert(prev_state == WORKING);
       do {
-        DBG << "going to sleep";
         full_queue.wait();
       } while(state != WAKENING);
-      DBG << "Waking up";
       prev_state = atomic::gcc::cas(&state, WAKENING, WORKING);
       assert(prev_state == WAKENING);
       full_queue.unlock();
