@@ -31,8 +31,6 @@
 #include <jellyfish/compacted_hash.hpp>
 #include <jellyfish/compacted_dumper.hpp>
 #include <jellyfish/raw_dumper.hpp>
-#include <jellyfish/fasta_parser.hpp>
-#include <jellyfish/fastq_sequence_parser.hpp>
 #include <jellyfish/parse_dna.hpp>
 #include <jellyfish/parse_qual_dna.hpp>
 
@@ -57,7 +55,6 @@ typedef jellyfish::hash< uint64_t,uint32_t,direct_index_storage_t,atomic::gcc> d
 #include <jellyfish/aligned_values_array.hpp>
 #include <jellyfish/floats.hpp>
 #include <jellyfish/fastq_dumper.hpp>
-#include <jellyfish/fastq_seq_qual_parser.hpp>
 #include <jellyfish/parse_quake.hpp>
 typedef jellyfish::aligned_values::array<uint64_t,jellyfish::Float,atomic::gcc,allocators::mmap> fastq_storage_t;
 typedef jellyfish::hash<uint64_t,jellyfish::Float,fastq_storage_t,atomic::gcc> fastq_hash_t;

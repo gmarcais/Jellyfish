@@ -18,7 +18,7 @@
 
 namespace jellyfish {
   void parse_dna::fill() {
-    sequence_t *new_seq = 0;
+    bucket_t *new_seq = 0;
   
     DBG;
     while(true) {
@@ -49,8 +49,7 @@ namespace jellyfish {
           rq.close();
           break;
         }
-        fparser =
-          jellyfish::file_parser::new_file_parser_sequence(*current_file);
+        fparser = sequence_parser::new_parser(*current_file);
       }
     }
   }
@@ -71,7 +70,7 @@ namespace jellyfish {
     }
     assert(i == nb_buffers);
 
-    fparser = jellyfish::file_parser::new_file_parser_sequence(*current_file);
+    fparser = sequence_parser::new_parser(*current_file);
     DBG << V(fparser);
   }
 

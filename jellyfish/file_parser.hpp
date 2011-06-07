@@ -25,11 +25,6 @@
 #include <jellyfish/misc.hpp>
 
 namespace jellyfish {
-  struct sequence_t {
-    char *start;
-    char *end;
-  };
-
   class file_parser {
     int                  _fd;
     char                 _base, _pbase;
@@ -42,35 +37,39 @@ namespace jellyfish {
     bool                 _is_mmapped;
 
     static bool          _do_mmap;
+    static bool          _force_mmap;
 
   protected:
     define_error_class(FileParserError);
     int sbumpc();
+    int speekc();
 
   public:
     // [str, str+len) is content on initial buffer
     file_parser(int fd, const char *path, const char *str, size_t len,
                 char pbase = '\n');
-    virtual ~file_parser();
-    static file_parser *new_file_parser_sequence(const char *path);
-    static file_parser *new_file_parser_seq_qual(const char *path);
+    ~file_parser();
+
     static bool do_mmap();
     static bool do_mmap(bool new_value);
+    // throw an error if mmap fails
+    static bool force_mmap();
+    static bool force_mmap(bool new_value);
+    static int file_peek(const char *path, char *peek);
 
-    // parse some input data into the buffer [start, *end). Returns
-    // false if there is no more data in the input. **end is an
-    // input/output parameter. It points past the end of the buffer
-    // when called and should point past the end of the data when
-    // returned.
-    virtual bool parse(char *start, char **end) = 0;
-
+    // current base and previous base
     char base() const { return _base; }
     char pbase() const { return _pbase; }
+    bool eof() const { return _base == EOF; }
+
+    // ptr to base. Valid only for mmaped files
+    const char *ptr() const { return _data; }
+    const char *base_ptr() const { return _data - 1; }
+    const char *pbase_ptr() const { return _data; }
+
+  private:
+    int read_next_buffer();
   };
 }
-
-#include <jellyfish/fasta_parser.hpp>
-#include <jellyfish/fastq_sequence_parser.hpp>
-#include <jellyfish/fastq_seq_qual_parser.hpp>
 
 #endif

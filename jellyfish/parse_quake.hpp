@@ -21,11 +21,11 @@
 #include <vector>
 #include <jellyfish/double_fifo_input.hpp>
 #include <jellyfish/misc.hpp>
-#include <jellyfish/file_parser.hpp>
+#include <jellyfish/seq_qual_parser.hpp>
 #include <jellyfish/circular_buffer.hpp>
 
 namespace jellyfish {
-  class parse_quake : public double_fifo_input<sequence_t> {
+  class parse_quake : public double_fifo_input<seq_qual_parser::sequence_t> {
     typedef std::vector<const char *> fary_t;
 
     uint_t                  mer_len;
@@ -38,7 +38,7 @@ namespace jellyfish {
     struct seq             *buffers;
     char                   *seam;
     bool                    canonical;
-    jellyfish::file_parser *fparser;
+    seq_qual_parser        *fparser;
 
   public:
     /* Action to take for a given letter in fasta file:
@@ -65,7 +65,7 @@ namespace jellyfish {
     
     class thread {
       parse_quake            *parser;
-      sequence_t             *sequence;
+      bucket_t               *sequence;
       const uint_t            mer_len, lshift;
       uint64_t                kmer, rkmer;
       const uint64_t          masq;

@@ -22,22 +22,21 @@
 #include <jellyfish/double_fifo_input.hpp>
 #include <jellyfish/atomic_gcc.hpp>
 #include <jellyfish/misc.hpp>
-#include <jellyfish/file_parser.hpp>
+#include <jellyfish/sequence_parser.hpp>
 
 namespace jellyfish {
-  class parse_dna : public double_fifo_input<sequence_t> {
+  class parse_dna : public double_fifo_input<sequence_parser::sequence_t> {
     typedef std::vector<const char *> fary_t;
 
-    uint_t                  mer_len;
-    size_t                  buffer_size;
-    fary_t                  files;
-    fary_t::const_iterator  current_file;
-    bool                    have_seam;
-    char                   *buffer_data;
-    char                   *seam;
-    bool                    canonical;
-    std::ifstream           fd;
-    jellyfish::file_parser *fparser;
+    uint_t                      mer_len;
+    size_t                      buffer_size;
+    fary_t                      files;
+    fary_t::const_iterator      current_file;
+    bool                        have_seam;
+    char                       *buffer_data;
+    char                       *seam;
+    bool                        canonical;
+    sequence_parser            *fparser;
 
   public:
     /* Action to take for a given letter in fasta file:
@@ -94,7 +93,7 @@ namespace jellyfish {
 
     class thread {
       parse_dna      *parser;
-      sequence_t     *sequence;
+      bucket_t       *sequence;
       const uint_t    mer_len, lshift;
       uint64_t        kmer, rkmer;
       const uint64_t  masq;

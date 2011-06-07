@@ -14,37 +14,32 @@
     along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <jellyfish/fasta_parser.hpp>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/mman.h>
+#include <jellyfish/parse_read.hpp>
 
-namespace jellyfish {
-  bool fasta_parser::parse(char *start, char **end) {
-    while(start < *end && base() != EOF) {
-      switch(sbumpc()) {
-      case EOF:
-        break;
+jellyfish::parse_read(int nb_files, char *argv[], unsigned int nb_buffers) :
+  double_fifo_input(nb_buffers), files(argv, argv + nb_files),
+  current_file(files.begin()),
+  fparser(file_parser::new_file_parser_read(*current_file)
+{ }
 
-      case '>':
-        if(pbase() == '\n') {
-          while(base() != EOF && base() != '\n') { sbumpc(); }
-          *start++ = 'N';
-        } else
-          *start++ = base();
-        break;
+jellyfish::~parse_read() { }
 
-      case '\n':
-        break;
-
-      default:
-        *start++ = base();
-      }
+void jellyfish::parse_read::fill() {
+  reads_t *new_seq = wq.dequeue();
+  
+  while(new_seq) {
+    bool input_eof = !fparser->parse(new_seq);
+    if(new_seq->nb_reads > 0) {
+      rq.enqueue(new_seq);
+      new_seq = wq.dequeue();
     }
-
-    *end = start;
-    return base() != EOF;
+    if(input_eof) {
+      delete fparser;
+      if(++current_file == files.end()) {
+        rq.close();
+        break;
+      }
+      fparser = file_parser::new_file_parser_read(*current_file);
+    }
   }
 }

@@ -34,12 +34,11 @@ namespace jellyfish {
       it->end = it->start = buffer_data + i * buffer_size;
     }
 
-    fparser =
-      jellyfish::file_parser::new_file_parser_seq_qual(*current_file);
+    fparser = seq_qual_parser::new_parser(*current_file);
   }
 
   void parse_qual_dna::fill() {
-    sequence_t *new_seq = 0;
+    bucket_t *new_seq = 0;
   
     while(true) {
       if(!new_seq) {
@@ -68,8 +67,7 @@ namespace jellyfish {
           rq.close();
           break;
         }
-        fparser = 
-          jellyfish::file_parser::new_file_parser_seq_qual(*current_file);
+        fparser = seq_qual_parser::new_parser(*current_file);
       }
     }
   }

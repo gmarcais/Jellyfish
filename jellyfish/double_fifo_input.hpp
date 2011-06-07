@@ -59,6 +59,7 @@ namespace jellyfish {
     void         input_routine();
     
   public:
+    typedef T bucket_t;
     double_fifo_input(unsigned long _nb_buckets);
     virtual ~double_fifo_input();
 
