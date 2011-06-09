@@ -15,6 +15,7 @@
 */
 
 #include <jellyfish/read_parser.hpp>
+#include <jellyfish/dbg.hpp>
 
 jellyfish::read_parser *
 jellyfish::read_parser::new_parser(const char *path) {
@@ -38,6 +39,7 @@ namespace jellyfish {
     for(rs->nb_reads = 0; 
         rs->nb_reads < read_parser::reads_t::max_nb_reads && !eof();
         ++rs->nb_reads) {
+      DBG << V(rs->nb_reads);
       read_t *r = &rs->reads[rs->nb_reads];
       r->qual_s = r->qual_e = 0;
       while(sbumpc() != '>')
@@ -47,7 +49,7 @@ namespace jellyfish {
       while(sbumpc() != '\n')
         BREAK_AT_END;
       BREAK_AT_END;
-      r->hlen  = ptr() - r->header;
+      r->hlen  = ptr() - r->header - 1;
       r->seq_s = ptr();
       // find end of sequence
       while(!eof())
@@ -56,6 +58,7 @@ namespace jellyfish {
             break;
       r->seq_e = ptr();
     }
+    DBG << V(rs->nb_reads);
     return !eof();
   }
 
@@ -72,7 +75,7 @@ namespace jellyfish {
       while(sbumpc() != '\n')
         BREAK_AT_END;
       BREAK_AT_END;
-      r->hlen  = ptr() - r->header;
+      r->hlen  = ptr() - r->header - 1;
       r->seq_s = ptr();
       // find end of sequence
       size_t nb_bases = 0;
@@ -101,7 +104,7 @@ namespace jellyfish {
       else
         BREAK_AT_END;
     }
-    return eof();
+    return !eof();
   } 
 }
 

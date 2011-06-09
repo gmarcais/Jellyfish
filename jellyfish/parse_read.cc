@@ -17,27 +17,34 @@
 #include <jellyfish/parse_read.hpp>
 
 jellyfish::parse_read::parse_read(int nb_files, char *argv[], unsigned int nb_buffers) :
-  double_fifo_input<read_parser::reads_t>(nb_buffers), files(argv, argv + nb_files),
+  double_fifo_input<read_parser::reads_t>(nb_buffers), 
+  files(argv, argv + nb_files),
   current_file(files.begin()),
   fparser(read_parser::new_parser(*current_file))
-{ }
+{ 
+  fparser->link();
+}
 
 void jellyfish::parse_read::fill() {
   read_parser::reads_t *new_seq = wq.dequeue();
   
   while(new_seq) {
+    new_seq->file = fparser;
     bool input_eof = !fparser->next_reads(new_seq);
+    DBG << V(input_eof);
     if(new_seq->nb_reads > 0) {
+      new_seq->link();
       rq.enqueue(new_seq);
       new_seq = wq.dequeue();
     }
     if(input_eof) {
-      delete fparser;
+      fparser->unlink();
       if(++current_file == files.end()) {
         rq.close();
         break;
       }
       fparser = read_parser::new_parser(*current_file);
+      fparser->link();
     }
   }
 }

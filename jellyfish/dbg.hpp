@@ -22,77 +22,99 @@
 #include <sstream>
 #include <exception>
 #include <stdexcept>
+#include <sys/types.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <ctype.h>
 
 namespace dbg {
-#ifdef DEBUG
+  pid_t gettid();
 
-  class substr {
+  class stringbuf : public std::stringbuf {
+  public:
+    stringbuf() : std::stringbuf(std::ios_base::out) { }
+    stringbuf(const std::string &str) : 
+      std::stringbuf(str, std::ios_base::out) { }
+
+    bool end_is_space() {
+      if(pptr() == pbase())
+        return true;
+      return isspace(*(pptr() - 1));
+    }
+    friend class print_t;
+  };
+
+  class str {
     const char  *_s;
     const size_t _l;
   public:
-    substr(const char *s, size_t len) : _s(s), _l(len) {}
-    friend std::ostream &operator<<(std::ostream &os, const substr &ss);
+    str(const char *s, size_t len) : _s(s), _l(len) {}
+    friend class print_t;
   };
+
+  class xspace { };
 
   class print_t {
     static pthread_mutex_t _lock;
-
-    std::ostringstream     _buff;
+    stringbuf              _strbuf;
+    std::ostream           _buf;
   public:
-    print_t(const char *file, const char *function, int line) {
-      _buff << pthread_self() << ":" << basename(file) << ":" 
-            << function << ":" << line << ": ";
+    print_t(const char *file, const char *function, int line) :
+      _buf(&_strbuf)
+    {
+      _buf << pthread_self() << "/" << gettid() << ":"
+           << basename(file) << ":" << function << ":" << line << ": ";
     }
 
     ~print_t() {
       pthread_mutex_lock(&_lock);
-      std::cerr << _buff.str() << std::endl;
+      std::cerr.write(_strbuf.pbase(), _strbuf.pptr() - _strbuf.pbase());
+      std::cerr << std::endl;
       pthread_mutex_unlock(&_lock);
     }
 
     print_t & operator<<(const char *a[]) {
       for(int i = 0; a[i]; i++)
-        _buff << (i ? "\n" : "") << a[i];
+        _buf << (i ? "\n" : "") << a[i];
       return *this;
     }
     print_t & operator<<(const std::exception &e) {
-      _buff << e.what();
+      _buf << e.what();
+      return *this;
+    }
+    print_t & operator<<(const str &ss) {
+      _buf.write(ss._s, ss._l);
+      return *this;
+    }
+    print_t & operator<<(const xspace &xs) {
+      if(!_strbuf.end_is_space())
+        _buf << " ";
       return *this;
     }
     template<typename T>
     print_t & operator<<(const T &x) {
-      _buff << x;
+      _buf << x;
       return *this;
     }
   };
 
-#else // !DEBUG
-
-  class substr {
+  class no_print_t {
   public:
-    substr(const char *s, size_t len) { }
-    friend std::ostream &operator<<(std::ostream &os, const substr &ss);
-  };
-
-  class print_t {
-  public:
-    print_t(const char *file, const char *function, int line) {}
+    no_print_t() {}
     
-    print_t & operator<<(const char *a[]) { return *this; }
-    print_t & operator<<(const std::exception &e) { return *this; }
     template<typename T>
-    print_t & operator<<(const T &x) { return *this; }
+    no_print_t & operator<<(const T &x) { return *this; }
   };
-
-#endif // DEBUG
 }
 
-
-
+#ifdef DEBUG
 #define DBG if(1) dbg::print_t(__FILE__, __FUNCTION__, __LINE__)
-#define V(v) " " #v ":" << v
-
+#define V(v) dbg::xspace() << #v ":" << v
+#else
+#define DBG if(1) dbg::no_print_t()
+#define V(v) v
 #endif
+
+#endif /* __DBG_HPP__ */

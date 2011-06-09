@@ -45,7 +45,7 @@ public:
   parser(int argc, const char *argv[]) :
     _parser(argc, argv, 25, 100, 1024*10),
     count(0)
-  {  DBG; }
+  { }
 
   void start(int id) {
     jellyfish::parse_dna::thread tparse = _parser.new_thread();
@@ -63,12 +63,10 @@ int main(int argc, const char *argv[])
 {
   show_backtrace();
 
-  DBG << "start " << V(argc);
   if(argc != 3)
     die << "Need the number of threads and file name";
 
   parser parse(argc - 2, argv + 2);
-  DBG;
   parse.exec_join(atoi(argv[1]));
   std::cout << "Get count " << parse.get_count() << std::endl;
   

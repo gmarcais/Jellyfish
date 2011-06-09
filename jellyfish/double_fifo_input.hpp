@@ -19,6 +19,7 @@
 
 #include <jellyfish/concurrent_queues.hpp>
 #include <jellyfish/locks_pthread.hpp>
+#include <jellyfish/dbg.hpp>
 #include <err.hpp>
 #include <pthread.h>
 #include <assert.h>
@@ -90,21 +91,24 @@ namespace jellyfish {
 
     if(pthread_create(&input_id, 0, static_input_routine, (void *)this) != 0)
       eraise(Error) << "Failed creating input thread" << err::no;
+    DBG << V(input_id);
   }
 
   template<typename T>
   double_fifo_input<T>::~double_fifo_input() {
+    DBG << V(input_id);
     if(input_id)
       if(pthread_cancel(input_id)) {
         void *input_return;
         pthread_join(input_id, &input_return);
+        DBG << V(input_return);
       }
     delete buckets;
   }
 
   template<typename T>
   void *double_fifo_input<T>::static_input_routine(void *arg) {
-    
+    DBG;
     double_fifo_input *o = (double_fifo_input *)arg;
     o->input_routine();
     return 0;

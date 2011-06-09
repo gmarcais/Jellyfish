@@ -15,21 +15,14 @@
 */
 
 #include <jellyfish/dbg.hpp>
+#include <sys/syscall.h>
 
 namespace dbg {
-#ifdef DEBUG
-
   pthread_mutex_t print_t::_lock = PTHREAD_MUTEX_INITIALIZER;
-  std::ostream &operator<<(std::ostream &os, const dbg::substr &ss) {
-    os.write(ss._s, ss._l);
-    return os;
-  }
 
+#ifdef SYS_gettid
+  pid_t gettid() { return (pid_t)syscall(SYS_gettid); }
 #else
-
-  std::ostream &operator<<(std::ostream &os, const dbg::substr &ss) {
-    return os;
-  }
-
+  pid_t gettid() { return getpid(); }
 #endif
 }

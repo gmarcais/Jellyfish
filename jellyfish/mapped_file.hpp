@@ -29,6 +29,7 @@
 #include <jellyfish/err.hpp>
 #include <jellyfish/misc.hpp>
 #include <jellyfish/atomic_gcc.hpp>
+#include <jellyfish/dbg.hpp>
 
 class mapped_file {
 protected:
@@ -71,6 +72,7 @@ public:
   }
 
   void unmap() {
+    DBG << V(_unmap) << " " << V(_base) << " " << V(_length);
     if(!_base)
       return;
     munmap(_base, _length);

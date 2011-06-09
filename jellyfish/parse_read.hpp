@@ -20,6 +20,7 @@
 #include <jellyfish/double_fifo_input.hpp>
 #include <jellyfish/read_parser.hpp>
 #include <jellyfish/misc.hpp>
+#include <jellyfish/dbg.hpp>
 #include <vector>
 
 namespace jellyfish {
@@ -37,7 +38,7 @@ namespace jellyfish {
     static const uint_t CODE_RESET = -1;
 
     parse_read(int nb_files, char *argv[], unsigned int nb_buffers);
-    ~parse_read() {}
+    ~parse_read() { DBG << "DTOR!!!"; }
 
     void set_canonical(bool v = true) { canonical = v; }
     virtual void fill();
@@ -53,12 +54,16 @@ namespace jellyfish {
         current_read(0) {}
 
       read_parser::read_t * next_read() {
+        DBG << V((void*)sequence) << " " << current_read << " "
+            << sequence->nb_reads;
         while(sequence) {
           if(current_read < sequence->nb_reads)
             return &sequence->reads[current_read++];
 
+          sequence->unlink(); // unmap file if not used anymore
           parser->release(sequence);
           sequence     = parser->next();
+          DBG << V(sequence);
           current_read = 0;
         }
         return 0;
