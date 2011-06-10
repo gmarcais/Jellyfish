@@ -43,7 +43,7 @@ aligned_values_array.hpp fastq_dumper.hpp floats.hpp			\
 circular_buffer.hpp counter.hpp parse_quake.hpp parse_dna.hpp		\
 parse_qual_dna.hpp file_parser.hpp sequence_parser.hpp			\
 seq_qual_parser.hpp double_fifo_input.hpp read_parser.hpp		\
-parse_read.hpp simple_growing_array.hpp toFloat.h eLut.h
+parse_read.hpp simple_growing_array.hpp toFloat.h eLut.h dbg.hpp
 
 check_PROGRAMS = generate_sequence test_double_fifo_input	\
 test_read_parser
