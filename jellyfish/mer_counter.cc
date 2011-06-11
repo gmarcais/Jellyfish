@@ -249,6 +249,9 @@ int count_main(int argc, char *argv[])
     die << "Invalid mer length '" << args.mer_len_arg
         << "'. It must be in [2, 31].";
 
+  if(args.inputs_num == 0)
+    die << "Need at least one input file or stream";
+
   Time start;
   mer_counting_base *counter;
   if(!args.buffers_given)
