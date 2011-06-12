@@ -10,7 +10,7 @@ storage.cc misc.cc err.cc mer_counter.cc histo_main.cc dump_main.cc	\
 time.cc thread_exec.cc query_main.cc square_binary_matrix.cc		\
 dump_fastq_main.cc histo_fastq_main.cc cite.cc parse_dna.cc		\
 file_parser.cc parse_quake.cc parse_qual_dna.cc sequence_parser.cc	\
-seq_qual_parser.cpp half.cpp hash_fastq_merge.cc cite_cmdline.cc	\
+seq_qual_parser.cc half.cpp hash_fastq_merge.cc cite_cmdline.cc	\
 query_cmdline.cc hash_merge_cmdline.cc histo_cmdline.cc			\
 stats_cmdline.cc histo_fastq_main_cmdline.cc				\
 dump_fastq_main_cmdline.cc mer_counter_cmdline.cc			\
@@ -22,7 +22,7 @@ EXTRA_DIST = cite_cmdline.hpp query_cmdline.hpp hash_merge_cmdline.hpp	\
 histo_cmdline.hpp stats_cmdline.hpp histo_fastq_main_cmdline.hpp	\
 dump_fastq_main_cmdline.hpp mer_counter_cmdline.hpp			\
 hash_fastq_merge_cmdline.hpp dump_cmdline.hpp double_fifo_input.hpp	\
-simple_growing_array.hpp
+simple_growing_array.hpp backtrace.hpp
 
 lib_LTLIBRARIES = libjellyfish.la
 libjellyfish_la_LDFLAGS = -version-info 1:0:0
@@ -44,7 +44,8 @@ aligned_values_array.hpp fastq_dumper.hpp floats.hpp			\
 circular_buffer.hpp counter.hpp parse_quake.hpp parse_dna.hpp		\
 parse_qual_dna.hpp file_parser.hpp sequence_parser.hpp			\
 seq_qual_parser.hpp double_fifo_input.hpp read_parser.hpp		\
-parse_read.hpp simple_growing_array.hpp toFloat.h eLut.h dbg.hpp
+parse_read.hpp simple_growing_array.hpp toFloat.h eLut.h dbg.hpp	\
+half.h
 
 check_PROGRAMS = generate_sequence test_double_fifo_input	\
 test_read_parser
