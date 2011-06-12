@@ -84,9 +84,7 @@ namespace jellyfish {
     out = &_out;
     unique = distinct = total = max_count = 0;
     tr.reset();
-    for(uint_t i = 0; i < threads; i++) {
-      thread_info[i].writer.reset_counters();
-    }
+    thread_info[0].writer.write_header(out);
     exec_join(threads);
     update_stats();
     _out.close();
@@ -98,9 +96,8 @@ namespace jellyfish {
     struct thread_info_t *my_info = &thread_info[id];
     atomic_t              atomic;
       
-    if(my_info->token->is_active())
-      my_info->writer.write_header(out);
-      
+    my_info->writer.reset_counters();
+
     for(i = id; i * nb_records < ary->get_size(); i += threads) {
       iterator it(ary, i * nb_records, (i + 1) * nb_records);
       while(it.next())

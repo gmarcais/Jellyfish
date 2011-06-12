@@ -65,6 +65,8 @@ struct mer_counter_args
   const char *reprobes_help; /**< @brief Maximum number of reprobes help description.  */
   int raw_flag;	/**< @brief Write raw database (default=off).  */
   const char *raw_help; /**< @brief Write raw database help description.  */
+  int both_flag;	/**< @brief Write list and raw database (default=off).  */
+  const char *both_help; /**< @brief Write list and raw database help description.  */
   int quake_flag;	/**< @brief Quake compatibility mode (default=off).  */
   const char *quake_help; /**< @brief Quake compatibility mode help description.  */
   int quality_start_arg;	/**< @brief Starting ASCII for quality values (default='64').  */
@@ -115,6 +117,7 @@ struct mer_counter_args
   unsigned int both_strands_given ;	/**< @brief Whether both-strands was given.  */
   unsigned int reprobes_given ;	/**< @brief Whether reprobes was given.  */
   unsigned int raw_given ;	/**< @brief Whether raw was given.  */
+  unsigned int both_given ;	/**< @brief Whether both was given.  */
   unsigned int quake_given ;	/**< @brief Whether quake was given.  */
   unsigned int quality_start_given ;	/**< @brief Whether quality-start was given.  */
   unsigned int min_quality_given ;	/**< @brief Whether min-quality was given.  */

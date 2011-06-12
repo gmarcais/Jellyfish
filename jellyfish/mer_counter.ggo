@@ -20,6 +20,8 @@ option "reprobes"               p "Maximum number of reprobes"
   int default="62"
 option "raw"                    r "Write raw database"
   flag off
+option "both"                   - "Write list and raw database"
+  flag off hidden
 option "quake"                  q "Quake compatibility mode"
   flag off
 option "quality-start"          - "Starting ASCII for quality values"
