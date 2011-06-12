@@ -31,7 +31,6 @@ void jellyfish::parse_read::fill() {
   while(new_seq) {
     new_seq->file = fparser;
     bool input_eof = !fparser->next_reads(new_seq);
-    DBG << V(input_eof);
     if(new_seq->nb_reads > 0) {
       new_seq->link();
       rq.enqueue(new_seq);

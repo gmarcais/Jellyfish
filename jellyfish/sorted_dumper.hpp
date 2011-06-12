@@ -14,6 +14,8 @@
     along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <jellyfish/err.hpp>
+#include <jellyfish/dbg.hpp>
 #include <jellyfish/dumper.hpp>
 #include <jellyfish/heap.hpp>
 #include <jellyfish/thread_exec.hpp>
@@ -46,6 +48,7 @@ namespace jellyfish {
     struct thread_info_t *thread_info;
     uint64_t volatile     unique, distinct, total, max_count;
     std::ofstream        *out;
+    locks::pthread::mutex dump_mutex;
 
   public:
     // klen: key field length in bits in hash (i.e before rounding up to bytes)
@@ -96,7 +99,9 @@ namespace jellyfish {
   template<typename storage_t, typename atomic_t>
   void sorted_dumper<storage_t,atomic_t>::_dump() {
     std::ofstream _out;
-    open_next_file(file_prefix.c_str(), file_index, _out);
+    assert(dump_mutex.try_lock());
+    DBG << V(file_prefix) << V(file_index);
+    open_next_file(file_prefix.c_str(), &file_index, _out);
     out = &_out;
     unique = distinct = total = max_count = 0;
     tr.reset();
@@ -105,6 +110,7 @@ namespace jellyfish {
     ary->zero_blocks(0, nb_blocks); // zero out last group of blocks
     update_stats();
     _out.close();
+    dump_mutex.unlock();
   }
 
   template<typename storage_t, typename atomic_t>

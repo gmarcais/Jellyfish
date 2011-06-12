@@ -39,7 +39,6 @@ namespace jellyfish {
     for(rs->nb_reads = 0; 
         rs->nb_reads < read_parser::reads_t::max_nb_reads && !eof();
         ++rs->nb_reads) {
-      DBG << V(rs->nb_reads);
       read_t *r = &rs->reads[rs->nb_reads];
       r->qual_s = r->qual_e = 0;
       while(sbumpc() != '>')
@@ -58,7 +57,6 @@ namespace jellyfish {
             break;
       r->seq_e = ptr();
     }
-    DBG << V(rs->nb_reads);
     return !eof();
   }
 

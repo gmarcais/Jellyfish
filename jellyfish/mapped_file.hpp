@@ -72,7 +72,6 @@ public:
   }
 
   void unmap() {
-    DBG << V(_unmap) << " " << V(_base) << " " << V(_length);
     if(!_base)
       return;
     munmap(_base, _length);

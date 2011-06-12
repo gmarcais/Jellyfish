@@ -180,7 +180,7 @@ namespace jellyfish {
     template<typename storage_t>
     void dumper<storage_t>::_dump() {
       std::ofstream _out;
-      open_next_file(file_prefix.c_str(), file_index, _out);
+      open_next_file(file_prefix.c_str(), &file_index, _out);
       out = &_out;
       tr.reset();
       write_header();

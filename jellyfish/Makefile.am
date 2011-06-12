@@ -14,7 +14,8 @@ seq_qual_parser.cpp half.cpp hash_fastq_merge.cc cite_cmdline.cc	\
 query_cmdline.cc hash_merge_cmdline.cc histo_cmdline.cc			\
 stats_cmdline.cc histo_fastq_main_cmdline.cc				\
 dump_fastq_main_cmdline.cc mer_counter_cmdline.cc			\
-hash_fastq_merge_cmdline.cc dump_cmdline.cc dbg.cc mapped_file.cc
+hash_fastq_merge_cmdline.cc dump_cmdline.cc dbg.cc mapped_file.cc	\
+backtrace.cc
 # jellyfish_CPPFLAGS = $(AM_CPPFLAGS)
 
 EXTRA_DIST = cite_cmdline.hpp query_cmdline.hpp hash_merge_cmdline.hpp	\

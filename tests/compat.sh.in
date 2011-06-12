@@ -1,4 +1,6 @@
-nCPUs=$(grep -c '^processor' /proc/cpuinfo 2>/dev/null || sysctl -n hw.ncpu)
+if [ -z "$nCPUs" ]; then
+    nCPUs=$(grep -c '^processor' /proc/cpuinfo 2>/dev/null || sysctl -n hw.ncpu)
+fi
 pref=$(basename $0 .sh)
 DIR=../jellyfish
 JF=$DIR/jellyfish

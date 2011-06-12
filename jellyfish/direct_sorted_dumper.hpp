@@ -80,7 +80,7 @@ namespace jellyfish {
   template<typename storage_t, typename atomic_t>
   void direct_sorted_dumper<storage_t,atomic_t>::_dump() {
     std::ofstream _out;
-    open_next_file(file_prefix, file_index, _out);
+    open_next_file(file_prefix, &file_index, _out);
     out = &_out;
     unique = distinct = total = max_count = 0;
     tr.reset();

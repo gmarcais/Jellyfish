@@ -30,6 +30,7 @@
 #include <inttypes.h>
 
 #include <jellyfish/err.hpp>
+#include <jellyfish/backtrace.hpp>
 #include <jellyfish/misc.hpp>
 #include <jellyfish/time.hpp>
 #include <jellyfish/mer_counting.hpp>
@@ -251,6 +252,8 @@ int count_main(int argc, char *argv[])
 
   if(args.inputs_num == 0)
     die << "Need at least one input file or stream";
+
+  show_backtrace();
 
   Time start;
   mer_counting_base *counter;

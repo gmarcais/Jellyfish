@@ -70,7 +70,7 @@ namespace jellyfish {
     template<typename storage_t>
     void raw_dumper<storage_t>::_dump() {
       std::ofstream _out;
-      open_next_file(file_prefix.c_str(), file_index, _out);
+      open_next_file(file_prefix.c_str(), &file_index, _out);
 
       // TODO: the zeroing out of the hash is not parallelized.
 

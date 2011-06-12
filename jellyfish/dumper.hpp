@@ -33,7 +33,7 @@ namespace jellyfish {
     define_error_class(ErrorWriting);
 
   protected:
-    void open_next_file(const char *prefix, int &index, std::ofstream &out) {
+    void open_next_file(const char *prefix, int *index, std::ofstream &out) {
       static const long file_len = pathconf("/", _PC_PATH_MAX);
 
       char file[file_len + 1];
@@ -42,7 +42,8 @@ namespace jellyfish {
       if(off < 0)
         eraise(ErrorWriting) << "Error creating output path" << err::no;
       if(off > 0 && off < file_len) {
-        int _off = snprintf(file + off, file_len - off, "_%d", index++);
+        int eindex = atomic::gcc::fetch_add(index, (int)1);
+        int _off = snprintf(file + off, file_len - off, "_%d", eindex);
         if(_off < 0)
           eraise(ErrorWriting) << "Error creating output path" << err::no;
         off += _off;

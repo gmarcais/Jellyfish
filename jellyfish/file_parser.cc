@@ -71,7 +71,6 @@ jellyfish::file_parser::file_parser(int fd, const char *path,
 
 jellyfish::file_parser::~file_parser() {
   if(_is_mmapped) {
-    DBG << "unmapping " << V((void*)_buffer) << V(_size);
     munmap(_buffer, _size);
   } else {
     delete _buffer;
