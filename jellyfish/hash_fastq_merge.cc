@@ -14,7 +14,7 @@
     along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <hash_fastq_merge_cmdline.hpp>
+#include <jellyfish/hash_fastq_merge_cmdline.hpp>
 #include <jellyfish/err.hpp>
 #include <jellyfish/misc.hpp>
 #include <jellyfish/mer_counting.hpp>

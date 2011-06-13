@@ -14,8 +14,8 @@
     along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <config.h>
-#include "storage.hpp"
+#include "config.h"
+#include <jellyfish/storage.hpp>
 
 namespace jellyfish {
   size_t _quadratic_reprobes[257] = {

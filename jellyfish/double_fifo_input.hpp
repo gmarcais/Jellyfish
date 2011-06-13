@@ -20,7 +20,7 @@
 #include <jellyfish/concurrent_queues.hpp>
 #include <jellyfish/locks_pthread.hpp>
 #include <jellyfish/dbg.hpp>
-#include <err.hpp>
+#include <jellyfish/err.hpp>
 #include <pthread.h>
 #include <assert.h>
 

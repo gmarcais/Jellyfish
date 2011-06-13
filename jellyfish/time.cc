@@ -14,6 +14,6 @@
     along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "time.hpp"
+#include <jellyfish/time.hpp>
 
 const Time Time::zero = Time(0, 0);

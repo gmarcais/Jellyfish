@@ -14,7 +14,7 @@
     along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <seq_qual_parser.hpp>
+#include <jellyfish/seq_qual_parser.hpp>
 
 jellyfish::seq_qual_parser *
 jellyfish::seq_qual_parser::new_parser(const char *path) {
