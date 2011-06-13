@@ -39,11 +39,13 @@ const char *histo_args_help[] = {
   "  -h, --high=LONG               High count value of histogram  \n                                  (default=`10000')",
   "  -i, --increment=LONG          Increment value for buckets  (default=`1')",
   "  -t, --threads=INT             Number of threads  (default=`1')",
+  "  -f, --full                    Full histo. Don't skip count 0.  (default=off)",
   "  -o, --output=STRING           Output file  (default=`/dev/fd/1')",
     0
 };
 
 typedef enum {ARG_NO
+  , ARG_FLAG
   , ARG_STRING
   , ARG_INT
   , ARG_LONG
@@ -72,6 +74,7 @@ void clear_given (struct histo_args *args_info)
   args_info->high_given = 0 ;
   args_info->increment_given = 0 ;
   args_info->threads_given = 0 ;
+  args_info->full_given = 0 ;
   args_info->output_given = 0 ;
 }
 
@@ -89,6 +92,7 @@ void clear_args (struct histo_args *args_info)
   args_info->increment_orig = NULL;
   args_info->threads_arg = 1;
   args_info->threads_orig = NULL;
+  args_info->full_flag = 0;
   args_info->output_arg = gengetopt_strdup ("/dev/fd/1");
   args_info->output_orig = NULL;
   
@@ -106,7 +110,8 @@ void init_args_info(struct histo_args *args_info)
   args_info->high_help = histo_args_help[4] ;
   args_info->increment_help = histo_args_help[5] ;
   args_info->threads_help = histo_args_help[6] ;
-  args_info->output_help = histo_args_help[7] ;
+  args_info->full_help = histo_args_help[7] ;
+  args_info->output_help = histo_args_help[8] ;
   
 }
 
@@ -246,6 +251,8 @@ histo_cmdline_dump(FILE *outfile, struct histo_args *args_info)
     write_into_file(outfile, "increment", args_info->increment_orig, 0);
   if (args_info->threads_given)
     write_into_file(outfile, "threads", args_info->threads_orig, 0);
+  if (args_info->full_given)
+    write_into_file(outfile, "full", 0, 0 );
   if (args_info->output_given)
     write_into_file(outfile, "output", args_info->output_orig, 0);
   
@@ -414,6 +421,9 @@ int update_arg(void *field, char **orig_field,
     val = possible_values[found];
 
   switch(arg_type) {
+  case ARG_FLAG:
+    *((int *)field) = !*((int *)field);
+    break;
   case ARG_INT:
     if (val) *((int *)field) = strtol (val, &stop_char, 0);
     break;
@@ -448,6 +458,7 @@ int update_arg(void *field, char **orig_field,
   /* store the original value */
   switch(arg_type) {
   case ARG_NO:
+  case ARG_FLAG:
     break;
   default:
     if (value && orig_field) {
@@ -509,11 +520,12 @@ histo_cmdline_internal (
         { "high",	1, NULL, 'h' },
         { "increment",	1, NULL, 'i' },
         { "threads",	1, NULL, 't' },
+        { "full",	0, NULL, 'f' },
         { "output",	1, NULL, 'o' },
         { 0,  0, 0, 0 }
       };
 
-      c = getopt_long (argc, argv, "Vs:l:h:i:t:o:", long_options, &option_index);
+      c = getopt_long (argc, argv, "Vs:l:h:i:t:fo:", long_options, &option_index);
 
       if (c == -1) break;	/* Exit from `while (1)' loop.  */
 
@@ -580,6 +592,16 @@ histo_cmdline_internal (
               &(local_args_info.threads_given), optarg, 0, "1", ARG_INT,
               check_ambiguity, override, 0, 0,
               "threads", 't',
+              additional_error))
+            goto failure;
+        
+          break;
+        case 'f':	/* Full histo. Don't skip count 0..  */
+        
+        
+          if (update_arg((void *)&(args_info->full_flag), 0, &(args_info->full_given),
+              &(local_args_info.full_given), optarg, 0, 0, ARG_FLAG,
+              check_ambiguity, override, 1, 0, "full", 'f',
               additional_error))
             goto failure;
         

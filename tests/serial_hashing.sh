@@ -9,7 +9,7 @@ EOF
 echo "Counting 22-mers on 1 CPU" && \
     $JF count --matrix seq10m_matrix_22 -m 22 -t 1 -o ${pref} \
     --timing ${pref}.timing -s 10000000 seq10m.fa && \
-    $JF histo ${pref}_0 > ${pref}.histo && \
+    $JF histo -f ${pref}_0 > ${pref}.histo && \
     check ${pref}.md5sum
 RET=$?
 

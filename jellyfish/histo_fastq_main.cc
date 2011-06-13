@@ -67,8 +67,9 @@ int histo_fastq_main(int argc, char *argv[])
   }
 
   for(int i = 0; i < nb_buckets; i++)
-    std::cout << (base + (float)i * args.increment_arg) <<
-      " " << histogram[i] << "\n";
+    if(histogram[i] > 0.0 || args.full_flag)
+      std::cout << (base + (float)i * args.increment_arg) 
+                << " " << histogram[i] << "\n";
 
   std::cout << std::flush;
 

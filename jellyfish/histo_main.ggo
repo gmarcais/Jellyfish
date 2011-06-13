@@ -21,5 +21,7 @@ option "increment"              i "Increment value for buckets"
   long default="1"
 option "threads"                t "Number of threads"
   int default="1"
+option "full"                   f "Full histo. Don't skip count 0."
+  flag off
 option "output"                 o "Output file"
   string default="/dev/fd/1"

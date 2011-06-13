@@ -54,6 +54,8 @@ struct histo_args
   int threads_arg;	/**< @brief Number of threads (default='1').  */
   char * threads_orig;	/**< @brief Number of threads original value given at command line.  */
   const char *threads_help; /**< @brief Number of threads help description.  */
+  int full_flag;	/**< @brief Full histo. Don't skip count 0. (default=off).  */
+  const char *full_help; /**< @brief Full histo. Don't skip count 0. help description.  */
   char * output_arg;	/**< @brief Output file (default='/dev/fd/1').  */
   char * output_orig;	/**< @brief Output file original value given at command line.  */
   const char *output_help; /**< @brief Output file help description.  */
@@ -65,6 +67,7 @@ struct histo_args
   unsigned int high_given ;	/**< @brief Whether high was given.  */
   unsigned int increment_given ;	/**< @brief Whether increment was given.  */
   unsigned int threads_given ;	/**< @brief Whether threads was given.  */
+  unsigned int full_given ;	/**< @brief Whether full was given.  */
   unsigned int output_given ;	/**< @brief Whether output was given.  */
 
   char **inputs ; /**< @brief unamed options (options without names) */

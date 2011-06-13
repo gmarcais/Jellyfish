@@ -14,7 +14,7 @@ echo "Counting 22-mers on ${nCPUs} CPU" && \
     --timing ${pref}.timing seq10m.fa && \
     $JF stats ${pref}_0 > ${pref}.stats && \
     $JF dump -c -L 2 ${pref}_0 > ${pref}_L.dump && \
-    $JF histo ${pref}_0 > ${pref}.histo &&
+    $JF histo -f ${pref}_0 > ${pref}.histo &&
     echo "GCCATTTCGATTAAAGAATGAT TAGGCATGCAACGCTTCCCTTT" | $JF query ${pref}_0 > ${pref}.query && \
     check ${pref}.md5sum
 RET=$?

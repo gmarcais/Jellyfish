@@ -48,12 +48,15 @@ struct histo_fastq_main_args
   float increment_arg;	/**< @brief Increment value for buckets (default='1.0').  */
   char * increment_orig;	/**< @brief Increment value for buckets original value given at command line.  */
   const char *increment_help; /**< @brief Increment value for buckets help description.  */
+  int full_flag;	/**< @brief Full histo. Don't skip count 0. (default=off).  */
+  const char *full_help; /**< @brief Full histo. Don't skip count 0. help description.  */
   
   unsigned int help_given ;	/**< @brief Whether help was given.  */
   unsigned int version_given ;	/**< @brief Whether version was given.  */
   unsigned int low_given ;	/**< @brief Whether low was given.  */
   unsigned int high_given ;	/**< @brief Whether high was given.  */
   unsigned int increment_given ;	/**< @brief Whether increment was given.  */
+  unsigned int full_given ;	/**< @brief Whether full was given.  */
 
   char **inputs ; /**< @brief unamed options (options without names) */
   unsigned inputs_num ; /**< @brief unamed options number */

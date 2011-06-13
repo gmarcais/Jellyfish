@@ -8,7 +8,7 @@ EOF
 echo "Counting 22-mers, fastq format, no quality, on ${nCPUs} CPU" && \
     $JF count --matrix seq10m_matrix_22 -m 22 -t $nCPUs \
     -o ${pref} -s 10000000 --timing ${pref}.timing seq10m.fq && \
-    $JF histo ${pref}_0 > ${pref}.histo && \
+    $JF histo -f ${pref}_0 > ${pref}.histo && \
     check ${pref}.md5sum
 RET=$?
 

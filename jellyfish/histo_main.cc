@@ -73,13 +73,14 @@ public:
     }
   }
 
-  void print(std::ostream &out) {
+  void print(std::ostream &out, bool full) {
     uint64_t col = base;
     for(uint64_t i = 0; i < nb_buckets; i++, col += inc) {
       uint64_t count = 0;
       for(uint_t j = 0; j < threads; j++)
         count += data[j * nb_buckets + i];
-      out << col << " " << count << "\n";
+      if(count > 0 || full)
+        out << col << " " << count << "\n";
     }
   }
 };
@@ -114,12 +115,12 @@ int histo_main(int argc, char *argv[])
     raw_inv_hash_query_t hash(dbf);
     histogram<raw_inv_hash_query_t> histo(&hash, args.threads_arg, base, ceil, args.increment_arg);
     histo.do_it();
-    histo.print(out);
+    histo.print(out, args.full_flag);
   } else if(!strncmp(type, jellyfish::compacted_hash::file_type, sizeof(type))) {
     hash_query_t hash(dbf);
     histogram<hash_query_t> histo(&hash, args.threads_arg, base, ceil, args.increment_arg);
     histo.do_it();
-    histo.print(out);
+    histo.print(out, args.full_flag);
   } else {
     die << "Invalid file type '" << err::substr(type, sizeof(type)) << "'.";
   }

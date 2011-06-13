@@ -37,10 +37,12 @@ const char *histo_fastq_main_args_help[] = {
   "  -l, --low=FLOAT        Low count value of histogram  (default=`0.0')",
   "  -h, --high=FLOAT       High count value of histogram  (default=`10000.0')",
   "  -i, --increment=FLOAT  Increment value for buckets  (default=`1.0')",
+  "  -f, --full             Full histo. Don't skip count 0.  (default=off)",
     0
 };
 
 typedef enum {ARG_NO
+  , ARG_FLAG
   , ARG_FLOAT
 } histo_fastq_main_cmdline_arg_type;
 
@@ -65,6 +67,7 @@ void clear_given (struct histo_fastq_main_args *args_info)
   args_info->low_given = 0 ;
   args_info->high_given = 0 ;
   args_info->increment_given = 0 ;
+  args_info->full_given = 0 ;
 }
 
 static
@@ -77,6 +80,7 @@ void clear_args (struct histo_fastq_main_args *args_info)
   args_info->high_orig = NULL;
   args_info->increment_arg = 1.0;
   args_info->increment_orig = NULL;
+  args_info->full_flag = 0;
   
 }
 
@@ -90,6 +94,7 @@ void init_args_info(struct histo_fastq_main_args *args_info)
   args_info->low_help = histo_fastq_main_args_help[2] ;
   args_info->high_help = histo_fastq_main_args_help[3] ;
   args_info->increment_help = histo_fastq_main_args_help[4] ;
+  args_info->full_help = histo_fastq_main_args_help[5] ;
   
 }
 
@@ -221,6 +226,8 @@ histo_fastq_main_cmdline_dump(FILE *outfile, struct histo_fastq_main_args *args_
     write_into_file(outfile, "high", args_info->high_orig, 0);
   if (args_info->increment_given)
     write_into_file(outfile, "increment", args_info->increment_orig, 0);
+  if (args_info->full_given)
+    write_into_file(outfile, "full", 0, 0 );
   
 
   i = EXIT_SUCCESS;
@@ -386,6 +393,9 @@ int update_arg(void *field, char **orig_field,
     val = possible_values[found];
 
   switch(arg_type) {
+  case ARG_FLAG:
+    *((int *)field) = !*((int *)field);
+    break;
   case ARG_FLOAT:
     if (val) *((float *)field) = (float)strtod (val, &stop_char);
     break;
@@ -408,6 +418,7 @@ int update_arg(void *field, char **orig_field,
   /* store the original value */
   switch(arg_type) {
   case ARG_NO:
+  case ARG_FLAG:
     break;
   default:
     if (value && orig_field) {
@@ -467,10 +478,11 @@ histo_fastq_main_cmdline_internal (
         { "low",	1, NULL, 'l' },
         { "high",	1, NULL, 'h' },
         { "increment",	1, NULL, 'i' },
+        { "full",	0, NULL, 'f' },
         { 0,  0, 0, 0 }
       };
 
-      c = getopt_long (argc, argv, "Vl:h:i:", long_options, &option_index);
+      c = getopt_long (argc, argv, "Vl:h:i:f", long_options, &option_index);
 
       if (c == -1) break;	/* Exit from `while (1)' loop.  */
 
@@ -513,6 +525,16 @@ histo_fastq_main_cmdline_internal (
               &(local_args_info.increment_given), optarg, 0, "1.0", ARG_FLOAT,
               check_ambiguity, override, 0, 0,
               "increment", 'i',
+              additional_error))
+            goto failure;
+        
+          break;
+        case 'f':	/* Full histo. Don't skip count 0..  */
+        
+        
+          if (update_arg((void *)&(args_info->full_flag), 0, &(args_info->full_given),
+              &(local_args_info.full_given), optarg, 0, 0, ARG_FLAG,
+              check_ambiguity, override, 1, 0, "full", 'f',
               additional_error))
             goto failure;
         

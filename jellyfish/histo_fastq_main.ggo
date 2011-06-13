@@ -8,3 +8,5 @@ option "high"                   h "High count value of histogram"
   float default="10000.0"
 option "increment"              i "Increment value for buckets"
   float default="1.0"
+option "full"                   f "Full histo. Don't skip count 0."
+  flag off
