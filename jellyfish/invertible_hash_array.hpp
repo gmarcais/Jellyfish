@@ -39,6 +39,22 @@ namespace jellyfish {
     define_error_class(ErrorAllocation);
     define_error_class(InvalidMatrix);
 
+    /* Contains an integer, the reprobe limit. It is capped based on
+     * the reprobe strategy to not be bigger than the size of the hash
+     * array.
+     */
+    class reprobe_limit_t {
+      uint_t limit;
+    public:
+      reprobe_limit_t(uint_t _limit, size_t *_reprobes, size_t _size) :
+        limit(_limit)
+      {
+        while(_reprobes[limit] >= _size && limit >= 1)
+          limit--;
+      }
+      inline uint_t val() const { return limit; }
+    };
+
     /* (key,value) pair bit-packed array.  It implements the logic of the
      * packed hash except for size doubling. Setting or incrementing a key
      * will return false if the hash is full. No memory management is done
@@ -58,8 +74,7 @@ namespace jellyfish {
       typedef typename Offsets<word>::offset_t offset_t;
       uint_t             lsize;    // log of size
       size_t             size, size_mask;
-      uint_t             reprobe_limit;
-      uint_t             lreprobe_limit;
+      reprobe_limit_t    reprobe_limit;
       uint_t             key_len;  // original key len
       word               key_mask; // mask for high bits of hash(key)
       uint_t             key_off;  // offset in key field for reprobe value
@@ -83,12 +98,13 @@ namespace jellyfish {
 
       array(size_t _size, uint_t _key_len, uint_t _val_len,
             uint_t _reprobe_limit, size_t *_reprobes) :
-        lsize(ceilLog2(_size)), size(((size_t)1) << lsize), size_mask(size - 1),
-        reprobe_limit(_reprobe_limit), key_len(_key_len),
+        lsize(ceilLog2(_size)), size(((size_t)1) << lsize),
+        size_mask(size - 1),
+        reprobe_limit(_reprobe_limit, _reprobes, size), key_len(_key_len),
         key_mask(key_len <= lsize ? 0 : (((word)1) << (key_len - lsize)) - 1),
         key_off(key_len <= lsize ? 0 : key_len - lsize),
-        offsets(key_off + bitsize(_reprobe_limit + 1), _val_len,
-                _reprobe_limit + 1),
+        offsets(key_off + bitsize(reprobe_limit.val() + 1), _val_len,
+                reprobe_limit.val() + 1),
         mem_block(div_ceil(size, (size_t)offsets.get_block_len()) * offsets.get_block_word_len() * sizeof(word)),
         data((word *)mem_block.get_ptr()), reprobes(_reprobes),
         hash_matrix(key_len), 
@@ -146,11 +162,11 @@ namespace jellyfish {
             SquareBinaryMatrix &_hash_matrix, 
             SquareBinaryMatrix &_hash_inverse_matrix) :
         lsize(ceilLog2(_size)), size(_size), size_mask(size-1),
-        reprobe_limit(_reprobe_limit), key_len(_key_len),
+        reprobe_limit(_reprobe_limit, _reprobes, size), key_len(_key_len),
         key_mask(key_len <= lsize ? 0 : (((word)1) << (key_len - lsize)) - 1),
         key_off(key_len <= lsize ? 0 : key_len - lsize),
-        offsets(key_off + bitsize(_reprobe_limit + 1), _val_len,
-                _reprobe_limit + 1),
+        offsets(key_off + bitsize(reprobe_limit.val() + 1), _val_len,
+                reprobe_limit.val() + 1),
         data((word *)map), reprobes(_reprobes),
         hash_matrix(_hash_matrix), hash_inverse_matrix(_hash_inverse_matrix)
       { }
@@ -175,9 +191,9 @@ namespace jellyfish {
       uint_t get_key_len() const { return key_len; }
       uint_t get_val_len() const { return offsets.get_val_len(); }
       
-      uint_t get_max_reprobe() const { return reprobe_limit; }
+      uint_t get_max_reprobe() const { return reprobe_limit.val(); }
       size_t get_max_reprobe_offset() const { 
-        return reprobes[reprobe_limit]; 
+        return reprobes[reprobe_limit.val()]; 
       }
 
       
@@ -464,7 +480,7 @@ namespace jellyfish {
         // Resolve value
         reprobe = 0;
         cid = id = (id + reprobes[0]) & size_mask;
-        while(reprobe <= reprobe_limit) {
+        while(reprobe <= reprobe_limit.val()) {
           if(reprobe)
             cid  = (id + reprobes[reprobe]) & size_mask;
 
@@ -544,7 +560,7 @@ namespace jellyfish {
             if(nkey == akey)
               break;
           }
-          if(++reprobe > reprobe_limit)
+          if(++reprobe > reprobe_limit.val())
             return false;
           cid = (id + reprobes[reprobe]) & size_mask;
           akey = key | ((reprobe + 1) << key_off);
@@ -586,7 +602,7 @@ namespace jellyfish {
             }
 
             cid = (bid + reprobes[++reprobe]) & size_mask;
-          } while(reprobe <= reprobe_limit);
+          } while(reprobe <= reprobe_limit.val());
         }
 
         return true;
@@ -640,7 +656,7 @@ namespace jellyfish {
             key_claimed = set_key(kw, nkey, o->key.mask1, ao->key.mask1);
           }
           if(!key_claimed) { // reprobe
-            if(++reprobe > reprobe_limit)
+            if(++reprobe > reprobe_limit.val())
               return false;
             cid = (id + reprobes[reprobe]) & size_mask;
 
@@ -727,7 +743,7 @@ namespace jellyfish {
             key_claimed = set_key(kw, nkey, o->key.mask1, ao->key.mask1, is_new);
           }
           if(!key_claimed) { // reprobe
-            if(++reprobe > reprobe_limit)
+            if(++reprobe > reprobe_limit.val())
               return false;
             cid = (*id + reprobes[reprobe]) & size_mask;
 
