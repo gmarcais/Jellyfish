@@ -620,7 +620,7 @@ namespace jellyfish {
       /**
        * Use hash as a set.
        */
-      inline bool add(word _key, bool *is_new) __attribute__((deprecated("Use set"))) {
+      inline bool add(word _key, bool *is_new) __attribute__((deprecated)) {
 	size_t id;
         return set(_key, is_new, &id);
       }
@@ -628,7 +628,7 @@ namespace jellyfish {
 	size_t id;
 	return set(_key, is_new, &id);
       }
-      bool add(word _key, bool *is_new, size_t *id)  __attribute__((deprecated("Use set"))) {
+      bool add(word _key, bool *is_new, size_t *id)  __attribute__((deprecated)) {
         return set(_key, is_new, id);
       }
       bool set(word _key, bool *is_new, size_t *id) {
