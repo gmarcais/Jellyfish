@@ -8,10 +8,11 @@ sort > ${pref}.md5sum <<EOF
 c3233e107bb6b42d0c979707f156264c ${pref}.query
 dbe881e4649406321d0e481da08eab5c ${pref}_L.dump
 dbe881e4649406321d0e481da08eab5c ${pref}.dump
+a210906960cf36c09eecad62a4c04973 ${pref}.stats
 EOF
 echo "Counting 22-mers on ${nCPUs} CPU" &&      \
     $JF count --matrix seq10m_matrix_22 -m 22 -t $nCPUs -o $pref \
-    -s 10000000 --timing ${pref}.timing seq10m.fa && \
+    -s 10000000 --timing ${pref}.timing --stats ${pref}.stats seq10m.fa && \
     $JF count --matrix seq10m_matrix_22 -m 22 -t $nCPUs -o ${pref}_L \
     -s 10000000 --timing ${pref}.timing -L 2 seq10m.fa && \
     $JF histo -f ${pref}_0 > ${pref}.histo &&      \
@@ -22,8 +23,5 @@ echo "Counting 22-mers on ${nCPUs} CPU" &&      \
 RET=$?
 
 cat ${pref}.timing
-# [ -z "$NODEL" ] && \
-#     rm -f ${pref}_* ${pref}.histo ${pref}.query ${pref}.md5sum \
-#     ${pref}.timing
 
 exit $RET

@@ -24,14 +24,19 @@ class display_kmer {
   int           _k;
   unsigned long count;
 public:
+  typedef unsigned long val_type;
   display_kmer(int k) : _k(k), count(0) {}
 
+  void add(uint64_t mer, int i, val_type *oval = 0) {
+    ++count;
+  }
   void inc(uint64_t mer) {
     // char mer_str[_k+1];
     // jellyfish::parse_dna::mer_binary_to_string(mer, _k, mer_str);
     // std::cout << mer_str << std::endl;
     ++count;
   }
+  
   display_kmer *operator->() { return this; }
   unsigned long get_count() { return count; }
 };

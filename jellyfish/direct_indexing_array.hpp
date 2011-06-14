@@ -57,7 +57,7 @@ namespace jellyfish {
       void write_raw(std::ostream *out) const {}
 
       template<typename add_t>
-      bool add(key_t key, const add_t &val, add_t *_oval = 0) {
+      bool add(key_t key, const add_t &val, val_t *_oval = 0) {
         bits_t oval = data[key];
         val_t nval = val_t(oval) + val;
 

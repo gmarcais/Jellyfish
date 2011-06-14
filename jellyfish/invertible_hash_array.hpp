@@ -714,7 +714,7 @@ namespace jellyfish {
         if(!claim_key(key, &is_new, &id, &ao, &w))
           return false;
         if(oval)
-          *oval = is_new;
+          *oval = !is_new;
 
         // Increment value
         word *vw = w + ao->val.woff;

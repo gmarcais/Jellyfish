@@ -47,8 +47,8 @@ namespace jellyfish {
     Float(float_t _v) : v(_v) {}
     Float(bits_t _v) : v(_v) {}
 
-    static const Float zero;
-    static const Float one;
+    // static const Float zero;
+    // static const Float one;
 
     const Float operator+(const Float y) const {
       return Float(v.fv + y.v.fv);
@@ -56,6 +56,9 @@ namespace jellyfish {
 
     bits_t bits() const { return v.iv; };
     float_t to_float() const { return v.fv; };
+
+    // Should we use the floating point ==?
+    bool operator==(Float o) { return v.iv == o.v.iv; }
   };
 }
 

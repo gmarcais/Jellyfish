@@ -38,6 +38,8 @@ namespace jellyfish {
 
     bits_t bits() const { return x; }
     float to_float() const { return (float)x; }
+   
+    bool operator==(const capped_integer &o) { return x == o.x; }
   };
 }
 

@@ -87,6 +87,9 @@ struct mer_counter_args
   char * timing_arg;	/**< @brief Print timing information.  */
   char * timing_orig;	/**< @brief Print timing information original value given at command line.  */
   const char *timing_help; /**< @brief Print timing information help description.  */
+  char * stats_arg;	/**< @brief Print stats.  */
+  char * stats_orig;	/**< @brief Print stats original value given at command line.  */
+  const char *stats_help; /**< @brief Print stats help description.  */
   int no_write_flag;	/**< @brief Don't write database (default=off).  */
   const char *no_write_help; /**< @brief Don't write database help description.  */
   int measure_flag;	/**< @brief Write usage statistics (default=off).  */
@@ -125,6 +128,7 @@ struct mer_counter_args
   unsigned int upper_count_given ;	/**< @brief Whether upper-count was given.  */
   unsigned int matrix_given ;	/**< @brief Whether matrix was given.  */
   unsigned int timing_given ;	/**< @brief Whether timing was given.  */
+  unsigned int stats_given ;	/**< @brief Whether stats was given.  */
   unsigned int no_write_given ;	/**< @brief Whether no-write was given.  */
   unsigned int measure_given ;	/**< @brief Whether measure was given.  */
   unsigned int buffers_given ;	/**< @brief Whether buffers was given.  */

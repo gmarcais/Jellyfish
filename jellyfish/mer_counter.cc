@@ -48,9 +48,11 @@
 // the hashing matrix). Refactor!
 class mer_counting_base {
 public:
-  virtual void count() = 0;
-  virtual Time get_writing_time() = 0;
   virtual ~mer_counting_base() {}
+  virtual void count() = 0;
+  virtual Time get_writing_time() const = 0;
+  virtual uint64_t get_distinct() const = 0;
+  virtual uint64_t get_total() const = 0;
 };
 
 template <typename parser_t, typename hash_t>
@@ -62,10 +64,12 @@ protected:
   typename hash_t::storage_t *ary;
   hash_t                     *hash;
   jellyfish::dumper_t        *dumper;
+  uint64_t                    distinct, total;
 
 public:
   mer_counting(struct mer_counter_args &_args) :
-    args(&_args), sync_barrier(args->threads_arg) {}
+    args(&_args), sync_barrier(args->threads_arg),
+    distinct(0), total(0) {}
 
   ~mer_counting() { 
     if(dumper)
@@ -89,13 +93,18 @@ public:
     if(is_serial) {
       hash->dump();
     }
+
+    atomic::gcc::fetch_add(&distinct, mer_stream.get_distinct());
+    atomic::gcc::fetch_add(&total, mer_stream.get_total());
   }
   
   void count() {
     exec_join(args->threads_arg);
   }
 
-  Time get_writing_time() { return hash->get_writing_time(); }
+  virtual Time get_writing_time() const { return hash->get_writing_time(); }
+  virtual uint64_t get_distinct() const { return distinct; }
+  virtual uint64_t get_total() const { return total; }
 };
 
 class mer_counting_fasta_hash : public mer_counting<jellyfish::parse_dna, inv_hash_t> {
@@ -279,7 +288,8 @@ int count_main(int argc, char *argv[])
   if(args.timing_given) {
     std::ofstream timing_fd(args.timing_arg);
     if(!timing_fd.good()) {
-      die << "Can't open timing file '" << args.timing_arg << err::no;
+      std::cerr << "Can't open timing file '" << args.timing_arg << err::no
+                << std::endl;
     } else {
       Time writing = counter->get_writing_time();
       Time counting = (all_done - after_init) - writing;
@@ -287,6 +297,18 @@ int count_main(int argc, char *argv[])
                 << "Counting " << counting.str() << "\n"
                 << "Writing  " << writing.str() << "\n";
       timing_fd.close();
+    }
+  }
+
+  if(args.stats_given) {
+    std::ofstream stats_fd(args.stats_arg);
+    if(!stats_fd.good()) {
+      std::cerr << "Can't open stats file '" << args.stats_arg << err::no
+                << std::endl;
+    } else {
+      stats_fd << "Distinct: " << counter->get_distinct() << "\n"
+               << "Total:    " << counter->get_total() << std::endl;
+      stats_fd.close();
     }
   }
 

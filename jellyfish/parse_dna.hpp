@@ -99,13 +99,19 @@ namespace jellyfish {
       const uint64_t  masq;
       uint_t          cmlen;
       const bool      canonical;
+      uint64_t        distinct, total;
 
     public:
       thread(parse_dna *_parser) :
         parser(_parser), sequence(0),
         mer_len(_parser->mer_len), lshift(2 * (mer_len - 1)),
         kmer(0), rkmer(0), masq((1UL << (2 * mer_len)) - 1),
-        cmlen(0), canonical(parser->canonical) { }
+        cmlen(0), canonical(parser->canonical),
+        distinct(0), total(0) {}
+
+      uint64_t get_uniq() const { return 0; }
+      uint64_t get_distinct() const { return distinct; }
+      uint64_t get_total() const { return total; }
 
       template<typename T>
       void parse(T &counter) {
@@ -126,10 +132,13 @@ namespace jellyfish {
               rkmer = (rkmer >> 2) | ((0x3 - c) << lshift);
               if(++cmlen >= mer_len) {
                 cmlen  = mer_len;
+                typename T::val_type oval;
                 if(canonical)
-                  counter->inc(kmer < rkmer ? kmer : rkmer);
+                  counter->add(kmer < rkmer ? kmer : rkmer, 1, &oval);
                 else
-                  counter->inc(kmer);
+                  counter->add(kmer, 1, &oval);
+                distinct += oval == (typename T::val_type)0;
+                ++total;
               }
             }
           }

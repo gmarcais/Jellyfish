@@ -52,6 +52,7 @@ const char *mer_counter_args_full_help[] = {
   "  -U, --upper-count=LONG        Don't output k-mer with count > upper-count",
   "      --matrix=Matrix file      Hash function binary matrix",
   "      --timing=Timing file      Print timing information",
+  "      --stats=Stats file        Print stats",
   "  -w, --no-write                Don't write database  (default=off)",
   "  -u, --measure                 Write usage statistics  (default=off)",
   "      --buffers=LONG            Number of buffers per thread",
@@ -84,11 +85,12 @@ init_help_array(void)
   mer_counter_args_help[16] = mer_counter_args_full_help[17];
   mer_counter_args_help[17] = mer_counter_args_full_help[18];
   mer_counter_args_help[18] = mer_counter_args_full_help[19];
-  mer_counter_args_help[19] = 0; 
+  mer_counter_args_help[19] = mer_counter_args_full_help[20];
+  mer_counter_args_help[20] = 0; 
   
 }
 
-const char *mer_counter_args_help[20];
+const char *mer_counter_args_help[21];
 
 typedef enum {ARG_NO
   , ARG_FLAG
@@ -135,6 +137,7 @@ void clear_given (struct mer_counter_args *args_info)
   args_info->upper_count_given = 0 ;
   args_info->matrix_given = 0 ;
   args_info->timing_given = 0 ;
+  args_info->stats_given = 0 ;
   args_info->no_write_given = 0 ;
   args_info->measure_given = 0 ;
   args_info->buffers_given = 0 ;
@@ -174,6 +177,8 @@ void clear_args (struct mer_counter_args *args_info)
   args_info->matrix_orig = NULL;
   args_info->timing_arg = NULL;
   args_info->timing_orig = NULL;
+  args_info->stats_arg = NULL;
+  args_info->stats_orig = NULL;
   args_info->no_write_flag = 0;
   args_info->measure_flag = 0;
   args_info->buffers_orig = NULL;
@@ -211,13 +216,14 @@ void init_args_info(struct mer_counter_args *args_info)
   args_info->upper_count_help = mer_counter_args_full_help[17] ;
   args_info->matrix_help = mer_counter_args_full_help[18] ;
   args_info->timing_help = mer_counter_args_full_help[19] ;
-  args_info->no_write_help = mer_counter_args_full_help[20] ;
-  args_info->measure_help = mer_counter_args_full_help[21] ;
-  args_info->buffers_help = mer_counter_args_full_help[22] ;
-  args_info->buffer_size_help = mer_counter_args_full_help[23] ;
-  args_info->out_buffer_size_help = mer_counter_args_full_help[24] ;
-  args_info->lock_help = mer_counter_args_full_help[25] ;
-  args_info->stream_help = mer_counter_args_full_help[26] ;
+  args_info->stats_help = mer_counter_args_full_help[20] ;
+  args_info->no_write_help = mer_counter_args_full_help[21] ;
+  args_info->measure_help = mer_counter_args_full_help[22] ;
+  args_info->buffers_help = mer_counter_args_full_help[23] ;
+  args_info->buffer_size_help = mer_counter_args_full_help[24] ;
+  args_info->out_buffer_size_help = mer_counter_args_full_help[25] ;
+  args_info->lock_help = mer_counter_args_full_help[26] ;
+  args_info->stream_help = mer_counter_args_full_help[27] ;
   
 }
 
@@ -326,6 +332,8 @@ mer_counter_cmdline_release (struct mer_counter_args *args_info)
   free_string_field (&(args_info->matrix_orig));
   free_string_field (&(args_info->timing_arg));
   free_string_field (&(args_info->timing_orig));
+  free_string_field (&(args_info->stats_arg));
+  free_string_field (&(args_info->stats_orig));
   free_string_field (&(args_info->buffers_orig));
   free_string_field (&(args_info->buffer_size_orig));
   free_string_field (&(args_info->out_buffer_size_orig));
@@ -404,6 +412,8 @@ mer_counter_cmdline_dump(FILE *outfile, struct mer_counter_args *args_info)
     write_into_file(outfile, "matrix", args_info->matrix_orig, 0);
   if (args_info->timing_given)
     write_into_file(outfile, "timing", args_info->timing_orig, 0);
+  if (args_info->stats_given)
+    write_into_file(outfile, "stats", args_info->stats_orig, 0);
   if (args_info->no_write_given)
     write_into_file(outfile, "no-write", 0, 0 );
   if (args_info->measure_given)
@@ -730,6 +740,7 @@ mer_counter_cmdline_internal (
         { "upper-count",	1, NULL, 'U' },
         { "matrix",	1, NULL, 0 },
         { "timing",	1, NULL, 0 },
+        { "stats",	1, NULL, 0 },
         { "no-write",	0, NULL, 'w' },
         { "measure",	0, NULL, 'u' },
         { "buffers",	1, NULL, 0 },
@@ -988,6 +999,20 @@ mer_counter_cmdline_internal (
                 &(local_args_info.timing_given), optarg, 0, 0, ARG_STRING,
                 check_ambiguity, override, 0, 0,
                 "timing", '-',
+                additional_error))
+              goto failure;
+          
+          }
+          /* Print stats.  */
+          else if (strcmp (long_options[option_index].name, "stats") == 0)
+          {
+          
+          
+            if (update_arg( (void *)&(args_info->stats_arg), 
+                 &(args_info->stats_orig), &(args_info->stats_given),
+                &(local_args_info.stats_given), optarg, 0, 0, ARG_STRING,
+                check_ambiguity, override, 0, 0,
+                "stats", '-',
                 additional_error))
               goto failure;
           

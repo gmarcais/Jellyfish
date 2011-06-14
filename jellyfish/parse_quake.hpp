@@ -23,6 +23,7 @@
 #include <jellyfish/misc.hpp>
 #include <jellyfish/seq_qual_parser.hpp>
 #include <jellyfish/circular_buffer.hpp>
+#include <jellyfish/floats.hpp>
 
 namespace jellyfish {
   class parse_quake : public double_fifo_input<seq_qual_parser::sequence_t> {
@@ -73,6 +74,7 @@ namespace jellyfish {
       const bool              canonical;
       circular_buffer<float>  quals;
       const char              quality_start;
+      uint64_t                distinct, total;
 
     public:
       thread(parse_quake *_parser, const char _qs) :
@@ -80,7 +82,11 @@ namespace jellyfish {
         mer_len(_parser->mer_len), lshift(2 * (mer_len - 1)),
         kmer(0), rkmer(0), masq((1UL << (2 * mer_len)) - 1),
         cmlen(0), canonical(parser->canonical), quals(mer_len),
-        quality_start(_qs) { }
+        quality_start(_qs),
+        distinct(0), total(0) { }
+
+      uint64_t get_distinct() const { return distinct; }
+      uint64_t get_total() const { return total; }
 
       template<typename T>
       void parse(T &counter) {
@@ -103,10 +109,13 @@ namespace jellyfish {
               quals.append(one_minus_p);
               if(++cmlen >= mer_len) {
                 cmlen  = mer_len;
+                Float oval;
                 if(canonical)
-                  counter->add(kmer < rkmer ? kmer : rkmer, quals.prod());
+                  counter->add(kmer < rkmer ? kmer : rkmer, quals.prod(), &oval);
                 else
-                  counter->add(kmer, quals.prod());
+                  counter->add(kmer, quals.prod(), &oval);
+                distinct += oval == (Float)0.0f;
+                ++total;
               }
             }
           }

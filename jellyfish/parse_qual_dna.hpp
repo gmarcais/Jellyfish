@@ -71,6 +71,7 @@ namespace jellyfish {
       const bool              canonical;
       const char              quality_start;
       const char              min_q;
+      uint64_t                distinct, total;
 
     public:
       thread(parse_qual_dna *_parser, const char _qs, const char _min_q) :
@@ -78,7 +79,11 @@ namespace jellyfish {
         mer_len(_parser->mer_len), lshift(2 * (mer_len - 1)),
         kmer(0), rkmer(0), masq((1UL << (2 * mer_len)) - 1),
         cmlen(0), canonical(parser->canonical),
-        quality_start(_qs), min_q(_min_q) { }
+        quality_start(_qs), min_q(_min_q),
+        distinct(0), total(0) { }
+
+      uint64_t get_distinct() const { return distinct; }
+      uint64_t get_total() const { return total; }
 
       template<typename T>
       void parse(T &counter) {
@@ -104,10 +109,13 @@ namespace jellyfish {
               rkmer = (rkmer >> 2) | ((0x3 - c) << lshift);
               if(++cmlen >= mer_len) {
                 cmlen  = mer_len;
+                uint64_t oval;
                 if(canonical)
-                  counter->inc(kmer < rkmer ? kmer : rkmer);
+                  counter->add(kmer < rkmer ? kmer : rkmer, 1, &oval);
                 else
-                  counter->inc(kmer);
+                  counter->add(kmer, 1, &oval);
+                distinct += !oval;
+                ++total;
               }
             }
           }

@@ -34,8 +34,10 @@ option "upper-count"            U "Don't output k-mer with count > upper-count"
   long
 option "matrix"                 - "Hash function binary matrix"
   string typestr="Matrix file"
-option "timing"                - "Print timing information"
+option "timing"                 - "Print timing information"
   string typestr="Timing file"
+option "stats"                  - "Print stats"
+  string typestr="Stats file"
 option "no-write"               w "Don't write database"
   flag off hidden
 option "measure"                u "Write usage statistics"

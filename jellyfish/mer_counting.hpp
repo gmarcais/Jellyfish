@@ -49,7 +49,7 @@ typedef jellyfish::hash< uint64_t,uint64_t,inv_hash_storage_t,atomic::gcc > inv_
 #include <jellyfish/capped_integer.hpp>
 typedef jellyfish::direct_indexing::array<uint64_t,jellyfish::capped_integer<uint32_t>,atomic::gcc,allocators::mmap> direct_index_storage_t;
 typedef jellyfish::direct_sorted_dumper< direct_index_storage_t, atomic::gcc> direct_index_dumper_t;
-typedef jellyfish::hash< uint64_t,uint32_t,direct_index_storage_t,atomic::gcc> direct_index_t;
+typedef jellyfish::hash< uint64_t,jellyfish::capped_integer<uint32_t>,direct_index_storage_t,atomic::gcc> direct_index_t;
 
 // Quake types
 #include <jellyfish/aligned_values_array.hpp>
