@@ -94,13 +94,15 @@ namespace jellyfish {
         ary(_ary), hsize_mask(ary->get_size() - 1), status(FREE), my_hash(_my_hash)
       { }
 
+      // Add val to the value associated with key. Returns the old
+      // value in *oval if oval is not NULL
       template<typename add_t>
-      inline void add(key_t key, const add_t &val) {
+      inline void add(key_t key, const add_t &val, add_t *oval = 0) {
         while(true) {
           while(atomic::cas(&status, FREE, INUSE) != FREE)
             my_hash->wait_event_is_done();
 
-          if(ary->add(key, val))
+          if(ary->add(key, val, oval))
             break;
 
           // Improve this. Undefined behavior if dump_to_file throws an error.
@@ -114,8 +116,8 @@ namespace jellyfish {
           my_hash->signal_not_in_use();
       }
 
-      inline void inc(key_t key) { return this->add(key, 1); }
-      inline void operator()(key_t key) { return this->add(key, 1); }
+      inline void inc(key_t key) { return this->add(key, (val_t)1); }
+      inline void operator()(key_t key) { return this->add(key, (val_t)1); }
 
       friend class hash;
     };

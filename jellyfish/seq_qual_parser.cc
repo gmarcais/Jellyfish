@@ -129,10 +129,6 @@ void jellyfish::fastq_seq_qual_parser::copy_qual_values(char *&qual_start, const
       eraise(FastqSeqQualParserError) << "Truncated input file";
     case '\n':
       break;
-    case '@':
-      if(pbase() == '\n')
-        eraise(FastqSeqQualParserError) << "Invalid input, short "
-          "on qual values";
     default:
       *qual_start = base();
       qual_start += 2;

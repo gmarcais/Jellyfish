@@ -611,105 +611,57 @@ namespace jellyfish {
       /**
        * Use hash values as counters
        */
-      inline bool add(word key, word val) {
+      inline bool add(word key, word val, word *oval = 0) {
         uint64_t hash = hash_matrix.times(key);
         return add_rec(hash & size_mask, (hash >> lsize) & key_mask,
-                       val, false);
-      }
-
-      bool add_rec(size_t id, word key, word val, bool large) {
-        uint_t		 reprobe     = 0;
-        const offset_t	*o, *lo, *ao;
-        word		*w, *kw, *vw, nkey;
-        bool		 key_claimed = false;
-        size_t		 cid         = id;
-        word		 cary;
-        word		 akey        = large ? 0 : (key | ((word)1 << key_off));
-
-        // Claim key
-        do {
-          w = offsets.get_word_offset(cid, &o, &lo, data);
-          ao = large ? lo : o;
-
-          kw = w + ao->key.woff;
-
-          if(ao->key.mask2) { // key split on two words
-            nkey = akey << ao->key.boff;
-            nkey |= ao->key.sb_mask1;
-            if(large)
-              nkey |= ao->key.lb_mask;
-            nkey &= ao->key.mask1;
-
-            // Use o->key.mask1 and not ao->key.mask1 as the first one is
-            // guaranteed to be bigger. The key needs to be free on its
-            // longer mask to claim it!
-            key_claimed = set_key(kw, nkey, o->key.mask1, ao->key.mask1);
-            if(key_claimed) {
-              nkey = ((akey >> ao->key.shift) | ao->key.sb_mask2) & ao->key.mask2;
-              key_claimed = key_claimed && set_key(kw + 1, nkey, o->key.mask2, ao->key.mask2);
-            }
-          } else { // key on one word
-            nkey = akey << ao->key.boff;
-            if(large)
-              nkey |= ao->key.lb_mask;
-            nkey &= ao->key.mask1;
-            key_claimed = set_key(kw, nkey, o->key.mask1, ao->key.mask1);
-          }
-          if(!key_claimed) { // reprobe
-            if(++reprobe > reprobe_limit.val())
-              return false;
-            cid = (id + reprobes[reprobe]) & size_mask;
-
-            if(large)
-              akey = reprobe;
-            else
-              akey = key | ((reprobe + 1) << key_off);
-          }
-        } while(!key_claimed);
-
-        // Increment value
-        vw = w + ao->val.woff;
-        cary = add_val(vw, val, ao->val.boff, ao->val.mask1);
-        cary >>= ao->val.shift;
-        if(cary && ao->val.mask2) { // value split on two words
-          cary = add_val(vw + 1, cary, 0, ao->val.mask2);
-          cary >>= ao->val.cshift;
-        }
-        if(cary) {
-          cid = (cid + reprobes[0]) & size_mask;
-          if(add_rec(cid, key, cary, true))
-            return true;
-
-          // Adding failed, table is full. Need to back-track and
-          // substract val.
-          cary = add_val(vw, ((word)1 << offsets.get_val_len()) - val,
-                         ao->val.boff, ao->val.mask1);
-          cary >>= ao->val.shift;
-          if(cary && ao->val.mask2) {
-            // Can I ignore the cary here? Table is known to be full, so
-            // not much of a choice. But does it leave the table in a
-            // consistent state?
-            add_val(vw + 1, cary, 0, ao->val.mask2);
-          }
-          return false;
-        }
-        return true;
+                       val, false, oval);
       }
 
       /**
        * Use hash as a set.
        */
-      inline bool add(word _key, bool *is_new) {
+      inline bool add(word _key, bool *is_new) __attribute__((deprecated("Use set"))) {
 	size_t id;
-	return add(_key, is_new, &id);
+        return set(_key, is_new, &id);
+      }
+      inline bool set(word _key, bool *is_new) {
+	size_t id;
+	return set(_key, is_new, &id);
+      }
+      bool add(word _key, bool *is_new, size_t *id)  __attribute__((deprecated("Use set"))) {
+        return set(_key, is_new, id);
+      }
+      bool set(word _key, bool *is_new, size_t *id) {
+        const offset_t *ao;
+        uint64_t hash = hash_matrix.times(_key);
+        word *w;
+        *id = hash & size_mask;
+        return claim_key((hash >> lsize) & key_mask, is_new, id, &ao, &w);
       }
 
-      bool add(word _key, bool *is_new, size_t *id) {
-        uint64_t hash = hash_matrix.times(_key);
-        *id = hash & size_mask;
-        word key = (hash >> lsize) & key_mask;
+      void write_ary_header(std::ostream *out) const {
+        hash_matrix.dump(out);
+        hash_inverse_matrix.dump(out);
+      }
 
-        // TODO: Lots of copy from other add. Factorize.
+      void write_raw(std::ostream *out) const {
+        if(out->tellp() & 0x7) { // Make sure aligned
+          std::string padding(0x8 - (out->tellp() & 0x7), '\0');
+          out->write(padding.c_str(), padding.size());
+        }
+        out->write((char *)mem_block.get_ptr(), mem_block.get_size());
+      }
+
+    private:
+      /* id is input/output. Equal to hash & size_maks on input. Equal
+       * to actual id where key was set on output. key is already hash
+       * shifted and masked to get higher bits. (>> lsize & key_mask)
+       *
+       * is_new is set on output to true if key did not exists in hash
+       * before. *ao points to the actual offsets object.
+       */
+      bool claim_key(const word &key, bool *is_new, size_t *id, 
+                     const offset_t **_ao, word **_w) {
         uint_t		 reprobe     = 0;
         const offset_t	*o, *lo, *ao;
         word		*w, *kw, nkey;
@@ -717,10 +669,9 @@ namespace jellyfish {
         size_t		 cid         = *id;
         word		 akey        = key | ((word)1 << key_off);
 
-        // Claim key
         do {
-          w = offsets.get_word_offset(cid, &o, &lo, data);
-          ao = o;
+          *_w  = w = offsets.get_word_offset(cid, &o, &lo, data);
+          *_ao = ao = o;
 
           kw = w + ao->key.woff;
 
@@ -755,20 +706,45 @@ namespace jellyfish {
         return true;
       }
 
-      void write_ary_header(std::ostream *out) const {
-        hash_matrix.dump(out);
-        hash_inverse_matrix.dump(out);
-      }
+      bool add_rec(size_t id, word key, word val, bool large, word *oval) {
+        const offset_t	*ao;
+        word		*w;
 
-      void write_raw(std::ostream *out) const {
-        if(out->tellp() & 0x7) { // Make sure aligned
-          std::string padding(0x8 - (out->tellp() & 0x7), '\0');
-          out->write(padding.c_str(), padding.size());
+        bool is_new;
+        if(!claim_key(key, &is_new, &id, &ao, &w))
+          return false;
+        if(oval)
+          *oval = is_new;
+
+        // Increment value
+        word *vw = w + ao->val.woff;
+        word cary = add_val(vw, val, ao->val.boff, ao->val.mask1);
+        cary >>= ao->val.shift;
+        if(cary && ao->val.mask2) { // value split on two words
+          cary = add_val(vw + 1, cary, 0, ao->val.mask2);
+          cary >>= ao->val.cshift;
         }
-        out->write((char *)mem_block.get_ptr(), mem_block.get_size());
+        if(cary) {
+          id = (id + reprobes[0]) & size_mask;
+          if(add_rec(id, key, cary, true, 0))
+            return true;
+
+          // Adding failed, table is full. Need to back-track and
+          // substract val.
+          cary = add_val(vw, ((word)1 << offsets.get_val_len()) - val,
+                         ao->val.boff, ao->val.mask1);
+          cary >>= ao->val.shift;
+          if(cary && ao->val.mask2) {
+            // Can I ignore the cary here? Table is known to be full, so
+            // not much of a choice. But does it leave the table in a
+            // consistent state?
+            add_val(vw + 1, cary, 0, ao->val.mask2);
+          }
+          return false;
+        }
+        return true;
       }
 
-    private:
       inline bool set_key(word *w, word nkey, word free_mask, 
                           word equal_mask) {
         word ow = *w, nw, okey;
