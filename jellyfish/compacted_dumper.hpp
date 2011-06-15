@@ -112,7 +112,8 @@ namespace jellyfish {
     std::cerr << "Open " << file << std::endl;
     out.open(file);
     if(!out.good())
-      eraise(ErrorWriting) << "Can't open file '" << file << "' for writing";
+      eraise(ErrorWriting) << "'" << file << "': " 
+                           << "Can't open file for writing" << err::no;
 
 
     out.write("JFLISTDN", 8);

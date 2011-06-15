@@ -27,7 +27,8 @@ jellyfish::seq_qual_parser::new_parser(const char *path) {
   case '@': return new fastq_seq_qual_parser(fd, path, &peek, 1);
       
   default:
-    eraise(FileParserError) << "Invalid input file '" << path << "'";
+    eraise(FileParserError) << "'" << path << "': "
+                            << "Invalid input file. Expected fastq";
   }
 
   return 0;

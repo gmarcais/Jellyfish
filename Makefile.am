@@ -7,5 +7,5 @@ man1_MANS = doc/jellyfish.man
 SUBDIRS = jellyfish tests
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = jellyfish-$(PACKAGE_VERSION).pc
+pkgconfig_DATA = jellyfish-1.1.pc
 

@@ -1,14 +1,16 @@
-AC_INIT([jellyfish], [1.1], [gmarcais@umd.edu])
+AC_INIT([jellyfish], [1.1.1], [gmarcais@umd.edu])
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE([-Wall -Werror foreign parallel-tests color-tests])
 AC_PROG_CXX
 
+AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
 gl_EARLY 
 gl_INIT
 
-define([concat], $1$2$3)dnl
-define([PC_FILE], concat([jellyfish-],AC_PACKAGE_VERSION,[.pc]))
+dnl define([concat], $1$2$3)dnl
+dnl define([PC_FILE], concat([jellyfish-],AC_PACKAGE_VERSION,[.pc]))
+define([PC_FILE], jellyfish-1.1.pc)
 AC_CONFIG_FILES([
     Makefile
     jellyfish/Makefile

@@ -10,7 +10,7 @@ storage.cc misc.cc err.cc mer_counter.cc histo_main.cc dump_main.cc	\
 time.cc thread_exec.cc query_main.cc square_binary_matrix.cc		\
 dump_fastq_main.cc histo_fastq_main.cc cite.cc parse_dna.cc		\
 file_parser.cc parse_quake.cc parse_qual_dna.cc sequence_parser.cc	\
-seq_qual_parser.cc half.cpp hash_fastq_merge.cc cite_cmdline.cc	\
+seq_qual_parser.cc half.cpp hash_fastq_merge.cc cite_cmdline.cc		\
 query_cmdline.cc hash_merge_cmdline.cc histo_cmdline.cc			\
 stats_cmdline.cc histo_fastq_main_cmdline.cc				\
 dump_fastq_main_cmdline.cc mer_counter_cmdline.cc			\
@@ -27,8 +27,10 @@ simple_growing_array.hpp backtrace.hpp
 lib_LTLIBRARIES = libjellyfish.la
 libjellyfish_la_LDFLAGS = -version-info 1:0:0
 libjellyfish_la_SOURCES = square_binary_matrix.cc err.cc misc.cc	\
-storage.cc thread_exec.cc time.cc file_parser.cc read_parser.cc		\
-parse_read.cc half.cpp mapped_file.cc
+dbg.hpp storage.cc thread_exec.cc time.cc file_parser.cc		\
+read_parser.cc parse_read.cc half.cpp mapped_file.cc parse_dna.cc	\
+parse_quake.cc parse_qual_dna.cc sequence_parser.cc seq_qual_parser.cc	\
+backtrace.cc
 libjellyfish_la_CPPFLAGS = $(AM_CPPFLAGS)
 library_includedir=$(includedir)/jellyfish-@PACKAGE_VERSION@/jellyfish
 library_include_HEADERS = allocators_malloc.hpp allocators_mmap.hpp	\
@@ -45,7 +47,7 @@ circular_buffer.hpp counter.hpp parse_quake.hpp parse_dna.hpp		\
 parse_qual_dna.hpp file_parser.hpp sequence_parser.hpp			\
 seq_qual_parser.hpp double_fifo_input.hpp read_parser.hpp		\
 parse_read.hpp simple_growing_array.hpp toFloat.h eLut.h dbg.hpp	\
-half.h
+half.h backtrace.hpp
 
 check_PROGRAMS = generate_sequence test_double_fifo_input	\
 test_read_parser
