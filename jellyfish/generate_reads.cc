@@ -66,7 +66,7 @@ public:
     static const int line_len = 4;
     os << ">genome " << _seq_len << "\n";
     size_t i;
-    for(i = 0; i < _int_seq_len / line_len; ++i) {
+    for(i = 0; i < _int_seq_len / line_len; i += line_len) {
       dump_chunk(_seq + i, line_len, 0, os);
       os << "\n";
     }
@@ -137,7 +137,7 @@ public:
       // TODO Fix: reads start only every 16 bases!
       memcpy(_read, base, 
              sizeof(uint32_t) * (_int_read_len + (_rest_read_len != 0)));
-      add_errors();
+      //      add_errors();
       dump_chunk(_read, _int_read_len, _rest_read_len, os);
       os << "\n";
     }
