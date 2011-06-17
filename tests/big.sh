@@ -1,5 +1,7 @@
 #! /bin/sh
 
+(echo big; date) >> /tmp/big.log
+
 if [ -z "$BIG" ]; then
     echo "Skip big test"
     exit 77
@@ -8,13 +10,12 @@ fi
 . ./compat.sh
 
 sort > ${pref}.md5sum <<EOF 
-019a57f22208f638f58b68a3131c4692 ${pref}_16.histo
+f52abd3e2a7cc5089cc8f32cb607c4c5 ${pref}_16.histo
 EOF
 
     # $JF count -m 31 -s 4000000000 -o ${pref}_31 -c 4 -p 253 -C -r -t $nCPUs --timing ${pref}_31.timing \
     # seq30g.fa && \
     # $JF histo ${pref}_31_0 > ${pref}_31.histo && \
-
 
 echo "Generate 30 Gigs of sequence and count k-mers on it" && \
     ([ -f seq30g.fa ] || ../jellyfish/generate_sequence -v -o seq30g -r 1000 -s 1602176487 30000000000) && \
