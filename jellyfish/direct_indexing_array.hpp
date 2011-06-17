@@ -74,6 +74,11 @@ namespace jellyfish {
         return true;
       }
 
+      bool get_val(key_t key, val_t &val, bool full = true) const {
+        val = data[key];
+        return true;
+      }
+
       class iterator {
         const array *ary;
         size_t       start_id;

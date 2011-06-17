@@ -100,7 +100,6 @@ namespace jellyfish {
   void sorted_dumper<storage_t,atomic_t>::_dump() {
     std::ofstream _out;
     assert(dump_mutex.try_lock());
-    DBG << V(file_prefix) << V(file_index);
     open_next_file(file_prefix.c_str(), &file_index, _out);
     out = &_out;
     unique = distinct = total = max_count = 0;

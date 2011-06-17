@@ -636,7 +636,8 @@ namespace jellyfish {
         uint64_t hash = hash_matrix.times(_key);
         word *w;
         *id = hash & size_mask;
-        return claim_key((hash >> lsize) & key_mask, is_new, id, &ao, &w);
+        return claim_key((hash >> lsize) & key_mask, is_new, id, false,
+                         &ao, &w);
       }
 
       void write_ary_header(std::ostream *out) const {
@@ -660,24 +661,26 @@ namespace jellyfish {
        * is_new is set on output to true if key did not exists in hash
        * before. *ao points to the actual offsets object.
        */
-      bool claim_key(const word &key, bool *is_new, size_t *id, 
+      bool claim_key(const word &key, bool *is_new, size_t *id, bool large,
                      const offset_t **_ao, word **_w) {
         uint_t		 reprobe     = 0;
         const offset_t	*o, *lo, *ao;
         word		*w, *kw, nkey;
         bool		 key_claimed = false;
         size_t		 cid         = *id;
-        word		 akey        = key | ((word)1 << key_off);
+        word		 akey        = large ? 0 :(key | ((word)1 << key_off));
 
         do {
           *_w  = w = offsets.get_word_offset(cid, &o, &lo, data);
-          *_ao = ao = o;
+          *_ao = ao = large ? lo : o;
 
           kw = w + ao->key.woff;
 
           if(ao->key.mask2) { // key split on two words
             nkey = akey << ao->key.boff;
             nkey |= ao->key.sb_mask1;
+            if(large)
+              nkey |= ao->key.lb_mask;
             nkey &= ao->key.mask1;
 
             // Use o->key.mask1 and not ao->key.mask1 as the first one is
@@ -690,6 +693,8 @@ namespace jellyfish {
             }
           } else { // key on one word
             nkey = akey << ao->key.boff;
+            if(large)
+              nkey |= ao->key.lb_mask;
             nkey &= ao->key.mask1;
             key_claimed = set_key(kw, nkey, o->key.mask1, ao->key.mask1, is_new);
           }
@@ -698,7 +703,10 @@ namespace jellyfish {
               return false;
             cid = (*id + reprobes[reprobe]) & size_mask;
 
-            akey = key | ((reprobe + 1) << key_off);
+            if(large)
+              akey = reprobe;
+            else
+              akey = key | ((reprobe + 1) << key_off);
           }
         } while(!key_claimed);
 
@@ -711,7 +719,7 @@ namespace jellyfish {
         word		*w;
 
         bool is_new;
-        if(!claim_key(key, &is_new, &id, &ao, &w))
+        if(!claim_key(key, &is_new, &id, large, &ao, &w))
           return false;
         if(oval)
           *oval = !is_new;

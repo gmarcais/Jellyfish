@@ -15,7 +15,7 @@ query_cmdline.cc hash_merge_cmdline.cc histo_cmdline.cc			\
 stats_cmdline.cc histo_fastq_main_cmdline.cc				\
 dump_fastq_main_cmdline.cc mer_counter_cmdline.cc			\
 hash_fastq_merge_cmdline.cc dump_cmdline.cc dbg.cc mapped_file.cc	\
-backtrace.cc
+backtrace.cc floats.cc
 # jellyfish_CPPFLAGS = $(AM_CPPFLAGS)
 
 EXTRA_DIST = cite_cmdline.hpp query_cmdline.hpp hash_merge_cmdline.hpp	\
@@ -30,7 +30,7 @@ libjellyfish_la_SOURCES = square_binary_matrix.cc err.cc misc.cc	\
 dbg.hpp storage.cc thread_exec.cc time.cc file_parser.cc		\
 read_parser.cc parse_read.cc half.cpp mapped_file.cc parse_dna.cc	\
 parse_quake.cc parse_qual_dna.cc sequence_parser.cc seq_qual_parser.cc	\
-backtrace.cc
+backtrace.cc floats.cc
 libjellyfish_la_CPPFLAGS = $(AM_CPPFLAGS)
 library_includedir=$(includedir)/jellyfish-@PACKAGE_VERSION@/jellyfish
 library_include_HEADERS = allocators_malloc.hpp allocators_mmap.hpp	\

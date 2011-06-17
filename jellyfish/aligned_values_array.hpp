@@ -98,6 +98,17 @@ namespace jellyfish {
         return true;
       }
 
+      bool get_val(key_t key, val_t &val, bool full = true) const {
+        key_t  v_ignore;
+        size_t key_id;
+
+        if(!keys.get_val(key, key_id, v_ignore, false))
+          return false;
+
+        vals.get_val(key_id, val);
+        return true;
+      }
+
       class iterator {
         typename key_ary_t::iterator              key_it;
         const val_ary_t                    *const vals;
