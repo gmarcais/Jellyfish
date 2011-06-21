@@ -64,8 +64,11 @@ namespace dbg {
     print_t(const char *file, const char *function, int line) :
       _buf(&_strbuf)
     {
+      const char *file_basename = strrchr(file, '/');
+      if(!file_basename)
+        file_basename = file;
       _buf << pthread_self() << "/" << gettid() << ":"
-           << basename(file) << ":" << function << ":" << line << ": ";
+           << file_basename << ":" << function << ":" << line << ": ";
     }
 
     ~print_t() {

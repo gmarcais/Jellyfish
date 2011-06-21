@@ -718,7 +718,7 @@ namespace jellyfish {
         const offset_t	*ao;
         word		*w;
 
-        bool is_new;
+        bool is_new = false;
         if(!claim_key(key, &is_new, &id, large, &ao, &w))
           return false;
         if(oval)

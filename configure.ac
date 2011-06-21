@@ -43,6 +43,8 @@ AS_IF([test "x$with_half" = "xyes"],
 # Check the version of strerror_r
 AC_FUNC_STRERROR_R      
 
+AC_CHECK_HEADERS([execinfo.h])
+
 LT_INIT
 AC_OUTPUT
 

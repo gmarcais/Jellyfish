@@ -50,16 +50,15 @@ parse_read.hpp simple_growing_array.hpp toFloat.h eLut.h dbg.hpp	\
 half.h backtrace.hpp
 
 check_PROGRAMS = generate_sequence test_double_fifo_input	\
-test_read_parser generate_reads
+test_read_parser
 generate_sequence_SOURCES = generate_sequence.cc	\
 generate_sequence_cmdline.cc misc.cc mersenne.cpp	\
 square_binary_matrix.cc
-generate_reads_SOURCES = generate_reads.cc generate_reads_cmdline.cc	\
-mersenne.cpp dbg.cc
+# generate_reads_SOURCES = generate_reads.cc generate_reads_cmdline.cc	\
+ mersenne.cpp dbg.cc
 test_double_fifo_input_SOURCES = test_double_fifo_input.cc	\
 parse_dna.cc file_parser.cc sequence_parser.cc backtrace.cc	\
 thread_exec.cc dbg.cc
 test_read_parser_SOURCES = test_read_parser.cc file_parser.cc	\
 read_parser.cc parse_read.cc dbg.cc backtrace.cc
-EXTRA_DIST += randomc.h generate_sequence_cmdline.hpp	\
-generate_reads_cmdline.hpp
+EXTRA_DIST += randomc.h generate_sequence_cmdline.hpp

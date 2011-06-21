@@ -1,3 +1,11 @@
+#include <config.h>
+
+#ifndef HAVE_EXECINFO_H
+
+void show_backtrace() {}
+
+#else
+
 #include <iostream>
 #include <stdexcept>
 #include <execinfo.h>
@@ -29,3 +37,5 @@ static void handler() {
 void show_backtrace() {
   std::set_terminate(handler);
 }
+
+#endif

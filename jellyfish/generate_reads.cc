@@ -66,7 +66,7 @@ public:
     static const int line_len = 4;
     os << ">genome " << _seq_len << "\n";
     size_t i;
-    for(i = 0; i < _int_seq_len / line_len; i += line_len) {
+    for(i = 0; i < _int_seq_len; i += line_len) {
       dump_chunk(_seq + i, line_len, 0, os);
       os << "\n";
     }
@@ -91,22 +91,23 @@ public:
          << letters[(*cur >> 24) & 0x3] << letters[(*cur >> 26) & 0x3]
          << letters[(*cur >> 28) & 0x3] << letters[(*cur >> 30) & 0x3];
     }
+    uint32_t bases = *cur;
     switch(rest_len) {
-    case 15: os << letters[ *cur        & 0x3];
-    case 14: os << letters[(*cur >> 2)  & 0x3];
-    case 13: os << letters[(*cur >> 4)  & 0x3];
-    case 12: os << letters[(*cur >> 6)  & 0x3];
-    case 11: os << letters[(*cur >> 8)  & 0x3];
-    case 10: os << letters[(*cur >> 10) & 0x3];
-    case 9:  os << letters[(*cur >> 12) & 0x3];
-    case 8:  os << letters[(*cur >> 14) & 0x3];
-    case 7:  os << letters[(*cur >> 16) & 0x3];
-    case 6:  os << letters[(*cur >> 18) & 0x3];
-    case 5:  os << letters[(*cur >> 20) & 0x3];
-    case 4:  os << letters[(*cur >> 22) & 0x3];
-    case 3:  os << letters[(*cur >> 24) & 0x3];
-    case 2:  os << letters[(*cur >> 26) & 0x3];
-    case 1:  os << letters[(*cur >> 28) & 0x3];
+    case 15: os << letters[bases & 0x3]; bases >>= 2;
+    case 14: os << letters[bases & 0x3]; bases >>= 2;
+    case 13: os << letters[bases & 0x3]; bases >>= 2;
+    case 12: os << letters[bases & 0x3]; bases >>= 2;
+    case 11: os << letters[bases & 0x3]; bases >>= 2;
+    case 10: os << letters[bases & 0x3]; bases >>= 2;
+    case 9:  os << letters[bases & 0x3]; bases >>= 2;
+    case 8:  os << letters[bases & 0x3]; bases >>= 2;
+    case 7:  os << letters[bases & 0x3]; bases >>= 2;
+    case 6:  os << letters[bases & 0x3]; bases >>= 2;
+    case 5:  os << letters[bases & 0x3]; bases >>= 2;
+    case 4:  os << letters[bases & 0x3]; bases >>= 2;
+    case 3:  os << letters[bases & 0x3]; bases >>= 2;
+    case 2:  os << letters[bases & 0x3]; bases >>= 2;
+    case 1:  os << letters[bases & 0x3]; bases >>= 2;
     }
   }
 
@@ -137,7 +138,7 @@ public:
       // TODO Fix: reads start only every 16 bases!
       memcpy(_read, base, 
              sizeof(uint32_t) * (_int_read_len + (_rest_read_len != 0)));
-      //      add_errors();
+      add_errors();
       dump_chunk(_read, _int_read_len, _rest_read_len, os);
       os << "\n";
     }
