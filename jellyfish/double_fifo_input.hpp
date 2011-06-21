@@ -91,6 +91,7 @@ namespace jellyfish {
 
     if(pthread_create(&input_id, 0, static_input_routine, (void *)this) != 0)
       eraise(Error) << "Failed creating input thread" << err::no;
+    DBG << V(input_id);
   }
 
   template<typename T>
@@ -122,6 +123,7 @@ namespace jellyfish {
       assert(prev_state == WORKING);
       do {
         full_queue.wait();
+        DBG << V(state);
       } while(state != WAKENING);
       prev_state = atomic::gcc::cas(&state, WAKENING, WORKING);
       assert(prev_state == WAKENING);
@@ -134,6 +136,7 @@ namespace jellyfish {
   template<typename T>
   typename double_fifo_input<T>::state_t double_fifo_input<T>::input_wake() {
     state_t prev_state = atomic::gcc::cas(&state, SLEEPING, WAKENING);
+    
     if(prev_state == SLEEPING) {
       full_queue.lock();
       full_queue.signal();
@@ -148,10 +151,14 @@ namespace jellyfish {
       input_wake();
   
     T *res = 0;
+    unsigned long nb_wakes = 0;
     while(!(res = rq.dequeue())) {
       if(rq.is_closed())
         return 0;
-      input_wake();
+      state_t prev_state = input_wake();
+      if(nb_wakes > 0)
+        DBG << V(prev_state);
+      ++nb_wakes;
       // TODO Should we wait on a lock instead when the input thread is
       // already in working state (i.e. it is most likely blocked on
       // some I/O).

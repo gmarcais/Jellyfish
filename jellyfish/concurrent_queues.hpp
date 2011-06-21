@@ -82,14 +82,13 @@ Val *concurrent_queue<Val>::dequeue() {
   ctail = tail;
   __sync_synchronize();
   while(!done) {
-    if(ctail != head) {
-      ntail = (ctail + 1) % size;
-      ntail = atomic::gcc::cas(&tail, ctail, ntail);
-      done = ntail == ctail;
-      ctail = ntail;
-    } else {
+    if(ctail == head)
       return NULL;
-    }
+
+    ntail = (ctail + 1) % size;
+    ntail = atomic::gcc::cas(&tail, ctail, ntail);
+    done = ntail == ctail;
+    ctail = ntail;
   }
   res = queue[ctail];
   queue[ctail] = NULL;
