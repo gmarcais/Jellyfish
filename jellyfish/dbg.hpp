@@ -28,6 +28,7 @@
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
+#include <signal.h>
 
 namespace dbg {
   pid_t gettid();
@@ -58,6 +59,8 @@ namespace dbg {
 
   class print_t {
     static pthread_mutex_t _lock;
+    static volatile pid_t  _print_tid;
+
     stringbuf              _strbuf;
     std::ostream           _buf;
   public:
@@ -72,11 +75,18 @@ namespace dbg {
     }
 
     ~print_t() {
-      pthread_mutex_lock(&_lock);
-      std::cerr.write(_strbuf.pbase(), _strbuf.pptr() - _strbuf.pbase());
-      std::cerr << std::endl;
-      pthread_mutex_unlock(&_lock);
+      if(_print_tid == 0 || gettid() == _print_tid) {
+        pthread_mutex_lock(&_lock);
+        std::cerr.write(_strbuf.pbase(), _strbuf.pptr() - _strbuf.pbase());
+        std::cerr << std::endl;
+        pthread_mutex_unlock(&_lock);
+      }
     }
+
+    static int set_signal(int signum = SIGUSR1);
+    static void signal_handler(int signum, siginfo_t *info, void *context);
+    static pid_t print_tid() { return _print_tid; }
+    static void print_tid(pid_t new_tid) { _print_tid = new_tid; }
 
     print_t & operator<<(const char *a[]) {
       for(int i = 0; a[i]; i++)

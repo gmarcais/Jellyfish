@@ -80,9 +80,11 @@ Val *concurrent_queue<Val>::dequeue() {
   unsigned int ctail, ntail;
 
   ctail = tail;
-  __sync_synchronize();
+  //  __sync_synchronize();
   while(!done) {
-    if(ctail == head)
+    //    if(ctail == head)
+    //      return NULL;
+    if(atomic::gcc::cas(&head, ctail, ctail) == ctail)
       return NULL;
 
     ntail = (ctail + 1) % size;

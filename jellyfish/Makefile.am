@@ -30,7 +30,7 @@ libjellyfish_la_SOURCES = square_binary_matrix.cc err.cc misc.cc	\
 dbg.hpp storage.cc thread_exec.cc time.cc file_parser.cc		\
 read_parser.cc parse_read.cc half.cpp mapped_file.cc parse_dna.cc	\
 parse_quake.cc parse_qual_dna.cc sequence_parser.cc seq_qual_parser.cc	\
-backtrace.cc floats.cc
+backtrace.cc floats.cc dbg.cc
 libjellyfish_la_CPPFLAGS = $(AM_CPPFLAGS)
 library_includedir=$(includedir)/jellyfish-@PACKAGE_VERSION@/jellyfish
 library_include_HEADERS = allocators_malloc.hpp allocators_mmap.hpp	\

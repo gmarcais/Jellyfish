@@ -136,7 +136,7 @@ namespace jellyfish {
   template<typename T>
   typename double_fifo_input<T>::state_t double_fifo_input<T>::input_wake() {
     state_t prev_state = atomic::gcc::cas(&state, SLEEPING, WAKENING);
-    
+    assert(prev_state >= WORKING && prev_state <= WAKENING);
     if(prev_state == SLEEPING) {
       full_queue.lock();
       full_queue.signal();
