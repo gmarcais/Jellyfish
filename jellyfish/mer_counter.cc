@@ -39,6 +39,7 @@
 #include <jellyfish/thread_exec.hpp>
 #include <jellyfish/square_binary_matrix.hpp>
 #include <jellyfish/mer_counter_cmdline.hpp>
+#include <jellyfish/noop_dumper.hpp>
 
 // Temporary
 //#include <jellyfish/measure_dumper.hpp>
@@ -178,7 +179,9 @@ public:
     }
     hash = new inv_hash_t(ary);
 
-    if(!args->no_write_flag) {
+    if(args->no_write_flag) {
+      dumper = new jellyfish::noop_dumper();
+    } else {
       // if(args->measure) {
       //   dumper = new jellyfish::measure_dumper<inv_hash_t::storage_t>(ary);
       // } else
@@ -196,8 +199,8 @@ public:
           _dumper->set_upper_count(args->upper_count_arg);
         dumper = _dumper;
       }
-      hash->set_dumper(dumper);
     }
+    hash->set_dumper(dumper);
     parser->set_canonical(args->both_strands_flag);
   }
 };
@@ -226,7 +229,9 @@ public:
     }
     hash = new inv_hash_t(ary);
 
-    if(!args->no_write_flag) {
+    if(args->no_write_flag) {
+      dumper = new jellyfish::noop_dumper();
+    } else {
       if(args->raw_flag) {
         dumper = new raw_inv_hash_dumper_t((uint_t)4, args->output_arg,
                                            args->out_buffer_size_arg, ary);
@@ -241,8 +246,8 @@ public:
           _dumper->set_upper_count(args->upper_count_arg);
         dumper = _dumper;
       }
-      hash->set_dumper(dumper);
     }
+    hash->set_dumper(dumper);
     parser->set_canonical(args->both_strands_flag);
   }
 };
@@ -259,15 +264,17 @@ public:
                                       args->buffer_size_arg);
     ary = new direct_index_t::storage_t(2 * args->mer_len_arg);
     hash = new direct_index_t(ary);
-    if(!args->no_write_flag) {
+    if(args->no_write_flag) {
+      dumper = new jellyfish::noop_dumper();
+    } else {
       if(args->raw_flag)
         std::cerr << "Switch --raw not (yet) supported with direct indexing. Ignoring." << std::endl;
       dumper = new direct_index_dumper_t(args->threads_arg, args->output_arg,
                                          args->out_buffer_size_arg,
                                          8*args->out_counter_len_arg,
                                          ary);
-      hash->set_dumper(dumper);
     }
+    hash->set_dumper(dumper);
     parser->set_canonical(args->both_strands_flag);
   }
 };
@@ -286,12 +293,14 @@ public:
                                       args->reprobes_arg, 
                                       jellyfish::quadratic_reprobes);
     hash = new fastq_hash_t(ary);
-    if(!args->no_write_flag) {
+    if(args->no_write_flag) {
+      dumper = new jellyfish::noop_dumper();
+    } else {
       dumper = new raw_fastq_dumper_t(args->threads_arg, args->output_arg,
                                       args->out_buffer_size_arg,
                                       ary);
-      hash->set_dumper(dumper);
     }
+    hash->set_dumper(dumper);
     parser->set_canonical(args->both_strands_flag);
   }
 };

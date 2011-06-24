@@ -21,7 +21,7 @@ EXTRA_DIST = cite_cmdline.hpp query_cmdline.hpp hash_merge_cmdline.hpp	\
 histo_cmdline.hpp stats_cmdline.hpp histo_fastq_main_cmdline.hpp	\
 dump_fastq_main_cmdline.hpp mer_counter_cmdline.hpp			\
 hash_fastq_merge_cmdline.hpp dump_cmdline.hpp double_fifo_input.hpp	\
-simple_growing_array.hpp backtrace.hpp
+simple_growing_array.hpp backtrace.hpp noop_dumper.hpp
 
 lib_LTLIBRARIES = libjellyfish.la
 libjellyfish_la_LDFLAGS = -version-info 1:0:0
