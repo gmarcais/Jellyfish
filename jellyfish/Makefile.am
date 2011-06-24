@@ -12,10 +12,9 @@ dump_fastq_main.cc histo_fastq_main.cc cite.cc parse_dna.cc		\
 file_parser.cc parse_quake.cc parse_qual_dna.cc sequence_parser.cc	\
 seq_qual_parser.cc half.cpp hash_fastq_merge.cc cite_cmdline.cc		\
 query_cmdline.cc hash_merge_cmdline.cc histo_cmdline.cc			\
-stats_cmdline.cc histo_fastq_main_cmdline.cc				\
-dump_fastq_main_cmdline.cc mer_counter_cmdline.cc			\
-hash_fastq_merge_cmdline.cc dump_cmdline.cc dbg.cc mapped_file.cc	\
-backtrace.cc floats.cc
+stats_cmdline.cc histo_fastq_main_cmdline.cc mer_counter_cmdline.cc	\
+dump_fastq_main_cmdline.cc hash_fastq_merge_cmdline.cc dump_cmdline.cc	\
+dbg.cc mapped_file.cc backtrace.cc floats.cc
 # jellyfish_CPPFLAGS = $(AM_CPPFLAGS)
 
 EXTRA_DIST = cite_cmdline.hpp query_cmdline.hpp hash_merge_cmdline.hpp	\

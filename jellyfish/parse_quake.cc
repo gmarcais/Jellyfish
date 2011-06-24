@@ -41,7 +41,7 @@ namespace jellyfish {
   
     while(true) {
       if(!new_seq) {
-        new_seq = wq.dequeue();
+        new_seq = write_next();
         if(!new_seq)
           break;
       }
@@ -56,14 +56,14 @@ namespace jellyfish {
       if(new_seq->end > new_seq->start + 2 * mer_len) {
         have_seam = true;
         memcpy(seam, new_seq->end - 2 * (mer_len - 1), 2 * (mer_len - 1));
-        rq.enqueue(new_seq);
+        write_release(new_seq);
         new_seq = 0;
       }
       if(input_eof) {
         delete fparser;
         have_seam = false;
         if(++current_file == files.end()) {
-          rq.close();
+          close();
           break;
         }
         fparser = seq_qual_parser::new_parser(*current_file);

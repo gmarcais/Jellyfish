@@ -30,6 +30,7 @@
 #include <inttypes.h>
 
 #include <jellyfish/err.hpp>
+#include <jellyfish/dbg.hpp>
 #include <jellyfish/backtrace.hpp>
 #include <jellyfish/misc.hpp>
 #include <jellyfish/time.hpp>
@@ -41,6 +42,53 @@
 
 // Temporary
 //#include <jellyfish/measure_dumper.hpp>
+
+// struct mer_counter_args {
+//   int    mer_len_given;
+//   int    mer_len_arg;
+//   int    size_given;
+//   long   size_arg;
+//   int    threads_given;
+//   int    threads_arg;
+//   int    output_given;
+//   char  *output_arg;
+//   int    counter_len_given;
+//   int    counter_len_arg;
+//   int    out_counter_len_given;
+//   int    out_counter_len_arg;
+//   int    both_strands_flag;
+//   int    reprobes_given;
+//   int    reprobes_arg;
+//   int    raw_flag;
+//   int    both_flag;
+//   int    quake_flag;
+//   int    quality_start_given;
+//   int    quality_start_arg;
+//   int    min_quality_given;
+//   int    min_quality_arg;
+//   int    lower_count_given;
+//   long   lower_count_arg;
+//   int    upper_count_given;
+//   long   upper_count_arg;
+//   int    matrix_given;
+//   char  *matrix_arg;
+//   int    timing_given;
+//   char  *timing_arg;
+//   int    stats_given;
+//   int    no_write_flag;
+//   char  *stats_arg;
+//   int    measure_flag;
+//   int    buffers_given;
+//   long   buffers_arg;
+//   int    buffer_size_given;
+//   long   buffer_size_arg;
+//   int    out_buffer_size_given;
+//   long   out_buffer_size_arg;
+//   int    lock_flag;
+//   int    stream_flag;
+//   int    inputs_num;
+//   char **inputs;
+// };
 
 
 // TODO: This mer_counting_base stuff has become wild. Lots of code
@@ -248,12 +296,89 @@ public:
   }
 };
 
+
+void display_args(struct mer_counter_args &args) {
+  if(!args.matrix_arg) args.matrix_arg = (char*)"";
+  DBG << V(args.mer_len_given) << V(args.mer_len_arg) << "\n"
+      << V(args.size_given) << V(args.size_arg) << "\n"
+      << V(args.threads_given) << V(args.threads_arg) << "\n"
+      << V(args.output_given) << V(args.output_arg) << "\n"
+      << V(args.counter_len_given) << V(args.counter_len_arg) << "\n"
+      << V(args.out_counter_len_given) << V(args.out_counter_len_arg) << "\n"
+      << V(args.both_strands_flag) << "\n"
+      << V(args.reprobes_given) << V(args.reprobes_arg) << "\n"
+      << V(args.raw_flag) << "\n"
+      << V(args.both_flag) << "\n"
+      << V(args.quake_flag) << "\n"
+      << V(args.quality_start_given) << V(args.quality_start_arg) << "\n"
+      << V(args.min_quality_given) << V(args.min_quality_arg) << "\n"
+      << V(args.lower_count_given) << V(args.lower_count_arg) << "\n"
+      << V(args.upper_count_given) << V(args.upper_count_arg) << "\n"
+      << V(args.matrix_given) << V(args.matrix_arg) << "\n"
+      << V(args.timing_given) << V(args.timing_arg) << "\n"
+      << V(args.stats_given) << V(args.stats_arg) << "\n"
+      << V(args.no_write_flag) << "\n"
+      << V(args.measure_flag) << "\n"
+      << V(args.buffers_given) << V(args.buffers_arg) << "\n"
+      << V(args.buffer_size_given) << V(args.buffer_size_arg) << "\n"
+      << V(args.out_buffer_size_given) << V(args.out_buffer_size_arg) << "\n"
+      << V(args.lock_flag) << "\n"
+      << V(args.stream_flag) << "\n";
+}
+
 int count_main(int argc, char *argv[])
 {
   struct mer_counter_args args;
 
   if(mer_counter_cmdline(argc, argv, &args) != 0)
     die << "Command line parser failed";
+
+  // args.mer_len_given         = 1;
+  // args.mer_len_arg           = 16;
+  // args.size_given            = 1;
+  // args.size_arg              = 4000000000L;
+  // args.threads_given         = 1;
+  // args.threads_arg           = 27;
+  // args.output_given          = 0;
+  // args.output_arg            = (char *)"mers";
+  // args.counter_len_given     = 1;
+  // args.counter_len_arg       = 4;
+  // args.out_counter_len_given = 1;
+  // args.out_counter_len_arg   = 2;
+  // args.both_strands_flag     = 1;
+  // args.reprobes_given        = 1;
+  // args.reprobes_arg          = 253;
+  // args.raw_flag              = 0;
+  // args.both_flag             = 0;
+  // args.quake_flag            = 0;
+  // args.quality_start_given   = 0;
+  // args.quality_start_arg     = 33;
+  // args.min_quality_given     = 0;
+  // args.min_quality_arg       = 2;
+  // args.lower_count_given     = 0;
+  // args.lower_count_arg       = 0L;
+  // args.upper_count_given     = 0;
+  // args.upper_count_arg       = 10000L;
+  // args.matrix_given          = 0;
+  // args.matrix_arg            = 0;
+  // args.timing_given          = 1;
+  // args.timing_arg            = (char *)"timing";
+  // args.stats_given           = 1;
+  // args.stats_arg             = (char *)"stats";
+  // args.no_write_flag         = 0;
+  // args.measure_flag          = 0;
+  // args.buffers_given         = 1;
+  // args.buffers_arg           = 1024;
+  // args.buffer_size_given     = 0;
+  // args.buffer_size_arg       = 1024 * 1024;
+  // args.out_buffer_size_given = 0;
+  // args.out_buffer_size_arg   = 10 * 1024 * 1024;
+  // args.lock_flag             = 0;
+  // args.stream_flag           = 0;
+  // args.inputs_num            = 1;
+  // args.inputs                = (char **)malloc(sizeof(char*) * 2);
+  // args.inputs[0]             = (char *)"/dev/fd/0";
+  // args.inputs[1]             = 0;
 
   if(args.mer_len_arg < 2 || args.mer_len_arg > 31)
     die << "Invalid mer length '" << args.mer_len_arg
@@ -262,12 +387,17 @@ int count_main(int argc, char *argv[])
   if(args.inputs_num == 0)
     die << "Need at least one input file or stream";
 
+  display_args(args);
+
   show_backtrace();
+  //  dbg::print_t::print_tid((pid_t)-1);
+  //  dbg::print_t::set_signal();
 
   Time start;
   mer_counting_base *counter;
   if(!args.buffers_given)
     args.buffers_arg = 3 * args.threads_arg;
+  DBG << V(args.buffers_arg);
   if(args.quake_flag) {
     counter = new mer_counting_quake(args.inputs_num, args.inputs, args);
   } else if(ceilLog2((unsigned long)args.size_arg) > 2 * (unsigned long)args.mer_len_arg) {

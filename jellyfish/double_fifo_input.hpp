@@ -45,15 +45,12 @@ namespace jellyfish {
     // WORKING -> SLEEPING -> WAKENING -> WORKING
     enum state_t { WORKING, SLEEPING, WAKENING };
 
-  protected:
-    queue                 rq, wq;
-
-  private:
-    T                    *buckets;
-    unsigned long         nb_buckets;
-    state_t volatile      state;
-    pthread_t             input_id;
-    locks::pthread::cond  full_queue;
+    queue                rq, wq;
+    T *                  buckets;
+    const unsigned long  nb_buckets;
+    state_t volatile     state;
+    pthread_t            input_id;
+    locks::pthread::cond full_queue;
 
     static void *static_input_routine(void *arg);
     void         input_routine();
@@ -65,11 +62,18 @@ namespace jellyfish {
 
     virtual void fill() = 0;
     T *next();
-    void release(T* bucket);
+    void release(T *bucket);
+    bool is_closed() { return rq.is_closed(); }
 
     typedef T *bucket_iterator;
     bucket_iterator bucket_begin() const { return buckets; }
     bucket_iterator bucket_end() const { return buckets + nb_buckets; }
+
+  protected:
+    // Get bucket to fill and release.
+    T *write_next();
+    void write_release(T *bucket);
+    void close() { rq.close(); }
 
   private:
     // Wake up input thread if it was sleeping. Returns previous
@@ -84,6 +88,7 @@ namespace jellyfish {
     rq(_nb_buckets), wq(_nb_buckets), nb_buckets(_nb_buckets), state(WORKING),
     input_id(0)
   {
+    DBG << V(nb_buckets);
     buckets = new T[nb_buckets];
 
     for(unsigned long i = 0; i < nb_buckets; ++i)
@@ -106,6 +111,7 @@ namespace jellyfish {
 
   template<typename T>
   void *double_fifo_input<T>::static_input_routine(void *arg) {
+    DBG << "Input thread";
     double_fifo_input *o = (double_fifo_input *)arg;
     o->input_routine();
     return 0;
@@ -120,15 +126,18 @@ namespace jellyfish {
       // until it become less than some threshold
       full_queue.lock();
       prev_state = atomic::gcc::cas(&state, WORKING, SLEEPING);
+      // DBG << "lock" << V(state) << V(prev_state);
       assert(prev_state == WORKING);
       do {
         full_queue.wait();
-        DBG << V(state);
+        // DBG << V(state);
       } while(state != WAKENING);
       prev_state = atomic::gcc::cas(&state, WAKENING, WORKING);
+      // DBG << "unlock" << V(state) << V(prev_state);
       assert(prev_state == WAKENING);
       full_queue.unlock();
 
+      // DBG << "fill";
       fill();
     }
   }
@@ -136,6 +145,7 @@ namespace jellyfish {
   template<typename T>
   typename double_fifo_input<T>::state_t double_fifo_input<T>::input_wake() {
     state_t prev_state = atomic::gcc::cas(&state, SLEEPING, WAKENING);
+    // DBG << "wake up?" << V(state) << V(prev_state);
     assert(prev_state >= WORKING && prev_state <= WAKENING);
     if(prev_state == SLEEPING) {
       full_queue.lock();
@@ -151,14 +161,15 @@ namespace jellyfish {
       input_wake();
   
     T *res = 0;
-    unsigned long nb_wakes = 0;
+    //    unsigned long nb_wakes = 0;
     while(!(res = rq.dequeue())) {
+      // DBG << V(res) << V(rq.is_closed());
       if(rq.is_closed())
         return 0;
-      state_t prev_state = input_wake();
-      if(nb_wakes > 0)
-        DBG << V(prev_state);
-      ++nb_wakes;
+      //state_t prev_state = input_wake();
+      input_wake();
+      // ++nb_wakes;
+      // DBG << "wake" << V(prev_state) << V(nb_wakes);
       // TODO Should we wait on a lock instead when the input thread is
       // already in working state (i.e. it is most likely blocked on
       // some I/O).
@@ -171,7 +182,19 @@ namespace jellyfish {
 
   template<typename T>
   void double_fifo_input<T>::release(T *bucket) {
+    assert(bucket - buckets >= 0 && (unsigned long)(bucket - buckets) < nb_buckets);
     wq.enqueue(bucket);
+  }
+
+  template<typename T>
+  T *double_fifo_input<T>::write_next() {
+    return wq.dequeue();
+  }
+
+  template<typename T>
+  void double_fifo_input<T>::write_release(T *bucket) {
+    assert(bucket - buckets >= 0 && (unsigned long)(bucket - buckets) < nb_buckets);
+    rq.enqueue(bucket);
   }
 }
 

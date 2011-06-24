@@ -24,8 +24,10 @@
 #include <errno.h>
 #include <new>
 #include <stdio.h>
+#include <assert.h>
 
 #include <jellyfish/atomic_gcc.hpp>
+#include <jellyfish/dbg.hpp>
 
 /* Concurrent queue. No check whether enqueue would overflow the queue.
  */
@@ -33,13 +35,14 @@
 template<class Val>
 class concurrent_queue {
   Val                   **queue;
-  unsigned int            size;
+  const unsigned int      size;
   unsigned int volatile   head;
   unsigned int volatile   tail;
   bool volatile           closed;
   
 public:
   concurrent_queue(unsigned int _size) : size(_size + 1), head(0), tail(0) { 
+    DBG << V(size);
     queue = new Val *[size];
     memset(queue, 0, sizeof(Val *) * size);
     closed = false;
@@ -52,9 +55,12 @@ public:
   void close() { closed = true; }
   bool has_space() { return head != tail; }
   bool is_low() { 
-    int len = head - tail;
+    unsigned int ctail = tail;
+    unsigned int chead = head;
+    int len = chead - ctail;
     if(len < 0)
       len += size;
+    // DBG << V(chead) << V(ctail) << V(len) << V(size);
     return (unsigned int)(4*len) <= size;
   }
 };
@@ -84,11 +90,13 @@ Val *concurrent_queue<Val>::dequeue() {
   while(!done) {
     //    if(ctail == head)
     //      return NULL;
+    // DBG << V(ctail) << V(head);
     if(atomic::gcc::cas(&head, ctail, ctail) == ctail)
       return NULL;
 
     ntail = (ctail + 1) % size;
     ntail = atomic::gcc::cas(&tail, ctail, ntail);
+    // DBG << V(ctail) << V(ntail);
     done = ntail == ctail;
     ctail = ntail;
   }

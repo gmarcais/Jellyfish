@@ -26,20 +26,20 @@ jellyfish::parse_read::parse_read(int nb_files, char *argv[], unsigned int nb_bu
 }
 
 void jellyfish::parse_read::fill() {
-  read_parser::reads_t *new_seq = wq.dequeue();
+  read_parser::reads_t *new_seq = write_next();
   
   while(new_seq) {
     new_seq->file = fparser;
     bool input_eof = !fparser->next_reads(new_seq);
     if(new_seq->nb_reads > 0) {
       new_seq->link();
-      rq.enqueue(new_seq);
-      new_seq = wq.dequeue();
+      write_release(new_seq);
+      new_seq = write_next();
     }
     if(input_eof) {
       fparser->unlink();
       if(++current_file == files.end()) {
-        rq.close();
+        close();
         break;
       }
       fparser = read_parser::new_parser(*current_file);
