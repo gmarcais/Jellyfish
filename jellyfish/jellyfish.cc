@@ -98,10 +98,10 @@ int main(int argc, char *argv[])
   } else {
     for(cmd_func *ccmd = cmd_list; ccmd->func != 0; ccmd++) {
       if(!ccmd->cmd.compare(argv[1])) {
-        std::string name(argv[0]);
-        name += " ";
-        name += argv[1];
-        argv[1] = strdup(name.c_str());
+        // std::string name(argv[0]);
+        // name += " ";
+        // name += argv[1];
+        // argv[1] = strdup(name.c_str());
         return ccmd->func(argc - 1, argv + 1);
       }
     }

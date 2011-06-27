@@ -133,7 +133,7 @@ public:
   
   void start(int id) {
     sync_barrier.wait();
-    
+
     typename parser_t::thread     mer_stream(parser->new_thread());
     typename hash_t::thread_ptr_t counter(hash->new_thread());
     mer_stream.parse(counter);
@@ -347,16 +347,16 @@ int count_main(int argc, char *argv[])
   // args.size_given            = 1;
   // args.size_arg              = 4000000000L;
   // args.threads_given         = 1;
-  // args.threads_arg           = 27;
+  // args.threads_arg           = 32;
   // args.output_given          = 0;
   // args.output_arg            = (char *)"mers";
   // args.counter_len_given     = 1;
-  // args.counter_len_arg       = 4;
+  // args.counter_len_arg       = 7;
   // args.out_counter_len_given = 1;
   // args.out_counter_len_arg   = 2;
   // args.both_strands_flag     = 1;
   // args.reprobes_given        = 1;
-  // args.reprobes_arg          = 253;
+  // args.reprobes_arg          = 62;
   // args.raw_flag              = 0;
   // args.both_flag             = 0;
   // args.quake_flag            = 0;
@@ -377,9 +377,9 @@ int count_main(int argc, char *argv[])
   // args.no_write_flag         = 0;
   // args.measure_flag          = 0;
   // args.buffers_given         = 1;
-  // args.buffers_arg           = 1024;
+  // args.buffers_arg           = 2048;
   // args.buffer_size_given     = 0;
-  // args.buffer_size_arg       = 1024 * 1024;
+  // args.buffer_size_arg       = 8192;
   // args.out_buffer_size_given = 0;
   // args.out_buffer_size_arg   = 10 * 1024 * 1024;
   // args.lock_flag             = 0;
@@ -396,6 +396,9 @@ int count_main(int argc, char *argv[])
   if(args.inputs_num == 0)
     die << "Need at least one input file or stream";
 
+  // free(args.output_arg);
+  // args.output_arg = (char *)"toto";
+  // args.output_given = 0;
   display_args(args);
 
   show_backtrace();
