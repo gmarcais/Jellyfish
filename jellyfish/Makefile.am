@@ -3,7 +3,7 @@
 AM_LDFLAGS = -lpthread
 AM_CPPFLAGS = -Wall -Werror -Wnon-virtual-dtor -g -O2 -I$(top_srcdir)
 
-bin_PROGRAMS = jellyfish
+bin_PROGRAMS = jellyfish jellyfish_count
 
 jellyfish_SOURCES = jellyfish.cc stats_main.cc hash_merge.cc		\
 storage.cc misc.cc err.cc mer_counter.cc histo_main.cc dump_main.cc	\
@@ -22,6 +22,12 @@ histo_cmdline.hpp stats_cmdline.hpp histo_fastq_main_cmdline.hpp	\
 dump_fastq_main_cmdline.hpp mer_counter_cmdline.hpp			\
 hash_fastq_merge_cmdline.hpp dump_cmdline.hpp double_fifo_input.hpp	\
 simple_growing_array.hpp backtrace.hpp noop_dumper.hpp
+
+jellyfish_count_SOURCES = jellyfish_count.cc mer_counter.cc storage.cc	\
+misc.cc err.cc time.cc thread_exec.cc square_binary_matrix.cc		\
+parse_dna.cc file_parser.cc parse_quake.cc parse_qual_dna.cc		\
+sequence_parser.cc seq_qual_parser.cc half.cpp dbg.cc mapped_file.cc	\
+backtrace.cc floats.cc mer_counter_cmdline.cc
 
 lib_LTLIBRARIES = libjellyfish.la
 libjellyfish_la_LDFLAGS = -version-info 1:0:0
