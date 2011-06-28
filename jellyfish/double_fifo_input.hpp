@@ -157,7 +157,7 @@ namespace jellyfish {
 
   template<typename T>
   T *double_fifo_input<T>::next() {
-    if(rq.is_low() && !rq.is_closed())
+    if(rq.is_low()) // && !rq.is_closed())
       input_wake();
   
     T *res = 0;

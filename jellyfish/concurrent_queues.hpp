@@ -52,10 +52,11 @@ public:
   void enqueue(Val *v);
   Val *dequeue();
   bool is_closed() { return closed; }
-  void close() { closed = true; }
+  void close() { closed = true; __sync_synchronize(); }
   bool has_space() { return head != tail; }
   bool is_low() { 
     unsigned int ctail = tail;
+    __sync_synchronize();
     unsigned int chead = head;
     int len = chead - ctail;
     if(len < 0)
@@ -71,12 +72,12 @@ void concurrent_queue<Val>::enqueue(Val *v) {
   unsigned int chead;
 
   chead = head;
-  while(!done) {
+  do {
     unsigned int nhead = (chead + 1) % size;
 
     done = (atomic::gcc::cas(&queue[chead], (Val*)0, v) == (Val*)0);
     chead = atomic::gcc::cas(&head, chead, nhead);
-  }
+  } while(!done);
 }
 
 template<class Val>
@@ -87,7 +88,7 @@ Val *concurrent_queue<Val>::dequeue() {
 
   ctail = tail;
   //  __sync_synchronize();
-  while(!done) {
+  do {
     //    if(ctail == head)
     //      return NULL;
     // DBG << V(ctail) << V(head);
@@ -99,9 +100,10 @@ Val *concurrent_queue<Val>::dequeue() {
     // DBG << V(ctail) << V(ntail);
     done = ntail == ctail;
     ctail = ntail;
-  }
+  } while(!done);
   res = queue[ctail];
-  queue[ctail] = NULL;
+  queue[ctail] = 0;
+  __sync_synchronize();
   return res;
 }
   
