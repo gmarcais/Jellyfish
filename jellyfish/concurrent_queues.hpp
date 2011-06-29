@@ -29,7 +29,21 @@
 #include <jellyfish/atomic_gcc.hpp>
 #include <jellyfish/dbg.hpp>
 
-/* Concurrent queue. No check whether enqueue would overflow the queue.
+/***
+ * Circular buffer of fixed size with thread safe enqueue and dequeue
+ * operation to make it behave like a FIFO. Elements are enqueued at
+ * the head and dequeued at the tail. Never more than n elements
+ * should be enqueued if the size is n+1. There is no check for this.
+ *
+ * It is possible for the tail pointer to go past an element (i.e. it
+ * has been "dequeued"), but the thread is slow to zero the pointer
+ * (i.e. to claim the element). It is then possible for the head
+ * pointer to point to this not yet claimed element. The enqueue()
+ * method blindly skip over such an element. Hence, it is possible
+ * that the same element will be dequeued again before it is
+ * claimed. Or, it will be claimed after being skipped and another
+ * thread will dequeue what looks like an empty element. The outer
+ * loop of dequeue() handles this situation.
  */
 
 template<class Val>
@@ -82,28 +96,38 @@ void concurrent_queue<Val>::enqueue(Val *v) {
 
 template<class Val>
 Val *concurrent_queue<Val>::dequeue() {
-  int done = 0;
+  bool done = false;
   Val *res;
   unsigned int ctail, ntail;
 
   ctail = tail;
   //  __sync_synchronize();
   do {
-    //    if(ctail == head)
-    //      return NULL;
-    // DBG << V(ctail) << V(head);
-    if(atomic::gcc::cas(&head, ctail, ctail) == ctail)
-      return NULL;
+    bool dequeued = false;
+    do {
+      //    if(ctail == head)
+      //      return NULL;
 
-    ntail = (ctail + 1) % size;
-    ntail = atomic::gcc::cas(&tail, ctail, ntail);
-    // DBG << V(ctail) << V(ntail);
-    done = ntail == ctail;
-    ctail = ntail;
+      // Complicated way to do ctail == head. Is it necessary? Or is
+      // the memory barrier above sufficient? Or even necessary?
+      if(atomic::gcc::cas(&head, ctail, ctail) == ctail)
+        return NULL;
+      ntail    = (ctail + 1) % size;
+      ntail    = atomic::gcc::cas(&tail, ctail, ntail);
+      dequeued = ntail == ctail;
+      ctail    = ntail;
+    } while(!dequeued);
+
+    // Claim dequeued slot.  We may have dequeued an element which is
+    // empty or that another thread also has dequeued but not yet
+    // claimed. This can happen if a thread is slow to claim (set
+    // pointer to 0) and the enqueue method has queued elements past
+    // this one.
+    res = queue[ctail];
+    if(res)
+      done = atomic::gcc::cas(&queue[ctail], res, (Val*)0) == res;
   } while(!done);
-  res = queue[ctail];
-  queue[ctail] = 0;
-  __sync_synchronize();
+
   return res;
 }
   
