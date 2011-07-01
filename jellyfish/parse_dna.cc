@@ -23,7 +23,6 @@ namespace jellyfish {
     while(true) {
       if(!new_seq) {
         new_seq = write_next();
-        // DBG << "dequeued" << V(new_seq);
         if(!new_seq)
           break;
       }
@@ -35,11 +34,10 @@ namespace jellyfish {
         start += mer_len - 1;
       }
       bool input_eof = !fparser->parse(start, &new_seq->end);
-      // DBG << V(input_eof) << V((void*)new_seq->start) << V((void*)new_seq->end);
+
       if(new_seq->end > new_seq->start + mer_len) {
         have_seam = true;
         memcpy(seam, new_seq->end - mer_len + 1, mer_len - 1);
-        // DBG << "enqueue" << V(new_seq);
         write_release(new_seq);
         new_seq = 0;
       }
@@ -61,7 +59,6 @@ namespace jellyfish {
     buffer_size(_buffer_size), files(argv, argv + nb_files),
     current_file(files.begin()), have_seam(false), canonical(false)
   {
-    DBG << V(nb_buffers);
     buffer_data = new char[nb_buffers * buffer_size];
     seam        = new char[mer_len];
     

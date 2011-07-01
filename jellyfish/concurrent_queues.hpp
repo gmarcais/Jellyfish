@@ -55,8 +55,7 @@ class concurrent_queue {
   bool volatile           closed;
   
 public:
-  concurrent_queue(unsigned int _size) : size(_size + 1), head(0), tail(0) { 
-    DBG << V(size);
+  concurrent_queue(unsigned int _size) : size(20 *_size), head(0), tail(0) { 
     queue = new Val *[size];
     memset(queue, 0, sizeof(Val *) * size);
     closed = false;
@@ -75,7 +74,6 @@ public:
     int len = chead - ctail;
     if(len < 0)
       len += size;
-    // DBG << V(chead) << V(ctail) << V(len) << V(size);
     return (unsigned int)(4*len) <= size;
   }
 };

@@ -36,7 +36,7 @@ main_func_t sos;
 main_func_t version;
 
 struct cmd_func {
-  std::string  cmd;
+  const char  *cmd;
   main_func_t *func;
 };
 cmd_func cmd_list[] = {
@@ -97,13 +97,8 @@ int main(int argc, char *argv[])
     error = "Too few arguments";
   } else {
     for(cmd_func *ccmd = cmd_list; ccmd->func != 0; ccmd++) {
-      if(!ccmd->cmd.compare(argv[1])) {
-        // std::string name(argv[0]);
-        // name += " ";
-        // name += argv[1];
-        // argv[1] = strdup(name.c_str());
+      if(!strcmp(ccmd->cmd, argv[1]))
         return ccmd->func(argc - 1, argv + 1);
-      }
     }
     error = "Unknown command '";
     error += argv[1];
