@@ -14,6 +14,9 @@
     along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef __DIVISOR_HPP__
+#define __DIVISOR_HPP__
+
 #include <jellyfish/misc.hpp>
 #include <stdint.h>
 
@@ -48,3 +51,5 @@ public:
     r = x - q * d;
   }
 };
+
+#endif /* __DIVISOR_HPP__ */

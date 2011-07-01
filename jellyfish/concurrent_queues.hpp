@@ -28,6 +28,7 @@
 
 #include <jellyfish/atomic_gcc.hpp>
 #include <jellyfish/dbg.hpp>
+#include <jellyfish/divisor.hpp>
 
 /***
  * Circular buffer of fixed size with thread safe enqueue and dequeue
@@ -53,12 +54,15 @@ class concurrent_queue {
   unsigned int volatile   head;
   unsigned int volatile   tail;
   bool volatile           closed;
+  divisor64               size_div;
   
 public:
-  concurrent_queue(unsigned int _size) : size(20 *_size), head(0), tail(0) { 
+  concurrent_queue(unsigned int _size) : 
+    size(20 *_size), head(0), tail(0), closed(false),
+    size_div(size) 
+  { 
     queue = new Val *[size];
     memset(queue, 0, sizeof(Val *) * size);
-    closed = false;
   }
   ~concurrent_queue() { delete [] queue; }
 
@@ -80,12 +84,15 @@ public:
 
 template<class Val>
 void concurrent_queue<Val>::enqueue(Val *v) {
-  int done = 0;
+  int          done = 0;
   unsigned int chead;
 
   chead = head;
   do {
-    unsigned int nhead = (chead + 1) % size;
+    uint64_t q, r;
+    size_div.division(chead + 1, q, r);
+    //    unsigned int nhead = (chead + 1) % size;
+    unsigned int nhead = r;
 
     done = (atomic::gcc::cas(&queue[chead], (Val*)0, v) == (Val*)0);
     chead = atomic::gcc::cas(&head, chead, nhead);
@@ -110,7 +117,10 @@ Val *concurrent_queue<Val>::dequeue() {
       // the memory barrier above sufficient? Or even necessary?
       if(atomic::gcc::cas(&head, ctail, ctail) == ctail)
         return NULL;
-      ntail    = (ctail + 1) % size;
+      //      ntail    = (ctail + 1) % size;
+      uint64_t q, r;
+      size_div.division(ctail + 1, q, r);
+      ntail = r;
       ntail    = atomic::gcc::cas(&tail, ctail, ntail);
       dequeued = ntail == ctail;
       ctail    = ntail;
