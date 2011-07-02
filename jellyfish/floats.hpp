@@ -52,7 +52,7 @@ namespace jellyfish {
     // static const Float zero;
     // static const Float one;
 
-    const Float operator+(const Float y) const {
+    const Float operator+(const Float &y) const {
       return Float(v.fv + y.v.fv);
     }
 

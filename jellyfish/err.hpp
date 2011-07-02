@@ -59,7 +59,7 @@ namespace err {
     int _errno;
   public:
     die_t() : _code(1), _errno(errno) {}
-    die_t(int c) : _code(c) {}
+    die_t(int c) : _code(c), _errno(errno) {}
     ~die_t() {
       std::cerr << std::endl;
       exit(_code);

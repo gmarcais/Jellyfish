@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
       try {
         inv = mat.inverse();
         break;
-      } catch(SquareBinaryMatrix::SingularMatrix e) {}
+      } catch(SquareBinaryMatrix::SingularMatrix &e) {}
     }
     char path[4096];
     int len = snprintf(path, sizeof(path), "%s_matrix_%d", args.output_arg, 

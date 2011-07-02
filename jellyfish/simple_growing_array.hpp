@@ -47,9 +47,14 @@ namespace jellyfish {
     define_error_class(SimpleGrowingArrayError);
     void resize() {
       _capacity *= 2;
-      _data = (T *)realloc(_data, sizeof(T) * _capacity);
-      if(_data == 0)
+      void * ndata = realloc(_data, sizeof(T) * _capacity);
+      if(ndata == 0) {
+        free(ndata);
+        _data = 0;
+        _capacity = _capacity / 2;
         eraise(SimpleGrowingArrayError) << "Out of memory" << err::no;
+      }
+      _data = (T*)ndata;
     }
   };
 }

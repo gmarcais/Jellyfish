@@ -35,7 +35,7 @@ SquareBinaryMatrix SquareBinaryMatrix::init_random_inverse() {
     init_random();
     try {
       return inverse();
-    } catch(SquareBinaryMatrix::SingularMatrix e) { }
+    } catch(SquareBinaryMatrix::SingularMatrix &e) { }
   }
 }
 

@@ -424,7 +424,7 @@ HALF_EXPORT void			printBits   (char  c[35], float f);
 //--------------------
 
 inline
-half::half ()
+half::half () : _h(0)
 {
     // no initialization
 }

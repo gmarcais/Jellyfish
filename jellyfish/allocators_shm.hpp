@@ -54,7 +54,7 @@ namespace allocators {
     }
 
     void *get_ptr() { return ptr != MAP_FAILED ? ptr : NULL; }
-    size_t get_size() { return size; }
+    size_t get_size() const { return size; }
 
     void *realloc(size_t new_size) {
       size_t old_size = size;

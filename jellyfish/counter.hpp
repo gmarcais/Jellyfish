@@ -28,7 +28,7 @@ public:
   inline uint64_t inc(uint64_t x) {
     return atomic::gcc::fetch_add(&count, x);
   }
-  inline uint64_t get() { return count; }
+  inline uint64_t get() const { return count; }
 
   class block {
     counter_t *c;

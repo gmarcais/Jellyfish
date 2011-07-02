@@ -52,7 +52,8 @@ public:
   }
 
   ~generate_reads_t() {
-    delete _seq;
+    delete[] _read;
+    delete[] _seq;
   }
 
   void generate_sequence() {
