@@ -50,16 +50,15 @@
 template<class Val>
 class concurrent_queue {
   Val                   **queue;
-  const unsigned int      size;
-  unsigned int volatile   head;
-  unsigned int volatile   tail;
+  const uint64_t      size;
+  uint64_t volatile   head;
+  uint64_t volatile   tail;
   bool volatile           closed;
-  divisor64               size_div;
+  //  divisor64               size_div;
   
 public:
-  concurrent_queue(unsigned int _size) : 
-    size(20 *_size), head(0), tail(0), closed(false),
-    size_div(size) 
+  concurrent_queue(uint64_t _size) : 
+    size(20 *_size), head(0), tail(0), closed(false)//, size_div(size) 
   { 
     queue = new Val *[size];
     memset(queue, 0, sizeof(Val *) * size);
@@ -72,27 +71,26 @@ public:
   void close() { closed = true; __sync_synchronize(); }
   bool has_space() { return head != tail; }
   bool is_low() { 
-    unsigned int ctail = tail;
+    uint64_t ctail = tail;
     __sync_synchronize();
-    unsigned int chead = head;
-    int len = chead - ctail;
+    uint64_t chead = head;
+    int64_t len = chead - ctail;
     if(len < 0)
       len += size;
-    return (unsigned int)(4*len) <= size;
+    return (uint64_t)(4*len) <= size;
   }
 };
 
 template<class Val>
 void concurrent_queue<Val>::enqueue(Val *v) {
   int          done = 0;
-  unsigned int chead;
+  uint64_t chead;
 
   chead = head;
   do {
-    uint64_t q, r;
-    size_div.division(chead + 1, q, r);
-    //    unsigned int nhead = (chead + 1) % size;
-    unsigned int nhead = r;
+    //    uint64_t q, nhead;
+    //    size_div.division(chead + 1, q, nhead);
+    uint64_t nhead = (chead + 1) % size;
 
     done = (atomic::gcc::cas(&queue[chead], (Val*)0, v) == (Val*)0);
     chead = atomic::gcc::cas(&head, chead, nhead);
@@ -103,7 +101,7 @@ template<class Val>
 Val *concurrent_queue<Val>::dequeue() {
   bool done = false;
   Val *res;
-  unsigned int ctail, ntail;
+  uint64_t ctail, ntail;
 
   ctail = tail;
   //  __sync_synchronize();
@@ -117,10 +115,9 @@ Val *concurrent_queue<Val>::dequeue() {
       // the memory barrier above sufficient? Or even necessary?
       if(atomic::gcc::cas(&head, ctail, ctail) == ctail)
         return NULL;
-      //      ntail    = (ctail + 1) % size;
-      uint64_t q, r;
-      size_div.division(ctail + 1, q, r);
-      ntail = r;
+      ntail    = (ctail + 1) % size;
+      // uint64_t q;
+      // size_div.division(ctail + 1, q, ntail);
       ntail    = atomic::gcc::cas(&tail, ctail, ntail);
       dequeued = ntail == ctail;
       ctail    = ntail;
