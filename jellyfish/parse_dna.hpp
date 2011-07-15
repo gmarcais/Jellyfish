@@ -23,6 +23,7 @@
 #include <jellyfish/atomic_gcc.hpp>
 #include <jellyfish/misc.hpp>
 #include <jellyfish/sequence_parser.hpp>
+#include <jellyfish/allocators_mmap.hpp>
 
 namespace jellyfish {
   class parse_dna : public double_fifo_input<sequence_parser::sequence_t> {
@@ -33,8 +34,8 @@ namespace jellyfish {
     fary_t                      files;
     fary_t::const_iterator      current_file;
     bool                        have_seam;
-    char                       *buffer_data;
     char                       *seam;
+    allocators::mmap            buffer_data;
     bool                        canonical;
     sequence_parser            *fparser;
 
@@ -85,7 +86,7 @@ namespace jellyfish {
               unsigned int nb_buffers, size_t _buffer_size); 
 
     ~parse_dna() {
-      delete [] buffer_data;
+      delete [] seam;
     }
 
     void set_canonical(bool v = true) { canonical = v; }

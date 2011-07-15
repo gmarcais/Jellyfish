@@ -21,6 +21,10 @@
 #include <jellyfish/locks_pthread.hpp>
 #include <jellyfish/dbg.hpp>
 #include <jellyfish/err.hpp>
+#include <jellyfish/time.hpp>
+
+#include <iostream>
+#include <fstream>
 #include <pthread.h>
 #include <assert.h>
 

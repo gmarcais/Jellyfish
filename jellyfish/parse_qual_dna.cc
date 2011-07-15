@@ -21,17 +21,17 @@ namespace jellyfish {
                                  unsigned int nb_buffers, size_t _buffer_size,
                                  const char _qs, const char _min_q) :
     double_fifo_input<seq_qual_parser::sequence_t>(nb_buffers), mer_len(_mer_len), 
-    buffer_size(_buffer_size), files(argv, argv + nb_files),
-    current_file(files.begin()), have_seam(false), quality_start(_qs),
-    min_q(_min_q)
+    buffer_size(allocators::mmap::round_to_page(_buffer_size)),
+    files(argv, argv + nb_files), current_file(files.begin()),
+    have_seam(false), buffer_data(buffer_size * nb_buffers),
+    quality_start(_qs), min_q(_min_q), canonical(false)
   {
-    buffer_data = new char[nb_buffers * buffer_size];
     seam        = new char[2*mer_len];
 
     unsigned long i = 0;
     for(bucket_iterator it = bucket_begin();
         it != bucket_end(); ++it, ++i) {
-      it->end = it->start = buffer_data + i * buffer_size;
+      it->end = it->start = (char*)buffer_data.get_ptr() + i * buffer_size;
     }
 
     fparser = seq_qual_parser::new_parser(*current_file);

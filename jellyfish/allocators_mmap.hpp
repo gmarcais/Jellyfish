@@ -26,8 +26,8 @@
 namespace allocators {
   class mmap
   {
-    void        *ptr;
-    size_t      size;
+    void   *ptr;
+    size_t  size;
    
   public:
     mmap() : ptr(MAP_FAILED), size(0) {}
@@ -69,6 +69,13 @@ namespace allocators {
       return munlock(ptr, size);
     }
     
+    // Return a a number of bytes which is a number of whole pages at
+    // least as large as size.
+    static size_t round_to_page(size_t _size) {
+      static const long pg_size = sysconf(_SC_PAGESIZE);
+      return (_size / pg_size + (_size % pg_size != 0)) * pg_size;
+    }
+
   private:
     static const int nb_threads = 4;
     struct tinfo {
@@ -78,7 +85,7 @@ namespace allocators {
     };
     void fast_zero() {
       tinfo info[nb_threads];
-      size_t pgsize = (size_t)getpagesize();
+      size_t pgsize = round_to_page(1);
       size_t nb_pages = size / pgsize + (size % pgsize != 0);
 
       for(int i = 0; i < nb_threads; i++) {

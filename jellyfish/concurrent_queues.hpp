@@ -54,11 +54,11 @@ class concurrent_queue {
   uint64_t volatile   head;
   uint64_t volatile   tail;
   bool volatile           closed;
-  //  divisor64               size_div;
+  divisor64               size_div;
   
 public:
   concurrent_queue(uint64_t _size) : 
-    size(20 *_size), head(0), tail(0), closed(false)//, size_div(size) 
+    size(20 *_size), head(0), tail(0), closed(false), size_div(size) 
   { 
     queue = new Val *[size];
     memset(queue, 0, sizeof(Val *) * size);
@@ -79,6 +79,15 @@ public:
       len += size;
     return (uint64_t)(4*len) <= size;
   }
+  uint64_t usage() {
+    uint64_t ctail = tail;
+    __sync_synchronize();
+    uint64_t chead = head;
+    int64_t len = chead - ctail;
+    if(len < 0)
+      len += size;
+    return len;
+  }
 };
 
 template<class Val>
@@ -88,13 +97,16 @@ void concurrent_queue<Val>::enqueue(Val *v) {
 
   chead = head;
   do {
-    //    uint64_t q, nhead;
-    //    size_div.division(chead + 1, q, nhead);
-    uint64_t nhead = (chead + 1) % size;
+    uint64_t q, nhead;
+    size_div.division(chead + 1, q, nhead);
+    //    uint64_t nhead = (chead + 1) % size;
 
     done = (atomic::gcc::cas(&queue[chead], (Val*)0, v) == (Val*)0);
     chead = atomic::gcc::cas(&head, chead, nhead);
   } while(!done);
+
+  assert(head >= 0 && head < size);
+  assert(tail >= 0 && tail < size);
 }
 
 template<class Val>
@@ -113,11 +125,14 @@ Val *concurrent_queue<Val>::dequeue() {
 
       // Complicated way to do ctail == head. Is it necessary? Or is
       // the memory barrier above sufficient? Or even necessary?
-      if(atomic::gcc::cas(&head, ctail, ctail) == ctail)
+      if(atomic::gcc::cas(&head, ctail, ctail) == ctail) {
+        assert(head >= 0 && head < size);
+        assert(tail >= 0 && tail < size);
         return NULL;
-      ntail    = (ctail + 1) % size;
-      // uint64_t q;
-      // size_div.division(ctail + 1, q, ntail);
+      }
+      //      ntail    = (ctail + 1) % size;
+      uint64_t q;
+      size_div.division(ctail + 1, q, ntail);
       ntail    = atomic::gcc::cas(&tail, ctail, ntail);
       dequeued = ntail == ctail;
       ctail    = ntail;
@@ -132,6 +147,9 @@ Val *concurrent_queue<Val>::dequeue() {
     if(res)
       done = atomic::gcc::cas(&queue[ctail], res, (Val*)0) == res;
   } while(!done);
+
+  assert(head >= 0 && head < size);
+  assert(tail >= 0 && tail < size);
 
   return res;
 }

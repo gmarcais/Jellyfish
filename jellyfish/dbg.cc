@@ -15,11 +15,30 @@
 */
 
 #include <jellyfish/dbg.hpp>
+#include <jellyfish/time.hpp>
 #include <sys/syscall.h>
 
 namespace dbg {
   pthread_mutex_t print_t::_lock      = PTHREAD_MUTEX_INITIALIZER;
   volatile pid_t  print_t::_print_tid = 0;
+
+#ifdef DEBUG
+  Time _tic_time;
+#endif
+
+  void tic() {
+#ifdef DEBUG
+    _tic_time.now();
+#endif
+ }
+  Time toc() {
+#ifdef DEBUG
+    Time t; 
+    return t - _tic_time;
+#else
+    return Time::zero;
+#endif
+  }
 
 #ifdef SYS_gettid
   pid_t gettid() { return (pid_t)syscall(SYS_gettid); }

@@ -37,6 +37,7 @@ main_func_t version;
 
 struct cmd_func {
   const char  *cmd;
+  //  std::string  cmd;
   main_func_t *func;
 };
 cmd_func cmd_list[] = {
@@ -98,6 +99,7 @@ int main(int argc, char *argv[])
   } else {
     for(cmd_func *ccmd = cmd_list; ccmd->func != 0; ccmd++) {
       if(!strcmp(ccmd->cmd, argv[1]))
+      //      if(!ccmd->cmd.compare(argv[1]))
         return ccmd->func(argc - 1, argv + 1);
     }
     error = "Unknown command '";

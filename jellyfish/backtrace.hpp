@@ -14,4 +14,5 @@
     along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+void print_backtrace();
 void show_backtrace();

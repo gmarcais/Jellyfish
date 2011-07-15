@@ -215,7 +215,7 @@ uint64_t SquareBinaryMatrix::times(uint64_t v) const {
 
 #else
 
-uint64_t SquareBinaryMatrix::times_sse(uint64_t v) const { }
+uint64_t SquareBinaryMatrix::times_sse(uint64_t v) const { return 0; }
 uint64_t SquareBinaryMatrix::times(uint64_t v) const {
   return times_unrolled(v);
 }

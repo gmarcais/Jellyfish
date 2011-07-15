@@ -23,44 +23,60 @@
 
 #include <jellyfish/err.hpp>
 #include <jellyfish/misc.hpp>
+#include <jellyfish/time.hpp>
 
 namespace jellyfish {
   class file_parser {
-    int                  _fd;
-    char                 _base, _pbase;
-    static const size_t  _buff_size = 1024 * 1024;
-    char                *_buffer;
-    const char          *_end_buffer;
-    const char          *_data;
-    const char          *_end_data;
-    size_t               _size;
-    bool                 _is_mmapped;
+    int         _fd;
+    int         _base, _pbase;
+    char       *_buffer;
+    const char *_end_buffer;
+    const char *_data;
+    const char *_end_data;
+    size_t      _size;
+    bool        _is_mmapped;
 
-    static bool          _do_mmap;
-    static bool          _force_mmap;
+    static bool _do_mmap;
+    static bool _force_mmap;
 
   protected:
     define_error_class(FileParserError);
-    int sbumpc();
-    int speekc();
+    // Get next character in "stream"
+    inline int sbumpc() {
+      _pbase = _base;
+      if(_data >= _end_data)
+        if(!read_next_buffer())
+          return _base = _eof;
+      return (_base = *_data++);
+    }
+    int speekc() {
+      if(_data >= _end_data)
+        if(!read_next_buffer())
+          return _eof;
+      return *_data;
+    }
+
 
   public:
+    static const size_t _buff_size = 1024 * 1024;
+    static const int    _eof       = -1;
+
     // [str, str+len) is content on initial buffer
     file_parser(int fd, const char *path, const char *str, size_t len,
                 char pbase = '\n');
     ~file_parser();
 
-    static bool do_mmap();
-    static bool do_mmap(bool new_value);
+    static bool do_mmap() { return _do_mmap; };
+    static bool do_mmap(bool new_value) { bool oval = _do_mmap; _do_mmap = new_value; return oval; }
     // throw an error if mmap fails
     static bool force_mmap();
     static bool force_mmap(bool new_value);
     static int file_peek(const char *path, char *peek);
 
     // current base and previous base
-    char base() const { return _base; }
-    char pbase() const { return _pbase; }
-    bool eof() const { return _base == EOF; }
+    int base() const { return _base; }
+    int pbase() const { return _pbase; }
+    bool eof() const { return _base == _eof; }
 
     // ptr to base. Valid only for mmaped files
     const char *ptr() const { return _data; }
@@ -68,7 +84,8 @@ namespace jellyfish {
     const char *pbase_ptr() const { return _data; }
 
   private:
-    int read_next_buffer();
+    // Buffers next chunk of data. Returns _eof if at end of file or next character
+    bool read_next_buffer();
   };
 }
 

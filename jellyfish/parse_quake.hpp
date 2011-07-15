@@ -24,6 +24,7 @@
 #include <jellyfish/seq_qual_parser.hpp>
 #include <jellyfish/circular_buffer.hpp>
 #include <jellyfish/floats.hpp>
+#include <jellyfish/allocators_mmap.hpp>
 
 namespace jellyfish {
   class parse_quake : public double_fifo_input<seq_qual_parser::sequence_t> {
@@ -34,10 +35,10 @@ namespace jellyfish {
     fary_t                  files;
     fary_t::const_iterator  current_file;
     bool                    have_seam;
-    const char              quality_start;
-    char                   *buffer_data;
+    allocators::mmap        buffer_data;
     struct seq             *buffers;
     char                   *seam;
+    const char              quality_start;
     bool                    canonical;
     seq_qual_parser        *fparser;
 
@@ -57,9 +58,7 @@ namespace jellyfish {
                 unsigned int nb_buffers, size_t _buffer_size,
                 const char _qs); 
 
-    ~parse_quake() {
-      delete [] buffer_data;
-    }
+    ~parse_quake() { }
 
     void set_canonical(bool v = true) { canonical = v; }
     virtual void fill();

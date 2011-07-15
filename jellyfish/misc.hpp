@@ -107,4 +107,21 @@ T *calloc_align(size_t nmemb, size_t alignment) {
     throw std::bad_alloc();
   return ptr.t;
 }
+
+/* Be pedantic about memory access. Any misaligned access will
+ * generate a BUS error.
+ */
+void disabled_misaligned_mem_access();
+
+/* Raison d'etre of this version of mem_copy: It seems we have slow
+ * down due to misaligned cache accesses. glibc memcpy does unaligned
+ * memory accesses and crashes when they are disabled. This version
+ * does only aligned memory access (see above).
+ */
+template <typename T>
+void mem_copy(char *dest,  const char *src, const T &len) {
+  // dumb copying char by char
+  for(T i = (T)0; i < len; ++i)
+    *dest++ = *src++;
+}
 #endif // __MISC_HPP__

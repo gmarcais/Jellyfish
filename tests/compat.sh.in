@@ -8,3 +8,7 @@ JF=$DIR/jellyfish
 check () {
     cut -d\  -f 2 $1 | xargs @MD5@ | sort | diff -w $1 -
 }
+
+if [ -n "$DEBUG" ]; then
+    set -x;
+fi

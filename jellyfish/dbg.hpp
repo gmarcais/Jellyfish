@@ -30,6 +30,8 @@
 #include <ctype.h>
 #include <signal.h>
 
+#include <jellyfish/time.hpp>
+
 namespace dbg {
   pid_t gettid();
 
@@ -56,6 +58,7 @@ namespace dbg {
   };
 
   class xspace { };
+  class no_flush { };
 
   class print_t {
     static pthread_mutex_t _lock;
@@ -63,9 +66,10 @@ namespace dbg {
 
     stringbuf              _strbuf;
     std::ostream           _buf;
+    bool                   _flush;
   public:
     print_t(const char *file, const char *function, int line) :
-      _buf(&_strbuf)
+      _buf(&_strbuf), _flush(true)
     {
       const char *file_basename = strrchr(file, '/');
       if(!file_basename)
@@ -78,7 +82,10 @@ namespace dbg {
       if(_print_tid == 0 || gettid() == _print_tid) {
         pthread_mutex_lock(&_lock);
         std::cerr.write(_strbuf.pbase(), _strbuf.pptr() - _strbuf.pbase());
-        std::cerr << std::endl;
+        if(_flush)
+          std::cerr << std::endl;
+        else
+          std::cerr << "\n";
         pthread_mutex_unlock(&_lock);
       }
     }
@@ -106,6 +113,14 @@ namespace dbg {
         _buf << " ";
       return *this;
     }
+    print_t &operator<<(const no_flush &nf) {
+      _flush = false;
+      return *this;
+    }
+    print_t & operator<<(const Time &t) {
+      _buf << t.str();
+      return *this;
+    }
     template<typename T>
     print_t & operator<<(const T &x) {
       _buf << x;
@@ -120,13 +135,18 @@ namespace dbg {
     template<typename T>
     no_print_t & operator<<(const T &x) { return *this; }
   };
+
+  void tic();
+  Time toc();
 }
 
 #ifdef DEBUG
 #define DBG if(1) dbg::print_t(__FILE__, __FUNCTION__, __LINE__)
+#define NFDBG if(1) dbg::print_t(__FILE__, __FUNCTION__, __LINE__) << dbg::no_flush()
 #define V(v) dbg::xspace() << #v ":" << v
 #else
 #define DBG if(1) dbg::no_print_t()
+#define NFDBG if(1) dbg::no_print_t()
 #define V(v) v
 #endif
 

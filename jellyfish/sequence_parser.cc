@@ -14,7 +14,9 @@
     along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <jellyfish/dbg.hpp>
 #include <jellyfish/sequence_parser.hpp>
+#include <jellyfish/time.hpp>
 
 jellyfish::sequence_parser *
 jellyfish::sequence_parser::new_parser(const char *path) {
@@ -35,40 +37,41 @@ jellyfish::sequence_parser::new_parser(const char *path) {
 }
 
 bool jellyfish::fasta_sequence_parser::parse(char *start, char **end) {
-  while(start < *end && base() != EOF) {
-    switch(sbumpc()) {
-    case EOF:
+  while(start < *end && base() != _eof) {
+    char c = 0;
+    switch(c = sbumpc()) {
+    case _eof:
       break;
 
     case '>':
       if(pbase() == '\n') {
-        while(base() != EOF && base() != '\n') { sbumpc(); }
+        while(c != _eof && c != '\n') { c = sbumpc(); }
         *start++ = 'N';
       } else
-        *start++ = base();
+        *start++ = c;
       break;
 
     case '\n':
       break;
 
     default:
-      *start++ = base();
+      *start++ = c;
     }
   }
 
   *end = start;
-  return base() != EOF;
+  return !eof();
 }
 
 bool jellyfish::fastq_sequence_parser::parse(char *start, char **end) {
-  while(start < *end && base() != EOF) {
+  while(start < *end && base() != _eof) {
     switch(sbumpc()) {
-    case EOF:
+    case _eof:
       break;
 
     case '@':
       if(pbase() == '\n') {
-        while(base() != EOF && base() != '\n') { sbumpc(); }
+        while(base() != _eof && base() != '\n') { sbumpc(); }
         *start++ = 'N';
         seq_len = 0;
       } else
@@ -77,8 +80,8 @@ bool jellyfish::fastq_sequence_parser::parse(char *start, char **end) {
 
     case '+':
       if(pbase() == '\n') { // Skip qual header & values
-        while(base() != EOF && base() != '\n') { sbumpc(); }
-        while(base() != EOF && seq_len > 0) {
+        while(base() != _eof && base() != '\n') { sbumpc(); }
+        while(base() != _eof && seq_len > 0) {
           if(base() != '\n')
             --seq_len;
           sbumpc();
@@ -97,5 +100,5 @@ bool jellyfish::fastq_sequence_parser::parse(char *start, char **end) {
   }
     
   *end = start;
-  return base() != EOF;
+  return base() != _eof;
 }

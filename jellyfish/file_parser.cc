@@ -17,12 +17,15 @@
 #include <jellyfish/err.hpp>
 #include <jellyfish/file_parser.hpp>
 #include <jellyfish/dbg.hpp>
+#include <jellyfish/time.hpp>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/mman.h>
 #include <assert.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 int jellyfish::file_parser::file_peek(const char *path, char *peek) {
   int fd = open(path, O_RDONLY);
@@ -39,6 +42,7 @@ int jellyfish::file_parser::file_peek(const char *path, char *peek) {
 jellyfish::file_parser::file_parser(int fd, const char *path, 
                                     const char *str, size_t len, char pbase) : 
   _fd(fd), _base(pbase), _pbase(pbase) {
+  
   struct stat stat_buf;
   if(fstat(fd, &stat_buf) == -1)
     eraise(FileParserError) << "Can't fstat '" << path << "'" << err::no;
@@ -73,48 +77,21 @@ jellyfish::file_parser::~file_parser() {
   if(_is_mmapped) {
     munmap(_buffer, _size);
   } else {
-    delete _buffer;
+    delete[] _buffer;
     close(_fd);
   }
 }
 
-// Get next character in "stream"
-int jellyfish::file_parser::sbumpc() {
-  _pbase = _base;
-  if(_data >= _end_data) {
-    if(_is_mmapped)
-      return (_base = EOF);
-    ssize_t gcount = read(_fd, _buffer, _buff_size);
-    if(gcount <= 0)
-      return (_base = EOF);
-    _data     = _buffer;
-    _end_data = _buffer + gcount;
-  }
-  //    std::cerr << "sbumpc " << *_data << std::endl;
-  return (_base = *_data++);
-}
+bool jellyfish::file_parser::read_next_buffer() {
+  if(_is_mmapped)
+    return false;
+  ssize_t gcount = read(_fd, _buffer, _buff_size);
+  if(gcount <= 0)
+    return false;
+  _data     = _buffer;
+  _end_data = _buffer + gcount;
 
-// Get next character in "stream" without moving
-// XXX code duplication! Refactor
-int jellyfish::file_parser::speekc() {
-  if(_data >= _end_data) {
-    if(_is_mmapped)
-      return (_base = EOF);
-    ssize_t gcount = read(_fd, _buffer, _buff_size);
-    if(gcount <= 0)
-      return (_base = EOF);
-    _data     = _buffer;
-    _end_data = _buffer + gcount;
-  }
-  //    std::cerr << "sbumpc " << *_data << std::endl;
-  return *_data;
-}
-
-bool jellyfish::file_parser::do_mmap() { return _do_mmap; }
-bool jellyfish::file_parser::do_mmap(bool new_value) {
-  bool old_value = _do_mmap;
-  _do_mmap = new_value;
-  return old_value;
+  return true;
 }
 
 bool jellyfish::file_parser::_do_mmap = true;

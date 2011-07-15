@@ -21,13 +21,15 @@
 #include <jellyfish/err.hpp>
 #include <jellyfish/misc.hpp>
 #include <jellyfish/file_parser.hpp>
+#include <jellyfish/time.hpp>
 
 namespace jellyfish {
   class sequence_parser : public file_parser {
+  protected:
   public:
     sequence_parser(int fd, const char *path, const char *str, size_t len) :
-      file_parser(fd, path, str, len) {}
-    virtual ~sequence_parser() {}
+      file_parser(fd, path, str, len) { }
+    virtual ~sequence_parser() { }
 
     struct sequence_t {
       char *start;
