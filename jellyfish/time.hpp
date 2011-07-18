@@ -17,92 +17,72 @@
 #ifndef __JELLYFISH_TIME_HPP__
 #define __JELLYFISH_TIME_HPP__
 
-#include <time.h>
+#include <sys/time.h>
 #include <iostream>
 #include <sstream>
 #include <iomanip>
-#include <assert.h>
 
 class Time {
-  static const long max_nseconds = 1000000000UL;
-  const clockid_t _type;
-  struct timespec _tp;
+  static const suseconds_t max_useconds = 1000000UL;
+  struct timeval tv;
 
  public:
   static const Time zero;
-  Time(bool init = true, clockid_t type = CLOCK_MONOTONIC) : _type(type) {
+  Time(bool init = true) {
     if(init)
       now();
   }
-  Time(time_t sec, long nsec, clockid_t type = CLOCK_MONOTONIC) : _type(type) {
-    _tp.tv_sec  = sec;
-    _tp.tv_nsec = nsec;
+  Time(time_t sec, suseconds_t usec) {
+    tv.tv_sec  = sec;
+    tv.tv_usec = usec;
   }
   Time &operator=(const Time &o) {
     if(&o != this) {
-      _tp.tv_sec  = o._tp.tv_sec;
-      _tp.tv_nsec = o._tp.tv_nsec;
+      tv.tv_sec = o.tv.tv_sec;
+      tv.tv_usec = o.tv.tv_usec;
     }
     return *this;
   }
 
-  Time operator-(const Time &o) const {
-    time_t sec = _tp.tv_sec - o._tp.tv_sec;
-    long   nsec;
-    if(o._tp.tv_nsec > _tp.tv_nsec) {
-      nsec = (max_nseconds + _tp.tv_nsec) - o._tp.tv_nsec;
-      sec--;
+  Time & operator-=(const Time &o) {
+    tv.tv_sec -= o.tv.tv_sec;
+    if(o.tv.tv_usec > tv.tv_usec) {
+      tv.tv_usec = (max_useconds + tv.tv_usec) - o.tv.tv_usec;
+      --tv.tv_sec;
     } else {
-      nsec = _tp.tv_nsec - o._tp.tv_nsec;
+      tv.tv_usec -= o.tv.tv_usec;
     }
-    return Time(sec, nsec);
+    return *this;
+  }
+  const Time operator-(const Time &o) const {
+    return Time(*this) -= o;
   }
 
   Time & operator+=(const Time &o) {
-    _tp.tv_sec  += o._tp.tv_sec;
-    _tp.tv_nsec += o._tp.tv_nsec;
-    if(_tp.tv_nsec >= max_nseconds) {
-      ++_tp.tv_sec;
-      _tp.tv_nsec -= max_nseconds;
+    tv.tv_sec  += o.tv.tv_sec;
+    tv.tv_usec += o.tv.tv_usec;
+    if(tv.tv_usec >= max_useconds) {
+      ++tv.tv_sec;
+      tv.tv_usec -= max_useconds;
     }
-    assert(_tp.tv_nsec >= 0);
-    assert(_tp.tv_nsec < max_nseconds);
     return *this;
   }
-
   const Time operator+(const Time &o) const {
     return Time(*this) += o;
   }
 
-  void now() { clock_gettime(_type, &_tp); }
+  void now() { gettimeofday(&tv, NULL); }
   Time elapsed() const {
-    Time t(true, _type);
-    return t - *this;
+    return Time() - *this;
   }
+
 
   std::string str() const {
     std::ostringstream res;
-    res << _tp.tv_sec << "."
-        << std::setfill('0') << std::setw(9) << std::right << _tp.tv_nsec;
+    res << tv.tv_sec << "."
+        << std::setfill('0') << std::setw(6) << std::right << tv.tv_usec;
     return res.str();
   }
 };
-
-class Monotonic : public Time {
-public:
-  Monotonic(bool init = true) : Time(init, CLOCK_MONOTONIC) {}
-  Monotonic(time_t sec, long nsec) : Time(sec, nsec, CLOCK_MONOTONIC) {}
-};
-class ProcCPU : public Time {
-public:
-  ProcCPU(bool init = true) : Time(init, CLOCK_PROCESS_CPUTIME_ID) {}
-  ProcCPU(time_t sec, long nsec) : Time(sec, nsec, CLOCK_PROCESS_CPUTIME_ID) {}
-};
-class ThreadCPU : public Time {
-public:
-  ThreadCPU(bool init = true) : Time(init, CLOCK_THREAD_CPUTIME_ID) {}
-  ThreadCPU(time_t sec, long nsec) : Time(sec, nsec, CLOCK_THREAD_CPUTIME_ID) {}
-};
-
 
 #endif // __TIME_HPP__

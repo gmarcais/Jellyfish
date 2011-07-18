@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-AM_LDFLAGS = -lpthread -lrt
+AM_LDFLAGS = -lpthread
 AM_CPPFLAGS = -Wall -Werror -Wnon-virtual-dtor -I$(top_srcdir)
 AM_CXXFLAGS = -g -O3
 
