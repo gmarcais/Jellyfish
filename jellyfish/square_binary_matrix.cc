@@ -130,28 +130,19 @@ void SquareBinaryMatrix::dump(std::ostream *os) const {
 }
 
 void SquareBinaryMatrix::load(std::istream *is) {
-  if(columns) {
-    delete[] columns;
-    columns = NULL;
-  }
   is->read((char *)&size, sizeof(size));
-  columns = new uint64_t[size];
+  alloc_columns();
   is->read((char *)columns, sizeof(uint64_t) * size);
 }
 
 size_t SquareBinaryMatrix::read(const char *map) {
   int nsize = 0;
-  if(columns) {
-    delete[] columns;
-    columns = NULL;
-    size = 0;
-  }
   memcpy(&nsize, map, sizeof(nsize));
   if(nsize <= 0 || nsize > 64)
     eraise(MismatchingSize) << "Invalid matrix size '" << nsize << "'. Must be between 1 and 64";
 
   size = nsize;
-  columns = new uint64_t[size];
+  alloc_columns();
   memcpy(columns, map + sizeof(size), sizeof(uint64_t) * size);
   return sizeof(size) + sizeof(uint64_t) * size;
 }
