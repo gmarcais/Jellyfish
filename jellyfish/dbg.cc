@@ -55,8 +55,10 @@ namespace dbg {
   }
 
   void print_t::signal_handler(int signum, siginfo_t *info, void *context) {
+#ifdef  HAVE_SI_INT
     if(info->si_code != SI_QUEUE)
       return;
     _print_tid = info->si_int;
+#endif
   }
 }

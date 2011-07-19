@@ -15,7 +15,7 @@ seq_qual_parser.cc half.cpp hash_fastq_merge.cc cite_cmdline.cc		\
 query_cmdline.cc hash_merge_cmdline.cc histo_cmdline.cc			\
 stats_cmdline.cc histo_fastq_main_cmdline.cc mer_counter_cmdline.cc	\
 dump_fastq_main_cmdline.cc hash_fastq_merge_cmdline.cc dump_cmdline.cc	\
-dbg.cc mapped_file.cc backtrace.cc floats.cc
+dbg.cc mapped_file.cc backtrace.cc floats.cc allocators_mmap.cc
 
 EXTRA_DIST = cite_cmdline.hpp query_cmdline.hpp hash_merge_cmdline.hpp	\
 histo_cmdline.hpp stats_cmdline.hpp histo_fastq_main_cmdline.hpp	\
@@ -29,7 +29,7 @@ libjellyfish_la_SOURCES = square_binary_matrix.cc err.cc misc.cc	\
 dbg.hpp storage.cc thread_exec.cc time.cc file_parser.cc		\
 read_parser.cc parse_read.cc half.cpp mapped_file.cc parse_dna.cc	\
 parse_quake.cc parse_qual_dna.cc sequence_parser.cc seq_qual_parser.cc	\
-backtrace.cc floats.cc dbg.cc
+backtrace.cc floats.cc dbg.cc allocators_mmap.cc
 libjellyfish_la_CPPFLAGS = $(AM_CPPFLAGS)
 library_includedir=$(includedir)/jellyfish-@PACKAGE_VERSION@/jellyfish
 library_include_HEADERS = allocators_malloc.hpp allocators_mmap.hpp	\
@@ -57,7 +57,7 @@ square_binary_matrix.cc backtrace.cc dbg.cc time.cc
  mersenne.cpp dbg.cc
 test_double_fifo_input_SOURCES = test_double_fifo_input.cc	\
 parse_dna.cc file_parser.cc sequence_parser.cc backtrace.cc	\
-thread_exec.cc dbg.cc time.cc
+thread_exec.cc dbg.cc time.cc allocators_mmap.cc
 test_read_parser_SOURCES = test_read_parser.cc file_parser.cc	\
 read_parser.cc parse_read.cc dbg.cc backtrace.cc time.cc
 EXTRA_DIST += randomc.h generate_sequence_cmdline.hpp
