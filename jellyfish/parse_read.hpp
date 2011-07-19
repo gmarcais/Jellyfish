@@ -34,6 +34,8 @@ namespace jellyfish {
     read_parser            *fparser;
 
   public:
+    typedef read_parser::read_t read_t;
+
     static const uint_t codes[256];
     static const uint_t CODE_RESET = -1;
 

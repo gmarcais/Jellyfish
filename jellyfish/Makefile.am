@@ -52,7 +52,7 @@ check_PROGRAMS = generate_sequence test_double_fifo_input	\
 test_read_parser
 generate_sequence_SOURCES = generate_sequence.cc	\
 generate_sequence_cmdline.cc misc.cc mersenne.cpp	\
-square_binary_matrix.cc backtrace.cc
+square_binary_matrix.cc backtrace.cc dbg.cc time.cc
 # generate_reads_SOURCES = generate_reads.cc generate_reads_cmdline.cc	\
  mersenne.cpp dbg.cc
 test_double_fifo_input_SOURCES = test_double_fifo_input.cc	\
