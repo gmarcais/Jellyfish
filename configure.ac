@@ -8,8 +8,6 @@ AC_PROG_CXX
 
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
-gl_EARLY 
-gl_INIT
 
 dnl define([concat], $1$2$3)dnl
 dnl define([PC_FILE], concat([jellyfish-],AC_PACKAGE_VERSION,[.pc]))
