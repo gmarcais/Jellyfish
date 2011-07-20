@@ -17,6 +17,10 @@
 #include <config.h>
 #include <jellyfish/allocators_mmap.hpp>
 
+#ifndef MAP_ANONYMOUS
+#define MAP_ANONYMOUS MAP_ANON
+#endif
+
 void *allocators::mmap::realloc(size_t new_size) {
   void *new_ptr = MAP_FAILED;
   if(ptr == MAP_FAILED) {
