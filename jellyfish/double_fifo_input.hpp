@@ -108,7 +108,7 @@ namespace jellyfish {
         void *input_return;
         pthread_join(input_id, &input_return);
       }
-    delete buckets;
+    delete [] buckets;
   }
 
   template<typename T>
