@@ -1,4 +1,4 @@
-AC_INIT([jellyfish], [1.1.1], [gmarcais@umd.edu])
+AC_INIT([jellyfish], [1.1.2], [gmarcais@umd.edu])
 AC_CANONICAL_HOST
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign parallel-tests color-tests])
@@ -27,8 +27,8 @@ AS_IF([test "x$MD5" = "x"], AC_CHECK_PROG([MD5], [md5], [md5 -r]), [])
 AS_IF([test "x$MD5" = "x"], AC_MSG_ERROR([Could not find md5 hashing program in your path]), [])
 
 AC_ARG_WITH([sse],
-            [AS_HELP_STRING([--without-sse], [disable SSE])],
-            [], [with_sse=yes])
+            [AS_HELP_STRING([--with-sse], [enable SSE])],
+            [], [with_sse=no])
 AS_IF([test "x$with_sse" != xno],
       [AC_DEFINE([HAVE_SSE], [1], [Define if you have SSE])],
       [])

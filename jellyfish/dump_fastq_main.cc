@@ -44,7 +44,8 @@ int dump_fastq_main(int argc, char *argv[])
   if(!out.good())
     die << "Error opening output file '" << args.output_arg << "'" << err::no;
 
-  fastq_storage_t *hash = raw_fastq_dumper_t::read(args.inputs[0]);
+  fastq_storage_t *hash =
+    raw_fastq_dumper_t::read(args.inputs[0]);
   if(args.verbose_flag)
     std::cerr << 
       "k-mer length (bases): " << (hash->get_key_len() / 2) << "\n"
