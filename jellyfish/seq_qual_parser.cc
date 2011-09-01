@@ -15,6 +15,7 @@
 */
 
 #include <jellyfish/seq_qual_parser.hpp>
+#include <stddef.h>
 
 jellyfish::seq_qual_parser *
 jellyfish::seq_qual_parser::new_parser(const char *path) {
