@@ -25,11 +25,11 @@
 #include <jellyfish/misc.hpp>
 #include <jellyfish/mer_counting.hpp>
 #include <jellyfish/compacted_hash.hpp>
-#include <jellyfish/dump_cmdline.hpp>
+#include <jellyfish/dump_main_cmdline.hpp>
 
 template<typename hash_t>
 void dump(const hash_t &h, std::ostream &out,
-          const struct dump_args &args, uint64_t lower_count, uint64_t upper_count) {
+          const dump_args &args, uint64_t lower_count, uint64_t upper_count) {
   typename hash_t::iterator it = h.iterator_all();
   if(args.column_flag) {
     char spacer = args.tab_flag ? '\t' : ' ';
@@ -49,22 +49,13 @@ void dump(const hash_t &h, std::ostream &out,
 
 int dump_main(int argc, char *argv[])
 {
-  struct dump_args args;
+  dump_args args(argc, argv);
 
-  if(dump_cmdline(argc, argv, &args) != 0)
-    die << "Command line parser failed";
-
-  if(args.inputs_num != 1)
-    die << "Need 1 database\n"
-        << dump_args_usage << "\n"
-        << dump_args_help;
-
-
-  std::ofstream out(args.output_arg);
+  std::ofstream out(args.output_arg.c_str());
   if(!out.good())
     die << "Error opening output file '" << args.output_arg << "'";
 
-  mapped_file dbf(args.inputs[0]);
+  mapped_file dbf(args.db_arg.c_str());
   dbf.sequential().will_need();
   char type[8];
   memcpy(type, dbf.base(), sizeof(type));

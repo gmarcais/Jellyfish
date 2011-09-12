@@ -1,0 +1,84 @@
+purpose "Count k-mers or qmers in fasta or fastq files"
+package "jellyfish count"
+
+output "count_main_cmdline.hpp"
+name "count_args"
+
+option("mer-len", "m") {
+  description "Length of mer"
+  uint32; required }
+option("size", "s") {
+  description "Hash size"
+  uint64; required }
+option("threads", "t") {
+  description "Number of threads"
+  uint32; default "1" }
+option("output", "o") {
+  description "Output prefix"
+  string; default "mer_counts" }
+option("counter-len", "c") {
+  description "Length of counting field"
+  uint32; default "7"; typestr "Length in bits" }
+option("out-counter-len") {
+  description "Length of counter field in output"
+  uint32; default "4"; typestr "Length in bytes" }
+option("both-strands", "C") {
+  description "Count both strand, canonical representation"
+  flag; off }
+option("reprobes", "p") {
+  description "Maximum number of reprobes"
+  uint32; default "62" }
+option("raw", "r") {
+  description "Write raw database"
+  flag; off }
+option("both") {
+  description "Write list and raw database"
+  flag; off; hidden }
+option("quake", "q") {
+  description "Quake compatibility mode"
+  flag; off }
+option("quality-start") {
+  description "Starting ASCII for quality values"
+  uint32; default "64" }
+option("min-quality") {
+  description "Minimum quality. A base with lesser quality becomes an N"
+  uint32; default "0" }
+option("lower-count", "L") {
+  description "Don't output k-mer with count < lower-count"
+  uint64 }
+option("upper-count", "U") {
+  description "Don't output k-mer with count > upper-count"
+  uint64 }
+option("matrix") {
+  description "Hash function binary matrix"
+  string; typestr "Matrix file" }
+option("timing") {
+  description "Print timing information"
+  c_string; typestr "Timing file" }
+option("stats") {
+  description "Print stats"
+  c_string; typestr "Stats file" }
+option("no-write", "w") {
+  description "Don't write database"
+  flag; off; hidden }
+option("measure", "u") {
+  description "Write usage statistics"
+  flag; off; hidden }
+option("buffers") {
+  description "Number of buffers per thread"
+  uint64; hidden }
+option("buffer-size") {
+  description "Size of buffers"
+  uint64; hidden; default "8192" }
+option("out-buffer-size") {
+  description "Size of output buffer per thread"
+  uint64; hidden; default "20000000" }
+option("lock") {
+  description "Lock hash in memory (no swapping)"
+  flag; off; hidden }
+option("stream") {
+  description "Read from stream, not memory map"
+  flag; off; hidden }
+arg("file") {
+  description "Sequence file(s) in fasta or fastq format"
+  c_string; multiple; typestr "path" }

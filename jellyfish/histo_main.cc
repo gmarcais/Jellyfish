@@ -29,7 +29,7 @@
 #include <jellyfish/thread_exec.hpp>
 #include <jellyfish/atomic_gcc.hpp>
 #include <jellyfish/counter.hpp>
-#include <jellyfish/histo_cmdline.hpp>
+#include <jellyfish/histo_main_cmdline.hpp>
 
 template<typename hash_t>
 class histogram : public thread_exec {
@@ -87,19 +87,14 @@ public:
 
 int histo_main(int argc, char *argv[])
 {
-  struct histo_args args;
-
-  if(histo_cmdline(argc, argv, &args) != 0)
-    die << "Command line parser failed";
-  if(args.inputs_num != 1)
-    die << "Need 1 database\n"
-        << histo_args_usage << "\n" << histo_args_help;
+  histo_args args(argc, argv);
 
   if(args.low_arg < 1)
-    die << "Low count value must be >= 1\n"
-        << histo_args_usage << "\n" << histo_args_help;
+    args.error("Low count value must be >= 1");
+  if(args.high_arg < args.low_arg)
+    args.error("High count value must be >= to low count value");
 
-  std::ofstream out(args.output_arg);
+  std::ofstream out(args.output_arg.c_str());
   if(!out.good())
     die << "Error opening output file '" << args.output_arg << "'" << err::no;
 
@@ -107,7 +102,7 @@ int histo_main(int argc, char *argv[])
     args.low_arg > 1 ? (args.increment_arg >= args.low_arg ? 1 : args.low_arg - args.increment_arg) : 1;
   const uint64_t ceil = args.high_arg + args.increment_arg;
 
-  mapped_file dbf(args.inputs[0]);
+  mapped_file dbf(args.db_arg.c_str());
   dbf.sequential().will_need();
   char type[8];
   memcpy(type, dbf.base(), sizeof(type));

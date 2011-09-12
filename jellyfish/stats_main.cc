@@ -25,7 +25,7 @@
 #include <jellyfish/misc.hpp>
 #include <jellyfish/mer_counting.hpp>
 #include <jellyfish/compacted_hash.hpp>
-#include <jellyfish/stats_cmdline.hpp>
+#include <jellyfish/stats_main_cmdline.hpp>
 
 template<typename hash_t>
 void compute_stats(const hash_t &h, uint64_t lower_count, uint64_t upper_count,
@@ -45,22 +45,13 @@ void compute_stats(const hash_t &h, uint64_t lower_count, uint64_t upper_count,
 
 int stats_main(int argc, char *argv[])
 {
-  struct stats_args args;
+  stats_args args(argc, argv);
 
-  if(stats_cmdline(argc, argv, &args) != 0)
-    die << "Command line parser failed";
-
-  if(args.inputs_num != 1)
-    die << "Need 1 database\n"
-        << stats_args_usage << "\n"
-        << stats_args_help;
-
-
-  std::ofstream out(args.output_arg);
+  std::ofstream out(args.db_arg.c_str());
   if(!out.good())
     die << "Error opening output file '" << args.output_arg << "'";
 
-  mapped_file dbf(args.inputs[0]);
+  mapped_file dbf(args.db_arg.c_str());
   dbf.sequential().will_need();
   char type[8];
   memcpy(type, dbf.base(), sizeof(type));

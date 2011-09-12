@@ -31,7 +31,7 @@ namespace jellyfish {
 
     uint_t                      mer_len;
     size_t                      buffer_size;
-    fary_t                      files;
+    const fary_t                files;
     fary_t::const_iterator      current_file;
     bool                        have_seam;
     char                       *seam;
@@ -82,7 +82,7 @@ namespace jellyfish {
     }
 
 
-    parse_dna(int nb_files, const char *argv[], uint_t _mer_len, 
+    parse_dna(const fary_t &_files, uint_t _mer_len, 
               unsigned int nb_buffers, size_t _buffer_size); 
 
     ~parse_dna() {

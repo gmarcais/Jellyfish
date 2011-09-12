@@ -31,7 +31,7 @@ namespace jellyfish {
 
     uint_t                  mer_len;
     size_t                  buffer_size;
-    fary_t                  files;
+    const fary_t            files;
     fary_t::const_iterator  current_file;
     bool                    have_seam;
     allocators::mmap        buffer_data;
@@ -51,7 +51,7 @@ namespace jellyfish {
     static const uint_t codes[256];
     static const uint_t CODE_RESET = -1;
 
-    parse_qual_dna(int nb_files, char *argv[], uint_t _mer_len, 
+    parse_qual_dna(const fary_t &_files, uint_t _mer_len, 
                    unsigned int nb_buffers, size_t _buffer_size,
                    const char _qs, const char _min_q); 
 

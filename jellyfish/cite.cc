@@ -46,12 +46,9 @@ const char *bibtex =
 
 int cite_main(int argc, char *argv[])
 {
-  struct cite_args args;
+  cite_cmdline args(argc, argv);
 
-  if(cite_cmdline(argc, argv, &args) != 0)
-    die << "Command line parser failed";
-
-  std::ofstream out(args.output_arg);
+  std::ofstream out(args.output_arg.c_str());
   if(!out.good())
     die << "Can't open output file '" << args.output_arg << "'" << err::no;
 

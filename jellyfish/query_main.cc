@@ -46,25 +46,16 @@ void print_mer_counts(const hash_t &h, std::istream &in, std::ostream &out) {
 
 int query_main(int argc, char *argv[])
 {
-  struct query_args args;
+  query_args args(argc, argv);
 
-  if(query_cmdline(argc, argv, &args) != 0)
-    die << "Command line parser failed";
-
-  if(args.inputs_num != 1) {
-    std::cerr << "Wrong number of argument\n";
-    query_cmdline_print_help();
-    exit(1);
-  }
-
-  std::ifstream in(args.input_arg);
+  std::ifstream in(args.input_arg.c_str());
   if(!in.good())
     die << "Can't open input file '" << args.input_arg << "'" << err::no;
-  std::ofstream out(args.output_arg);
+  std::ofstream out(args.output_arg.c_str());
   if(!out.good())
     die << "Can't open output file '" << args.output_arg << "'" << err::no;
 
-  mapped_file dbf(args.inputs[0]);
+  mapped_file dbf(args.db_arg.c_str());
   char type[8];
   memcpy(type, dbf.base(), sizeof(type));
   if(!strncmp(type, jellyfish::raw_hash::file_type, sizeof(type))) {

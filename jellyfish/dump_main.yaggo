@@ -1,0 +1,25 @@
+purpose "Dump k-mer counts"
+package "jellyfish stats"
+description "By default, dump in a fasta format where the header is the count and the sequence is the sequence of the k-mer. The column format is a 2 column output: k-mer count."
+
+output "dump_main_cmdline.hpp"
+name "dump_args"
+
+option("column", "c") {
+  description "Column format"
+  flag; off }
+option("tab", "t") {
+  description "Tab separator"
+  flag; off }
+option("lower-count", "L") {
+  description "Don't output k-mer with count < lower-count"
+  uint64 }
+option("upper-count", "U") {
+  description "Don't output k-mer with count > upper-count"
+  uint64 }
+option("output", "o") {
+  description "Output file"
+  string; default="/dev/fd/1" }
+arg("db") {
+  description "Jellyfish database"
+  string; typestr "path" }

@@ -1,0 +1,23 @@
+purpose "Query from a compacted database"
+package "jellyfish query"
+description "Query a hash. It reads k-mers from the standard input and write the counts on the standard output."
+
+output "query_cmdline.hpp"
+name "query_args"
+
+option("both-strands", "C") {
+  description "Both strands"
+  flag; off
+}
+option("input", "i") {
+  description "Input file"
+  string; default "/dev/fd/0"; typestr="file"
+}
+option("output", "o") {
+  description "Output file"
+  string; default="/dev/fd/1"; typestr="file"
+}
+arg("db") {
+  description "Jellyfish database"
+  string; typestr "path"
+}

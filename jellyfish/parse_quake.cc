@@ -17,12 +17,12 @@
 #include <jellyfish/parse_quake.hpp>
 
 namespace jellyfish {
-  parse_quake::parse_quake(int nb_files, char *argv[], uint_t _mer_len,
+  parse_quake::parse_quake(const fary_t &_files, uint_t _mer_len,
                            unsigned int nb_buffers, size_t _buffer_size,
                            const char _qs) :
     double_fifo_input<seq_qual_parser::sequence_t>(nb_buffers), mer_len(_mer_len), 
     buffer_size(allocators::mmap::round_to_page(_buffer_size)),
-    files(argv, argv + nb_files), current_file(files.begin()),
+    files(_files), current_file(files.begin()),
     have_seam(false), buffer_data(buffer_size * nb_buffers),
     quality_start(_qs), canonical(false)
   {

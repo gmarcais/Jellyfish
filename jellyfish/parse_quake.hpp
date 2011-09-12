@@ -32,7 +32,7 @@ namespace jellyfish {
 
     uint_t                  mer_len;
     size_t                  buffer_size;
-    fary_t                  files;
+    const fary_t            files;
     fary_t::const_iterator  current_file;
     bool                    have_seam;
     allocators::mmap        buffer_data;
@@ -54,7 +54,7 @@ namespace jellyfish {
     static const float proba_codes[41];
     static const float one_minus_proba_codes[41];
 
-    parse_quake(int nb_files, char *argv[], uint_t _mer_len, 
+    parse_quake(const fary_t &_files, uint_t _mer_len, 
                 unsigned int nb_buffers, size_t _buffer_size,
                 const char _qs); 
 
