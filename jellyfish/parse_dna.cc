@@ -57,27 +57,6 @@ namespace jellyfish {
     }
   }
 
-  parse_dna::parse_dna(const std::vector<const char *> &_files,
-                       uint_t _mer_len,
-                       unsigned int nb_buffers, size_t _buffer_size) :
-    double_fifo_input<sequence_parser::sequence_t>(nb_buffers), mer_len(_mer_len), 
-    buffer_size(allocators::mmap::round_to_page(_buffer_size)),
-    files(_files), current_file(files.begin()),
-    have_seam(false), buffer_data(buffer_size * nb_buffers), canonical(false)
-  {
-    seam        = new char[mer_len];
-    memset(seam, 'A', mer_len);
-
-    unsigned long i = 0;
-    for(bucket_iterator it = bucket_begin();
-        it != bucket_end(); ++it, ++i) {
-      it->end = it->start = (char *)buffer_data.get_ptr() + i * buffer_size;
-    }
-    assert(i == nb_buffers);
-
-    fparser = sequence_parser::new_parser(*current_file);
-  }
-
   const uint_t parse_dna::codes[256] = {
     -3, -3, -3, -3, -3, -3, -3, -3, -3, -3, -2, -3, -3, -3, -3, -3, 
     -3, -3, -3, -3, -3, -3, -3, -3, -3, -3, -3, -3, -3, -3, -3, -3, 

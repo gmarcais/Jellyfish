@@ -24,7 +24,7 @@ public:
     tab_flag(false),
     lower_count_arg(0), lower_count_given(false),
     upper_count_arg(0), upper_count_given(false),
-    output_arg(""), output_given(false)
+    output_arg("/dev/fd/1"), output_given(false)
   {
     static struct option long_options[] = {
       {"column", 0, 0, 'c'},
@@ -104,7 +104,7 @@ public:
   " -t, --tab                                Tab separator (false)\n" \
   " -L, --lower-count=uint64                 Don't output k-mer with count < lower-count\n" \
   " -U, --upper-count=uint64                 Don't output k-mer with count > upper-count\n" \
-  " -o, --output=string                      Output file\n" \
+  " -o, --output=string                      Output file (/dev/fd/1)\n" \
   "     --usage                              Usage\n" \
   " -h, --help                               This message\n" \
   " -V, --version                            Version"

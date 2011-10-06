@@ -19,7 +19,7 @@ option("upper-count", "U") {
   uint64 }
 option("output", "o") {
   description "Output file"
-  string; default="/dev/fd/1" }
+  string; default "/dev/fd/1" }
 arg("db") {
   description "Jellyfish database"
   string; typestr "path" }

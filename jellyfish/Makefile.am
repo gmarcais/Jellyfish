@@ -11,7 +11,7 @@ storage.cc misc.cc err.cc mer_counter.cc histo_main.cc dump_main.cc	\
 time.cc thread_exec.cc query_main.cc square_binary_matrix.cc		\
 dump_fastq_main.cc histo_fastq_main.cc cite.cc parse_dna.cc		\
 file_parser.cc parse_quake.cc parse_qual_dna.cc sequence_parser.cc	\
-seq_qual_parser.cc half.cpp hash_fastq_merge.cc hash_merge_cmdline.cc	\
+seq_qual_parser.cc half.cpp hash_fastq_merge.cc				\
 histo_fastq_main_cmdline.cc dump_fastq_main_cmdline.cc			\
 hash_fastq_merge_cmdline.cc dbg.cc mapped_file.cc backtrace.cc		\
 floats.cc allocators_mmap.cc yaggo.cpp
@@ -53,8 +53,8 @@ test_read_parser
 generate_sequence_SOURCES = generate_sequence.cc	\
 generate_sequence_cmdline.cc misc.cc mersenne.cpp	\
 square_binary_matrix.cc backtrace.cc dbg.cc time.cc
-# generate_reads_SOURCES = generate_reads.cc generate_reads_cmdline.cc	\
- mersenne.cpp dbg.cc
+# generate_reads_SOURCES = generate_reads.cc generate_reads_cmdline.cc
+# mersenne.cpp dbg.cc
 test_double_fifo_input_SOURCES = test_double_fifo_input.cc	\
 parse_dna.cc file_parser.cc sequence_parser.cc backtrace.cc	\
 thread_exec.cc dbg.cc time.cc allocators_mmap.cc

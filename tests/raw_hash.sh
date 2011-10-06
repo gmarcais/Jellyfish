@@ -10,8 +10,7 @@ c3233e107bb6b42d0c979707f156264c ${pref}.query
 EOF
 echo "Counting 22-mers on ${nCPUs} CPU" && \
     $JF count --matrix seq10m_matrix_22 -m 22 -c 2 -t $nCPUs \
-    -o $pref -s 10000000 --raw \
-    --timing ${pref}.timing seq10m.fa && \
+    -o $pref -s 10000000 --raw --timing ${pref}.timing seq10m.fa && \
     $JF stats ${pref}_0 > ${pref}.stats && \
     $JF dump -c -L 2 ${pref}_0 > ${pref}_L.dump && \
     $JF histo -f ${pref}_0 > ${pref}.histo &&

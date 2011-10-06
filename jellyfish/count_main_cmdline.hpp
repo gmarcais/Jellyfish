@@ -48,6 +48,8 @@ public:
   bool                           lock_flag;
   bool                           stream_flag;
   std::vector<const char *>      file_arg;
+  typedef std::vector<const char *>::iterator file_arg_it;
+  typedef std::vector<const char *>::const_iterator file_arg_const_it;
 
   enum {
     USAGE_OPT = 1000,

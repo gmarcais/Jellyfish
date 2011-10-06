@@ -19,7 +19,7 @@ public:
   query_args(int argc, char *argv[]) :
     both_strands_flag(false),
     input_arg("/dev/fd/0"), input_given(false),
-    output_arg(""), output_given(false)
+    output_arg("/dev/fd/1"), output_given(false)
   {
     static struct option long_options[] = {
       {"both-strands", 0, 0, 'C'},
@@ -84,8 +84,8 @@ public:
 #define query_args_HELP "Query from a compacted database\n\nQuery a hash. It reads k-mers from the standard input and write the counts on the standard output.\n\n" \
   "Options (default value in (), *required):\n" \
   " -C, --both-strands                       Both strands (false)\n" \
-  " -i, --input=string                       Input file (/dev/fd/0)\n" \
-  " -o, --output=string                      Output file\n" \
+  " -i, --input=file                         Input file (/dev/fd/0)\n" \
+  " -o, --output=file                        Output file (/dev/fd/1)\n" \
   "     --usage                              Usage\n" \
   " -h, --help                               This message\n" \
   " -V, --version                            Version"

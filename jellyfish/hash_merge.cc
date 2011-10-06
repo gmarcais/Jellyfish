@@ -90,33 +90,26 @@ void *writer_function(void *_info) {
 
 int merge_main(int argc, char *argv[])
 {
-  struct hash_merge_args args;
+  merge_args args(argc, argv);
 
-  if(hash_merge_cmdline(argc, argv, &args) != 0)
-    die << "Command line parser failed";
-
-  int i;
-  unsigned int rklen       = 0;
-  size_t       max_reprobe = 0;
-  size_t       hash_size   = 0;
+  int                i;
+  unsigned int       rklen       = 0;
+  size_t             max_reprobe = 0;
+  size_t             hash_size   = 0;
   SquareBinaryMatrix hash_matrix;
   SquareBinaryMatrix hash_inverse_matrix;
 
   // compute the number of hashes we're going to read
-  int num_hashes = args.inputs_num;
-  if(num_hashes <= 0)
-    die << "No hash files given\n" 
-        << hash_merge_args_usage << "\n" << hash_merge_args_help;
+  int num_hashes = args.input_arg.size();
 
   // this is our row of iterators
   hash_reader_t iters[num_hashes];
  
   // create an iterator for each hash file
   for(i = 0; i < num_hashes; i++) {
-    char *db_file;
-
     // open the hash database
-    db_file = args.inputs[i];
+    const char *db_file = args.input_arg[i];
+
     try {
       iters[i].initialize(db_file, args.out_buffer_size_arg);
     } catch(std::exception *e) {
@@ -170,7 +163,7 @@ int merge_main(int argc, char *argv[])
     die << "Hashes contain no items.";
 
   // open the output file
-  std::ofstream out(args.output_arg);
+  std::ofstream out(args.output_arg.c_str());
   size_t nb_records = args.out_buffer_size_arg /
     (bits_to_bytes(rklen) + bits_to_bytes(8 * args.out_counter_len_arg));
   if(args.verbose_flag)

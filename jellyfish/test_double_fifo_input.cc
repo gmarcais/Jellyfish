@@ -48,7 +48,7 @@ class parser : public thread_exec {
 
 public:
   parser(int argc, const char *argv[]) :
-    _parser(argc, argv, 25, 100, 1024*10),
+    _parser(argv, argv + argc, 25, 100, 1024*10),
     count(0)
   { }
 

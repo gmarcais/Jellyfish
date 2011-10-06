@@ -24,7 +24,7 @@
 int main(int argc, char *argv[])
 {
   show_backtrace();
-  jellyfish::parse_read parser(argc - 1, argv + 1, 100);
+  jellyfish::parse_read parser(argv + 1, argv + argc, 100);
   jellyfish::parse_read::thread stream = parser.new_thread();
 
   jellyfish::read_parser::read_t *read;

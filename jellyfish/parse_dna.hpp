@@ -81,8 +81,8 @@ namespace jellyfish {
       return (((uint64_t)-1) - v) >> (bsizeof(v) - (length << 1));
     }
 
-
-    parse_dna(const fary_t &_files, uint_t _mer_len, 
+    template<typename T>
+    parse_dna(T _files_start, T _files_end, uint_t _mer_len, 
               unsigned int nb_buffers, size_t _buffer_size); 
 
     ~parse_dna() {
@@ -154,5 +154,28 @@ namespace jellyfish {
     thread new_thread() { return thread(this); }
   };
 }
+
+template<typename T>
+jellyfish::parse_dna::parse_dna(T _files_start, T _files_end,
+                     uint_t _mer_len,
+                     unsigned int nb_buffers, size_t _buffer_size) :
+  double_fifo_input<sequence_parser::sequence_t>(nb_buffers), mer_len(_mer_len), 
+  buffer_size(allocators::mmap::round_to_page(_buffer_size)),
+  files(_files_start, _files_end), current_file(files.begin()),
+  have_seam(false), buffer_data(buffer_size * nb_buffers), canonical(false)
+{
+  seam        = new char[mer_len];
+  memset(seam, 'A', mer_len);
+
+  unsigned long i = 0;
+  for(bucket_iterator it = bucket_begin();
+      it != bucket_end(); ++it, ++i) {
+    it->end = it->start = (char *)buffer_data.get_ptr() + i * buffer_size;
+  }
+  assert(i == nb_buffers);
+
+  fparser = sequence_parser::new_parser(*current_file);
+}
+
 
 #endif

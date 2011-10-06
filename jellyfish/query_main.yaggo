@@ -11,11 +11,11 @@ option("both-strands", "C") {
 }
 option("input", "i") {
   description "Input file"
-  string; default "/dev/fd/0"; typestr="file"
+  string; default "/dev/fd/0"; typestr "file"
 }
 option("output", "o") {
   description "Output file"
-  string; default="/dev/fd/1"; typestr="file"
+  string; default "/dev/fd/1"; typestr "file"
 }
 arg("db") {
   description "Jellyfish database"

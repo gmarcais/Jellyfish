@@ -39,7 +39,9 @@ namespace jellyfish {
     static const uint_t codes[256];
     static const uint_t CODE_RESET = -1;
 
-    parse_read(int nb_files, char *argv[], unsigned int nb_buffers);
+    //    parse_read(int nb_files, char *argv[], unsigned int nb_buffers);
+    template<typename T>
+    parse_read(T argv_start, T argv_end, unsigned int nb_buffers);
     ~parse_read() { }
 
     void set_canonical(bool v = true) { canonical = v; }
@@ -74,6 +76,16 @@ namespace jellyfish {
     friend class thread;
     thread new_thread() { return thread(this); }
   };
+}
+
+template<typename T>
+jellyfish::parse_read::parse_read(T argv_start, T argv_end, unsigned int nb_buffers) :
+  double_fifo_input<read_parser::reads_t>(nb_buffers), 
+  files(argv_start, argv_end),
+  current_file(files.begin()),
+  fparser(read_parser::new_parser(*current_file))
+{ 
+  fparser->link();
 }
 
 #endif

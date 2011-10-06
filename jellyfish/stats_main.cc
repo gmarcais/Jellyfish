@@ -47,11 +47,11 @@ int stats_main(int argc, char *argv[])
 {
   stats_args args(argc, argv);
 
-  std::ofstream out(args.db_arg.c_str());
+  std::ofstream out(args.output_arg);
   if(!out.good())
     die << "Error opening output file '" << args.output_arg << "'";
 
-  mapped_file dbf(args.db_arg.c_str());
+  mapped_file dbf(args.db_arg);
   dbf.sequential().will_need();
   char type[8];
   memcpy(type, dbf.base(), sizeof(type));

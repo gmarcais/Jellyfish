@@ -16,15 +16,6 @@
 
 #include <jellyfish/parse_read.hpp>
 
-jellyfish::parse_read::parse_read(int nb_files, char *argv[], unsigned int nb_buffers) :
-  double_fifo_input<read_parser::reads_t>(nb_buffers), 
-  files(argv, argv + nb_files),
-  current_file(files.begin()),
-  fparser(read_parser::new_parser(*current_file))
-{ 
-  fparser->link();
-}
-
 void jellyfish::parse_read::fill() {
   read_parser::reads_t *new_seq = write_next();
   

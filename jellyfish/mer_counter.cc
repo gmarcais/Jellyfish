@@ -114,7 +114,7 @@ public:
                           count_args &_args) :
     mer_counting<jellyfish::parse_dna, inv_hash_t>(_args)
   {
-    parser = new jellyfish::parse_dna(files,
+    parser = new jellyfish::parse_dna(files.begin(), files.end(),
                                       args->mer_len_arg, args->buffers_arg,
                                       args->buffer_size_arg);
     ary = new inv_hash_t::storage_t(args->size_arg, 2*args->mer_len_arg,
@@ -211,7 +211,7 @@ public:
                             count_args &_args) :
     mer_counting<jellyfish::parse_dna, direct_index_t>(_args)
   {
-    parser = new jellyfish::parse_dna(files,
+    parser = new jellyfish::parse_dna(files.begin(), files.end(),
                                       args->mer_len_arg, args->buffers_arg,
                                       args->buffer_size_arg);
     ary = new direct_index_t::storage_t(2 * args->mer_len_arg);

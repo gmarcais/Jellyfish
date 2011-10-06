@@ -11,9 +11,9 @@ public:
   uint64_t                       upper_count_arg;
   bool                           upper_count_given;
   bool                           verbose_flag;
-  yaggo::string                  output_arg;
+  const char *                   output_arg;
   bool                           output_given;
-  yaggo::string                  db_arg;
+  const char *                   db_arg;
 
   enum {
     USAGE_OPT = 1000,
@@ -86,13 +86,13 @@ public:
         break;
       case 'o':
         output_given = true;
-        output_arg.assign(optarg);
+        output_arg = optarg;
         break;
       }
     }
     if(argc - optind != 1)
       error("Requires exactly 1 argument.");
-    db_arg = yaggo::string(argv[optind]);
+    db_arg = argv[optind];
     ++optind;
   }
 #define stats_args_USAGE "Usage: jellyfish stats [options] db:path"
@@ -113,7 +113,7 @@ public:
   " -L, --lower-count=uint64                 Don't consider k-mer with count < lower-count\n" \
   " -U, --upper-count=uint64                 Don't consider k-mer with count > upper-count\n" \
   " -v, --verbose                            Verbose (false)\n" \
-  " -o, --output=string                      Output file (/dev/fd/1)\n" \
+  " -o, --output=c_string                    Output file (/dev/fd/1)\n" \
   "     --usage                              Usage\n" \
   " -h, --help                               This message\n" \
   "     --full-help                          Detailed help\n" \
