@@ -22,25 +22,19 @@
 
 int hash_fastq_merge_main(int argc, char *argv[])
 {
-  struct hash_fastq_merge_args args;
-
-  if(hash_fastq_merge_cmdline(argc, argv, &args) != 0)
-    die << "Command line parser failed";
-
-  if(args.inputs_num < 2)
-    die << "Need at least 2 quake databases\n"
-        << hash_fastq_merge_args_usage << "\n" << hash_fastq_merge_args_help;
+  hash_fastq_merge_args args(argc, argv);
 
   fastq_hash_t::storage_t ary(args.size_arg, 2*args.mer_len_arg,
                               args.reprobes_arg, jellyfish::quadratic_reprobes);
   fastq_hash_t hash(&ary);
   fastq_hash_t::thread_ptr_t counter(hash.new_thread());
   
-  for(unsigned int i = 0; i < args.inputs_num; ++i) {
-    fastq_storage_t *ihash = raw_fastq_dumper_t::read(args.inputs[i]);
+  int num_hashes = args.db_arg.size();
+  for(int i = 0; i < num_hashes; ++i) {
+    fastq_storage_t *ihash = raw_fastq_dumper_t::read(args.db_arg[i]);
     if(ihash->get_key_len() != hash.get_key_len())
       die << "Invalid mer length '" << (ihash->get_key_len() / 2)
-          << "' for database '" << args.inputs[i] 
+          << "' for database '" << args.db_arg[i] 
           << "'. Should be '" << (hash.get_key_len() / 2) << "'";
     fastq_storage_t::iterator iit = ihash->iterator_all();
     while(iit.next()) {

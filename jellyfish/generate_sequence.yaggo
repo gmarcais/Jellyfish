@@ -1,0 +1,27 @@
+purpose "Generate randome sequence of given lengths."
+package "generate_sequence"
+
+output "generate_sequence_cmdline.hpp"
+name "generate_sequence_args"
+
+option("seed", "s") {
+  description "Seed"
+  long; required }
+option("mer", "m") {
+  description "Mer length. Generate matrix of size 2*length"
+  uint32; multiple }
+option("output", "o") {
+  description "Output prefix"
+  c_string; default "output" }
+option("fastq", "q") {
+  description "Generate fastq file"
+  flag; off }
+option("read-length", "r") {
+  description "Read length for fasta format (default=size of sequence)"
+  uint32 }
+option("verbose", "v") {
+  description "Be verbose"
+  flag; off }
+arg("length") {
+  description "Length of sequence to generate"
+  uint64; multiple; at_least 1 }

@@ -47,29 +47,21 @@ private:
 };
 const char rDNAg_t::letters[4] = { 'A', 'C', 'G', 'T' };
 
-struct generate_sequence_args args;
-
-void create_path(char *path, unsigned int path_size, const char *ext, bool many, int i) {
+void create_path(char *path, unsigned int path_size, const char *ext, bool many, int i, const char *output_arg) {
   int len;
   if(many)
-    len = snprintf(path, path_size, "%s_%d.%s", args.output_arg, i, ext);
+    len = snprintf(path, path_size, "%s_%d.%s", output_arg, i, ext);
   else
-    len = snprintf(path, path_size, "%s.%s", args.output_arg, ext);
+    len = snprintf(path, path_size, "%s.%s", output_arg, ext);
   if(len < 0)
     die << "Error creating the fasta file '" << path << "'" << err::no;
   if((unsigned int)len >= path_size)
-    die << "Output prefix too long '" << args.output_arg << "'";
+    die << "Output prefix too long '" << output_arg << "'";
 }
 
 int main(int argc, char *argv[])
 {
-  
-  if(generate_sequence_cmdline(argc, argv, &args) != 0)
-    die << "Command line parser failed";
-
-  if(args.inputs_num == 0)
-    die << "Need at least 1 length\n" 
-        << generate_sequence_args_usage << "\n" << generate_sequence_args_help;
+  generate_sequence_args args(argc, argv);
   
   if(args.verbose_flag)
     std::cout << "Seed: " << args.seed_arg << "\n";
@@ -77,7 +69,7 @@ int main(int argc, char *argv[])
   
   // Generate matrices
   uint64_t lines[64];
-  for(unsigned int j = 0; j < args.mer_given; j++) {
+  for(unsigned int j = 0; j < args.mer_arg.size(); j++) {
     if(args.mer_arg[j] <= 0 || args.mer_arg[j] > 31)
       die << "Mer size (" << args.mer_arg[j] << ") must be between 1 and 31.";
     int matrix_size = args.mer_arg[j] << 1;
@@ -112,13 +104,13 @@ int main(int argc, char *argv[])
   // Output sequence
   rDNAg_t rDNAg(&rng);
   char path[4096];
-  bool many = args.inputs_num > 1;
+  bool many = args.length_arg.size() > 1;
   
-  for(unsigned int i = 0; i < args.inputs_num; ++i) {
-    size_t length = atol(args.inputs[i]);
+  for(unsigned int i = 0; i < args.length_arg.size(); ++i) {
+    size_t length = args.length_arg[i];
   
     if(args.fastq_flag) {
-      create_path(path, sizeof(path), "fq", many, i);
+      create_path(path, sizeof(path), "fq", many, i, args.output_arg);
       std::ofstream fd(path);
       if(!fd.good())
         die << "Can't open fasta file '" << path << err::no;
@@ -140,7 +132,7 @@ int main(int argc, char *argv[])
         die << "Error while writing fasta file '" << path << err::no;
       fd.close();
     } else {
-      create_path(path, sizeof(path), "fa", many, i);
+      create_path(path, sizeof(path), "fa", many, i, args.output_arg);
       std::ofstream fd(path);
       if(!fd.good())
         die << "Can't open fasta file '" << path << err::no;

@@ -30,22 +30,14 @@
 
 int dump_fastq_main(int argc, char *argv[])
 {
-  struct dump_fastq_main_args args;
-
-  if(dump_fastq_main_cmdline(argc, argv, &args) != 0)
-    die << "Command line parser failed";
-
-  if(args.inputs_num != 1)
-    die << "Need 1 database\n"
-        << dump_fastq_main_args_usage << "\n"
-        << dump_fastq_main_args_help;
+  dump_fastq_main_args args(argc, argv);
 
   std::ofstream out(args.output_arg);
   if(!out.good())
     die << "Error opening output file '" << args.output_arg << "'" << err::no;
 
   fastq_storage_t *hash =
-    raw_fastq_dumper_t::read(args.inputs[0]);
+    raw_fastq_dumper_t::read(args.db_arg);
   if(args.verbose_flag)
     std::cerr << 
       "k-mer length (bases): " << (hash->get_key_len() / 2) << "\n"

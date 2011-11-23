@@ -31,32 +31,25 @@
 
 int histo_fastq_main(int argc, char *argv[])
 {
-  struct histo_fastq_main_args args;
-
-  if(histo_fastq_main_cmdline(argc, argv, &args) != 0)
-    die << "Command line parser failed";
-
-  if(args.inputs_num != 1)
-    die << "Need 1 database\n"
-        << histo_fastq_main_args_usage << "\n"
-        << histo_fastq_main_args_help;
+  histo_fastq_main_args args(argc, argv);
 
   if(args.low_arg < 0.0)
-    die << "Low count (" << args.low_arg << ") must be >= 0.0\n"
-        << histo_fastq_main_args_usage << "\n"
-        << histo_fastq_main_args_help;
+    args.error("Low count (option --low,-l) must be >= 0.0");
 
-  fastq_storage_t *hash = raw_fastq_dumper_t::read(args.inputs[0]);
+  fastq_storage_t *hash = raw_fastq_dumper_t::read(args.db_arg);
   fastq_storage_t::iterator it = hash->iterator_all();
+  float low_arg = args.low_arg;
+  float increment_arg = args.increment_arg;
+  float high_arg = args.high_arg;
   const float base = 
-    args.low_arg > 0.0 ? (args.increment_arg >= args.low_arg ? 0.0 : args.low_arg - args.increment_arg) : 0.0;
-  const float ceil = args.high_arg + args.increment_arg;
-  const int nb_buckets = (int)ceilf((ceil + args.increment_arg - base) / args.increment_arg);
+    low_arg > 0.0 ? (increment_arg >= low_arg ? 0.0 : low_arg - increment_arg) : 0.0;
+  const float ceil = high_arg + increment_arg;
+  const int nb_buckets = (int)ceilf((ceil + increment_arg - base) / increment_arg);
   const int last_bucket = nb_buckets - 1;
   std::vector<uint64_t> histogram(nb_buckets, 0UL);
 
   while(it.next()) {
-    int i = (int)roundf((it.get_val().to_float() - base) / args.increment_arg);
+    int i = (int)roundf((it.get_val().to_float() - base) / increment_arg);
     if(i < 0) {
       histogram[0]++;
     } else if(i >= last_bucket) {
@@ -68,7 +61,7 @@ int histo_fastq_main(int argc, char *argv[])
 
   for(int i = 0; i < nb_buckets; i++)
     if(histogram[i] > 0.0 || args.full_flag)
-      std::cout << (base + (float)i * args.increment_arg) 
+      std::cout << (base + (float)i * increment_arg) 
                 << " " << histogram[i] << "\n";
 
   std::cout << std::flush;
