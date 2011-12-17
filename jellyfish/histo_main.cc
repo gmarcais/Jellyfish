@@ -60,6 +60,7 @@ public:
 
   void start(int th_id) {
     uint64_t *hist = &data[th_id * nb_buckets];
+
     for(size_t i = slice_id++; i <= nb_slices; i = slice_id++) {
       typename hash_t::iterator it = hash->iterator_slice(i, nb_slices);
       while(it.next()) {
@@ -93,7 +94,6 @@ int histo_main(int argc, char *argv[])
     args.error("Low count value must be >= 1");
   if(args.high_arg < args.low_arg)
     args.error("High count value must be >= to low count value");
-
   std::ofstream out(args.output_arg.c_str());
   if(!out.good())
     die << "Error opening output file '" << args.output_arg << "'" << err::no;
@@ -113,6 +113,12 @@ int histo_main(int argc, char *argv[])
     histo.print(out, args.full_flag);
   } else if(!strncmp(type, jellyfish::compacted_hash::file_type, sizeof(type))) {
     hash_query_t hash(dbf);
+    if(args.verbose_flag)
+      std::cerr << "mer length  = " << hash.get_mer_len() << "\n"
+                << "hash size   = " << hash.get_size() << "\n"
+                << "max reprobe = " << hash.get_max_reprobe() << "\n"
+                << "matrix      = " << hash.get_hash_matrix().xor_sum() << "\n"
+                << "inv_matrix  = " << hash.get_hash_inverse_matrix().xor_sum() << "\n";
     histogram<hash_query_t> histo(&hash, args.threads_arg, base, ceil, args.increment_arg);
     histo.do_it();
     histo.print(out, args.full_flag);

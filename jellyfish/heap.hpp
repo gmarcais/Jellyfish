@@ -61,31 +61,32 @@ namespace jellyfish {
   class heap_t {
     heap_item_t<iterator>       *storage;
     heap_item_t<iterator>      **elts;
-    size_t                       capacity;
+    size_t                       capacity_;
     size_t                       h;
     heap_item_compare<iterator>  compare;
   public:
     typedef const heap_item_t<iterator> *const_item_t;
 
-    heap_t() : storage(0) { }
+    heap_t() : storage(0), elts(0), capacity_(0), h(0) { }
     heap_t(size_t _capacity)  { initialize(_capacity); }
     ~heap_t() {
-      if(storage) {
-        delete[] storage;
-        delete[] elts;
-      }
+      delete[] storage;
+      delete[] elts;
     }
 
     void initialize(size_t _capacity) {
-      capacity = _capacity;
+      capacity_ = _capacity;
       h = 0;
-      storage = new heap_item_t<iterator>[capacity];
-      elts = new heap_item_t<iterator>*[capacity];
+      storage = new heap_item_t<iterator>[capacity_];
+      elts = new heap_item_t<iterator>*[capacity_];
+      for(size_t h1 = 0; h1 < capacity_; ++h1)
+        elts[h1] = &storage[h1];
+      std::cerr << __PRETTY_FUNCTION__ << " " << h << " " << (void*)storage << "\n";
     }
 
     void fill(iterator &it) {
       h = 0;
-      while(h < capacity) {
+      while(h < capacity_) {
         if(!it.next())
           break;
         storage[h].initialize(it);
@@ -97,7 +98,7 @@ namespace jellyfish {
     template<typename ForwardIterator>
     void fill(ForwardIterator first, ForwardIterator last) {
       h = 0;
-      while(h < capacity && first != last) {
+      while(h < capacity_ && first != last) {
         if(!first->next())
           break;
         storage[h].initialize(*first++);
@@ -110,6 +111,7 @@ namespace jellyfish {
     bool is_empty() const { return h == 0; }
     bool is_not_empty() const { return h > 0; }
     size_t size() const { return h; }
+    size_t capacity() const { return capacity_; }
 
     // The following 3 should only be used after fill has been called
     const_item_t head() const { return elts[0]; }

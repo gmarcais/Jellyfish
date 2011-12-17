@@ -33,6 +33,9 @@ option("output", "o") {
 option("buffer-size", "s") {
   description "Length in bytes of input buffer"
   uint64; default "10000000"; suffix; hidden; typestr "Buffer length" }
+option("verbose", "v") {
+  description "Output information"
+  flag; off }
 arg("db") {
   description "Jellyfish database"
   string; typestr "path" }

@@ -492,18 +492,18 @@ namespace jellyfish {
       iterator get_iterator() const { return iterator_all(); }
       iterator iterator_all() const { return iterator(base, last_id, key_len, val_len, get_mer_len()); }
       iterator iterator_slice(size_t slice_number, size_t number_of_slice) const {
-        size_t  slice_size = get_size() / number_of_slice;
+        size_t  slice_size = last_id / number_of_slice;
         size_t  start      = slice_number * slice_size;
         char   *it_base    = base + start * record_len;
-        size_t  last_id    = slice_size;
+        size_t  it_last_id = slice_size;
 
         if(it_base >= file.end()) {
-          it_base = base;
-          last_id = 0;
-        } else if(it_base + last_id * record_len > file.end())
-          last_id = (file.end() - it_base) / record_len;
+          it_base    = base;
+          it_last_id = 0;
+        } else if(it_base + it_last_id * record_len > file.end())
+          it_last_id = (file.end() - it_base) / record_len;
 
-        return iterator(it_base, last_id, key_len, val_len, get_mer_len()); 
+        return iterator(it_base, it_last_id, key_len, val_len, get_mer_len()); 
       }
     };
   }

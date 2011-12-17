@@ -3,7 +3,7 @@
 #ifndef __HISTO_ARGS_HPP__
 #define __HISTO_ARGS_HPP__
 
-#include <jellyfish/yaggo.hpp>
+#include <yaggo.hpp>
 
 class histo_args {
 public:
@@ -20,6 +20,7 @@ public:
   bool                           output_given;
   uint64_t                       buffer_size_arg;
   bool                           buffer_size_given;
+  bool                           verbose_flag;
   yaggo::string                  db_arg;
 
   enum {
@@ -35,7 +36,8 @@ public:
     threads_arg(1), threads_given(false),
     full_flag(false),
     output_arg("/dev/fd/1"), output_given(false),
-    buffer_size_arg(10000000), buffer_size_given(false)
+    buffer_size_arg(10000000), buffer_size_given(false),
+    verbose_flag(false)
   {
     static struct option long_options[] = {
       {"low", 1, 0, 'l'},
@@ -45,13 +47,14 @@ public:
       {"full", 0, 0, 'f'},
       {"output", 1, 0, 'o'},
       {"buffer-size", 1, 0, 's'},
+      {"verbose", 0, 0, 'v'},
       {"help", 0, 0, HELP_OPT},
       {"full-help", 0, 0, FULL_HELP_OPT},
       {"usage", 0, 0, USAGE_OPT},
       {"version", 0, 0, 'V'},
       {0, 0, 0, 0}
     };
-    static const char *short_options = "Vl:h:i:t:fo:s:";
+    static const char *short_options = "Vl:h:i:t:fo:s:v";
 
     std::string err;
 #define CHECK_ERR(type,val,which) if(!err.empty()) { std::cerr << "Invalid " #type " '" << val << "' for [" which "]: " << err << "\n"; exit(1); }
@@ -109,8 +112,11 @@ public:
         break;
       case 's':
         buffer_size_given = true;
-        buffer_size_arg = yaggo::conv_uint<uint64_t>((const char *)optarg, err, true);
+        buffer_size_arg = yaggo::conv_uint<uint64_t>((const char *)optarg, err, false);
         CHECK_ERR(uint64_t, optarg, "-s, --buffer-size=Buffer length")
+        break;
+      case 'v':
+        verbose_flag = true;
         break;
       }
     }
@@ -142,6 +148,7 @@ public:
   " -t, --threads=uint32                     Number of threads (1)\n" \
   " -f, --full                               Full histo. Don't skip count 0. (false)\n" \
   " -o, --output=string                      Output file (/dev/fd/1)\n" \
+  " -v, --verbose                            Output information (false)\n" \
   "     --usage                              Usage\n" \
   "     --help                               This message\n" \
   "     --full-help                          Detailed help\n" \
@@ -166,6 +173,7 @@ public:
     os << "full_flag:" << full_flag << "\n";
     os << "output_given:" << output_given << " output_arg:" << output_arg << "\n";
     os << "buffer_size_given:" << buffer_size_given << " buffer_size_arg:" << buffer_size_arg << "\n";
+    os << "verbose_flag:" << verbose_flag << "\n";
     os << "db_arg:" << db_arg << "\n";
   }
 private:

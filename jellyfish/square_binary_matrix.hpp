@@ -22,46 +22,55 @@
 #include <string.h>
 #include <iostream>
 #include <exception>
+#include <algorithm>
 #include <assert.h>
 #include <jellyfish/err.hpp>
 #include <jellyfish/misc.hpp>
 
 class SquareBinaryMatrix {
+public:
+  define_error_class(ErrorAllocation);
+  define_error_class(SingularMatrix);
+  define_error_class(MismatchingSize);
+
+private:
   uint64_t *columns;
   int       size;
 
-private:
   uint64_t mask() const { return (((uint64_t)1) << size) - 1; }
   uint64_t msb() const { return ((uint64_t)1) << (size - 1); }
+  uint64_t *first_alloc(size_t size) {
+    uint64_t *res = calloc_align<uint64_t>((size_t)size, (size_t)16);
+    if(!res)
+      eraise(ErrorAllocation) << "Can't allocate matrix of size '" << size << "'";
+    return res;
+  }
   void alloc_columns() {
-    if(columns)
+    if(columns) {
       free(columns);
-    if(size < 0)
       columns = 0;
-    else
-      columns = calloc_align<uint64_t>((size_t)size, (size_t)16);
+    }
+    if(size < 0 || size > 64)
+      eraise(MismatchingSize) << "Invalid matrix size '" << size << "'";
+    columns = first_alloc(size);
   }
 
 public:
-  SquareBinaryMatrix() : columns(0), size(-1) { }
+  SquareBinaryMatrix() : columns(0), size(0) { }
 
-  SquareBinaryMatrix(int _size) :columns(0), size(_size) {
-    alloc_columns();
+  SquareBinaryMatrix(int _size) :columns(first_alloc(_size)), size(_size) {
     memset(columns, '\0', sizeof(uint64_t) * _size);
   }
-  SquareBinaryMatrix(const SquareBinaryMatrix &rhs) : columns(0) {
+  SquareBinaryMatrix(const SquareBinaryMatrix &rhs) : columns(first_alloc(rhs.get_size())), size(rhs.get_size()) {
     int i;
     
-    size = rhs.get_size();
-    alloc_columns();
     uint64_t _mask = mask();
     for(i = 0; i < size; i++)
       columns[i] = rhs.columns[i] & _mask;
   }
-  SquareBinaryMatrix(const uint64_t *_columns, int _size) : columns(0), size(_size) {
+  SquareBinaryMatrix(const uint64_t *_columns, int _size) : columns(first_alloc(_size)), size(_size) {
     int i;
     uint64_t _mask = mask();
-    alloc_columns();
 
     for(i = 0; i < size; i++)
       columns[i] = _columns[i] & _mask;
@@ -78,19 +87,13 @@ public:
       free(columns);
   }
 
-  define_error_class(SingularMatrix);
-  define_error_class(MismatchingSize);
+  void swap(SquareBinaryMatrix &rhs) {
+    std::swap(columns, rhs.columns);
+    std::swap(size, rhs.size);
+  }
 
-  SquareBinaryMatrix &operator=(const SquareBinaryMatrix &rhs) {
-    int i;
-    if(this == &rhs)
-      return *this;
-    size = rhs.get_size();
-    alloc_columns();
-    uint64_t _mask = mask();
-    for(i = 0; i < size; i++)
-      columns[i] = rhs.columns[i] & _mask;
-
+  SquareBinaryMatrix &operator=(SquareBinaryMatrix rhs) {
+    this->swap(rhs);
     return *this;
   }
 
@@ -171,6 +174,13 @@ public:
     for(i = 0; i < size; i++)
       res += __builtin_popcountl(columns[i]);
     return res;
+  }
+
+  uint64_t xor_sum() const {
+    uint64_t sum = 0;
+    for(int i = 0; i < size; ++i)
+      sum ^= columns[i];
+    return sum;
   }
 
   void print(std::ostream *os) const;
