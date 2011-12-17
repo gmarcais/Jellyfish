@@ -1,4 +1,4 @@
-AC_INIT([jellyfish], [1.1.2], [gmarcais@umd.edu])
+AC_INIT([jellyfish], [1.1.3], [gmarcais@umd.edu])
 AC_CANONICAL_HOST
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign parallel-tests color-tests])
