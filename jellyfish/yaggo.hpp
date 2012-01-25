@@ -51,6 +51,10 @@ namespace yaggo {
     int32_t as_int32(bool si_suffix = false) const;
     int64_t as_int64_suffix() const { return as_int64(true); }
     int64_t as_int64(bool si_suffix = false) const;
+    int as_int_suffix() const { return as_int(true); }
+    int as_int(bool si_suffix = false) const;
+    long as_long_suffix() const { return as_long(true); }
+    long as_long(bool si_suffix = false) const;
     double as_double_suffix() const { return as_double(true); }
     double as_double(bool si_suffix = false) const;
   };

@@ -3,7 +3,7 @@
 #ifndef __HASH_FASTQ_MERGE_ARGS_HPP__
 #define __HASH_FASTQ_MERGE_ARGS_HPP__
 
-#include <yaggo.hpp>
+#include <jellyfish/yaggo.hpp>
 
 class hash_fastq_merge_args {
 public:
@@ -28,8 +28,8 @@ public:
   };
 
   hash_fastq_merge_args(int argc, char *argv[]) :
-    size_arg(0), size_given(false),
-    mer_len_arg(0), mer_len_given(false),
+    size_arg(), size_given(false),
+    mer_len_arg(), mer_len_given(false),
     output_arg("merged.jf"), output_given(false),
     reprobes_arg(62), reprobes_given(false),
     out_buffer_size_arg(20000000), out_buffer_size_given(false)

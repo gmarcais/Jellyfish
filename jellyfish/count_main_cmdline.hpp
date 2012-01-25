@@ -71,8 +71,8 @@ public:
   };
 
   count_args(int argc, char *argv[]) :
-    mer_len_arg(0), mer_len_given(false),
-    size_arg(0), size_given(false),
+    mer_len_arg(), mer_len_given(false),
+    size_arg(), size_given(false),
     threads_arg(1), threads_given(false),
     output_arg("mer_counts"), output_given(false),
     counter_len_arg(7), counter_len_given(false),
@@ -84,14 +84,14 @@ public:
     quake_flag(false),
     quality_start_arg(64), quality_start_given(false),
     min_quality_arg(0), min_quality_given(false),
-    lower_count_arg(0), lower_count_given(false),
-    upper_count_arg(0), upper_count_given(false),
+    lower_count_arg(), lower_count_given(false),
+    upper_count_arg(), upper_count_given(false),
     matrix_arg(""), matrix_given(false),
     timing_arg(""), timing_given(false),
     stats_arg(""), stats_given(false),
     no_write_flag(false),
     measure_flag(false),
-    buffers_arg(0), buffers_given(false),
+    buffers_arg(), buffers_given(false),
     buffer_size_arg(8192), buffer_size_given(false),
     out_buffer_size_arg(20000000), out_buffer_size_given(false),
     lock_flag(false),

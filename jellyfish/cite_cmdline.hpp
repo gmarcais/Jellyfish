@@ -3,7 +3,7 @@
 #ifndef __CITE_CMDLINE_HPP__
 #define __CITE_CMDLINE_HPP__
 
-#include <yaggo.hpp>
+#include <jellyfish/yaggo.hpp>
 
 class cite_cmdline {
 public:

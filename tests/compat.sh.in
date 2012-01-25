@@ -2,7 +2,7 @@ if [ -z "$nCPUs" ]; then
     nCPUs=$(grep -c '^processor' /proc/cpuinfo 2>/dev/null || sysctl -n hw.ncpu)
 fi
 pref=$(basename $0 .sh)
-DIR=../jellyfish
+DIR=../bin
 JF=$DIR/jellyfish
 
 check () {
@@ -12,3 +12,5 @@ check () {
 if [ -n "$DEBUG" ]; then
     set -x;
 fi
+
+set -e

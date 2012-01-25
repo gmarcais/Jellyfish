@@ -3,7 +3,7 @@
 #ifndef __DUMP_ARGS_HPP__
 #define __DUMP_ARGS_HPP__
 
-#include <yaggo.hpp>
+#include <jellyfish/yaggo.hpp>
 
 class dump_args {
 public:

@@ -1,10 +1,10 @@
 #! /bin/sh
 
+cd tests
 . ./compat.sh
 
 sort > ${pref}.md5sum <<EOF 
 EOF
-
 
 echo "Test double fifo" &&
 $DIR/test_double_fifo_input 1 seq1m_0.fa > ${pref}_double_fifo.stats &&

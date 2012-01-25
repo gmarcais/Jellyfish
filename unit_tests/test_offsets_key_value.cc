@@ -5,7 +5,11 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
-#include <offsets_key_value.hpp>
+#include <jellyfish/offsets_key_value.hpp>
+
+#ifndef UINT64_C
+#define UINT64_C(x) ((uint64_t)x)
+#endif
 
 using namespace jellyfish;
 
@@ -26,14 +30,14 @@ public:
 };
 
 TEST_P(ComputeOffsetsTest, CheckCoherency) {
-  Offsets<uint64_t>::offset_t *it = NULL, *pit = NULL, 
-    *lit = NULL, *lpit = NULL;
-  uint_t k_len = GetParam().key_len;
-  uint_t v_len = GetParam().val_len;
-  uint_t kv_len = k_len + v_len;
-  uint_t lk_len = 4;
-  uint_t lv_len = kv_len - lk_len;
-  uint_t i = 0, *w, *pw;
+  const Offsets<uint64_t>::offset_t *it     = NULL, *pit = NULL;
+  const Offsets<uint64_t>::offset_t *lit    = NULL, *lpit = NULL;
+  uint_t                             k_len  = GetParam().key_len;
+  uint_t                             v_len  = GetParam().val_len;
+  uint_t                             kv_len = k_len + v_len;
+  uint_t                             lk_len = 4;
+  uint_t                             lv_len = kv_len - lk_len;
+  uint_t                             i      = 0, *w, *pw;
   
   //   /* Still missing:
   //    * - testing of value masks

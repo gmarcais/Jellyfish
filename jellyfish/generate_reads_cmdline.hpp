@@ -3,7 +3,7 @@
 #ifndef __GENERATE_READS_ARGS_HPP__
 #define __GENERATE_READS_ARGS_HPP__
 
-#include <yaggo.hpp>
+#include <jellyfish/yaggo.hpp>
 
 class generate_reads_args {
 public:

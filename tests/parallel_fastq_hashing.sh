@@ -1,5 +1,6 @@
 #! /bin/sh
 
+cd tests
 . ./compat.sh
 
 sort > ${pref}.md5sum <<EOF

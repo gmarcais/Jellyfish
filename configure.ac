@@ -1,7 +1,8 @@
 AC_INIT([jellyfish], [1.1.3], [gmarcais@umd.edu])
 AC_CANONICAL_HOST
 AC_CONFIG_MACRO_DIR([m4])
-AM_INIT_AUTOMAKE([-Wall -Werror foreign parallel-tests color-tests])
+AM_INIT_AUTOMAKE([-Wall -Werror subdir-objects foreign parallel-tests color-tests])
+AM_SILENT_RULES([yes])
 
 : ${CXXFLAGS=""}
 AC_PROG_CXX
@@ -14,8 +15,6 @@ dnl define([PC_FILE], concat([jellyfish-],AC_PACKAGE_VERSION,[.pc]))
 define([PC_FILE], jellyfish-1.1.pc)
 AC_CONFIG_FILES([
     Makefile
-    jellyfish/Makefile
-    tests/Makefile
     tests/compat.sh
 ]
     PC_FILE

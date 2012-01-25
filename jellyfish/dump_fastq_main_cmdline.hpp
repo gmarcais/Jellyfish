@@ -3,7 +3,7 @@
 #ifndef __DUMP_FASTQ_MAIN_ARGS_HPP__
 #define __DUMP_FASTQ_MAIN_ARGS_HPP__
 
-#include <yaggo.hpp>
+#include <jellyfish/yaggo.hpp>
 
 class dump_fastq_main_args {
 public:

@@ -10,7 +10,7 @@ GTEST_DIR = gtest-1.4.0
 
 # Where to find user code.
 UPDIR = $(realpath ..)
-USER_DIR = $(UPDIR)/jellyfish
+USER_DIR = $(UPDIR)
 
 VPATH = $(USER_DIR)
 
@@ -28,7 +28,7 @@ LDFLAGS = -lpthread -lrt -lm
 # All tests produced by this Makefile.  Remember to add new tests you
 # created to the list.
 #TESTS = test_large_block test_mutex test_cond test_packed_key_value_array test_square_binary_matrix test_misc test_offsets_key_value
-TESTS = test_square_binary_matrix
+TESTS = test_offsets_key_value
 SOURCES = $(patsubst %,%.cc,$(TESTS))
 
 # All Google Test headers.  Usually you shouldn't change this

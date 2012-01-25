@@ -3,7 +3,7 @@
 #ifndef __HISTO_ARGS_HPP__
 #define __HISTO_ARGS_HPP__
 
-#include <yaggo.hpp>
+#include <jellyfish/yaggo.hpp>
 
 class histo_args {
 public:

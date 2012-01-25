@@ -3,7 +3,7 @@
 #ifndef __STATS_ARGS_HPP__
 #define __STATS_ARGS_HPP__
 
-#include <yaggo.hpp>
+#include <jellyfish/yaggo.hpp>
 
 class stats_args {
 public:

@@ -3,7 +3,7 @@
 #ifndef __GENERATE_SEQUENCE_ARGS_HPP__
 #define __GENERATE_SEQUENCE_ARGS_HPP__
 
-#include <yaggo.hpp>
+#include <jellyfish/yaggo.hpp>
 
 class generate_sequence_args {
 public:
@@ -28,11 +28,11 @@ public:
   };
 
   generate_sequence_args(int argc, char *argv[]) :
-    seed_arg(0), seed_given(false),
+    seed_arg(), seed_given(false),
     mer_arg(), mer_given(false),
     output_arg("output"), output_given(false),
     fastq_flag(false),
-    read_length_arg(0), read_length_given(false),
+    read_length_arg(), read_length_given(false),
     verbose_flag(false)
   {
     static struct option long_options[] = {

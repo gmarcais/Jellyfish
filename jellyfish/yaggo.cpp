@@ -77,6 +77,32 @@ namespace yaggo {
     return res;
   }
 
+  int string::as_int(bool si_suffix) const {
+    std::string err;
+    int res = yaggo::conv_int<int>((const char *)this->c_str(), err, si_suffix);
+    if(!err.empty()) {
+      std::string msg("Invalid conversion of '");
+      msg += *this;
+      msg += "' to int_t: ";
+      msg += err;
+      throw std::runtime_error(msg);
+    }
+    return res;
+  }
+
+  long string::as_long(bool si_suffix) const {
+    std::string err;
+    long res = yaggo::conv_int<long>((const char *)this->c_str(), err, si_suffix);
+    if(!err.empty()) {
+      std::string msg("Invalid conversion of '");
+      msg += *this;
+      msg += "' to long_t: ";
+      msg += err;
+      throw std::runtime_error(msg);
+    }
+    return res;
+  }
+
   double string::as_double(bool si_suffix) const {
     std::string err;
     double res = yaggo::conv_double((const char *)this->c_str(), err, si_suffix);

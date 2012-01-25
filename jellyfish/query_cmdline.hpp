@@ -3,7 +3,7 @@
 #ifndef __QUERY_ARGS_HPP__
 #define __QUERY_ARGS_HPP__
 
-#include <yaggo.hpp>
+#include <jellyfish/yaggo.hpp>
 
 class query_args {
 public:
