@@ -154,3 +154,15 @@ tests/from_stream_fastq.log: tests/generate_fastq_sequence.log
 tests/merge.log: tests/generate_fastq_sequence.log
 tests/min_qual.log: tests/generate_fastq_sequence.log
 tests/parsers.log: tests/generate_sequence.log
+
+########################################
+# Unit tests
+########################################
+TESTS += unit_tests/unit_tests.sh
+check_PROGRAMS += bin/test_offsets_key_value
+
+bin_test_offsets_key_value_SOURCES = unit_tests/test_offsets_key_value.cc
+bin_test_offsets_key_value_CXXFLAGS = -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)/unit_tests/gtest
+bin_test_offsets_key_value_LDADD = libgtest_main.la
+
+include gtest.mk

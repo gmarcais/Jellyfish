@@ -51,22 +51,79 @@
 \Prog{Jellyfish} is a $k$-mer counter based on a multi-threaded hash
 table implementation.
 
+\subsection{Counting and merging}
+
 To count $k$-mers, use a command like:
 
 \begin{verbatim}
 jellyfish count -m 22 -o output -c 3 -s 10000000 -t 32 input.fasta
 \end{verbatim}
 
-This will count the the 22-mers in species.fasta with 32 threads. The
+This will count the the 22-mers in input.fasta with 32 threads. The
 counter field in the hash uses only 3 bits and the hash has at least
-10 million entries. Let the size of the table be $s=2^l$ and the max
-reprobe value is less than $2^r$, then the memory usage per entry in
-the hash is (in bits, not bytes) $2k-l+r+1$.
+10 million entries.
 
+The output files will be named output_0, output_1, etc. (the prefix is
+specified with the \Opt{-o} switch). If the hash is large enough (has
+specified by the \Opt{-s} switch) to fit all the $k$-mers, there will
+be only one output file named output_0. If the hash filled up before
+all the mers were read, the hash is dumped to disk, zeroed out and
+reading in mers resumes.
+
+To obtain correct results from the other sub-commands (such as histo,
+stats, etc.), the multiple output files need to be merged into one
+with the merge command. For example with the following command:
+
+\begin{verbatim}
+jellyfish merge -o output.jf output_*
+\end{verbatim}
+
+\subsection{Orientation}
+
+When the orientation of the sequences in the input fasta file is not
+known, e.g. in sequencing reads, using \LOpt{both-strands} (\Opt{-C})
+makes the most sense.
+
+For any $k$-mer $m$, its canonical representation is $m$ itself or its
+reverse-complement, whichever comes first lexicographically. With the
+option \Opt{-C}, only the canonical representation of the mers are
+stored in the hash and the count value is the number of occurrences of
+both the mer and its reverse-complement.
+
+
+\subsection{Choosing the hash size}
+
+To achieve the best performance, a minimum number of intermediary
+files should be written to disk. So the parameter \Opt{-s} should be
+chosen to fit as many $k$-mers as possible (ideally all of them) while
+still fitting in memory.
+
+For example, suppose we count $k$-mers in short sequencing reads with,
+there is $n$ reads and there is an average of 1 error per reads where
+each error generates $k$ unique mers. If the genome size is $G$, the
+size of the hash to fit all $k$-mers at once would be: $(G +
+k*n)/0.8$. The division by $0.8$ compensates for the maximum usage of
+approximately $80\%$ of the hash table.
+
+On the other hand, when counting $k$-mers in an assembled sequence of
+length $G$, setting \Opt{-s} to $G$ is appropriate.
+
+As a matter of convenience, Jellyfish understands ISO suffixes for the
+size of the hash. Hence '-s 10M' stands 10 million entries while '-s
+50G' stands for 50 billion entries.
+
+The actual memory usage of the hash table can be computed as
+follow. The actual size of the hash will be rounded up to the next
+power of 2: $s=2^l$. The parameter $r$ is such that the maximum
+reprobe value (\Opt{-p}) is less than $2^r$. Then the memory usage per
+entry in the hash is (in bits, not bytes) $2k-l+r+1$. The total memory
+usage of the hash table in bytes is: $2^l*(2k-l+r+1)/8$.
+
+\subsection{Choosing the counting field size}
 To save space, the hash table supports variable length counter, i.e. a
 $k$-mer occurring only a few times will use a small counter, a $k$-mer
 occurring many times will used multiple entries in the hash. The
-\Opt{-c} specify the length of the small counter. The tradeoff is: a
+\Opt{-c} specify the length of the small counter. The trade off is: a
 low value will save space per entry in the hash but will increase the
 number of entries used, hence maybe requiring a larger hash. In
 practice, use a value for \Opt{-c} so that most of you $k$-mers
@@ -75,13 +132,8 @@ where most of the sequence is unique, use \OptArg{-c}{1} or
 \OptArg{-c}{2}. For sequencing reads, use a value for
 \Opt{-c} large enough to counts up to twice the coverage.
 
-When the orientation of the sequences in the input fasta file is not
-known, e.g. in sequencing reads, using \LOpt{both-strands} (\Opt{-C})
-makes the most sense.
-
-The following subcommand are used to look at the result: histo, dump, stats.
-
 \section{Options}
+The following subcommand are used to look at the result: histo, dump, stats.
 include(options.tex)
 \section{Version}
 
@@ -90,8 +142,8 @@ Version: \Version\ of \Date
 \section{Bugs}
 
 \begin{itemize}
-\item \Prog{jellyfish merge} has not been parallelized and is very
-  slow.
+\item \Prog{jellyfish merge} has not been parallelized and is
+  relatively slow.
 \end{itemize}
 
 \section{Copyright \& License}

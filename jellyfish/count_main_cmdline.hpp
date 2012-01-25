@@ -165,7 +165,7 @@ public:
         break;
       case 's':
         size_given = true;
-        size_arg = yaggo::conv_uint<uint64_t>((const char *)optarg, err, false);
+        size_arg = yaggo::conv_uint<uint64_t>((const char *)optarg, err, true);
         CHECK_ERR(uint64_t, optarg, "-s, --size=uint64")
         break;
       case 't':

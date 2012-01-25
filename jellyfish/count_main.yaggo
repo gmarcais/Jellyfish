@@ -9,7 +9,7 @@ option("mer-len", "m") {
   uint32; required }
 option("size", "s") {
   description "Hash size"
-  uint64; required }
+  uint64; suffix; required }
 option("threads", "t") {
   description "Number of threads"
   uint32; default "1" }

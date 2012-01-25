@@ -37,7 +37,8 @@ TEST_P(ComputeOffsetsTest, CheckCoherency) {
   uint_t                             kv_len = k_len + v_len;
   uint_t                             lk_len = 4;
   uint_t                             lv_len = kv_len - lk_len;
-  uint_t                             i      = 0, *w, *pw;
+  uint_t                             i      = 0;
+  uint64_t                          *w, *pw;
   
   //   /* Still missing:
   //    * - testing of value masks
@@ -60,10 +61,10 @@ TEST_P(ComputeOffsetsTest, CheckCoherency) {
       }
 
       if(pit->key.mask2) { // key between two words
-        EXPECT_LT(64u, pit->key.boff + k_len) <<
+        EXPECT_LT((uint_t)64, pit->key.boff + k_len) <<
           i << ": Key not between words, should not have mask2";
       } else {
-        EXPECT_GE(64u, pit->key.boff - 1 + k_len + 1) <<
+        EXPECT_GE((uint_t)64, pit->key.boff - 1 + k_len + 1) <<
           i << ": Key between words, should have mask2";
       } 
       EXPECT_EQ((pit->key.boff + kv_len + 1 + (pit->key.mask2 ? 2 : 0)) % 64,
@@ -124,7 +125,7 @@ TEST_P(ComputeOffsetsTest, CheckCoherency) {
     }
 
     if(it->val.mask2) {
-      EXPECT_LT(64u, it->val.boff + v_len) <<
+      EXPECT_LT((uint_t)64, it->val.boff + v_len) <<
         i << ": val not between words, should not have mask2";
       EXPECT_EQ(64 - it->val.boff, it->val.shift) <<
         i << ": invalid val shift";
@@ -133,7 +134,7 @@ TEST_P(ComputeOffsetsTest, CheckCoherency) {
       EXPECT_EQ(UINT64_C(1) << (it->val.boff + v_len - 64), 1 + it->val.mask2) <<
         i << ": invalid val mask2";
     } else {
-      EXPECT_GE(64u, it->val.boff + v_len) <<
+      EXPECT_GE((uint_t)64, it->val.boff + v_len) <<
         i << ": val between words, should have mask2";
       EXPECT_EQ(v_len, it->val.shift) <<
         i << ": invalid val shift";
@@ -142,7 +143,7 @@ TEST_P(ComputeOffsetsTest, CheckCoherency) {
     }
     EXPECT_EQ(v_len, it->val.shift + it->val.cshift);
     if(lit->val.mask2) {
-      EXPECT_LT(64u, lit->val.boff + lv_len) <<
+      EXPECT_LT((uint_t)64, lit->val.boff + lv_len) <<
         i << ": val not between words, should not have mask2 large field";
       EXPECT_EQ(64 - lit->val.boff, lit->val.shift) <<
         i << ": invalid val shift large field";
@@ -151,7 +152,7 @@ TEST_P(ComputeOffsetsTest, CheckCoherency) {
       EXPECT_EQ(UINT64_C(1) << (lit->val.boff + lv_len - 64), 1 + lit->val.mask2) <<
         i << ": invalid val mask2 large field";
     } else {
-      EXPECT_GE(64u, lit->val.boff + lv_len) <<
+      EXPECT_GE((uint_t)64, lit->val.boff + lv_len) <<
         i << ": val between words, should have mask2 large field " << lit->val.boff << " " << lv_len;
       EXPECT_EQ(lv_len, lit->val.shift) <<
         i << ": invalid val shift large field";
