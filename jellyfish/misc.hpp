@@ -31,10 +31,10 @@
 #include <ostream>
 
 #define bsizeof(v)      (8 * sizeof(v))
-typedef uint_fast16_t uint_t;
+typedef uint_fast64_t uint_t;
 //#define UINT_C(x)       
-#define PRIUINTu PRIuFAST16
-#define PRIUINTx PRIxFAST16
+#define PRIUINTu PRIuFAST64
+#define PRIUINTx PRIxFAST64
 
 inline int leading_zeroes(int x) { return __builtin_clz(x); } // CLK
 inline int leading_zeroes(unsigned int x) { return __builtin_clz(x); }

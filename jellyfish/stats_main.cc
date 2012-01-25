@@ -26,6 +26,7 @@
 #include <jellyfish/mer_counting.hpp>
 #include <jellyfish/compacted_hash.hpp>
 #include <jellyfish/stats_main_cmdline.hpp>
+#include <jellyfish/fstream_default.hpp>
 
 template<typename hash_t>
 void compute_stats(const hash_t &h, uint64_t lower_count, uint64_t upper_count,
@@ -47,7 +48,7 @@ int stats_main(int argc, char *argv[])
 {
   stats_args args(argc, argv);
 
-  std::ofstream out(args.output_arg);
+  ofstream_default out(args.output_given ? args.output_arg : 0, std::cout);
   if(!out.good())
     die << "Error opening output file '" << args.output_arg << "'";
 

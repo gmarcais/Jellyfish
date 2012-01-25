@@ -3,7 +3,7 @@
 #ifndef __DUMP_ARGS_HPP__
 #define __DUMP_ARGS_HPP__
 
-#include <jellyfish/yaggo.hpp>
+#include <yaggo.hpp>
 
 class dump_args {
 public:
@@ -13,7 +13,7 @@ public:
   bool                           lower_count_given;
   uint64_t                       upper_count_arg;
   bool                           upper_count_given;
-  yaggo::string                  output_arg;
+  const char *                   output_arg;
   bool                           output_given;
   yaggo::string                  db_arg;
 
@@ -24,9 +24,9 @@ public:
   dump_args(int argc, char *argv[]) :
     column_flag(false),
     tab_flag(false),
-    lower_count_arg(0), lower_count_given(false),
-    upper_count_arg(0), upper_count_given(false),
-    output_arg("/dev/fd/1"), output_given(false)
+    lower_count_arg(), lower_count_given(false),
+    upper_count_arg(), upper_count_given(false),
+    output_arg(""), output_given(false)
   {
     static struct option long_options[] = {
       {"column", 0, 0, 'c'},
@@ -83,7 +83,7 @@ public:
         break;
       case 'o':
         output_given = true;
-        output_arg.assign(optarg);
+        output_arg = optarg;
         break;
       }
     }
@@ -100,13 +100,15 @@ public:
               << std::endl;
     exit(1);
   }
-#define dump_args_HELP "Dump k-mer counts\n\nBy default, dump in a fasta format where the header is the count and the sequence is the sequence of the k-mer. The column format is a 2 column output: k-mer count.\n\n" \
+#define dump_args_HELP "Dump k-mer counts\n\nBy default, dump in a fasta format where the header is the count and\n" \
+  "the sequence is the sequence of the k-mer. The column format is a 2\n" \
+  "column output: k-mer count.\n\n" \
   "Options (default value in (), *required):\n" \
   " -c, --column                             Column format (false)\n" \
   " -t, --tab                                Tab separator (false)\n" \
   " -L, --lower-count=uint64                 Don't output k-mer with count < lower-count\n" \
   " -U, --upper-count=uint64                 Don't output k-mer with count > upper-count\n" \
-  " -o, --output=string                      Output file (/dev/fd/1)\n" \
+  " -o, --output=c_string                    Output file\n" \
   "     --usage                              Usage\n" \
   " -h, --help                               This message\n" \
   " -V, --version                            Version"

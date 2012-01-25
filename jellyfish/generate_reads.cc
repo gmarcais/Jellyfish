@@ -149,7 +149,7 @@ public:
 
 int main(int argc, char *argv[])
 {
-  generate_reads_args args;
+  generate_reads_args args();
   if(generate_reads_cmdline(argc, argv, &args) != 0)
     die << "Command line parser failed!";
 

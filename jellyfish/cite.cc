@@ -43,12 +43,13 @@ const char *bibtex =
 #include <jellyfish/cite_cmdline.hpp>
 #include <jellyfish/err.hpp>
 #include <jellyfish/misc.hpp>
+#include <jellyfish/fstream_default.hpp>
 
 int cite_main(int argc, char *argv[])
 {
   cite_cmdline args(argc, argv);
 
-  std::ofstream out(args.output_arg.c_str());
+  ofstream_default out(args.output_given ? args.output_arg : 0, std::cout);
   if(!out.good())
     die << "Can't open output file '" << args.output_arg << "'" << err::no;
 

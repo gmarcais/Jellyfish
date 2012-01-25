@@ -30,6 +30,7 @@
 #include <jellyfish/atomic_gcc.hpp>
 #include <jellyfish/counter.hpp>
 #include <jellyfish/histo_main_cmdline.hpp>
+#include <jellyfish/fstream_default.hpp>
 
 template<typename hash_t>
 class histogram : public thread_exec {
@@ -94,7 +95,7 @@ int histo_main(int argc, char *argv[])
     args.error("Low count value must be >= 1");
   if(args.high_arg < args.low_arg)
     args.error("High count value must be >= to low count value");
-  std::ofstream out(args.output_arg.c_str());
+  ofstream_default out(args.output_given ? args.output_arg : 0, std::cout);
   if(!out.good())
     die << "Error opening output file '" << args.output_arg << "'" << err::no;
 

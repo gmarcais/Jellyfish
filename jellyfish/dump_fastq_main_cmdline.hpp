@@ -25,10 +25,10 @@ public:
   dump_fastq_main_args(int argc, char *argv[]) :
     column_flag(false),
     tab_flag(false),
-    lower_count_arg(0.0), lower_count_given(false),
-    upper_count_arg(0.0), upper_count_given(false),
+    lower_count_arg(), lower_count_given(false),
+    upper_count_arg(), upper_count_given(false),
     verbose_flag(false),
-    output_arg("/dev/fd/1"), output_given(false)
+    output_arg(""), output_given(false)
   {
     static struct option long_options[] = {
       {"column", 0, 0, 'c'},
@@ -115,7 +115,7 @@ public:
   " -L, --lower-count=double                 Don't output k-mer with count < lower-count\n" \
   " -U, --upper-count=double                 Don't output k-mer with count > upper-count\n" \
   " -v, --verbose                            Be verbose (false)\n" \
-  " -o, --output=c_string                    Output file (/dev/fd/1)\n" \
+  " -o, --output=c_string                    Output file\n" \
   "     --usage                              Usage\n" \
   " -h, --help                               This message\n" \
   " -V, --version                            Version"

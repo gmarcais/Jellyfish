@@ -16,7 +16,7 @@ public:
   uint32_t                       threads_arg;
   bool                           threads_given;
   bool                           full_flag;
-  yaggo::string                  output_arg;
+  const char *                   output_arg;
   bool                           output_given;
   uint64_t                       buffer_size_arg;
   bool                           buffer_size_given;
@@ -35,7 +35,7 @@ public:
     increment_arg(1), increment_given(false),
     threads_arg(1), threads_given(false),
     full_flag(false),
-    output_arg("/dev/fd/1"), output_given(false),
+    output_arg(""), output_given(false),
     buffer_size_arg(10000000), buffer_size_given(false),
     verbose_flag(false)
   {
@@ -108,7 +108,7 @@ public:
         break;
       case 'o':
         output_given = true;
-        output_arg.assign(optarg);
+        output_arg = optarg;
         break;
       case 's':
         buffer_size_given = true;
@@ -147,7 +147,7 @@ public:
   " -i, --increment=uint64                   Increment value for buckets (1)\n" \
   " -t, --threads=uint32                     Number of threads (1)\n" \
   " -f, --full                               Full histo. Don't skip count 0. (false)\n" \
-  " -o, --output=string                      Output file (/dev/fd/1)\n" \
+  " -o, --output=c_string                    Output file\n" \
   " -v, --verbose                            Output information (false)\n" \
   "     --usage                              Usage\n" \
   "     --help                               This message\n" \

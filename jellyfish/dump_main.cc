@@ -26,6 +26,7 @@
 #include <jellyfish/mer_counting.hpp>
 #include <jellyfish/compacted_hash.hpp>
 #include <jellyfish/dump_main_cmdline.hpp>
+#include <jellyfish/fstream_default.hpp>
 
 template<typename hash_t>
 void dump(const hash_t &h, std::ostream &out,
@@ -51,7 +52,7 @@ int dump_main(int argc, char *argv[])
 {
   dump_args args(argc, argv);
 
-  std::ofstream out(args.output_arg.c_str());
+  ofstream_default out(args.output_given ? args.output_arg : 0, std::cout);
   if(!out.good())
     die << "Error opening output file '" << args.output_arg << "'";
 

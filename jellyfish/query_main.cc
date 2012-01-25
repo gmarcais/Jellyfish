@@ -26,6 +26,7 @@
 #include <jellyfish/query_cmdline.hpp>
 #include <jellyfish/err.hpp>
 #include <jellyfish/misc.hpp>
+#include <jellyfish/fstream_default.hpp>
 
 template<typename hash_t>
 void print_mer_counts(const hash_t &h, std::istream &in, std::ostream &out) {
@@ -48,10 +49,10 @@ int query_main(int argc, char *argv[])
 {
   query_args args(argc, argv);
 
-  std::ifstream in(args.input_arg.c_str());
+  ifstream_default in(args.input_given ? args.input_arg : 0, std::cin);
   if(!in.good())
     die << "Can't open input file '" << args.input_arg << "'" << err::no;
-  std::ofstream out(args.output_arg.c_str());
+  ofstream_default out(args.input_given ? args.output_arg : 0, std::cout);
   if(!out.good())
     die << "Can't open output file '" << args.output_arg << "'" << err::no;
 

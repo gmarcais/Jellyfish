@@ -25,7 +25,7 @@ option("verbose", "v") {
   flag; off }
 option("output", "o") {
   description "Output file"
-  c_string; default="/dev/fd/1"
+  c_string
 }
 arg("db") {
   description "Jellyfish database"

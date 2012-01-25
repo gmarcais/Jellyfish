@@ -29,7 +29,7 @@ option("full", "f") {
   flag; off }
 option("output", "o") {
   description "Output file"
-  string; default "/dev/fd/1" }
+  c_string }
 option("buffer-size", "s") {
   description "Length in bytes of input buffer"
   uint64; default "10000000"; suffix; hidden; typestr "Buffer length" }

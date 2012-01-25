@@ -19,7 +19,7 @@ histo_main_cmdline.hpp stats_main_cmdline.hpp				\
 histo_fastq_main_cmdline.hpp dump_fastq_main_cmdline.hpp		\
 count_main_cmdline.hpp hash_fastq_merge_cmdline.hpp			\
 dump_main_cmdline.hpp double_fifo_input.hpp simple_growing_array.hpp	\
-backtrace.hpp noop_dumper.hpp yaggo.hpp
+backtrace.hpp noop_dumper.hpp yaggo.hpp fstream_default.hpp
 
 lib_LTLIBRARIES = libjellyfish.la
 libjellyfish_la_LDFLAGS = -version-info 1:0:0

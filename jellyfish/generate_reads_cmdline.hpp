@@ -29,14 +29,14 @@ public:
   };
 
   generate_reads_args(int argc, char *argv[]) :
-    seed_arg(0), seed_given(false),
-    output_arg("/dev/fd/1"), output_given(false),
+    seed_arg(), seed_given(false),
+    output_arg(""), output_given(false),
     fastq_flag(false),
-    read_length_arg(0), read_length_given(false),
-    genome_length_arg(0), genome_length_given(false),
+    read_length_arg(), read_length_given(false),
+    genome_length_arg(), genome_length_given(false),
     sequence_arg(""), sequence_given(false),
-    error_rate_arg(0.0), error_rate_given(false),
-    coverage_arg(0.0), coverage_given(false),
+    error_rate_arg(), error_rate_given(false),
+    coverage_arg(), coverage_given(false),
     verbose_flag(false)
   {
     static struct option long_options[] = {
@@ -145,7 +145,7 @@ public:
 #define generate_reads_args_HELP "Generate random reads\n\n" \
   "Options (default value in (), *required):\n" \
   " -s, --seed=uint64                       *Seed\n" \
-  " -o, --output=c_string                    Output (/dev/fd/1)\n" \
+  " -o, --output=c_string                    Output\n" \
   " -q, --fastq                              Generate fastq file (false)\n" \
   " -r, --read-length=uint32                *Read length (default=size of sequence)\n" \
   " -g, --genome-length=uint64              *Length of genome\n" \

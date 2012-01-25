@@ -3,12 +3,12 @@
 #ifndef __CITE_CMDLINE_HPP__
 #define __CITE_CMDLINE_HPP__
 
-#include <jellyfish/yaggo.hpp>
+#include <yaggo.hpp>
 
 class cite_cmdline {
 public:
   bool                           bibtex_flag;
-  yaggo::string                  output_arg;
+  const char *                   output_arg;
   bool                           output_given;
 
   enum {
@@ -17,7 +17,7 @@ public:
 
   cite_cmdline(int argc, char *argv[]) :
     bibtex_flag(false),
-    output_arg("/dev/fd/1"), output_given(false)
+    output_arg(""), output_given(false)
   {
     static struct option long_options[] = {
       {"bibtex", 0, 0, 'b'},
@@ -57,7 +57,7 @@ public:
         break;
       case 'o':
         output_given = true;
-        output_arg.assign(optarg);
+        output_arg = optarg;
         break;
       }
     }
@@ -75,7 +75,7 @@ public:
 #define cite_cmdline_HELP "How to cite Jellyfish's paper\n\nCitation of paper\n\n" \
   "Options (default value in (), *required):\n" \
   " -b, --bibtex                             Bibtex format (false)\n" \
-  " -o, --output=string                      Output file (/dev/fd/1)\n" \
+  " -o, --output=c_string                    Output file\n" \
   "     --usage                              Usage\n" \
   " -h, --help                               This message\n" \
   " -V, --version                            Version"

@@ -9,7 +9,7 @@ option("seed", "s") {
   uint64; required }
 option("output", "o") {
   description "Output"
-  c_string; default="/dev/fd/1" }
+  c_string }
 option("fastq", "q") {
   description "Generate fastq file"
   flag; off }

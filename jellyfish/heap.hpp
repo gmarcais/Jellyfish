@@ -81,7 +81,6 @@ namespace jellyfish {
       elts = new heap_item_t<iterator>*[capacity_];
       for(size_t h1 = 0; h1 < capacity_; ++h1)
         elts[h1] = &storage[h1];
-      std::cerr << __PRETTY_FUNCTION__ << " " << h << " " << (void*)storage << "\n";
     }
 
     void fill(iterator &it) {

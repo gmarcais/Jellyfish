@@ -3,7 +3,7 @@
 #ifndef __STATS_ARGS_HPP__
 #define __STATS_ARGS_HPP__
 
-#include <jellyfish/yaggo.hpp>
+#include <yaggo.hpp>
 
 class stats_args {
 public:
@@ -24,10 +24,10 @@ public:
 
   stats_args(int argc, char *argv[]) :
     recompute_flag(false),
-    lower_count_arg(0), lower_count_given(false),
-    upper_count_arg(0), upper_count_given(false),
+    lower_count_arg(), lower_count_given(false),
+    upper_count_arg(), upper_count_given(false),
     verbose_flag(false),
-    output_arg("/dev/fd/1"), output_given(false)
+    output_arg(""), output_given(false)
   {
     static struct option long_options[] = {
       {"recompute", 0, 0, 'r'},
@@ -115,7 +115,7 @@ public:
   " -L, --lower-count=uint64                 Don't consider k-mer with count < lower-count\n" \
   " -U, --upper-count=uint64                 Don't consider k-mer with count > upper-count\n" \
   " -v, --verbose                            Verbose (false)\n" \
-  " -o, --output=c_string                    Output file (/dev/fd/1)\n" \
+  " -o, --output=c_string                    Output file\n" \
   "     --usage                              Usage\n" \
   " -h, --help                               This message\n" \
   "     --full-help                          Detailed help\n" \

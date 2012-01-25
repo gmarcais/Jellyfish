@@ -3,14 +3,14 @@
 #ifndef __QUERY_ARGS_HPP__
 #define __QUERY_ARGS_HPP__
 
-#include <jellyfish/yaggo.hpp>
+#include <yaggo.hpp>
 
 class query_args {
 public:
   bool                           both_strands_flag;
-  yaggo::string                  input_arg;
+  const char *                   input_arg;
   bool                           input_given;
-  yaggo::string                  output_arg;
+  const char *                   output_arg;
   bool                           output_given;
   yaggo::string                  db_arg;
 
@@ -20,8 +20,8 @@ public:
 
   query_args(int argc, char *argv[]) :
     both_strands_flag(false),
-    input_arg("/dev/fd/0"), input_given(false),
-    output_arg("/dev/fd/1"), output_given(false)
+    input_arg(""), input_given(false),
+    output_arg(""), output_given(false)
   {
     static struct option long_options[] = {
       {"both-strands", 0, 0, 'C'},
@@ -62,11 +62,11 @@ public:
         break;
       case 'i':
         input_given = true;
-        input_arg.assign(optarg);
+        input_arg = optarg;
         break;
       case 'o':
         output_given = true;
-        output_arg.assign(optarg);
+        output_arg = optarg;
         break;
       }
     }
@@ -86,8 +86,8 @@ public:
 #define query_args_HELP "Query from a compacted database\n\nQuery a hash. It reads k-mers from the standard input and write the counts on the standard output.\n\n" \
   "Options (default value in (), *required):\n" \
   " -C, --both-strands                       Both strands (false)\n" \
-  " -i, --input=file                         Input file (/dev/fd/0)\n" \
-  " -o, --output=file                        Output file (/dev/fd/1)\n" \
+  " -i, --input=file                         Input file\n" \
+  " -o, --output=file                        Output file\n" \
   "     --usage                              Usage\n" \
   " -h, --help                               This message\n" \
   " -V, --version                            Version"

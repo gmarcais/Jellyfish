@@ -27,12 +27,13 @@
 #include <jellyfish/mer_counting.hpp>
 #include <jellyfish/fastq_dumper.hpp>
 #include <jellyfish/dump_fastq_main_cmdline.hpp>
+#include <jellyfish/fstream_default.hpp>
 
 int dump_fastq_main(int argc, char *argv[])
 {
   dump_fastq_main_args args(argc, argv);
 
-  std::ofstream out(args.output_arg);
+  ofstream_default out(args.output_given ? args.output_arg : 0, std::cout);
   if(!out.good())
     die << "Error opening output file '" << args.output_arg << "'" << err::no;
 

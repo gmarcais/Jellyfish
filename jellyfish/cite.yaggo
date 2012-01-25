@@ -11,5 +11,5 @@ option("bibtex", "b") {
 }
 option("output", "o") {
   description "Output file"
-  string; default "/dev/fd/1"
+  c_string
 }
