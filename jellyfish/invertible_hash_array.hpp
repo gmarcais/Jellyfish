@@ -617,6 +617,8 @@ namespace jellyfish {
                        val, false, oval);
       }
 
+      
+
       /**
        * Use hash as a set.
        */
@@ -638,6 +640,24 @@ namespace jellyfish {
         *id = hash & size_mask;
         return claim_key((hash >> lsize) & key_mask, is_new, id, false,
                          &ao, &w);
+      }
+
+      /**
+       * Use hash as a map. This sets a value with the key. It is only
+       * partially thread safe. I.e., multiple different key can be
+       * added concurrently. On the other hand, the same key can not
+       * be added at the same time by different thread: the value set
+       * may not be correct.
+       */
+      inline bool map(word _key, word val) {
+        bool   is_new;
+        return map(_key, val, &is_new);
+      }
+
+      bool map(word _key, word val, bool* is_new) {
+        uint64_t hash = hash_matrix.times(_key);
+        return map_rec(hash & size_mask, (hash >> lsize) & key_mask, val, false, 
+                       is_new);
       }
 
       void write_ary_header(std::ostream *out) const {
@@ -753,6 +773,29 @@ namespace jellyfish {
         return true;
       }
 
+      bool map_rec(size_t id, word key, word val, bool large, bool* is_new) {
+        const offset_t* ao;
+        word*           w;
+        bool            is_new_entry = false;
+        if(!claim_key(key, &is_new_entry, &id, large, &ao, &w))
+          return false;
+        if(is_new)
+          *is_new = is_new_entry;
+        
+        // Set value
+        word *vw     = w + ao->val.woff;
+        word  cary   = set_val(vw, val, ao->val.boff, ao->val.mask1);
+        cary       >>= ao->val.shift;
+        if(cary && ao->val.mask2) { // value split on two words
+          cary   = set_val(vw + 1, cary, 0, ao->val.mask2);
+          cary >>= ao->val.cshift;
+        }
+        if(!cary)
+          return true;
+        id = (id + reprobes[0]) & size_mask;
+        return map_rec(id, key, cary, true, 0);
+      }
+
       inline bool set_key(word *w, word nkey, word free_mask, 
                           word equal_mask) {
         word ow = *w, nw, okey;
@@ -798,6 +841,18 @@ namespace jellyfish {
         } while(now != ow);
 
         return nval & (~(mask >> shift));
+      }
+
+      inline word set_val(word *w, word val, uint_t shift, word mask) {
+        word now = *w, ow, nw;
+
+        do {
+          ow = now;
+          nw = (ow & ~mask) | ((val << shift) & mask);
+          now = atomic.cas(w, ow, nw);
+        } while(now != ow);
+
+        return val & (~(mask >> shift));
       }
     };
 

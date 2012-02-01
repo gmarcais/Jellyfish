@@ -260,7 +260,7 @@ namespace jellyfish {
           //        return false;
           ptr = buffer;
           end_buffer = NULL;
-          if((typeof record_len)io->gcount() >= record_len)
+          if((size_t)io->gcount() >= record_len)
             end_buffer = ptr + (io->gcount() - record_len);
         }
       }
@@ -462,7 +462,7 @@ namespace jellyfish {
         bool next(uint64_t *_id, key_t *_key, val_t *_val) {
           if(id >= last_id)
             return false;
-          *_id = atomic::gcc::add_fetch(&id, (typeof(id))1) - 1;
+          *_id = atomic::gcc::add_fetch(&id, (uint64_t)1) - 1;
           if(*_id >= last_id)
             return false;
           char *ptr = base + (*_id) * record_len;

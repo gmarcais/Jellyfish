@@ -85,9 +85,11 @@ namespace jellyfish {
       typedef typename storage_t::iterator iterator;
 
     private:
-      mapped_file  _file;
-      storage_t   *_ary;
-      bool         _canonical;
+      mapped_file         _file;
+      storage_t          *_ary;
+      bool                _canonical;
+      SquareBinaryMatrix  hash_matrix;
+      SquareBinaryMatrix  hash_inverse_matrix;
 
     public:
       query(mapped_file &map) : 
@@ -108,8 +110,11 @@ namespace jellyfish {
       size_t get_max_reprobe_offset() const { return _ary->get_max_reprobe_offset(); }
       bool   get_canonical() const { return _canonical; }
       void   set_canonical(bool v) { _canonical = v; }
+      SquareBinaryMatrix get_hash_matrix() { return hash_matrix; }
+      SquareBinaryMatrix get_hash_inverse_matrix() { return hash_inverse_matrix; }
       storage_t *get_ary() const { return _ary; }
 
+      iterator get_iterator() const { return iterator_all(); }
       iterator iterator_all() const { return _ary->iterator_all(); }
       iterator iterator_slice(size_t slice_number, size_t number_of_slice) const {
         return _ary->iterator_slice(slice_number, number_of_slice);
@@ -164,7 +169,6 @@ namespace jellyfish {
                                << "Invalid key length '" << header->key_len << "'";
         // TODO: Should that be in the file instead?
         // reprobes = jellyfish::quadratic_reprobes;
-        SquareBinaryMatrix hash_matrix, hash_inverse_matrix;
         map += hash_matrix.read(map);
         if((uint_t)hash_matrix.get_size() != header->key_len)
           eraise(ErrorReading) << "'" << _file.path() << "': "

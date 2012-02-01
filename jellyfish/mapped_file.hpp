@@ -86,6 +86,11 @@ public:
   size_t length() const { return _length; }
   std::string path() const { return _path; }
 
+  bool will_unmap(bool value = true) {
+    bool ovalue = _unmap;
+    _unmap = value;
+    return ovalue;
+  }
   // No error checking here. Should I throw something?
   const mapped_file & will_need() const {
     madvise(_base, _length, MADV_WILLNEED);
@@ -148,10 +153,10 @@ public:
   }
 
   void inc() {
-    atomic::gcc::fetch_add(&used_counter, (typeof(used_counter))1);
+    atomic::gcc::fetch_add(&used_counter, (long)1);
   }
   void dec() {
-    long val = atomic::gcc::add_fetch(&used_counter, (typeof(used_counter))-1);
+    long val = atomic::gcc::add_fetch(&used_counter, (long)-1);
     if(done && val == 0)
       mapped_file::unmap();
   }

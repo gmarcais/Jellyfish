@@ -23,7 +23,7 @@ public:
   counter_t() : count(0) {}
 
   inline uint64_t operator++(int) {
-    return atomic::gcc::fetch_add(&count, (typeof(count))1);
+    return atomic::gcc::fetch_add(&count, (uint64_t)1);
   }
   inline uint64_t inc(uint64_t x) {
     return atomic::gcc::fetch_add(&count, x);
