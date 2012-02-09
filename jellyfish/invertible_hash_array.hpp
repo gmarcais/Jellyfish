@@ -450,7 +450,8 @@ namespace jellyfish {
        * forward for entries with large bit set pointing back to the
        * key at id, and all those values are summed up.
        */
-      bool get_key_val_full(size_t id, word &key, word &val) const {
+      bool get_key_val_full(size_t id, word &key, word &val,
+                            bool carry_bit = false) const {
         const offset_t	*o, *lo;
         word		*w, *kvw, nkey, nval;
         uint_t		 reprobe = 0, overflows = 0;
@@ -477,6 +478,13 @@ namespace jellyfish {
         if(o->val.mask2)
           val |= ((*(kvw+1)) & o->val.mask2) << o->val.shift;
 
+        if(carry_bit) {
+          bool do_reprobe = val & 0x1;
+          val >>= 1;
+          if(!do_reprobe)
+            return true;
+        }
+
         // Resolve value
         reprobe = 0;
         cid = id = (id + reprobes[0]) & size_mask;
@@ -499,9 +507,18 @@ namespace jellyfish {
               nval = ((*kvw) & lo->val.mask1) >> lo->val.boff;
               if(lo->val.mask2)
                 nval |= ((*(kvw+1)) & lo->val.mask2) << lo->val.shift;
+              bool do_reprobe = true;
+              if(carry_bit) {
+                do_reprobe = nval & 0x1;
+                nval >>= 1;
+              }
+
               nval <<= offsets.get_val_len();
               nval <<= offsets.get_lval_len() * overflows;
               val += nval;
+
+              if(!do_reprobe)
+                return true;
 
               overflows++;
               reprobe = 0;
@@ -524,19 +541,23 @@ namespace jellyfish {
         return true;
       }
 
-      inline bool get_val(const word key, word &val, bool full = false) const {
+      inline bool get_val(const word key, word &val, bool full = false,
+                          bool carry_bit = false) const {
         uint64_t hash = hash_matrix.times(key);
         size_t key_id;
-        return _get_val(hash & size_mask, key_id, (hash >> lsize) & key_mask, val, full);
+        return _get_val(hash & size_mask, key_id, (hash >> lsize) & key_mask, val, 
+                        full, carry_bit);
       }
 
-      inline bool get_val(const word key, size_t &key_id, word &val, bool full = false) const {
+      inline bool get_val(const word key, size_t &key_id, word &val, 
+                          bool full = false, bool carry_bit = false) const {
         uint64_t hash = hash_matrix.times(key);
-        return _get_val(hash & size_mask, key_id, (hash >> lsize) & key_mask, val, full);
+        return _get_val(hash & size_mask, key_id, (hash >> lsize) & key_mask, val,
+                        full, carry_bit);
       }
 
       bool _get_val(const size_t id, size_t &key_id, const word key, word &val, 
-                   const bool full = false) const {
+                    const bool full = false, bool carry_bit = false) const {
         word           *w, *kvw, nkey, nval;
         const offset_t *o, *lo;
         size_t          cid     = id;
@@ -572,10 +593,17 @@ namespace jellyfish {
         if(o->val.mask2) {
           val |= ((*(kvw+1)) & o->val.mask2) << o->val.shift;
         }
+        bool do_reprobe = true;
+        if(carry_bit) {
+          do_reprobe = val & 0x1;
+          val >>= 1;
+        }
         key_id = cid;
 
-        // Eventually get large values...
-        if(full) {
+        // Eventually get large values...  TODO: this seems buggy. It
+        // only looks for large values once, not as many times as
+        // needed.
+        if(full && do_reprobe) {
           const size_t bid = (cid + reprobes[0]) & size_mask;
           cid = bid;
           reprobe = 0;
@@ -595,9 +623,13 @@ namespace jellyfish {
                 nval = ((*kvw) & lo->val.mask1) >> lo->val.boff;
                 if(lo->val.mask2)
                   nval |= ((*(kvw+1)) & lo->val.mask2) << lo->val.shift;
+                if(carry_bit)
+                  nval >>= 1;
 
                 val |= nval << offsets.get_val_len();
-                break;
+                break; // Should break only if carry_bit of nval is
+                       // not set. Otherwise, we should reset the
+                       // reprobe to 0 and try again.
               }
             }
 
@@ -773,6 +805,10 @@ namespace jellyfish {
         return true;
       }
 
+      // Store val in the hash at position id. Reprobe and recurse if
+      // val does not fit in counter field. A bit is added at the
+      // beginning of the counting field indicating whether there is
+      // another entry for the same key further in the hash.
       bool map_rec(size_t id, word key, word val, bool large, bool* is_new) {
         const offset_t* ao;
         word*           w;
@@ -781,7 +817,11 @@ namespace jellyfish {
           return false;
         if(is_new)
           *is_new = is_new_entry;
-        
+
+        // Determine if there will be a carry
+        val <<= 1;
+        val |= (val > offsets.get_max_val());
+
         // Set value
         word *vw     = w + ao->val.woff;
         word  cary   = set_val(vw, val, ao->val.boff, ao->val.mask1);
@@ -845,10 +885,11 @@ namespace jellyfish {
 
       inline word set_val(word *w, word val, uint_t shift, word mask) {
         word now = *w, ow, nw;
+        word sval = (val << shift) & mask;
 
         do {
           ow = now;
-          nw = (ow & ~mask) | ((val << shift) & mask);
+          nw = (ow & ~mask) | sval;
           now = atomic.cas(w, ow, nw);
         } while(now != ow);
 

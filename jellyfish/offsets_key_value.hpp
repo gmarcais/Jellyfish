@@ -97,6 +97,7 @@ namespace jellyfish {
     uint_t get_reprobe_len() const { return reprobe_len; }
     uint_t get_key_len() const { return key_len; }
     uint_t get_val_len() const { return val_len; }
+    word   get_max_val() const { return ((word)1 << val_len) - 1; }
     uint_t get_lval_len() const { return lval_len; }
 
     // Discretize and round down number of entries according to length
