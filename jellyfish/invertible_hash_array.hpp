@@ -623,10 +623,11 @@ namespace jellyfish {
                 nval = ((*kvw) & lo->val.mask1) >> lo->val.boff;
                 if(lo->val.mask2)
                   nval |= ((*(kvw+1)) & lo->val.mask2) << lo->val.shift;
-                if(carry_bit)
+                if(carry_bit) {
                   nval >>= 1;
-
-                val |= nval << offsets.get_val_len();
+                  val |= nval << (offsets.get_val_len() - 1);
+                } else
+                  val |= nval << offsets.get_val_len();
                 break; // Should break only if carry_bit of nval is
                        // not set. Otherwise, we should reset the
                        // reprobe to 0 and try again.
@@ -823,14 +824,20 @@ namespace jellyfish {
         val |= (val > offsets.get_max_val());
 
         // Set value
-        word *vw     = w + ao->val.woff;
-        word  cary   = set_val(vw, val, ao->val.boff, ao->val.mask1);
-        cary       >>= ao->val.shift;
-        if(cary && ao->val.mask2) { // value split on two words
-          cary   = set_val(vw + 1, cary, 0, ao->val.mask2);
+        word *vw         = w + ao->val.woff;
+        word  oval       = 0;
+        word  cary       = set_val(vw, val, ao->val.boff, ao->val.mask1, oval);
+        cary           >>= ao->val.shift;
+        bool  cary_bit   = oval & 0x1;
+        if(ao->val.mask2) { // value split on two words. Write even if
+                            // cary is 0 as there maybe some value in
+                            // there already
+          cary   = set_val(vw + 1, cary, 0, ao->val.mask2, oval);
           cary >>= ao->val.cshift;
         }
-        if(!cary)
+        // Done if there is no carry and previous value did not have
+        // the carry_bit set
+        if(!cary && !cary_bit)
           return true;
         id = (id + reprobes[0]) & size_mask;
         return map_rec(id, key, cary, true, 0);
@@ -883,7 +890,8 @@ namespace jellyfish {
         return nval & (~(mask >> shift));
       }
 
-      inline word set_val(word *w, word val, uint_t shift, word mask) {
+      inline word set_val(word *w, word val, uint_t shift, word mask,
+                          word& oval) {
         word now = *w, ow, nw;
         word sval = (val << shift) & mask;
 
@@ -893,6 +901,7 @@ namespace jellyfish {
           now = atomic.cas(w, ow, nw);
         } while(now != ow);
 
+        oval = (ow & mask) >> shift;
         return val & (~(mask >> shift));
       }
     };
