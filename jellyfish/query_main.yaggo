@@ -9,6 +9,10 @@ option("both-strands", "C") {
   description "Both strands"
   flag; off
 }
+option("cary-bit", "c") {
+  description "Value field as the cary bit information"
+  flag; off
+}
 option("input", "i") {
   description "Input file"
   c_string; typestr "file"

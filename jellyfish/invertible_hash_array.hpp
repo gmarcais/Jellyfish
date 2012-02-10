@@ -821,7 +821,7 @@ namespace jellyfish {
 
         // Determine if there will be a carry
         val <<= 1;
-        val |= (val > offsets.get_max_val());
+        val |= (val > offsets.get_max_val(large));
 
         // Set value
         word *vw         = w + ao->val.woff;

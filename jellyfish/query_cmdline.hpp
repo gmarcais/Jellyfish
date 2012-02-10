@@ -8,6 +8,7 @@
 class query_args {
 public:
   bool                           both_strands_flag;
+  bool                           cary_bit_flag;
   const char *                   input_arg;
   bool                           input_given;
   const char *                   output_arg;
@@ -18,13 +19,24 @@ public:
     USAGE_OPT = 1000
   };
 
-  query_args(int argc, char *argv[]) :
+  query_args() : 
     both_strands_flag(false),
+    cary_bit_flag(false),
     input_arg(""), input_given(false),
     output_arg(""), output_given(false)
-  {
+  { }
+
+  query_args(int argc, char* argv[]) :
+    both_strands_flag(false),
+    cary_bit_flag(false),
+    input_arg(""), input_given(false),
+    output_arg(""), output_given(false)
+  { parse(argc, argv); }
+
+  void parse(int argc, char* argv[]) {
     static struct option long_options[] = {
       {"both-strands", 0, 0, 'C'},
+      {"cary-bit", 0, 0, 'c'},
       {"input", 1, 0, 'i'},
       {"output", 1, 0, 'o'},
       {"help", 0, 0, 'h'},
@@ -32,7 +44,7 @@ public:
       {"version", 0, 0, 'V'},
       {0, 0, 0, 0}
     };
-    static const char *short_options = "hVCi:o:";
+    static const char *short_options = "hVCci:o:";
 
 #define CHECK_ERR(type,val,which) if(!err.empty()) { std::cerr << "Invalid " #type " '" << val << "' for [" which "]: " << err << "\n"; exit(1); }
     while(true) { 
@@ -60,6 +72,9 @@ public:
       case 'C':
         both_strands_flag = true;
         break;
+      case 'c':
+        cary_bit_flag = true;
+        break;
       case 'i':
         input_given = true;
         input_arg = optarg;
@@ -86,6 +101,7 @@ public:
 #define query_args_HELP "Query from a compacted database\n\nQuery a hash. It reads k-mers from the standard input and write the counts on the standard output.\n\n" \
   "Options (default value in (), *required):\n" \
   " -C, --both-strands                       Both strands (false)\n" \
+  " -c, --cary-bit                           Value field as the cary bit information (false)\n" \
   " -i, --input=file                         Input file\n" \
   " -o, --output=file                        Output file\n" \
   "     --usage                              Usage\n" \
@@ -104,6 +120,7 @@ public:
   }
   void dump(std::ostream &os = std::cout) {
     os << "both_strands_flag:" << both_strands_flag << "\n";
+    os << "cary_bit_flag:" << cary_bit_flag << "\n";
     os << "input_given:" << input_given << " input_arg:" << input_arg << "\n";
     os << "output_given:" << output_given << " output_arg:" << output_arg << "\n";
     os << "db_arg:" << db_arg << "\n";

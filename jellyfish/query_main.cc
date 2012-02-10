@@ -62,6 +62,7 @@ int query_main(int argc, char *argv[])
   if(!strncmp(type, jellyfish::raw_hash::file_type, sizeof(type))) {
     raw_inv_hash_query_t hash(dbf);
     hash.set_canonical(args.both_strands_flag);
+    hash.set_cary_bit(args.cary_bit_flag);
     print_mer_counts(hash, in, out);
   } else if(!strncmp(type, jellyfish::compacted_hash::file_type, sizeof(type))) {
     hash_query_t hash(dbf);

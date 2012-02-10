@@ -88,14 +88,15 @@ namespace jellyfish {
       mapped_file         _file;
       storage_t          *_ary;
       bool                _canonical;
+      bool                _cary_bit;
       SquareBinaryMatrix  hash_matrix;
       SquareBinaryMatrix  hash_inverse_matrix;
 
     public:
       query(mapped_file &map) : 
-        _file(map), _ary(0), _canonical(false) { init(); }
+        _file(map), _ary(0), _canonical(false), _cary_bit(false) { init(); }
       query(std::string filename) : 
-        _file(filename), _ary(0), _canonical(false) { init(); }
+        _file(filename), _ary(0), _canonical(false), _cary_bit(false) { init(); }
 
       ~query() {
         if(_ary)
@@ -110,6 +111,8 @@ namespace jellyfish {
       size_t get_max_reprobe_offset() const { return _ary->get_max_reprobe_offset(); }
       bool   get_canonical() const { return _canonical; }
       void   set_canonical(bool v) { _canonical = v; }
+      bool   get_cary_bit() const { return _cary_bit; }
+      void   set_cary_bit(bool v) { _cary_bit = v; }
       SquareBinaryMatrix get_hash_matrix() { return hash_matrix; }
       SquareBinaryMatrix get_hash_inverse_matrix() { return hash_inverse_matrix; }
       storage_t *get_ary() const { return _ary; }
@@ -129,9 +132,9 @@ namespace jellyfish {
         bool success;
         if(_canonical) {
           typename storage_t::key_t key2 = parse_dna::reverse_complement(key, get_mer_len());
-          success = _ary->get_val(key2 < key ? key2 : key, res, true);
+          success = _ary->get_val(key2 < key ? key2 : key, res, true, _cary_bit);
         } else
-          success = _ary->get_val(key, res, true);
+          success = _ary->get_val(key, res, true, _cary_bit);
         return success ? res : 0;
       }
 

@@ -97,8 +97,10 @@ namespace jellyfish {
     uint_t get_reprobe_len() const { return reprobe_len; }
     uint_t get_key_len() const { return key_len; }
     uint_t get_val_len() const { return val_len; }
-    word   get_max_val() const { return ((word)1 << val_len) - 1; }
     uint_t get_lval_len() const { return lval_len; }
+    word   get_max_val(bool large) const { 
+      return (((uint64_t)1) << (large ? lval_len : val_len)) - 1;
+    }
 
     // Discretize and round down number of entries according to length
     // of a block. Return in blocks the number of blocks.
