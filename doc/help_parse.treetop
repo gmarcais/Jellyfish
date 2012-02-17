@@ -1,6 +1,6 @@
 grammar HelpGrammar
   rule line
-    spaces sws:switches* text [\n]? {
+    spaces sws:switches* text [\n]* {
       def to_tex(opened)
         res = ""
         unless sws.empty?
@@ -12,7 +12,8 @@ grammar HelpGrammar
           res << sws.elements.map { |s| s.to_tex }.join(",")
           res << "] "
         end
-        res << text.text_value
+        res << "\\noindent " unless text.text_value.empty?
+        res << quote(text.text_value)
       end
     }
   end
@@ -40,7 +41,7 @@ grammar HelpGrammar
   rule long_switch
     "-" name:[^,\s=]+ val:("=" [^,\s]+)? ","? spaces {
       def to_tex
-        val.empty? ? "\\LOpt{#{name.text_value}}" : "\\LOptArg{#{name.text_value}}{#{val.text_value}}"
+        val.empty? ? "\\LOpt{#{quote(name.text_value)}}" : "\\LOptArg{#{quote(name.text_value)}}{#{quote(val.text_value)}}"
       end
     }
   end

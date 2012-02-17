@@ -3,25 +3,32 @@ MI = makeinfo
 PDFLATEX = pdflatex
 M4 = m4
 
-all: jellyfish.man jellyfish.html jellyfish.pdf
+TARGETS = jellyfish.man jellyfish.html jellyfish.pdf
+all: $(TARGETS)
 
 man: jellyfish.man
 	man ./$<
 
-%.man: %.tex options.tex
-	$(M4) $< | $(L2M) /dev/fd/0 $@
+%-full.tex: %.tex options.tex
+	$(M4) $< > $@
 
-%.html: %.tex options.tex
+%.man: %-full.tex
+	$(L2M) $< $@
+
+%.html: %-full.tex
 	$(L2M) -H $< $@
 
-%.texi: %.tex options.tex
+%.texi: %-full.tex
 	$(L2M) -T $< $@
 
 %.info: %.texi
 	$(MI) --force $< $@
 
-%.latex: %.tex options.tex
+%.latex: %-full.tex
 	$(L2M) -L $< $@
 
 %.pdf: %.latex
 	$(PDFLATEX) $<
+
+clean:
+	rm -f $(TARGETS) *-full.tex

@@ -1,113 +1,112 @@
 \subsection{count}
+\noindent Usage: jellyfish count [options] file:path+
 
-Count k-mers or qmers in fasta or fastq files
+\noindent Count k-mers or qmers in fasta or fastq files
 
-Usage: jellyfish count [OPTIONS]... [file.f[aq]]...
-
+\noindent Options (default value in (), *required):
 \begin{description}
-\item[\Opt{-h},\LOpt{help}] Print help and exit
-\item[\LOpt{full-help}] Print help, including hidden options, and exit
-\item[\Opt{-V},\LOpt{version}] Print version and exit
-\item[\Opt{-m},\LOptArg{mer-len}{=INT}] Length of mer (mandatory)
-\item[\Opt{-s},\LOptArg{size}{=LONG}] Hash size (mandatory)
-\item[\Opt{-t},\LOptArg{threads}{=INT}] Number of threads  (default=`1')
-\item[\Opt{-o},\LOptArg{output}{=STRING}] Output prefix  (default=`mer\_counts')
-\item[\Opt{-c},\LOptArg{counter-len}{=Length}] in bits
-Length of counting field  (default=`7')
-\item[\LOptArg{out-counter-len}{=Length}] in bytes
-Length of counter field in output  
-(default=`4')
-\item[\Opt{-C},\LOpt{both-strands}] Count both strand, canonical representation  
-(default=off)
-\item[\Opt{-p},\LOptArg{reprobes}{=INT}] Maximum number of reprobes  (default=`62')
-\item[\Opt{-r},\LOpt{raw}] Write raw database  (default=off)
-\item[\Opt{-q},\LOpt{quake}] Quake compatibility mode  (default=off)
-\item[\LOptArg{quality-start}{=INT}] Starting ASCII for quality values  
-(default=`64')
-\item[\LOptArg{min-quality}{=INT}] Minimum quality. A base with lesser quality 
-becomes an N  (default=`0')
-\item[\Opt{-L},\LOptArg{lower-count}{=LONG}] Don't output k-mer with count < lower-count
-\item[\Opt{-U},\LOptArg{upper-count}{=LONG}] Don't output k-mer with count > upper-count
-\item[\LOptArg{matrix}{=Matrix}] file      Hash function binary matrix
-\item[\LOptArg{timing}{=Timing}] file      Print timing information
-\end{description}
-\subsection{histo}
-
-Create an histogram of k-mer occurrences
-
-Usage: jellyfish histo [OPTIONS]... [database.jf]...
-
-\begin{description}
-\item[\LOpt{help}] Print help and exit
-\item[\Opt{-V},\LOpt{version}] Print version and exit
-\item[\Opt{-s},\LOptArg{buffer-size}{=Buffer}] length
-Length in bytes of input buffer  
-(default=`10000000')
-\item[\Opt{-l},\LOptArg{low}{=LONG}] Low count value of histogram  (default=`1')
-\item[\Opt{-h},\LOptArg{high}{=LONG}] High count value of histogram  
-(default=`10000')
-\item[\Opt{-i},\LOptArg{increment}{=LONG}] Increment value for buckets  (default=`1')
-\item[\Opt{-t},\LOptArg{threads}{=INT}] Number of threads  (default=`1')
-\item[\Opt{-o},\LOptArg{output}{=STRING}] Output file  (default=`/dev/fd/1')
-\end{description}
-\subsection{dump}
-
-Dump k-mer counts
-
-Usage: jellyfish stats [OPTIONS]... [database.jf]...
-
-\begin{description}
-\item[\Opt{-h},\LOpt{help}] Print help and exit
-\item[\Opt{-V},\LOpt{version}] Print version and exit
-\item[\Opt{-c},\LOpt{column}] Column format  (default=off)
-\item[\Opt{-t},\LOpt{tab}] Tab separator  (default=off)
-\item[\Opt{-L},\LOptArg{lower-count}{=LONG}] Don't output k-mer with count < lower-count
-\item[\Opt{-U},\LOptArg{upper-count}{=LONG}] Don't output k-mer with count > upper-count
-\item[\Opt{-o},\LOptArg{output}{=STRING}] Output file  (default=`/dev/fd/1')
+\item[\Opt{-m},\LOptArg{mer-len}{=uint32}] \noindent *Length of mer
+\item[\Opt{-s},\LOptArg{size}{=uint64}] \noindent *Hash size
+\item[\Opt{-t},\LOptArg{threads}{=uint32}] \noindent Number of threads (1)
+\item[\Opt{-o},\LOptArg{output}{=string}] \noindent Output prefix (mer\_counts)
+\item[\Opt{-c},\LOptArg{counter-len}{=Length}] \noindent in bits         Length of counting field (7)
+\item[\LOptArg{out-counter-len}{=Length}] \noindent in bytes    Length of counter field in output (4)
+\item[\Opt{-C},\LOpt{both-strands}] \noindent Count both strand, canonical representation (false)
+\item[\Opt{-p},\LOptArg{reprobes}{=uint32}] \noindent Maximum number of reprobes (62)
+\item[\Opt{-r},\LOpt{raw}] \noindent Write raw database (false)
+\item[\Opt{-q},\LOpt{quake}] \noindent Quake compatibility mode (false)
+\item[\LOptArg{quality-start}{=uint32}] \noindent Starting ASCII for quality values (64)
+\item[\LOptArg{min-quality}{=uint32}] \noindent Minimum quality. A base with lesser quality becomes an N (0)
+\item[\Opt{-L},\LOptArg{lower-count}{=uint64}] \noindent Don't output k-mer with count < lower-count
+\item[\Opt{-U},\LOptArg{upper-count}{=uint64}] \noindent Don't output k-mer with count > upper-count
+\item[\LOptArg{matrix}{=Matrix}] \noindent file                 Hash function binary matrix
+\item[\LOptArg{timing}{=Timing}] \noindent file                 Print timing information
+\item[\LOptArg{stats}{=Stats}] \noindent file                   Print stats
+\item[\LOpt{usage}] \noindent Usage
+\item[\Opt{-h},\LOpt{help}] \noindent This message
+\item[\LOpt{full-help}] \noindent Detailed help
+\item[\Opt{-V},\LOpt{version}] \noindent Version
 \end{description}
 \subsection{stats}
+\noindent Usage: jellyfish stats [options] db:path
 
-Statistics
+\noindent Statistics
 
-Usage: jellyfish stats [OPTIONS]... [database.jf]...
+\noindent Display some statistics about the k-mers in the hash:
 
+\noindent Unique:    Number of k-mers which occur only once.
+\noindent Distinct:  Number of k-mers, not counting multiplicity.
+\noindent Total:     Number of k-mers, including multiplicity.
+\noindent Max\_count: Maximum number of occurrence of a k-mer.
+
+\noindent Options (default value in (), *required):
 \begin{description}
-\item[\Opt{-h},\LOpt{help}] Print help and exit
-\item[\LOpt{full-help}] Print help, including hidden options, and exit
-\item[\Opt{-V},\LOpt{version}] Print version and exit
-\item[\Opt{-L},\LOptArg{lower-count}{=LONG}] Don't output k-mer with count < lower-count
-\item[\Opt{-U},\LOptArg{upper-count}{=LONG}] Don't output k-mer with count > upper-count
-\item[\Opt{-v},\LOpt{verbose}] Verbose  (default=off)
-\item[\Opt{-o},\LOptArg{output}{=STRING}] Output file  (default=`/dev/fd/1')
+\item[\Opt{-L},\LOptArg{lower-count}{=uint64}] \noindent Don't consider k-mer with count < lower-count
+\item[\Opt{-U},\LOptArg{upper-count}{=uint64}] \noindent Don't consider k-mer with count > upper-count
+\item[\Opt{-v},\LOpt{verbose}] \noindent Verbose (false)
+\item[\Opt{-o},\LOptArg{output}{=c\_string}] \noindent Output file
+\item[\LOpt{usage}] \noindent Usage
+\item[\Opt{-h},\LOpt{help}] \noindent This message
+\item[\LOpt{full-help}] \noindent Detailed help
+\item[\Opt{-V},\LOpt{version}] \noindent Version
 \end{description}
-\subsection{merge}
+\subsection{histo}
+\noindent Usage: jellyfish histo [options] db:path
 
-Merge jellyfish databases
+\noindent Create an histogram of k-mer occurrences
 
-Usage: jellyfish merge [OPTIONS]... [database.jf]...
+\noindent Create an histogram with the number of k-mers having a given
+\noindent count. In bucket 'i' are tallied the k-mers which have a count 'c'
+\noindent satisfying 'low+i*inc <= c < low+(i+1)*inc'. Buckets in the output are
+\noindent labeled by the low end point (low+i*inc).
 
+\noindent The last bucket in the output behaves as a catchall: it tallies all
+\noindent k-mers with a count greater or equal to the low end point of this
+\noindent bucket.
+
+\noindent Options (default value in (), *required):
 \begin{description}
-\item[\Opt{-h},\LOpt{help}] Print help and exit
-\item[\Opt{-V},\LOpt{version}] Print version and exit
-\item[\Opt{-s},\LOptArg{buffer-size}{=Buffer}] length
-Length in bytes of input buffer  
-(default=`10000000')
-\item[\Opt{-o},\LOptArg{output}{=STRING}] Output file  (default=`mer\_counts\_merged.jf')
-\item[\LOptArg{out-counter-len}{=INT}] Length (in bytes) of counting field in output  
-(default=`4')
-\item[\LOptArg{out-buffer-size}{=LONG}] Size of output buffer per thread  
-(default=`10000000')
-\item[\Opt{-v},\LOpt{verbose}] Be verbose  (default=off)
+\item[\Opt{-l},\LOptArg{low}{=uint64}] \noindent Low count value of histogram (1)
+\item[\Opt{-h},\LOptArg{high}{=uint64}] \noindent High count value of histogram (10000)
+\item[\Opt{-i},\LOptArg{increment}{=uint64}] \noindent Increment value for buckets (1)
+\item[\Opt{-t},\LOptArg{threads}{=uint32}] \noindent Number of threads (1)
+\item[\Opt{-f},\LOpt{full}] \noindent Full histo. Don't skip count 0. (false)
+\item[\Opt{-o},\LOptArg{output}{=c\_string}] \noindent Output file
+\item[\Opt{-v},\LOpt{verbose}] \noindent Output information (false)
+\item[\LOpt{usage}] \noindent Usage
+\item[\LOpt{help}] \noindent This message
+\item[\LOpt{full-help}] \noindent Detailed help
+\item[\Opt{-V},\LOpt{version}] \noindent Version
+\end{description}
+\subsection{query}
+\noindent Usage: jellyfish query [options] db:path
+
+\noindent Query from a compacted database
+
+\noindent Query a hash. It reads k-mers from the standard input and write the counts on the standard output.
+
+\noindent Options (default value in (), *required):
+\begin{description}
+\item[\Opt{-C},\LOpt{both-strands}] \noindent Both strands (false)
+\item[\Opt{-c},\LOpt{cary-bit}] \noindent Value field as the cary bit information (false)
+\item[\Opt{-i},\LOptArg{input}{=file}] \noindent Input file
+\item[\Opt{-o},\LOptArg{output}{=file}] \noindent Output file
+\item[\LOpt{usage}] \noindent Usage
+\item[\Opt{-h},\LOpt{help}] \noindent This message
+\item[\Opt{-V},\LOpt{version}] \noindent Version
 \end{description}
 \subsection{cite}
+\noindent Usage: jellyfish cite [options]
 
-How to cite Jellyfish's paper
+\noindent How to cite Jellyfish's paper
 
-Usage: jellyfish cite [OPTIONS]...
+\noindent Citation of paper
 
+\noindent Options (default value in (), *required):
 \begin{description}
-\item[\Opt{-h},\LOpt{help}] Print help and exit
-\item[\Opt{-V},\LOpt{version}] Print version and exit
-\item[\Opt{-b},\LOpt{bibtex}] Bibtex format  (default=off)
-\item[\Opt{-o},\LOptArg{output}{=STRING}] Output file  (default=`/dev/fd/1')
+\item[\Opt{-b},\LOpt{bibtex}] \noindent Bibtex format (false)
+\item[\Opt{-o},\LOptArg{output}{=c\_string}] \noindent Output file
+\item[\LOpt{usage}] \noindent Usage
+\item[\Opt{-h},\LOpt{help}] \noindent This message
+\item[\Opt{-V},\LOpt{version}] \noindent Version
 \end{description}

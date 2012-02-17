@@ -35,7 +35,8 @@ module HelpGrammar
         res << sws.elements.map { |s| s.to_tex }.join(",")
         res << "] "
       end
-      res << text.text_value
+      res << "\\noindent " unless text.text_value.empty?
+      res << quote(text.text_value)
     end
   end
 
@@ -69,17 +70,21 @@ module HelpGrammar
         r4 = _nt_text
         s0 << r4
         if r4
-          if has_terminal?('\G[\\n]', true, index)
-            r6 = true
-            @index += 1
-          else
-            r6 = nil
+          s5, i5 = [], index
+          loop do
+            if has_terminal?('\G[\\n]', true, index)
+              r6 = true
+              @index += 1
+            else
+              r6 = nil
+            end
+            if r6
+              s5 << r6
+            else
+              break
+            end
           end
-          if r6
-            r5 = r6
-          else
-            r5 = instantiate_node(SyntaxNode,input, index...index)
-          end
+          r5 = instantiate_node(SyntaxNode,input, i5...index, s5)
           s0 << r5
         end
       end
@@ -279,7 +284,7 @@ module HelpGrammar
 
   module LongSwitch2
     def to_tex
-      val.empty? ? "\\LOpt{#{name.text_value}}" : "\\LOptArg{#{name.text_value}}{#{val.text_value}}"
+      val.empty? ? "\\LOpt{#{quote(name.text_value)}}" : "\\LOptArg{#{quote(name.text_value)}}{#{quote(val.text_value)}}"
     end
   end
 

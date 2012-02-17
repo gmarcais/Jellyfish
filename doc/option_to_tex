@@ -1,8 +1,16 @@
 #! /usr/bin/env ruby
 
+exit 1 if ARGV[0].nil?
+
 require 'rubygems'
 require 'treetop'
+
+
+def quote(str)
+  str.gsub(/_/, "\\_")
+end
 require 'help_parse.rb'
+
 
 class IsOpen
   attr_accessor :is_open
@@ -11,6 +19,7 @@ class IsOpen
   end
 end
 opened = IsOpen.new
+
 
 parser = HelpGrammarParser.new
 open(ARGV[0]) { |fd|

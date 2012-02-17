@@ -19,6 +19,7 @@
 \usepackage[nofancy]{latex2man}
 \message{no fancyhdr or fancyheadings package present, discard it}
 }}
+\usepackage[letterpaper]{geometry}
 
 \newcommand{\ddash}[1]{-\,-#1}
 \newcommand{\LOpt}[1]{\Opt{\ddash{#1}}}
@@ -27,7 +28,7 @@
 \newcommand{\LoOptArg}[2]{\oOptArg{\ddash{#1}}{#2}}
 \newcommand{\LoOptoArg}[2]{\oOptoArg{\ddash{#1}}{#2}}
 
-\setVersion{1.1}
+\setVersion{1.1.4}
 \setDate{2010/10/1}
 
 \begin{document}
@@ -44,7 +45,11 @@
 \Prog{jellyfish dump}  \Arg{hash} \\
 \Prog{jellyfish stats} \Arg{hash} \\
 \Prog{jellyfish histo} \oOptArg{-h}{high} \oOptArg{-l}{low} \oOptArg{-i}{increment} \Arg{hash} \\
-\Prog{jellyfish query} \Arg{hash}
+\Prog{jellyfish query} \Arg{hash} \\
+\Prog{jellyfish cite} \\
+
+
+Plus equivalent version for \Prog{Quake} mode: \Prog{qhisto}, \Prog{qdump} and \Prog{qmerge}.
 
 \section{Description}
 
@@ -63,23 +68,28 @@ This will count the the 22-mers in input.fasta with 32 threads. The
 counter field in the hash uses only 3 bits and the hash has at least
 10 million entries.
 
-The output files will be named output_0, output_1, etc. (the prefix is
-specified with the \Opt{-o} switch). If the hash is large enough (has
-specified by the \Opt{-s} switch) to fit all the $k$-mers, there will
-be only one output file named output_0. If the hash filled up before
-all the mers were read, the hash is dumped to disk, zeroed out and
-reading in mers resumes.
+The output files will be named output\_0, output\_1, etc. (the prefix
+is specified with the \Opt{-o} switch). If the hash is large enough
+(has specified by the \Opt{-s} switch) to fit all the $k$-mers, there
+will be only one output file named output\_0. If the hash filled up
+before all the mers were read, the hash is dumped to disk, zeroed out
+and reading in mers resumes. Multiple intermediary files will be
+present on the disks, named output\_0, output\_1, etc.
 
 To obtain correct results from the other sub-commands (such as histo,
-stats, etc.), the multiple output files need to be merged into one
+stats, etc.), the multiple output files, if any, need to be merged into one
 with the merge command. For example with the following command:
 
 \begin{verbatim}
-jellyfish merge -o output.jf output_*
+jellyfish merge -o output.jf output\_*
 \end{verbatim}
 
-\subsection{Orientation}
+Should you get many intermediary output files (say hundreds), the size
+of the hash table is too small. Rerunning \Prog{Jellyfish} with a
+larger size (option \Opt{-s}) is probably faster than merging all the
+intermediary files.
 
+\subsection{Orientation}
 When the orientation of the sequences in the input fasta file is not
 known, e.g. in sequencing reads, using \LOpt{both-strands} (\Opt{-C})
 makes the most sense.
@@ -98,10 +108,13 @@ files should be written to disk. So the parameter \Opt{-s} should be
 chosen to fit as many $k$-mers as possible (ideally all of them) while
 still fitting in memory.
 
-For example, suppose we count $k$-mers in short sequencing reads with,
-there is $n$ reads and there is an average of 1 error per reads where
+We consider to examples: counting mers in sequencing reads and in a
+finished genome.
+
+First, suppose we count $k$-mers in short sequencing reads:
+there are $n$ reads and there is an average of 1 error per reads where
 each error generates $k$ unique mers. If the genome size is $G$, the
-size of the hash to fit all $k$-mers at once would be: $(G +
+size of the hash (option \Opt{-s}) to fit all $k$-mers at once is estimated to: $(G +
 k*n)/0.8$. The division by $0.8$ compensates for the maximum usage of
 approximately $80\%$ of the hash table.
 
@@ -115,7 +128,7 @@ size of the hash. Hence '-s 10M' stands 10 million entries while '-s
 The actual memory usage of the hash table can be computed as
 follow. The actual size of the hash will be rounded up to the next
 power of 2: $s=2^l$. The parameter $r$ is such that the maximum
-reprobe value (\Opt{-p}) is less than $2^r$. Then the memory usage per
+reprobe value (\Opt{-p}) plus one is less than $2^r$. Then the memory usage per
 entry in the hash is (in bits, not bytes) $2k-l+r+1$. The total memory
 usage of the hash table in bytes is: $2^l*(2k-l+r+1)/8$.
 
@@ -123,18 +136,22 @@ usage of the hash table in bytes is: $2^l*(2k-l+r+1)/8$.
 To save space, the hash table supports variable length counter, i.e. a
 $k$-mer occurring only a few times will use a small counter, a $k$-mer
 occurring many times will used multiple entries in the hash. The
-\Opt{-c} specify the length of the small counter. The trade off is: a
-low value will save space per entry in the hash but will increase the
-number of entries used, hence maybe requiring a larger hash. In
-practice, use a value for \Opt{-c} so that most of you $k$-mers
+\Opt{-c} specify the length of the small counter. The trade off is as
+follows: a low value will save space per entry in the hash but can
+potentially increase the number of entries used, hence maybe requiring
+a larger hash.
+
+In practice, use a value for \Opt{-c} so that most of you $k$-mers
 require only 1 entry. For example, to count $k$-mers in a genome,
 where most of the sequence is unique, use \OptArg{-c}{1} or
-\OptArg{-c}{2}. For sequencing reads, use a value for
-\Opt{-c} large enough to counts up to twice the coverage.
+\OptArg{-c}{2}. For sequencing reads, use a value for \Opt{-c} large
+enough to counts up to twice the coverage.
 
-\section{Options}
-The following subcommand are used to look at the result: histo, dump, stats.
+
+
+\section{Subcommands and options}
 include(options.tex)
+
 \section{Version}
 
 Version: \Version\ of \Date
@@ -144,6 +161,9 @@ Version: \Version\ of \Date
 \begin{itemize}
 \item \Prog{jellyfish merge} has not been parallelized and is
   relatively slow.
+\item The hash table does not grow in memory automatically and
+  \Prog{jellyfish merge} is not called automatically on the
+  intermediary files (if any).
 \end{itemize}
 
 \section{Copyright \& License}

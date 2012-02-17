@@ -1,5 +1,5 @@
 '\" t
-.\" Manual page created with latex2man on Sat Apr 23 05:39:15 EDT 2011
+.\" Manual page created with latex2man on Fri Feb 17 13:13:24 EST 2012
 .\" NOTE: This file is generated, DO NOT EDIT.
 .de Vb
 .ft CW
@@ -48,6 +48,14 @@ jellyfish histo
 .br
 jellyfish query
 \fIhash\fP
+.br
+jellyfish cite
+.br
+.PP
+Plus equivalent version for Quake
+mode: qhisto,
+qdump
+and qmerge\&.
 .PP
 .SH DESCRIPTION
 
@@ -56,114 +64,168 @@ Jellyfish
 is a k\-mer counter based on a multi\-threaded hash 
 table implementation. 
 .PP
+.SS COUNTING AND MERGING
+.PP
 To count k\-mers, use a command like: 
 .PP
 .Vb
 jellyfish count \-m 22 \-o output \-c 3 \-s 10000000 \-t 32 input.fasta
 .Ve
 .PP
-This will count the the 22\-mers in species.fasta with 32 threads. The 
+This will count the the 22\-mers in input.fasta with 32 threads. The 
 counter field in the hash uses only 3 bits and the hash has at least 
-10 million entries. Let the size of the table be s=2^l and the max 
-reprobe value is less than 2^r, then the memory usage per entry in 
-the hash is (in bits, not bytes) 2k\-l+r+1\&. 
+10 million entries. 
 .PP
-To save space, the hash table supports variable length counter, i.e. a 
-k\-mer occurring only a few times will use a small counter, a k\-mer 
-occurring many times will used multiple entries in the hash. The 
-\fB\-c\fP
-specify the length of the small counter. The tradeoff is: a 
-low value will save space per entry in the hash but will increase the 
-number of entries used, hence maybe requiring a larger hash. In 
-practice, use a value for \fB\-c\fP
-so that most of you k\-mers 
-require only 1 entry. For example, to count k\-mers in a genome, 
-where most of the sequence is unique, use \fB\-c\fP\fI1\fP
-or 
-\fB\-c\fP\fI2\fP\&.
-For sequencing reads, use a value for 
-\fB\-c\fP
-large enough to counts up to twice the coverage. 
+The output files will be named output_0, output_1, etc. (the prefix 
+is specified with the \fB\-o\fP
+switch). If the hash is large enough 
+(has specified by the \fB\-s\fP
+switch) to fit all the k\-mers, there 
+will be only one output file named output_0. If the hash filled up 
+before all the mers were read, the hash is dumped to disk, zeroed out 
+and reading in mers resumes. Multiple intermediary files will be 
+present on the disks, named output_0, output_1, etc. 
 .PP
+To obtain correct results from the other sub\-commands (such as histo, 
+stats, etc.), the multiple output files, if any, need to be merged into one 
+with the merge command. For example with the following command: 
+.PP
+.Vb
+jellyfish merge \-o output.jf output\\_*
+.Ve
+.PP
+Should you get many intermediary output files (say hundreds), the size 
+of the hash table is too small. Rerunning Jellyfish
+with a 
+larger size (option \fB\-s\fP)
+is probably faster than merging all the 
+intermediary files. 
+.PP
+.SS ORIENTATION
 When the orientation of the sequences in the input fasta file is not 
 known, e.g. in sequencing reads, using \fB--both\-strands\fP
 (\fB\-C\fP)
 makes the most sense. 
 .PP
-The following subcommand are used to look at the result: histo, dump, stats. 
+For any k\-mer m, its canonical representation is m itself or its 
+reverse\-complement, whichever comes first lexicographically. With the 
+option \fB\-C\fP,
+only the canonical representation of the mers are 
+stored in the hash and the count value is the number of occurrences of 
+both the mer and its reverse\-complement. 
 .PP
-.SH OPTIONS
+.SS CHOOSING THE HASH SIZE
+.PP
+To achieve the best performance, a minimum number of intermediary 
+files should be written to disk. So the parameter \fB\-s\fP
+should be 
+chosen to fit as many k\-mers as possible (ideally all of them) while 
+still fitting in memory. 
+.PP
+We consider to examples: counting mers in sequencing reads and in a 
+finished genome. 
+.PP
+First, suppose we count k\-mers in short sequencing reads: 
+there are n reads and there is an average of 1 error per reads where 
+each error generates k unique mers. If the genome size is G, the 
+size of the hash (option \fB\-s\fP)
+to fit all k\-mers at once is estimated to: $(G + 
+k*n)/0.8$. The division by 0.8 compensates for the maximum usage of 
+approximately $80%$ of the hash table. 
+.PP
+On the other hand, when counting k\-mers in an assembled sequence of 
+length G, setting \fB\-s\fP
+to G is appropriate. 
+.PP
+As a matter of convenience, Jellyfish understands ISO suffixes for the 
+size of the hash. Hence \&'\-s 10M\&' stands 10 million entries while \&'\-s 
+50G\&' stands for 50 billion entries. 
+.PP
+The actual memory usage of the hash table can be computed as 
+follow. The actual size of the hash will be rounded up to the next 
+power of 2: s=2^l\&. The parameter r is such that the maximum 
+reprobe value (\fB\-p\fP)
+plus one is less than 2^r\&. Then the memory usage per 
+entry in the hash is (in bits, not bytes) 2k\-l+r+1\&. The total memory 
+usage of the hash table in bytes is: 2^l*(2k\-l+r+1)/8\&. 
+.PP
+.SS CHOOSING THE COUNTING FIELD SIZE
+To save space, the hash table supports variable length counter, i.e. a 
+k\-mer occurring only a few times will use a small counter, a k\-mer 
+occurring many times will used multiple entries in the hash. The 
+\fB\-c\fP
+specify the length of the small counter. The trade off is as 
+follows: a low value will save space per entry in the hash but can 
+potentially increase the number of entries used, hence maybe requiring 
+a larger hash. 
+.PP
+In practice, use a value for \fB\-c\fP
+so that most of you k\-mers 
+require only 1 entry. For example, to count k\-mers in a genome, 
+where most of the sequence is unique, use \fB\-c\fP\fI1\fP
+or 
+\fB\-c\fP\fI2\fP\&.
+For sequencing reads, use a value for \fB\-c\fP
+large 
+enough to counts up to twice the coverage. 
+.PP
+.SH SUBCOMMANDS AND OPTIONS
 
 .SS COUNT
+Usage: jellyfish count [options] file:path+ 
 .PP
 Count k\-mers or qmers in fasta or fastq files 
 .PP
-Usage: jellyfish count [OPTIONS]... [file.f[aq]]... 
-.PP
-.TP
-\fB\-h\fP,\fB--help\fP
- Print help and exit 
-.TP
-\fB--full\-help\fP
- Print help, including hidden options, and exit 
-.TP
-\fB\-V\fP,\fB--version\fP
- Print version and exit 
+Options (default value in (), *required): 
 .TP
 \fB\-m\fP,
-\fB--mer\-len\fP\fI=INT\fP
- Length of mer (mandatory) 
+\fB--mer\-len\fP\fI=uint32\fP
+ *Length of mer 
 .TP
 \fB\-s\fP,
-\fB--size\fP\fI=LONG\fP
- Hash size (mandatory) 
+\fB--size\fP\fI=uint64\fP
+ *Hash size 
 .TP
 \fB\-t\fP,
-\fB--threads\fP\fI=INT\fP
- Number of threads (default=1) 
+\fB--threads\fP\fI=uint32\fP
+ Number of threads (1) 
 .TP
 \fB\-o\fP,
-\fB--output\fP\fI=STRING\fP
- Output prefix (default=mer_counts) 
+\fB--output\fP\fI=string\fP
+ Output prefix (mer_counts) 
 .TP
 \fB\-c\fP,
 \fB--counter\-len\fP\fI=Length\fP
- in bits 
-Length of counting field (default=7) 
+ in bits Length of counting field (7) 
 .TP
 \fB--out\-counter\-len\fP\fI=Length\fP
- in bytes 
-Length of counter field in output 
-(default=4) 
+ in bytes Length of counter field in output (4) 
 .TP
 \fB\-C\fP,\fB--both\-strands\fP
- Count both strand, canonical representation 
-(default=off) 
+ Count both strand, canonical representation (false) 
 .TP
 \fB\-p\fP,
-\fB--reprobes\fP\fI=INT\fP
- Maximum number of reprobes (default=62) 
+\fB--reprobes\fP\fI=uint32\fP
+ Maximum number of reprobes (62) 
 .TP
 \fB\-r\fP,\fB--raw\fP
- Write raw database (default=off) 
+ Write raw database (false) 
 .TP
 \fB\-q\fP,\fB--quake\fP
- Quake compatibility mode (default=off) 
+ Quake compatibility mode (false) 
 .TP
-\fB--quality\-start\fP\fI=INT\fP
- Starting ASCII for quality values 
-(default=64) 
+\fB--quality\-start\fP\fI=uint32\fP
+ Starting ASCII for quality values (64) 
 .TP
-\fB--min\-quality\fP\fI=INT\fP
- Minimum quality. A base with lesser quality 
-becomes an N (default=0) 
+\fB--min\-quality\fP\fI=uint32\fP
+ Minimum quality. A base with lesser quality becomes an N (0) 
 .TP
 \fB\-L\fP,
-\fB--lower\-count\fP\fI=LONG\fP
+\fB--lower\-count\fP\fI=uint64\fP
  Don\&'t output k\-mer with count < lower\-count 
 .TP
 \fB\-U\fP,
-\fB--upper\-count\fP\fI=LONG\fP
+\fB--upper\-count\fP\fI=uint64\fP
  Don\&'t output k\-mer with count > upper\-count 
 .TP
 \fB--matrix\fP\fI=Matrix\fP
@@ -171,175 +233,192 @@ becomes an N (default=0)
 .TP
 \fB--timing\fP\fI=Timing\fP
  file Print timing information 
-.PP
-.SS HISTO
-.PP
-Create an histogram of k\-mer occurrences 
-.PP
-Usage: jellyfish histo [OPTIONS]... [database.jf]... 
-.PP
 .TP
-\fB--help\fP
- Print help and exit 
+\fB--stats\fP\fI=Stats\fP
+ file Print stats 
 .TP
-\fB\-V\fP,\fB--version\fP
- Print version and exit 
-.TP
-\fB\-s\fP,
-\fB--buffer\-size\fP\fI=Buffer\fP
- length 
-Length in bytes of input buffer 
-(default=10000000) 
-.TP
-\fB\-l\fP,
-\fB--low\fP\fI=LONG\fP
- Low count value of histogram (default=1) 
-.TP
-\fB\-h\fP,
-\fB--high\fP\fI=LONG\fP
- High count value of histogram 
-(default=10000) 
-.TP
-\fB\-i\fP,
-\fB--increment\fP\fI=LONG\fP
- Increment value for buckets (default=1) 
-.TP
-\fB\-t\fP,
-\fB--threads\fP\fI=INT\fP
- Number of threads (default=1) 
-.TP
-\fB\-o\fP,
-\fB--output\fP\fI=STRING\fP
- Output file (default=/dev/fd/1) 
-.PP
-.SS DUMP
-.PP
-Dump k\-mer counts 
-.PP
-Usage: jellyfish stats [OPTIONS]... [database.jf]... 
-.PP
+\fB--usage\fP
+ Usage 
 .TP
 \fB\-h\fP,\fB--help\fP
- Print help and exit 
+ This message 
+.TP
+\fB--full\-help\fP
+ Detailed help 
 .TP
 \fB\-V\fP,\fB--version\fP
- Print version and exit 
-.TP
-\fB\-c\fP,\fB--column\fP
- Column format (default=off) 
-.TP
-\fB\-t\fP,\fB--tab\fP
- Tab separator (default=off) 
-.TP
-\fB\-L\fP,
-\fB--lower\-count\fP\fI=LONG\fP
- Don\&'t output k\-mer with count < lower\-count 
-.TP
-\fB\-U\fP,
-\fB--upper\-count\fP\fI=LONG\fP
- Don\&'t output k\-mer with count > upper\-count 
-.TP
-\fB\-o\fP,
-\fB--output\fP\fI=STRING\fP
- Output file (default=/dev/fd/1) 
+ Version 
 .PP
 .SS STATS
+Usage: jellyfish stats [options] db:path 
 .PP
 Statistics 
 .PP
-Usage: jellyfish stats [OPTIONS]... [database.jf]... 
+Display some statistics about the k\-mers in the hash: 
 .PP
-.TP
-\fB\-h\fP,\fB--help\fP
- Print help and exit 
-.TP
-\fB--full\-help\fP
- Print help, including hidden options, and exit 
-.TP
-\fB\-V\fP,\fB--version\fP
- Print version and exit 
+Unique: Number of k\-mers which occur only once. 
+Distinct: Number of k\-mers, not counting multiplicity. 
+Total: Number of k\-mers, including multiplicity. 
+Max_count: Maximum number of occurrence of a k\-mer. 
+.PP
+Options (default value in (), *required): 
 .TP
 \fB\-L\fP,
-\fB--lower\-count\fP\fI=LONG\fP
- Don\&'t output k\-mer with count < lower\-count 
+\fB--lower\-count\fP\fI=uint64\fP
+ Don\&'t consider k\-mer with count < lower\-count 
 .TP
 \fB\-U\fP,
-\fB--upper\-count\fP\fI=LONG\fP
- Don\&'t output k\-mer with count > upper\-count 
+\fB--upper\-count\fP\fI=uint64\fP
+ Don\&'t consider k\-mer with count > upper\-count 
 .TP
 \fB\-v\fP,\fB--verbose\fP
- Verbose (default=off) 
+ Verbose (false) 
 .TP
 \fB\-o\fP,
-\fB--output\fP\fI=STRING\fP
- Output file (default=/dev/fd/1) 
-.PP
-.SS MERGE
-.PP
-Merge jellyfish databases 
-.PP
-Usage: jellyfish merge [OPTIONS]... [database.jf]... 
-.PP
+\fB--output\fP\fI=c_string\fP
+ Output file 
+.TP
+\fB--usage\fP
+ Usage 
 .TP
 \fB\-h\fP,\fB--help\fP
- Print help and exit 
+ This message 
+.TP
+\fB--full\-help\fP
+ Detailed help 
 .TP
 \fB\-V\fP,\fB--version\fP
- Print version and exit 
+ Version 
+.PP
+.SS HISTO
+Usage: jellyfish histo [options] db:path 
+.PP
+Create an histogram of k\-mer occurrences 
+.PP
+Create an histogram with the number of k\-mers having a given 
+count. In bucket \&'i\&' are tallied the k\-mers which have a count \&'c\&' 
+satisfying \&'low+i*inc <= c < low+(i+1)*inc\&'\&. Buckets in the output are 
+labeled by the low end point (low+i*inc). 
+.PP
+The last bucket in the output behaves as a catchall: it tallies all 
+k\-mers with a count greater or equal to the low end point of this 
+bucket. 
+.PP
+Options (default value in (), *required): 
 .TP
-\fB\-s\fP,
-\fB--buffer\-size\fP\fI=Buffer\fP
- length 
-Length in bytes of input buffer 
-(default=10000000) 
+\fB\-l\fP,
+\fB--low\fP\fI=uint64\fP
+ Low count value of histogram (1) 
+.TP
+\fB\-h\fP,
+\fB--high\fP\fI=uint64\fP
+ High count value of histogram (10000) 
+.TP
+\fB\-i\fP,
+\fB--increment\fP\fI=uint64\fP
+ Increment value for buckets (1) 
+.TP
+\fB\-t\fP,
+\fB--threads\fP\fI=uint32\fP
+ Number of threads (1) 
+.TP
+\fB\-f\fP,\fB--full\fP
+ Full histo. Don\&'t skip count 0. (false) 
 .TP
 \fB\-o\fP,
-\fB--output\fP\fI=STRING\fP
- Output file (default=mer_counts_merged.jf) 
-.TP
-\fB--out\-counter\-len\fP\fI=INT\fP
- Length (in bytes) of counting field in output 
-(default=4) 
-.TP
-\fB--out\-buffer\-size\fP\fI=LONG\fP
- Size of output buffer per thread 
-(default=10000000) 
+\fB--output\fP\fI=c_string\fP
+ Output file 
 .TP
 \fB\-v\fP,\fB--verbose\fP
- Be verbose (default=off) 
+ Output information (false) 
+.TP
+\fB--usage\fP
+ Usage 
+.TP
+\fB--help\fP
+ This message 
+.TP
+\fB--full\-help\fP
+ Detailed help 
+.TP
+\fB\-V\fP,\fB--version\fP
+ Version 
+.PP
+.SS QUERY
+Usage: jellyfish query [options] db:path 
+.PP
+Query from a compacted database 
+.PP
+Query a hash. It reads k\-mers from the standard input and write the counts on the standard output. 
+.PP
+Options (default value in (), *required): 
+.TP
+\fB\-C\fP,\fB--both\-strands\fP
+ Both strands (false) 
+.TP
+\fB\-c\fP,\fB--cary\-bit\fP
+ Value field as the cary bit information (false) 
+.TP
+\fB\-i\fP,
+\fB--input\fP\fI=file\fP
+ Input file 
+.TP
+\fB\-o\fP,
+\fB--output\fP\fI=file\fP
+ Output file 
+.TP
+\fB--usage\fP
+ Usage 
+.TP
+\fB\-h\fP,\fB--help\fP
+ This message 
+.TP
+\fB\-V\fP,\fB--version\fP
+ Version 
 .PP
 .SS CITE
+Usage: jellyfish cite [options] 
 .PP
 How to cite Jellyfish\&'s paper 
 .PP
-Usage: jellyfish cite [OPTIONS]... 
+Citation of paper 
 .PP
-.TP
-\fB\-h\fP,\fB--help\fP
- Print help and exit 
-.TP
-\fB\-V\fP,\fB--version\fP
- Print version and exit 
+Options (default value in (), *required): 
 .TP
 \fB\-b\fP,\fB--bibtex\fP
- Bibtex format (default=off) 
+ Bibtex format (false) 
 .TP
 \fB\-o\fP,
-\fB--output\fP\fI=STRING\fP
- Output file (default=/dev/fd/1) 
+\fB--output\fP\fI=c_string\fP
+ Output file 
+.TP
+\fB--usage\fP
+ Usage 
+.TP
+\fB\-h\fP,\fB--help\fP
+ This message 
+.TP
+\fB\-V\fP,\fB--version\fP
+ Version 
 .PP
 .SH VERSION
 
 .PP
-Version: 1.1 of 2010/10/1
+Version: 1.1.4 of 2010/10/1
 .PP
 .SH BUGS
 
 .PP
 .TP
 .B *
-jellyfish merge has not been parallelized and is very
-slow. 
+jellyfish merge has not been parallelized and is
+relatively slow. 
+.TP
+.B *
+The hash table does not grow in memory automatically and 
+jellyfish merge
+is not called automatically on the 
+intermediary files (if any). 
 .PP
 .SH COPYRIGHT & LICENSE
 
