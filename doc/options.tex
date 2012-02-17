@@ -78,6 +78,42 @@
 \item[\LOpt{full-help}] \noindent Detailed help
 \item[\Opt{-V},\LOpt{version}] \noindent Version
 \end{description}
+\subsection{dump}
+\noindent Usage: jellyfish stats [options] db:path
+
+\noindent Dump k-mer counts
+
+\noindent By default, dump in a fasta format where the header is the count and
+\noindent the sequence is the sequence of the k-mer. The column format is a 2
+\noindent column output: k-mer count.
+
+\noindent Options (default value in (), *required):
+\begin{description}
+\item[\Opt{-c},\LOpt{column}] \noindent Column format (false)
+\item[\Opt{-t},\LOpt{tab}] \noindent Tab separator (false)
+\item[\Opt{-L},\LOptArg{lower-count}{=uint64}] \noindent Don't output k-mer with count < lower-count
+\item[\Opt{-U},\LOptArg{upper-count}{=uint64}] \noindent Don't output k-mer with count > upper-count
+\item[\Opt{-o},\LOptArg{output}{=c\_string}] \noindent Output file
+\item[\LOpt{usage}] \noindent Usage
+\item[\Opt{-h},\LOpt{help}] \noindent This message
+\item[\Opt{-V},\LOpt{version}] \noindent Version
+\end{description}
+\subsection{merge}
+\noindent Usage: jellyfish merge [options] input:c\_string+
+
+\noindent Merge jellyfish databases
+
+\noindent Options (default value in (), *required):
+\begin{description}
+\item[\Opt{-s},\LOptArg{buffer-size}{=Buffer}] \noindent length          Length in bytes of input buffer (10000000)
+\item[\Opt{-o},\LOptArg{output}{=string}] \noindent Output file (mer\_counts\_merged.jf)
+\item[\LOptArg{out-counter-len}{=uint32}] \noindent Length (in bytes) of counting field in output (4)
+\item[\LOptArg{out-buffer-size}{=uint64}] \noindent Size of output buffer per thread (10000000)
+\item[\Opt{-v},\LOpt{verbose}] \noindent Be verbose (false)
+\item[\LOpt{usage}] \noindent Usage
+\item[\Opt{-h},\LOpt{help}] \noindent This message
+\item[\Opt{-V},\LOpt{version}] \noindent Version
+\end{description}
 \subsection{query}
 \noindent Usage: jellyfish query [options] db:path
 
@@ -108,5 +144,57 @@
 \item[\Opt{-o},\LOptArg{output}{=c\_string}] \noindent Output file
 \item[\LOpt{usage}] \noindent Usage
 \item[\Opt{-h},\LOpt{help}] \noindent This message
+\item[\Opt{-V},\LOpt{version}] \noindent Version
+\end{description}
+\subsection{qhisto}
+\noindent Usage: jellyfish qhisto [options] db:c\_string
+
+\noindent Create an histogram of k-mer occurences
+
+\noindent Options (default value in (), *required):
+\begin{description}
+\item[\Opt{-l},\LOptArg{low}{=double}] \noindent Low count value of histogram (0.0)
+\item[\Opt{-h},\LOptArg{high}{=double}] \noindent High count value of histogram (10000.0)
+\item[\Opt{-i},\LOptArg{increment}{=double}] \noindent Increment value for buckets (1.0)
+\item[\Opt{-f},\LOpt{full}] \noindent Full histo. Don't skip count 0. (false)
+\item[\LOpt{usage}] \noindent Usage
+\item[\LOpt{help}] \noindent This message
+\item[\Opt{-V},\LOpt{version}] \noindent Version
+\end{description}
+\subsection{qdump}
+\noindent Usage: jellyfish qdump [options] db:path
+
+\noindent Dump k-mer from a qmer database
+
+\noindent By default, dump in a fasta format where the header is the count and
+\noindent the sequence is the sequence of the k-mer. The column format is a 2
+\noindent column output: k-mer count.
+
+\noindent Options (default value in (), *required):
+\begin{description}
+\item[\Opt{-c},\LOpt{column}] \noindent Column format (false)
+\item[\Opt{-t},\LOpt{tab}] \noindent Tab separator (false)
+\item[\Opt{-L},\LOptArg{lower-count}{=double}] \noindent Don't output k-mer with count < lower-count
+\item[\Opt{-U},\LOptArg{upper-count}{=double}] \noindent Don't output k-mer with count > upper-count
+\item[\Opt{-v},\LOpt{verbose}] \noindent Be verbose (false)
+\item[\Opt{-o},\LOptArg{output}{=c\_string}] \noindent Output file
+\item[\LOpt{usage}] \noindent Usage
+\item[\Opt{-h},\LOpt{help}] \noindent This message
+\item[\Opt{-V},\LOpt{version}] \noindent Version
+\end{description}
+\subsection{qmerge}
+\noindent Usage: jellyfish merge [options] db:c\_string+
+
+\noindent Merge quake databases
+
+\noindent Options (default value in (), *required):
+\begin{description}
+\item[\Opt{-s},\LOptArg{size}{=uint64}] \noindent *Merged hash table size
+\item[\Opt{-m},\LOptArg{mer-len}{=uint32}] \noindent *Mer length
+\item[\Opt{-o},\LOptArg{output}{=c\_string}] \noindent Output file (merged.jf)
+\item[\Opt{-p},\LOptArg{reprobes}{=uint32}] \noindent Maximum number of reprobes (62)
+\item[\LOpt{usage}] \noindent Usage
+\item[\Opt{-h},\LOpt{help}] \noindent This message
+\item[\LOpt{full-help}] \noindent Detailed help
 \item[\Opt{-V},\LOpt{version}] \noindent Version
 \end{description}

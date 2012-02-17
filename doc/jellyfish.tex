@@ -33,7 +33,7 @@
 
 \begin{document}
 
-\begin{Name}{1}{jellyfish}{G. Marcais}{k-mer counter}{Jellyfish: A fast k-mer counter}
+\begin{Name}{1}{jellyfish}{G. Marcais and C. Kingsford}{k-mer counter}{Jellyfish: A fast k-mer counter}
 
 \Prog{Jellyfish} is a software to count $k$-mers in DNA sequences.
 
@@ -136,7 +136,7 @@ usage of the hash table in bytes is: $2^l*(2k-l+r+1)/8$.
 To save space, the hash table supports variable length counter, i.e. a
 $k$-mer occurring only a few times will use a small counter, a $k$-mer
 occurring many times will used multiple entries in the hash. The
-\Opt{-c} specify the length of the small counter. The trade off is as
+\Opt{-c} specify the length (in bits) of the small counter. The trade off is as
 follows: a low value will save space per entry in the hash but can
 potentially increase the number of entries used, hence maybe requiring
 a larger hash.
@@ -145,7 +145,8 @@ In practice, use a value for \Opt{-c} so that most of you $k$-mers
 require only 1 entry. For example, to count $k$-mers in a genome,
 where most of the sequence is unique, use \OptArg{-c}{1} or
 \OptArg{-c}{2}. For sequencing reads, use a value for \Opt{-c} large
-enough to counts up to twice the coverage.
+enough to counts up to twice the coverage. For example, if the
+coverage is 10X, choose a counter length of $4$ (\OptArg{-c}{4}) as $2^4 > 10$.
 
 
 
@@ -180,7 +181,7 @@ Version: \Version\ of \Date
   General Public License for more details. \\
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see
-  <\URL{http://www.gnu.org/licenses/}>.
+  \URL{http://www.gnu.org/licenses/}. 
 \end{description}
 
 \section{Authors}
@@ -189,6 +190,7 @@ Guillaume Marcais \\
 University of Maryland \\
 \Email{gmarcais@umd.edu}
 
+\noindent
 Carl Kingsford \\
 University of Maryland \\
 \Email{carlk@umiacs.umd.edu}

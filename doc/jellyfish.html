@@ -1,5 +1,5 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-<!-- Manual page created with latex2man on Fri Feb 17 13:12:22 EST 2012 --
+<!-- Manual page created with latex2man on Fri Feb 17 13:29:45 EST 2012 --
 -- Author of latex2man: Juergen.Vollmer@informatik-vollmer.de --
 -- NOTE: This file is generated, DO NOT EDIT. -->
 <html>
@@ -8,7 +8,7 @@
 <h1 align=center>
 Jellyfish: A fast k-mer counter 
 </h1>
-<h4 align=center>G. Marcais </h4>
+<h4 align=center>G. Marcais and C. Kingsford </h4>
 <h4 align=center>2010/10/1</h4>
 <h4 align=center>Version 1.1.4</h4>
 <p>
@@ -30,13 +30,18 @@ is a software to count k-mers in DNA sequences.
 <li><a href="#section_8">count </a></li>
 <li><a href="#section_9">stats </a></li>
 <li><a href="#section_10">histo </a></li>
-<li><a href="#section_11">query </a></li>
-<li><a href="#section_12">cite </a></li>
+<li><a href="#section_11">dump </a></li>
+<li><a href="#section_12">merge </a></li>
+<li><a href="#section_13">query </a></li>
+<li><a href="#section_14">cite </a></li>
+<li><a href="#section_15">qhisto </a></li>
+<li><a href="#section_16">qdump </a></li>
+<li><a href="#section_17">qmerge </a></li>
 </ul>
-<li><a href="#section_13">Version </a></li>
-<li><a href="#section_14">Bugs </a></li>
-<li><a href="#section_15">Copyright &amp; License </a></li>
-<li><a href="#section_16">Authors </a></li>
+<li><a href="#section_18">Version </a></li>
+<li><a href="#section_19">Bugs </a></li>
+<li><a href="#section_20">Copyright &amp; License </a></li>
+<li><a href="#section_21">Authors </a></li>
 </ul>
 <p>
 <h2><a name="section_1">Synopsis</a></h2>
@@ -178,7 +183,7 @@ To save space, the hash table supports variable length counter, i.e. a
 k-mer occurring only a few times will use a small counter, a k-mer 
 occurring many times will used multiple entries in the hash. The 
 <b>-c</b>
-specify the length of the small counter. The trade off is as 
+specify the length (in bits) of the small counter. The trade off is as 
 follows: a low value will save space per entry in the hash but can 
 potentially increase the number of entries used, hence maybe requiring 
 a larger hash. 
@@ -191,7 +196,9 @@ or
 <b>-c</b><i>2</i>.
 For sequencing reads, use a value for <b>-c</b>
 large 
-enough to counts up to twice the coverage. 
+enough to counts up to twice the coverage. For example, if the 
+coverage is 10X, choose a counter length of 4 (<b>-c</b><i>4</i>)
+as $2^4 > 10$. 
 <p>
 <h2><a name="section_7">Subcommands and options</a></h2>
 
@@ -414,7 +421,98 @@ Options (default value in (), *required):
 <dd> Version 
 </dd>
 </dl>
-<h4><a name="section_11">query</a></h4>
+<h4><a name="section_11">dump</a></h4>
+
+Usage: jellyfish stats [options] db:path 
+<p>
+Dump k-mer counts 
+<p>
+By default, dump in a fasta format where the header is the count and 
+the sequence is the sequence of the k-mer. The column format is a 2 
+column output: k-mer count. 
+<p>
+Options (default value in (), *required): 
+<dl compact>
+<dt><b>-c</b>,<b>--column</b>
+</dt>
+<dd> Column format (false) 
+</dd>
+<dt><b>-t</b>,<b>--tab</b>
+</dt>
+<dd> Tab separator (false) 
+</dd>
+<dt><b>-L</b>,
+<b>--lower-count</b><i>=uint64</i>
+</dt>
+<dd> Don't output k-mer with count < lower-count 
+</dd>
+<dt><b>-U</b>,
+<b>--upper-count</b><i>=uint64</i>
+</dt>
+<dd> Don't output k-mer with count > upper-count 
+</dd>
+<dt><b>-o</b>,
+<b>--output</b><i>=c_string</i>
+</dt>
+<dd> Output file 
+</dd>
+<dt><b>--usage</b>
+</dt>
+<dd> Usage 
+</dd>
+<dt><b>-h</b>,<b>--help</b>
+</dt>
+<dd> This message 
+</dd>
+<dt><b>-V</b>,<b>--version</b>
+</dt>
+<dd> Version 
+</dd>
+</dl>
+<h4><a name="section_12">merge</a></h4>
+
+Usage: jellyfish merge [options] input:c_string+ 
+<p>
+Merge jellyfish databases 
+<p>
+Options (default value in (), *required): 
+<dl compact>
+<dt><b>-s</b>,
+<b>--buffer-size</b><i>=Buffer</i>
+</dt>
+<dd> length Length in bytes of input buffer (10000000) 
+</dd>
+<dt><b>-o</b>,
+<b>--output</b><i>=string</i>
+</dt>
+<dd> Output file (mer_counts_merged.jf) 
+</dd>
+<dt><b>--out-counter-len</b><i>=uint32</i>
+</dt>
+<dd> Length (in bytes) of counting field in output (4) 
+</dd>
+<dt><b>--out-buffer-size</b><i>=uint64</i>
+</dt>
+<dd> Size of output buffer per thread (10000000) 
+</dd>
+<dt><b>-v</b>,<b>--verbose</b>
+</dt>
+<dd> Be verbose (false) 
+</dd>
+<dt><b>--usage</b>
+</dt>
+<dd> Usage 
+</dd>
+<dt><b>-h</b>,<b>--help</b>
+</dt>
+<dd> This message 
+</dd>
+<dt><b>-V</b>,<b>--version</b>
+</dt>
+<dd> Version 
+</dd>
+</dl>
+<h4><a name="section_13">query</a></h4>
 
 Usage: jellyfish query [options] db:path 
 <p>
@@ -455,7 +553,7 @@ Options (default value in (), *required):
 <dd> Version 
 </dd>
 </dl>
-<h4><a name="section_12">cite</a></h4>
+<h4><a name="section_14">cite</a></h4>
 
 Usage: jellyfish cite [options] 
 <p>
@@ -487,13 +585,150 @@ Options (default value in (), *required):
 <dd> Version 
 </dd>
 </dl>
+<h4><a name="section_15">qhisto</a></h4>
+
+Usage: jellyfish qhisto [options] db:c_string 
 <p>
-<h2><a name="section_13">Version</a></h2>
+Create an histogram of k-mer occurences 
+<p>
+Options (default value in (), *required): 
+<dl compact>
+<dt><b>-l</b>,
+<b>--low</b><i>=double</i>
+</dt>
+<dd> Low count value of histogram (0.0) 
+</dd>
+<dt><b>-h</b>,
+<b>--high</b><i>=double</i>
+</dt>
+<dd> High count value of histogram (10000.0) 
+</dd>
+<dt><b>-i</b>,
+<b>--increment</b><i>=double</i>
+</dt>
+<dd> Increment value for buckets (1.0) 
+</dd>
+<dt><b>-f</b>,<b>--full</b>
+</dt>
+<dd> Full histo. Don't skip count 0. (false) 
+</dd>
+<dt><b>--usage</b>
+</dt>
+<dd> Usage 
+</dd>
+<dt><b>--help</b>
+</dt>
+<dd> This message 
+</dd>
+<dt><b>-V</b>,<b>--version</b>
+</dt>
+<dd> Version 
+</dd>
+</dl>
+<h4><a name="section_16">qdump</a></h4>
+
+Usage: jellyfish qdump [options] db:path 
+<p>
+Dump k-mer from a qmer database 
+<p>
+By default, dump in a fasta format where the header is the count and 
+the sequence is the sequence of the k-mer. The column format is a 2 
+column output: k-mer count. 
+<p>
+Options (default value in (), *required): 
+<dl compact>
+<dt><b>-c</b>,<b>--column</b>
+</dt>
+<dd> Column format (false) 
+</dd>
+<dt><b>-t</b>,<b>--tab</b>
+</dt>
+<dd> Tab separator (false) 
+</dd>
+<dt><b>-L</b>,
+<b>--lower-count</b><i>=double</i>
+</dt>
+<dd> Don't output k-mer with count < lower-count 
+</dd>
+<dt><b>-U</b>,
+<b>--upper-count</b><i>=double</i>
+</dt>
+<dd> Don't output k-mer with count > upper-count 
+</dd>
+<dt><b>-v</b>,<b>--verbose</b>
+</dt>
+<dd> Be verbose (false) 
+</dd>
+<dt><b>-o</b>,
+<b>--output</b><i>=c_string</i>
+</dt>
+<dd> Output file 
+</dd>
+<dt><b>--usage</b>
+</dt>
+<dd> Usage 
+</dd>
+<dt><b>-h</b>,<b>--help</b>
+</dt>
+<dd> This message 
+</dd>
+<dt><b>-V</b>,<b>--version</b>
+</dt>
+<dd> Version 
+</dd>
+</dl>
+<h4><a name="section_17">qmerge</a></h4>
+
+Usage: jellyfish merge [options] db:c_string+ 
+<p>
+Merge quake databases 
+<p>
+Options (default value in (), *required): 
+<dl compact>
+<dt><b>-s</b>,
+<b>--size</b><i>=uint64</i>
+</dt>
+<dd> *Merged hash table size 
+</dd>
+<dt><b>-m</b>,
+<b>--mer-len</b><i>=uint32</i>
+</dt>
+<dd> *Mer length 
+</dd>
+<dt><b>-o</b>,
+<b>--output</b><i>=c_string</i>
+</dt>
+<dd> Output file (merged.jf) 
+</dd>
+<dt><b>-p</b>,
+<b>--reprobes</b><i>=uint32</i>
+</dt>
+<dd> Maximum number of reprobes (62) 
+</dd>
+<dt><b>--usage</b>
+</dt>
+<dd> Usage 
+</dd>
+<dt><b>-h</b>,<b>--help</b>
+</dt>
+<dd> This message 
+</dd>
+<dt><b>--full-help</b>
+</dt>
+<dd> Detailed help 
+</dd>
+<dt><b>-V</b>,<b>--version</b>
+</dt>
+<dd> Version 
+</dd>
+</dl>
+<p>
+<h2><a name="section_18">Version</a></h2>
 
 <p>
 Version: 1.1.4 of 2010/10/1
 <p>
-<h2><a name="section_14">Bugs</a></h2>
+<h2><a name="section_19">Bugs</a></h2>
 
 <p>
 <ul compact>
@@ -507,7 +742,7 @@ intermediary files (if any).
 </li>
 </ul>
 <p>
-<h2><a name="section_15">Copyright &amp; License</a></h2>
+<h2><a name="section_20">Copyright &amp; License</a></h2>
 
 <dl compact>
 <dt>Copyright</dt>
@@ -528,11 +763,11 @@ General Public License for more details. <br>
 
 You should have received a copy of the GNU General Public License 
 along with this program. If not, see 
-<<a href ="http://www.gnu.org/licenses/"><tt>http://www.gnu.org/licenses/</tt></a>>.
+<a href ="http://www.gnu.org/licenses/"><tt>http://www.gnu.org/licenses/</tt></a>.
 </dd>
 </dl>
 <p>
-<h2><a name="section_16">Authors</a></h2>
+<h2><a name="section_21">Authors</a></h2>
 
 Guillaume Marcais <br>
 

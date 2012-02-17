@@ -1,5 +1,5 @@
 '\" t
-.\" Manual page created with latex2man on Fri Feb 17 13:13:24 EST 2012
+.\" Manual page created with latex2man on Fri Feb 17 13:29:44 EST 2012
 .\" NOTE: This file is generated, DO NOT EDIT.
 .de Vb
 .ft CW
@@ -154,7 +154,7 @@ To save space, the hash table supports variable length counter, i.e. a
 k\-mer occurring only a few times will use a small counter, a k\-mer 
 occurring many times will used multiple entries in the hash. The 
 \fB\-c\fP
-specify the length of the small counter. The trade off is as 
+specify the length (in bits) of the small counter. The trade off is as 
 follows: a low value will save space per entry in the hash but can 
 potentially increase the number of entries used, hence maybe requiring 
 a larger hash. 
@@ -167,7 +167,9 @@ or
 \fB\-c\fP\fI2\fP\&.
 For sequencing reads, use a value for \fB\-c\fP
 large 
-enough to counts up to twice the coverage. 
+enough to counts up to twice the coverage. For example, if the 
+coverage is 10X, choose a counter length of 4 (\fB\-c\fP\fI4\fP)
+as $2^4 > 10$. 
 .PP
 .SH SUBCOMMANDS AND OPTIONS
 
@@ -344,6 +346,77 @@ Options (default value in (), *required):
 \fB\-V\fP,\fB--version\fP
  Version 
 .PP
+.SS DUMP
+Usage: jellyfish stats [options] db:path 
+.PP
+Dump k\-mer counts 
+.PP
+By default, dump in a fasta format where the header is the count and 
+the sequence is the sequence of the k\-mer. The column format is a 2 
+column output: k\-mer count. 
+.PP
+Options (default value in (), *required): 
+.TP
+\fB\-c\fP,\fB--column\fP
+ Column format (false) 
+.TP
+\fB\-t\fP,\fB--tab\fP
+ Tab separator (false) 
+.TP
+\fB\-L\fP,
+\fB--lower\-count\fP\fI=uint64\fP
+ Don\&'t output k\-mer with count < lower\-count 
+.TP
+\fB\-U\fP,
+\fB--upper\-count\fP\fI=uint64\fP
+ Don\&'t output k\-mer with count > upper\-count 
+.TP
+\fB\-o\fP,
+\fB--output\fP\fI=c_string\fP
+ Output file 
+.TP
+\fB--usage\fP
+ Usage 
+.TP
+\fB\-h\fP,\fB--help\fP
+ This message 
+.TP
+\fB\-V\fP,\fB--version\fP
+ Version 
+.PP
+.SS MERGE
+Usage: jellyfish merge [options] input:c_string+ 
+.PP
+Merge jellyfish databases 
+.PP
+Options (default value in (), *required): 
+.TP
+\fB\-s\fP,
+\fB--buffer\-size\fP\fI=Buffer\fP
+ length Length in bytes of input buffer (10000000) 
+.TP
+\fB\-o\fP,
+\fB--output\fP\fI=string\fP
+ Output file (mer_counts_merged.jf) 
+.TP
+\fB--out\-counter\-len\fP\fI=uint32\fP
+ Length (in bytes) of counting field in output (4) 
+.TP
+\fB--out\-buffer\-size\fP\fI=uint64\fP
+ Size of output buffer per thread (10000000) 
+.TP
+\fB\-v\fP,\fB--verbose\fP
+ Be verbose (false) 
+.TP
+\fB--usage\fP
+ Usage 
+.TP
+\fB\-h\fP,\fB--help\fP
+ This message 
+.TP
+\fB\-V\fP,\fB--version\fP
+ Version 
+.PP
 .SS QUERY
 Usage: jellyfish query [options] db:path 
 .PP
@@ -401,6 +474,113 @@ Options (default value in (), *required):
 \fB\-V\fP,\fB--version\fP
  Version 
 .PP
+.SS QHISTO
+Usage: jellyfish qhisto [options] db:c_string 
+.PP
+Create an histogram of k\-mer occurences 
+.PP
+Options (default value in (), *required): 
+.TP
+\fB\-l\fP,
+\fB--low\fP\fI=double\fP
+ Low count value of histogram (0.0) 
+.TP
+\fB\-h\fP,
+\fB--high\fP\fI=double\fP
+ High count value of histogram (10000.0) 
+.TP
+\fB\-i\fP,
+\fB--increment\fP\fI=double\fP
+ Increment value for buckets (1.0) 
+.TP
+\fB\-f\fP,\fB--full\fP
+ Full histo. Don\&'t skip count 0. (false) 
+.TP
+\fB--usage\fP
+ Usage 
+.TP
+\fB--help\fP
+ This message 
+.TP
+\fB\-V\fP,\fB--version\fP
+ Version 
+.PP
+.SS QDUMP
+Usage: jellyfish qdump [options] db:path 
+.PP
+Dump k\-mer from a qmer database 
+.PP
+By default, dump in a fasta format where the header is the count and 
+the sequence is the sequence of the k\-mer. The column format is a 2 
+column output: k\-mer count. 
+.PP
+Options (default value in (), *required): 
+.TP
+\fB\-c\fP,\fB--column\fP
+ Column format (false) 
+.TP
+\fB\-t\fP,\fB--tab\fP
+ Tab separator (false) 
+.TP
+\fB\-L\fP,
+\fB--lower\-count\fP\fI=double\fP
+ Don\&'t output k\-mer with count < lower\-count 
+.TP
+\fB\-U\fP,
+\fB--upper\-count\fP\fI=double\fP
+ Don\&'t output k\-mer with count > upper\-count 
+.TP
+\fB\-v\fP,\fB--verbose\fP
+ Be verbose (false) 
+.TP
+\fB\-o\fP,
+\fB--output\fP\fI=c_string\fP
+ Output file 
+.TP
+\fB--usage\fP
+ Usage 
+.TP
+\fB\-h\fP,\fB--help\fP
+ This message 
+.TP
+\fB\-V\fP,\fB--version\fP
+ Version 
+.PP
+.SS QMERGE
+Usage: jellyfish merge [options] db:c_string+ 
+.PP
+Merge quake databases 
+.PP
+Options (default value in (), *required): 
+.TP
+\fB\-s\fP,
+\fB--size\fP\fI=uint64\fP
+ *Merged hash table size 
+.TP
+\fB\-m\fP,
+\fB--mer\-len\fP\fI=uint32\fP
+ *Mer length 
+.TP
+\fB\-o\fP,
+\fB--output\fP\fI=c_string\fP
+ Output file (merged.jf) 
+.TP
+\fB\-p\fP,
+\fB--reprobes\fP\fI=uint32\fP
+ Maximum number of reprobes (62) 
+.TP
+\fB--usage\fP
+ Usage 
+.TP
+\fB\-h\fP,\fB--help\fP
+ This message 
+.TP
+\fB--full\-help\fP
+ Detailed help 
+.TP
+\fB\-V\fP,\fB--version\fP
+ Version 
+.PP
 .SH VERSION
 
 .PP
@@ -441,7 +621,7 @@ General Public License for more details.
 .br
 You should have received a copy of the GNU General Public License 
 along with this program. If not, see 
-<\fBhttp://www.gnu.org/licenses/\fP>.
+\fBhttp://www.gnu.org/licenses/\fP\&.
 .PP
 .SH AUTHORS
 
