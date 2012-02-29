@@ -27,13 +27,23 @@ public:
     OUT_BUFFER_SIZE_OPT
   };
 
-  hash_fastq_merge_args(int argc, char *argv[]) :
+  hash_fastq_merge_args() : 
     size_arg(), size_given(false),
     mer_len_arg(), mer_len_given(false),
     output_arg("merged.jf"), output_given(false),
     reprobes_arg(62), reprobes_given(false),
     out_buffer_size_arg(20000000), out_buffer_size_given(false)
-  {
+  { }
+
+  hash_fastq_merge_args(int argc, char* argv[]) :
+    size_arg(), size_given(false),
+    mer_len_arg(), mer_len_given(false),
+    output_arg("merged.jf"), output_given(false),
+    reprobes_arg(62), reprobes_given(false),
+    out_buffer_size_arg(20000000), out_buffer_size_given(false)
+  { parse(argc, argv); }
+
+  void parse(int argc, char* argv[]) {
     static struct option long_options[] = {
       {"size", 1, 0, 's'},
       {"mer-len", 1, 0, 'm'},
@@ -101,17 +111,22 @@ public:
         break;
       }
     }
+
+    // Check that required switches are present
     if(!size_given)
       error("[-s, --size=uint64] required switch");
     if(!mer_len_given)
       error("[-m, --mer-len=uint32] required switch");
+
+    // Parse arguments
     if(argc - optind < 2)
       error("Requires at least 2 arguments.");
     for( ; optind < argc; ++optind) {
       db_arg.push_back(argv[optind]);
     }
   }
-#define hash_fastq_merge_args_USAGE "Usage: jellyfish merge [options] db:c_string+"
+
+#define hash_fastq_merge_args_USAGE "Usage: jellyfish merge [options] db:string+"
   const char * usage() const { return hash_fastq_merge_args_USAGE; }
   void error(const char *msg) { 
     std::cerr << "Error: " << msg << "\n" << usage()
@@ -119,11 +134,12 @@ public:
               << std::endl;
     exit(1);
   }
+
 #define hash_fastq_merge_args_HELP "Merge quake databases\n\n" \
   "Options (default value in (), *required):\n" \
   " -s, --size=uint64                       *Merged hash table size\n" \
   " -m, --mer-len=uint32                    *Mer length\n" \
-  " -o, --output=c_string                    Output file (merged.jf)\n" \
+  " -o, --output=string                      Output file (merged.jf)\n" \
   " -p, --reprobes=uint32                    Maximum number of reprobes (62)\n" \
   "     --usage                              Usage\n" \
   " -h, --help                               This message\n" \

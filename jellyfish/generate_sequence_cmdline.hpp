@@ -27,14 +27,25 @@ public:
     USAGE_OPT = 1000
   };
 
-  generate_sequence_args(int argc, char *argv[]) :
+  generate_sequence_args() : 
     seed_arg(), seed_given(false),
     mer_arg(), mer_given(false),
     output_arg("output"), output_given(false),
     fastq_flag(false),
     read_length_arg(), read_length_given(false),
     verbose_flag(false)
-  {
+  { }
+
+  generate_sequence_args(int argc, char* argv[]) :
+    seed_arg(), seed_given(false),
+    mer_arg(), mer_given(false),
+    output_arg("output"), output_given(false),
+    fastq_flag(false),
+    read_length_arg(), read_length_given(false),
+    verbose_flag(false)
+  { parse(argc, argv); }
+
+  void parse(int argc, char* argv[]) {
     static struct option long_options[] = {
       {"seed", 1, 0, 's'},
       {"mer", 1, 0, 'm'},
@@ -100,8 +111,12 @@ public:
         break;
       }
     }
+
+    // Check that required switches are present
     if(!seed_given)
       error("[-s, --seed=long] required switch");
+
+    // Parse arguments
     if(argc - optind < 1)
       error("Requires at least 1 argument.");
     for( ; optind < argc; ++optind) {
@@ -109,6 +124,7 @@ public:
       CHECK_ERR(uint64_t, argv[optind], "length")
     }
   }
+
 #define generate_sequence_args_USAGE "Usage: generate_sequence [options] length:uint64+"
   const char * usage() const { return generate_sequence_args_USAGE; }
   void error(const char *msg) { 
@@ -117,11 +133,12 @@ public:
               << std::endl;
     exit(1);
   }
+
 #define generate_sequence_args_HELP "Generate randome sequence of given lengths.\n\n" \
   "Options (default value in (), *required):\n" \
   " -s, --seed=long                         *Seed\n" \
   " -m, --mer=uint32                         Mer length. Generate matrix of size 2*length\n" \
-  " -o, --output=c_string                    Output prefix (output)\n" \
+  " -o, --output=string                      Output prefix (output)\n" \
   " -q, --fastq                              Generate fastq file (false)\n" \
   " -r, --read-length=uint32                 Read length for fasta format (default=size of sequence)\n" \
   " -v, --verbose                            Be verbose (false)\n" \

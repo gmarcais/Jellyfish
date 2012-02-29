@@ -135,19 +135,25 @@ usage of the hash table in bytes is: $2^l*(2k-l+r+1)/8$.
 \subsection{Choosing the counting field size}
 To save space, the hash table supports variable length counter, i.e. a
 $k$-mer occurring only a few times will use a small counter, a $k$-mer
-occurring many times will used multiple entries in the hash. The
-\Opt{-c} specify the length (in bits) of the small counter. The trade off is as
-follows: a low value will save space per entry in the hash but can
-potentially increase the number of entries used, hence maybe requiring
-a larger hash.
+occurring many times will used multiple entries in the hash.
+
+Important: the size of the couting field does NOT change the result,
+it only impacts the amount of memory used. In particular, there is no
+maximum value in the hash. Even if the counting field uses 5 bits, a
+$k$-mer occuring 2 million times will have a value reported of 2
+million (i.e., it is not capped at $2^5$).
+
+The \Opt{-c} specify the length (in bits) of the counting field. The
+trade off is as follows: a low value will save space per entry in the
+hash but can potentially increase the number of entries used, hence
+maybe requiring a larger hash.
 
 In practice, use a value for \Opt{-c} so that most of you $k$-mers
 require only 1 entry. For example, to count $k$-mers in a genome,
 where most of the sequence is unique, use \OptArg{-c}{1} or
 \OptArg{-c}{2}. For sequencing reads, use a value for \Opt{-c} large
 enough to counts up to twice the coverage. For example, if the
-coverage is 10X, choose a counter length of $4$ (\OptArg{-c}{4}) as $2^4 > 10$.
-
+coverage is 10X, choose a counter length of $5$ (\OptArg{-c}{5}) as $2^5 > 20$.
 
 
 \section{Subcommands and options}

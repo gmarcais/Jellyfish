@@ -1,5 +1,5 @@
 purpose "Dump k-mer counts"
-package "jellyfish stats"
+package "jellyfish dump"
 description "By default, dump in a fasta format where the header is the count and
 the sequence is the sequence of the k-mer. The column format is a 2
 column output: k-mer count."

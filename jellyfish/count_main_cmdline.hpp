@@ -70,7 +70,7 @@ public:
     STREAM_OPT
   };
 
-  count_args(int argc, char *argv[]) :
+  count_args() : 
     mer_len_arg(), mer_len_given(false),
     size_arg(), size_given(false),
     threads_arg(1), threads_given(false),
@@ -96,7 +96,37 @@ public:
     out_buffer_size_arg(20000000), out_buffer_size_given(false),
     lock_flag(false),
     stream_flag(false)
-  {
+  { }
+
+  count_args(int argc, char* argv[]) :
+    mer_len_arg(), mer_len_given(false),
+    size_arg(), size_given(false),
+    threads_arg(1), threads_given(false),
+    output_arg("mer_counts"), output_given(false),
+    counter_len_arg(7), counter_len_given(false),
+    out_counter_len_arg(4), out_counter_len_given(false),
+    both_strands_flag(false),
+    reprobes_arg(62), reprobes_given(false),
+    raw_flag(false),
+    both_flag(false),
+    quake_flag(false),
+    quality_start_arg(64), quality_start_given(false),
+    min_quality_arg(0), min_quality_given(false),
+    lower_count_arg(), lower_count_given(false),
+    upper_count_arg(), upper_count_given(false),
+    matrix_arg(""), matrix_given(false),
+    timing_arg(""), timing_given(false),
+    stats_arg(""), stats_given(false),
+    no_write_flag(false),
+    measure_flag(false),
+    buffers_arg(), buffers_given(false),
+    buffer_size_arg(8192), buffer_size_given(false),
+    out_buffer_size_arg(20000000), out_buffer_size_given(false),
+    lock_flag(false),
+    stream_flag(false)
+  { parse(argc, argv); }
+
+  void parse(int argc, char* argv[]) {
     static struct option long_options[] = {
       {"mer-len", 1, 0, 'm'},
       {"size", 1, 0, 's'},
@@ -265,16 +295,21 @@ public:
         break;
       }
     }
+
+    // Check that required switches are present
     if(!mer_len_given)
       error("[-m, --mer-len=uint32] required switch");
     if(!size_given)
       error("[-s, --size=uint64] required switch");
+
+    // Parse arguments
     if(argc - optind < 0)
       error("Requires at least 0 argument.");
     for( ; optind < argc; ++optind) {
       file_arg.push_back(argv[optind]);
     }
   }
+
 #define count_args_USAGE "Usage: jellyfish count [options] file:path+"
   const char * usage() const { return count_args_USAGE; }
   void error(const char *msg) { 
@@ -283,6 +318,7 @@ public:
               << std::endl;
     exit(1);
   }
+
 #define count_args_HELP "Count k-mers or qmers in fasta or fastq files\n\n" \
   "Options (default value in (), *required):\n" \
   " -m, --mer-len=uint32                    *Length of mer\n" \

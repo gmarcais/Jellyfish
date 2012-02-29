@@ -27,6 +27,7 @@
 \item[\LOpt{full-help}] \noindent Detailed help
 \item[\Opt{-V},\LOpt{version}] \noindent Version
 \end{description}
+
 \subsection{stats}
 \noindent Usage: jellyfish stats [options] db:path
 
@@ -44,12 +45,13 @@
 \item[\Opt{-L},\LOptArg{lower-count}{=uint64}] \noindent Don't consider k-mer with count < lower-count
 \item[\Opt{-U},\LOptArg{upper-count}{=uint64}] \noindent Don't consider k-mer with count > upper-count
 \item[\Opt{-v},\LOpt{verbose}] \noindent Verbose (false)
-\item[\Opt{-o},\LOptArg{output}{=c\_string}] \noindent Output file
+\item[\Opt{-o},\LOptArg{output}{=string}] \noindent Output file
 \item[\LOpt{usage}] \noindent Usage
 \item[\Opt{-h},\LOpt{help}] \noindent This message
 \item[\LOpt{full-help}] \noindent Detailed help
 \item[\Opt{-V},\LOpt{version}] \noindent Version
 \end{description}
+
 \subsection{histo}
 \noindent Usage: jellyfish histo [options] db:path
 
@@ -71,15 +73,16 @@
 \item[\Opt{-i},\LOptArg{increment}{=uint64}] \noindent Increment value for buckets (1)
 \item[\Opt{-t},\LOptArg{threads}{=uint32}] \noindent Number of threads (1)
 \item[\Opt{-f},\LOpt{full}] \noindent Full histo. Don't skip count 0. (false)
-\item[\Opt{-o},\LOptArg{output}{=c\_string}] \noindent Output file
+\item[\Opt{-o},\LOptArg{output}{=string}] \noindent Output file
 \item[\Opt{-v},\LOpt{verbose}] \noindent Output information (false)
 \item[\LOpt{usage}] \noindent Usage
 \item[\LOpt{help}] \noindent This message
 \item[\LOpt{full-help}] \noindent Detailed help
 \item[\Opt{-V},\LOpt{version}] \noindent Version
 \end{description}
+
 \subsection{dump}
-\noindent Usage: jellyfish stats [options] db:path
+\noindent Usage: jellyfish dump [options] db:path
 
 \noindent Dump k-mer counts
 
@@ -93,13 +96,14 @@
 \item[\Opt{-t},\LOpt{tab}] \noindent Tab separator (false)
 \item[\Opt{-L},\LOptArg{lower-count}{=uint64}] \noindent Don't output k-mer with count < lower-count
 \item[\Opt{-U},\LOptArg{upper-count}{=uint64}] \noindent Don't output k-mer with count > upper-count
-\item[\Opt{-o},\LOptArg{output}{=c\_string}] \noindent Output file
+\item[\Opt{-o},\LOptArg{output}{=string}] \noindent Output file
 \item[\LOpt{usage}] \noindent Usage
 \item[\Opt{-h},\LOpt{help}] \noindent This message
 \item[\Opt{-V},\LOpt{version}] \noindent Version
 \end{description}
+
 \subsection{merge}
-\noindent Usage: jellyfish merge [options] input:c\_string+
+\noindent Usage: jellyfish merge [options] input:string+
 
 \noindent Merge jellyfish databases
 
@@ -114,6 +118,7 @@
 \item[\Opt{-h},\LOpt{help}] \noindent This message
 \item[\Opt{-V},\LOpt{version}] \noindent Version
 \end{description}
+
 \subsection{query}
 \noindent Usage: jellyfish query [options] db:path
 
@@ -131,23 +136,9 @@
 \item[\Opt{-h},\LOpt{help}] \noindent This message
 \item[\Opt{-V},\LOpt{version}] \noindent Version
 \end{description}
-\subsection{cite}
-\noindent Usage: jellyfish cite [options]
 
-\noindent How to cite Jellyfish's paper
-
-\noindent Citation of paper
-
-\noindent Options (default value in (), *required):
-\begin{description}
-\item[\Opt{-b},\LOpt{bibtex}] \noindent Bibtex format (false)
-\item[\Opt{-o},\LOptArg{output}{=c\_string}] \noindent Output file
-\item[\LOpt{usage}] \noindent Usage
-\item[\Opt{-h},\LOpt{help}] \noindent This message
-\item[\Opt{-V},\LOpt{version}] \noindent Version
-\end{description}
 \subsection{qhisto}
-\noindent Usage: jellyfish qhisto [options] db:c\_string
+\noindent Usage: jellyfish qhisto [options] db:string
 
 \noindent Create an histogram of k-mer occurences
 
@@ -161,6 +152,7 @@
 \item[\LOpt{help}] \noindent This message
 \item[\Opt{-V},\LOpt{version}] \noindent Version
 \end{description}
+
 \subsection{qdump}
 \noindent Usage: jellyfish qdump [options] db:path
 
@@ -177,13 +169,14 @@
 \item[\Opt{-L},\LOptArg{lower-count}{=double}] \noindent Don't output k-mer with count < lower-count
 \item[\Opt{-U},\LOptArg{upper-count}{=double}] \noindent Don't output k-mer with count > upper-count
 \item[\Opt{-v},\LOpt{verbose}] \noindent Be verbose (false)
-\item[\Opt{-o},\LOptArg{output}{=c\_string}] \noindent Output file
+\item[\Opt{-o},\LOptArg{output}{=string}] \noindent Output file
 \item[\LOpt{usage}] \noindent Usage
 \item[\Opt{-h},\LOpt{help}] \noindent This message
 \item[\Opt{-V},\LOpt{version}] \noindent Version
 \end{description}
+
 \subsection{qmerge}
-\noindent Usage: jellyfish merge [options] db:c\_string+
+\noindent Usage: jellyfish merge [options] db:string+
 
 \noindent Merge quake databases
 
@@ -191,10 +184,27 @@
 \begin{description}
 \item[\Opt{-s},\LOptArg{size}{=uint64}] \noindent *Merged hash table size
 \item[\Opt{-m},\LOptArg{mer-len}{=uint32}] \noindent *Mer length
-\item[\Opt{-o},\LOptArg{output}{=c\_string}] \noindent Output file (merged.jf)
+\item[\Opt{-o},\LOptArg{output}{=string}] \noindent Output file (merged.jf)
 \item[\Opt{-p},\LOptArg{reprobes}{=uint32}] \noindent Maximum number of reprobes (62)
 \item[\LOpt{usage}] \noindent Usage
 \item[\Opt{-h},\LOpt{help}] \noindent This message
 \item[\LOpt{full-help}] \noindent Detailed help
 \item[\Opt{-V},\LOpt{version}] \noindent Version
 \end{description}
+
+\subsection{cite}
+\noindent Usage: jellyfish cite [options]
+
+\noindent How to cite Jellyfish's paper
+
+\noindent Citation of paper
+
+\noindent Options (default value in (), *required):
+\begin{description}
+\item[\Opt{-b},\LOpt{bibtex}] \noindent Bibtex format (false)
+\item[\Opt{-o},\LOptArg{output}{=string}] \noindent Output file
+\item[\LOpt{usage}] \noindent Usage
+\item[\Opt{-h},\LOpt{help}] \noindent This message
+\item[\Opt{-V},\LOpt{version}] \noindent Version
+\end{description}
+

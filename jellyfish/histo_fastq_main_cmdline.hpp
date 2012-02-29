@@ -21,12 +21,21 @@ public:
     HELP_OPT
   };
 
-  histo_fastq_main_args(int argc, char *argv[]) :
+  histo_fastq_main_args() : 
     low_arg(0.0), low_given(false),
     high_arg(10000.0), high_given(false),
     increment_arg(1.0), increment_given(false),
     full_flag(false)
-  {
+  { }
+
+  histo_fastq_main_args(int argc, char* argv[]) :
+    low_arg(0.0), low_given(false),
+    high_arg(10000.0), high_given(false),
+    increment_arg(1.0), increment_given(false),
+    full_flag(false)
+  { parse(argc, argv); }
+
+  void parse(int argc, char* argv[]) {
     static struct option long_options[] = {
       {"low", 1, 0, 'l'},
       {"high", 1, 0, 'h'},
@@ -83,12 +92,15 @@ public:
         break;
       }
     }
+
+    // Parse arguments
     if(argc - optind != 1)
       error("Requires exactly 1 argument.");
     db_arg = argv[optind];
     ++optind;
   }
-#define histo_fastq_main_args_USAGE "Usage: jellyfish qhisto [options] db:c_string"
+
+#define histo_fastq_main_args_USAGE "Usage: jellyfish qhisto [options] db:string"
   const char * usage() const { return histo_fastq_main_args_USAGE; }
   void error(const char *msg) { 
     std::cerr << "Error: " << msg << "\n" << usage()
@@ -96,6 +108,7 @@ public:
               << std::endl;
     exit(1);
   }
+
 #define histo_fastq_main_args_HELP "Create an histogram of k-mer occurences\n\n" \
   "Options (default value in (), *required):\n" \
   " -l, --low=double                         Low count value of histogram (0.0)\n" \

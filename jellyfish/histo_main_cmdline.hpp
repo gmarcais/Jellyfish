@@ -29,7 +29,7 @@ public:
     HELP_OPT
   };
 
-  histo_args(int argc, char *argv[]) :
+  histo_args() : 
     low_arg(1), low_given(false),
     high_arg(10000), high_given(false),
     increment_arg(1), increment_given(false),
@@ -38,7 +38,20 @@ public:
     output_arg(""), output_given(false),
     buffer_size_arg(10000000), buffer_size_given(false),
     verbose_flag(false)
-  {
+  { }
+
+  histo_args(int argc, char* argv[]) :
+    low_arg(1), low_given(false),
+    high_arg(10000), high_given(false),
+    increment_arg(1), increment_given(false),
+    threads_arg(1), threads_given(false),
+    full_flag(false),
+    output_arg(""), output_given(false),
+    buffer_size_arg(10000000), buffer_size_given(false),
+    verbose_flag(false)
+  { parse(argc, argv); }
+
+  void parse(int argc, char* argv[]) {
     static struct option long_options[] = {
       {"low", 1, 0, 'l'},
       {"high", 1, 0, 'h'},
@@ -112,7 +125,7 @@ public:
         break;
       case 's':
         buffer_size_given = true;
-        buffer_size_arg = yaggo::conv_uint<uint64_t>((const char *)optarg, err, false);
+        buffer_size_arg = yaggo::conv_uint<uint64_t>((const char *)optarg, err, true);
         CHECK_ERR(uint64_t, optarg, "-s, --buffer-size=Buffer length")
         break;
       case 'v':
@@ -120,11 +133,14 @@ public:
         break;
       }
     }
+
+    // Parse arguments
     if(argc - optind != 1)
       error("Requires exactly 1 argument.");
     db_arg = yaggo::string(argv[optind]);
     ++optind;
   }
+
 #define histo_args_USAGE "Usage: jellyfish histo [options] db:path"
   const char * usage() const { return histo_args_USAGE; }
   void error(const char *msg) { 
@@ -133,6 +149,7 @@ public:
               << std::endl;
     exit(1);
   }
+
 #define histo_args_HELP "Create an histogram of k-mer occurrences\n\nCreate an histogram with the number of k-mers having a given\n" \
   "count. In bucket 'i' are tallied the k-mers which have a count 'c'\n" \
   "satisfying 'low+i*inc <= c < low+(i+1)*inc'. Buckets in the output are\n" \
@@ -147,7 +164,7 @@ public:
   " -i, --increment=uint64                   Increment value for buckets (1)\n" \
   " -t, --threads=uint32                     Number of threads (1)\n" \
   " -f, --full                               Full histo. Don't skip count 0. (false)\n" \
-  " -o, --output=c_string                    Output file\n" \
+  " -o, --output=string                      Output file\n" \
   " -v, --verbose                            Output information (false)\n" \
   "     --usage                              Usage\n" \
   "     --help                               This message\n" \

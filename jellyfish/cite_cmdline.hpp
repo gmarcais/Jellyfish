@@ -15,10 +15,17 @@ public:
     USAGE_OPT = 1000
   };
 
-  cite_cmdline(int argc, char *argv[]) :
+  cite_cmdline() : 
     bibtex_flag(false),
     output_arg(""), output_given(false)
-  {
+  { }
+
+  cite_cmdline(int argc, char* argv[]) :
+    bibtex_flag(false),
+    output_arg(""), output_given(false)
+  { parse(argc, argv); }
+
+  void parse(int argc, char* argv[]) {
     static struct option long_options[] = {
       {"bibtex", 0, 0, 'b'},
       {"output", 1, 0, 'o'},
@@ -61,9 +68,12 @@ public:
         break;
       }
     }
+
+    // Parse arguments
     if(argc - optind != 0)
       error("Requires exactly 0 argument.");
   }
+
 #define cite_cmdline_USAGE "Usage: jellyfish cite [options]"
   const char * usage() const { return cite_cmdline_USAGE; }
   void error(const char *msg) { 
@@ -72,10 +82,11 @@ public:
               << std::endl;
     exit(1);
   }
+
 #define cite_cmdline_HELP "How to cite Jellyfish's paper\n\nCitation of paper\n\n" \
   "Options (default value in (), *required):\n" \
   " -b, --bibtex                             Bibtex format (false)\n" \
-  " -o, --output=c_string                    Output file\n" \
+  " -o, --output=string                      Output file\n" \
   "     --usage                              Usage\n" \
   " -h, --help                               This message\n" \
   " -V, --version                            Version"

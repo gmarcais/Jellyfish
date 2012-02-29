@@ -19,6 +19,7 @@
 
 #include <jellyfish/misc.hpp>
 #include <jellyfish/divisor.hpp>
+#include <signal.h>
 
 namespace jellyfish {
   /* A word is whatever aligned type used for atomic operations

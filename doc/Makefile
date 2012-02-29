@@ -9,6 +9,9 @@ all: $(TARGETS)
 man: jellyfish.man
 	man ./$<
 
+options.tex: generate_options_tex.sh
+	sh $< > $@
+
 %-full.tex: %.tex options.tex
 	$(M4) $< > $@
 
@@ -31,4 +34,4 @@ man: jellyfish.man
 	$(PDFLATEX) $<
 
 clean:
-	rm -f $(TARGETS) *-full.tex
+	rm -f $(TARGETS) *-full.tex options.tex

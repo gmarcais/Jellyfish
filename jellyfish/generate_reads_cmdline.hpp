@@ -28,7 +28,7 @@ public:
     USAGE_OPT = 1000
   };
 
-  generate_reads_args(int argc, char *argv[]) :
+  generate_reads_args() : 
     seed_arg(), seed_given(false),
     output_arg(""), output_given(false),
     fastq_flag(false),
@@ -38,7 +38,21 @@ public:
     error_rate_arg(), error_rate_given(false),
     coverage_arg(), coverage_given(false),
     verbose_flag(false)
-  {
+  { }
+
+  generate_reads_args(int argc, char* argv[]) :
+    seed_arg(), seed_given(false),
+    output_arg(""), output_given(false),
+    fastq_flag(false),
+    read_length_arg(), read_length_given(false),
+    genome_length_arg(), genome_length_given(false),
+    sequence_arg(""), sequence_given(false),
+    error_rate_arg(), error_rate_given(false),
+    coverage_arg(), coverage_given(false),
+    verbose_flag(false)
+  { parse(argc, argv); }
+
+  void parse(int argc, char* argv[]) {
     static struct option long_options[] = {
       {"seed", 1, 0, 's'},
       {"output", 1, 0, 'o'},
@@ -121,6 +135,8 @@ public:
         break;
       }
     }
+
+    // Check that required switches are present
     if(!seed_given)
       error("[-s, --seed=uint64] required switch");
     if(!read_length_given)
@@ -131,9 +147,12 @@ public:
       error("[-e, --error-rate=double] required switch");
     if(!coverage_given)
       error("[-c, --coverage=double] required switch");
+
+    // Parse arguments
     if(argc - optind != 0)
       error("Requires exactly 0 argument.");
   }
+
 #define generate_reads_args_USAGE "Usage: generate_reads [options]"
   const char * usage() const { return generate_reads_args_USAGE; }
   void error(const char *msg) { 
@@ -142,10 +161,11 @@ public:
               << std::endl;
     exit(1);
   }
+
 #define generate_reads_args_HELP "Generate random reads\n\n" \
   "Options (default value in (), *required):\n" \
   " -s, --seed=uint64                       *Seed\n" \
-  " -o, --output=c_string                    Output\n" \
+  " -o, --output=string                      Output\n" \
   " -q, --fastq                              Generate fastq file (false)\n" \
   " -r, --read-length=uint32                *Read length (default=size of sequence)\n" \
   " -g, --genome-length=uint64              *Length of genome\n" \

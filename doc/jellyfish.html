@@ -1,5 +1,5 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-<!-- Manual page created with latex2man on Fri Feb 17 13:29:45 EST 2012 --
+<!-- Manual page created with latex2man on Wed Feb 29 10:58:49 EST 2012 --
 -- Author of latex2man: Juergen.Vollmer@informatik-vollmer.de --
 -- NOTE: This file is generated, DO NOT EDIT. -->
 <html>
@@ -33,10 +33,10 @@ is a software to count k-mers in DNA sequences.
 <li><a href="#section_11">dump </a></li>
 <li><a href="#section_12">merge </a></li>
 <li><a href="#section_13">query </a></li>
-<li><a href="#section_14">cite </a></li>
-<li><a href="#section_15">qhisto </a></li>
-<li><a href="#section_16">qdump </a></li>
-<li><a href="#section_17">qmerge </a></li>
+<li><a href="#section_14">qhisto </a></li>
+<li><a href="#section_15">qdump </a></li>
+<li><a href="#section_16">qmerge </a></li>
+<li><a href="#section_17">cite </a></li>
 </ul>
 <li><a href="#section_18">Version </a></li>
 <li><a href="#section_19">Bugs </a></li>
@@ -181,12 +181,19 @@ usage of the hash table in bytes is: 2^l*(2k-l+r+1)/8.
 
 To save space, the hash table supports variable length counter, i.e. a 
 k-mer occurring only a few times will use a small counter, a k-mer 
-occurring many times will used multiple entries in the hash. The 
-<b>-c</b>
-specify the length (in bits) of the small counter. The trade off is as 
-follows: a low value will save space per entry in the hash but can 
-potentially increase the number of entries used, hence maybe requiring 
-a larger hash. 
+occurring many times will used multiple entries in the hash. 
+<p>
+Important: the size of the couting field does NOT change the result, 
+it only impacts the amount of memory used. In particular, there is no 
+maximum value in the hash. Even if the counting field uses 5 bits, a 
+k-mer occuring 2 million times will have a value reported of 2 
+million (i.e., it is not capped at 2^5). 
+<p>
+The <b>-c</b>
+specify the length (in bits) of the counting field. The 
+trade off is as follows: a low value will save space per entry in the 
+hash but can potentially increase the number of entries used, hence 
+maybe requiring a larger hash. 
 <p>
 In practice, use a value for <b>-c</b>
 so that most of you k-mers 
@@ -197,8 +204,8 @@ or
 For sequencing reads, use a value for <b>-c</b>
 large 
 enough to counts up to twice the coverage. For example, if the 
-coverage is 10X, choose a counter length of 4 (<b>-c</b><i>4</i>)
-as $2^4 > 10$. 
+coverage is 10X, choose a counter length of 5 (<b>-c</b><i>5</i>)
+as $2^5 > 20$. 
 <p>
 <h2><a name="section_7">Subcommands and options</a></h2>
 
@@ -303,6 +310,7 @@ Options (default value in (), *required):
 <dd> Version 
 </dd>
 </dl>
+<p>
 <h4><a name="section_9">stats</a></h4>
 
 Usage: jellyfish stats [options] db:path 
@@ -333,7 +341,7 @@ Options (default value in (), *required):
 <dd> Verbose (false) 
 </dd>
 <dt><b>-o</b>,
-<b>--output</b><i>=c_string</i>
+<b>--output</b><i>=string</i>
 </dt>
 <dd> Output file 
 </dd>
@@ -354,6 +362,7 @@ Options (default value in (), *required):
 <dd> Version 
 </dd>
 </dl>
+<p>
 <h4><a name="section_10">histo</a></h4>
 
 Usage: jellyfish histo [options] db:path 
@@ -396,7 +405,7 @@ Options (default value in (), *required):
 <dd> Full histo. Don't skip count 0. (false) 
 </dd>
 <dt><b>-o</b>,
-<b>--output</b><i>=c_string</i>
+<b>--output</b><i>=string</i>
 </dt>
 <dd> Output file 
 </dd>
@@ -421,9 +430,10 @@ Options (default value in (), *required):
 <dd> Version 
 </dd>
 </dl>
+<p>
 <h4><a name="section_11">dump</a></h4>
 
-Usage: jellyfish stats [options] db:path 
+Usage: jellyfish dump [options] db:path 
 <p>
 Dump k-mer counts 
 <p>
@@ -452,7 +462,7 @@ Options (default value in (), *required):
 <dd> Don't output k-mer with count > upper-count 
 </dd>
 <dt><b>-o</b>,
-<b>--output</b><i>=c_string</i>
+<b>--output</b><i>=string</i>
 </dt>
 <dd> Output file 
 </dd>
@@ -469,9 +479,10 @@ Options (default value in (), *required):
 <dd> Version 
 </dd>
 </dl>
+<p>
 <h4><a name="section_12">merge</a></h4>
 
-Usage: jellyfish merge [options] input:c_string+ 
+Usage: jellyfish merge [options] input:string+ 
 <p>
 Merge jellyfish databases 
 <p>
@@ -512,6 +523,7 @@ Options (default value in (), *required):
 <dd> Version 
 </dd>
 </dl>
+<p>
 <h4><a name="section_13">query</a></h4>
 
 Usage: jellyfish query [options] db:path 
@@ -553,41 +565,10 @@ Options (default value in (), *required):
 <dd> Version 
 </dd>
 </dl>
-<h4><a name="section_14">cite</a></h4>
+<p>
+<h4><a name="section_14">qhisto</a></h4>
 
-Usage: jellyfish cite [options] 
-<p>
-How to cite Jellyfish's paper 
-<p>
-Citation of paper 
-<p>
-Options (default value in (), *required): 
-<dl compact>
-<dt><b>-b</b>,<b>--bibtex</b>
-</dt>
-<dd> Bibtex format (false) 
-</dd>
-<dt><b>-o</b>,
-<b>--output</b><i>=c_string</i>
-</dt>
-<dd> Output file 
-</dd>
-<dt><b>--usage</b>
-</dt>
-<dd> Usage 
-</dd>
-<dt><b>-h</b>,<b>--help</b>
-</dt>
-<dd> This message 
-</dd>
-<dt><b>-V</b>,<b>--version</b>
-</dt>
-<dd> Version 
-</dd>
-</dl>
-<h4><a name="section_15">qhisto</a></h4>
-
-Usage: jellyfish qhisto [options] db:c_string 
+Usage: jellyfish qhisto [options] db:string 
 <p>
 Create an histogram of k-mer occurences 
 <p>
@@ -625,7 +606,8 @@ Options (default value in (), *required):
 <dd> Version 
 </dd>
 </dl>
-<h4><a name="section_16">qdump</a></h4>
+<p>
+<h4><a name="section_15">qdump</a></h4>
 
 Usage: jellyfish qdump [options] db:path 
 <p>
@@ -660,7 +642,7 @@ Options (default value in (), *required):
 <dd> Be verbose (false) 
 </dd>
 <dt><b>-o</b>,
-<b>--output</b><i>=c_string</i>
+<b>--output</b><i>=string</i>
 </dt>
 <dd> Output file 
 </dd>
@@ -677,9 +659,10 @@ Options (default value in (), *required):
 <dd> Version 
 </dd>
 </dl>
-<h4><a name="section_17">qmerge</a></h4>
+<p>
+<h4><a name="section_16">qmerge</a></h4>
 
-Usage: jellyfish merge [options] db:c_string+ 
+Usage: jellyfish merge [options] db:string+ 
 <p>
 Merge quake databases 
 <p>
@@ -696,7 +679,7 @@ Options (default value in (), *required):
 <dd> *Mer length 
 </dd>
 <dt><b>-o</b>,
-<b>--output</b><i>=c_string</i>
+<b>--output</b><i>=string</i>
 </dt>
 <dd> Output file (merged.jf) 
 </dd>
@@ -716,6 +699,39 @@ Options (default value in (), *required):
 <dt><b>--full-help</b>
 </dt>
 <dd> Detailed help 
+</dd>
+<dt><b>-V</b>,<b>--version</b>
+</dt>
+<dd> Version 
+</dd>
+</dl>
+<p>
+<h4><a name="section_17">cite</a></h4>
+
+Usage: jellyfish cite [options] 
+<p>
+How to cite Jellyfish's paper 
+<p>
+Citation of paper 
+<p>
+Options (default value in (), *required): 
+<dl compact>
+<dt><b>-b</b>,<b>--bibtex</b>
+</dt>
+<dd> Bibtex format (false) 
+</dd>
+<dt><b>-o</b>,
+<b>--output</b><i>=string</i>
+</dt>
+<dd> Output file 
+</dd>
+<dt><b>--usage</b>
+</dt>
+<dd> Usage 
+</dd>
+<dt><b>-h</b>,<b>--help</b>
+</dt>
+<dd> This message 
 </dd>
 <dt><b>-V</b>,<b>--version</b>
 </dt>

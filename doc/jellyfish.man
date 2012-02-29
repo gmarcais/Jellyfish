@@ -1,5 +1,5 @@
 '\" t
-.\" Manual page created with latex2man on Fri Feb 17 13:29:44 EST 2012
+.\" Manual page created with latex2man on Wed Feb 29 10:58:48 EST 2012
 .\" NOTE: This file is generated, DO NOT EDIT.
 .de Vb
 .ft CW
@@ -152,12 +152,19 @@ usage of the hash table in bytes is: 2^l*(2k\-l+r+1)/8\&.
 .SS CHOOSING THE COUNTING FIELD SIZE
 To save space, the hash table supports variable length counter, i.e. a 
 k\-mer occurring only a few times will use a small counter, a k\-mer 
-occurring many times will used multiple entries in the hash. The 
-\fB\-c\fP
-specify the length (in bits) of the small counter. The trade off is as 
-follows: a low value will save space per entry in the hash but can 
-potentially increase the number of entries used, hence maybe requiring 
-a larger hash. 
+occurring many times will used multiple entries in the hash. 
+.PP
+Important: the size of the couting field does NOT change the result, 
+it only impacts the amount of memory used. In particular, there is no 
+maximum value in the hash. Even if the counting field uses 5 bits, a 
+k\-mer occuring 2 million times will have a value reported of 2 
+million (i.e., it is not capped at 2^5). 
+.PP
+The \fB\-c\fP
+specify the length (in bits) of the counting field. The 
+trade off is as follows: a low value will save space per entry in the 
+hash but can potentially increase the number of entries used, hence 
+maybe requiring a larger hash. 
 .PP
 In practice, use a value for \fB\-c\fP
 so that most of you k\-mers 
@@ -168,8 +175,8 @@ or
 For sequencing reads, use a value for \fB\-c\fP
 large 
 enough to counts up to twice the coverage. For example, if the 
-coverage is 10X, choose a counter length of 4 (\fB\-c\fP\fI4\fP)
-as $2^4 > 10$. 
+coverage is 10X, choose a counter length of 5 (\fB\-c\fP\fI5\fP)
+as $2^5 > 20$. 
 .PP
 .SH SUBCOMMANDS AND OPTIONS
 
@@ -277,7 +284,7 @@ Options (default value in (), *required):
  Verbose (false) 
 .TP
 \fB\-o\fP,
-\fB--output\fP\fI=c_string\fP
+\fB--output\fP\fI=string\fP
  Output file 
 .TP
 \fB--usage\fP
@@ -328,7 +335,7 @@ Options (default value in (), *required):
  Full histo. Don\&'t skip count 0. (false) 
 .TP
 \fB\-o\fP,
-\fB--output\fP\fI=c_string\fP
+\fB--output\fP\fI=string\fP
  Output file 
 .TP
 \fB\-v\fP,\fB--verbose\fP
@@ -347,7 +354,7 @@ Options (default value in (), *required):
  Version 
 .PP
 .SS DUMP
-Usage: jellyfish stats [options] db:path 
+Usage: jellyfish dump [options] db:path 
 .PP
 Dump k\-mer counts 
 .PP
@@ -372,7 +379,7 @@ Options (default value in (), *required):
  Don\&'t output k\-mer with count > upper\-count 
 .TP
 \fB\-o\fP,
-\fB--output\fP\fI=c_string\fP
+\fB--output\fP\fI=string\fP
  Output file 
 .TP
 \fB--usage\fP
@@ -385,7 +392,7 @@ Options (default value in (), *required):
  Version 
 .PP
 .SS MERGE
-Usage: jellyfish merge [options] input:c_string+ 
+Usage: jellyfish merge [options] input:string+ 
 .PP
 Merge jellyfish databases 
 .PP
@@ -449,33 +456,8 @@ Options (default value in (), *required):
 \fB\-V\fP,\fB--version\fP
  Version 
 .PP
-.SS CITE
-Usage: jellyfish cite [options] 
-.PP
-How to cite Jellyfish\&'s paper 
-.PP
-Citation of paper 
-.PP
-Options (default value in (), *required): 
-.TP
-\fB\-b\fP,\fB--bibtex\fP
- Bibtex format (false) 
-.TP
-\fB\-o\fP,
-\fB--output\fP\fI=c_string\fP
- Output file 
-.TP
-\fB--usage\fP
- Usage 
-.TP
-\fB\-h\fP,\fB--help\fP
- This message 
-.TP
-\fB\-V\fP,\fB--version\fP
- Version 
-.PP
 .SS QHISTO
-Usage: jellyfish qhisto [options] db:c_string 
+Usage: jellyfish qhisto [options] db:string 
 .PP
 Create an histogram of k\-mer occurences 
 .PP
@@ -534,7 +516,7 @@ Options (default value in (), *required):
  Be verbose (false) 
 .TP
 \fB\-o\fP,
-\fB--output\fP\fI=c_string\fP
+\fB--output\fP\fI=string\fP
  Output file 
 .TP
 \fB--usage\fP
@@ -547,7 +529,7 @@ Options (default value in (), *required):
  Version 
 .PP
 .SS QMERGE
-Usage: jellyfish merge [options] db:c_string+ 
+Usage: jellyfish merge [options] db:string+ 
 .PP
 Merge quake databases 
 .PP
@@ -562,7 +544,7 @@ Options (default value in (), *required):
  *Mer length 
 .TP
 \fB\-o\fP,
-\fB--output\fP\fI=c_string\fP
+\fB--output\fP\fI=string\fP
  Output file (merged.jf) 
 .TP
 \fB\-p\fP,
@@ -577,6 +559,31 @@ Options (default value in (), *required):
 .TP
 \fB--full\-help\fP
  Detailed help 
+.TP
+\fB\-V\fP,\fB--version\fP
+ Version 
+.PP
+.SS CITE
+Usage: jellyfish cite [options] 
+.PP
+How to cite Jellyfish\&'s paper 
+.PP
+Citation of paper 
+.PP
+Options (default value in (), *required): 
+.TP
+\fB\-b\fP,\fB--bibtex\fP
+ Bibtex format (false) 
+.TP
+\fB\-o\fP,
+\fB--output\fP\fI=string\fP
+ Output file 
+.TP
+\fB--usage\fP
+ Usage 
+.TP
+\fB\-h\fP,\fB--help\fP
+ This message 
 .TP
 \fB\-V\fP,\fB--version\fP
  Version 

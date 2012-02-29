@@ -22,13 +22,23 @@ public:
     FULL_HELP_OPT
   };
 
-  stats_args(int argc, char *argv[]) :
+  stats_args() : 
     recompute_flag(false),
     lower_count_arg(), lower_count_given(false),
     upper_count_arg(), upper_count_given(false),
     verbose_flag(false),
     output_arg(""), output_given(false)
-  {
+  { }
+
+  stats_args(int argc, char* argv[]) :
+    recompute_flag(false),
+    lower_count_arg(), lower_count_given(false),
+    upper_count_arg(), upper_count_given(false),
+    verbose_flag(false),
+    output_arg(""), output_given(false)
+  { parse(argc, argv); }
+
+  void parse(int argc, char* argv[]) {
     static struct option long_options[] = {
       {"recompute", 0, 0, 'r'},
       {"lower-count", 1, 0, 'L'},
@@ -92,11 +102,14 @@ public:
         break;
       }
     }
+
+    // Parse arguments
     if(argc - optind != 1)
       error("Requires exactly 1 argument.");
     db_arg = argv[optind];
     ++optind;
   }
+
 #define stats_args_USAGE "Usage: jellyfish stats [options] db:path"
   const char * usage() const { return stats_args_USAGE; }
   void error(const char *msg) { 
@@ -105,6 +118,7 @@ public:
               << std::endl;
     exit(1);
   }
+
 #define stats_args_HELP "Statistics\n\nDisplay some statistics about the k-mers in the hash:\n" \
   "\n" \
   "Unique:    Number of k-mers which occur only once.\n" \
@@ -115,7 +129,7 @@ public:
   " -L, --lower-count=uint64                 Don't consider k-mer with count < lower-count\n" \
   " -U, --upper-count=uint64                 Don't consider k-mer with count > upper-count\n" \
   " -v, --verbose                            Verbose (false)\n" \
-  " -o, --output=c_string                    Output file\n" \
+  " -o, --output=string                      Output file\n" \
   "     --usage                              Usage\n" \
   " -h, --help                               This message\n" \
   "     --full-help                          Detailed help\n" \

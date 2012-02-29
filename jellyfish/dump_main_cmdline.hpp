@@ -21,13 +21,23 @@ public:
     USAGE_OPT = 1000
   };
 
-  dump_args(int argc, char *argv[]) :
+  dump_args() : 
     column_flag(false),
     tab_flag(false),
     lower_count_arg(), lower_count_given(false),
     upper_count_arg(), upper_count_given(false),
     output_arg(""), output_given(false)
-  {
+  { }
+
+  dump_args(int argc, char* argv[]) :
+    column_flag(false),
+    tab_flag(false),
+    lower_count_arg(), lower_count_given(false),
+    upper_count_arg(), upper_count_given(false),
+    output_arg(""), output_given(false)
+  { parse(argc, argv); }
+
+  void parse(int argc, char* argv[]) {
     static struct option long_options[] = {
       {"column", 0, 0, 'c'},
       {"tab", 0, 0, 't'},
@@ -87,12 +97,15 @@ public:
         break;
       }
     }
+
+    // Parse arguments
     if(argc - optind != 1)
       error("Requires exactly 1 argument.");
     db_arg = yaggo::string(argv[optind]);
     ++optind;
   }
-#define dump_args_USAGE "Usage: jellyfish stats [options] db:path"
+
+#define dump_args_USAGE "Usage: jellyfish dump [options] db:path"
   const char * usage() const { return dump_args_USAGE; }
   void error(const char *msg) { 
     std::cerr << "Error: " << msg << "\n" << usage()
@@ -100,6 +113,7 @@ public:
               << std::endl;
     exit(1);
   }
+
 #define dump_args_HELP "Dump k-mer counts\n\nBy default, dump in a fasta format where the header is the count and\n" \
   "the sequence is the sequence of the k-mer. The column format is a 2\n" \
   "column output: k-mer count.\n\n" \
@@ -108,7 +122,7 @@ public:
   " -t, --tab                                Tab separator (false)\n" \
   " -L, --lower-count=uint64                 Don't output k-mer with count < lower-count\n" \
   " -U, --upper-count=uint64                 Don't output k-mer with count > upper-count\n" \
-  " -o, --output=c_string                    Output file\n" \
+  " -o, --output=string                      Output file\n" \
   "     --usage                              Usage\n" \
   " -h, --help                               This message\n" \
   " -V, --version                            Version"

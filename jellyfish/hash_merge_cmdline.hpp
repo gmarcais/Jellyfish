@@ -26,13 +26,23 @@ public:
     OUT_BUFFER_SIZE_OPT
   };
 
-  merge_args(int argc, char *argv[]) :
+  merge_args() : 
     buffer_size_arg(10000000), buffer_size_given(false),
     output_arg("mer_counts_merged.jf"), output_given(false),
     out_counter_len_arg(4), out_counter_len_given(false),
     out_buffer_size_arg(10000000), out_buffer_size_given(false),
     verbose_flag(false)
-  {
+  { }
+
+  merge_args(int argc, char* argv[]) :
+    buffer_size_arg(10000000), buffer_size_given(false),
+    output_arg("mer_counts_merged.jf"), output_given(false),
+    out_counter_len_arg(4), out_counter_len_given(false),
+    out_buffer_size_arg(10000000), out_buffer_size_given(false),
+    verbose_flag(false)
+  { parse(argc, argv); }
+
+  void parse(int argc, char* argv[]) {
     static struct option long_options[] = {
       {"buffer-size", 1, 0, 's'},
       {"output", 1, 0, 'o'},
@@ -94,13 +104,16 @@ public:
         break;
       }
     }
+
+    // Parse arguments
     if(argc - optind < 2)
       error("Requires at least 2 arguments.");
     for( ; optind < argc; ++optind) {
       input_arg.push_back(argv[optind]);
     }
   }
-#define merge_args_USAGE "Usage: jellyfish merge [options] input:c_string+"
+
+#define merge_args_USAGE "Usage: jellyfish merge [options] input:string+"
   const char * usage() const { return merge_args_USAGE; }
   void error(const char *msg) { 
     std::cerr << "Error: " << msg << "\n" << usage()
@@ -108,6 +121,7 @@ public:
               << std::endl;
     exit(1);
   }
+
 #define merge_args_HELP "Merge jellyfish databases\n\n" \
   "Options (default value in (), *required):\n" \
   " -s, --buffer-size=Buffer length          Length in bytes of input buffer (10000000)\n" \

@@ -85,11 +85,14 @@ public:
         break;
       }
     }
+
+    // Parse arguments
     if(argc - optind != 1)
       error("Requires exactly 1 argument.");
     db_arg = yaggo::string(argv[optind]);
     ++optind;
   }
+
 #define query_args_USAGE "Usage: jellyfish query [options] db:path"
   const char * usage() const { return query_args_USAGE; }
   void error(const char *msg) { 
@@ -98,6 +101,7 @@ public:
               << std::endl;
     exit(1);
   }
+
 #define query_args_HELP "Query from a compacted database\n\nQuery a hash. It reads k-mers from the standard input and write the counts on the standard output.\n\n" \
   "Options (default value in (), *required):\n" \
   " -C, --both-strands                       Both strands (false)\n" \
