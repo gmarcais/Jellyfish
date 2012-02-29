@@ -66,7 +66,9 @@ int stats_main(int argc, char *argv[])
     hash_query_t hash(dbf);
     if(args.verbose_flag)
       out << "k-mer length (bases): " << hash.get_mer_len() << "\n"
-          << "value length (bytes): " << hash.get_val_len() << "\n";
+          << "value length (bytes): " << hash.get_val_len() << "\n"
+          << "max reprobe         : " << hash.get_max_reprobe() << "\n"
+          << "hash size           : " << hash.get_size() << "\n";
 
     if(args.recompute_flag) {
       compute_stats(hash, lower_count, upper_count, unique, distinct,
