@@ -39,7 +39,7 @@ bin_jellyfish_SOURCES = jellyfish/jellyfish.cc jellyfish/stats_main.cc	\
                         jellyfish/mapped_file.cc			\
                         jellyfish/backtrace.cc jellyfish/floats.cc	\
                         jellyfish/allocators_mmap.cc			\
-                        jellyfish/yaggo.cpp
+                        jellyfish/yaggo.cpp jellyfish/dna_codes.cc
 
 EXTRA_DIST += jellyfish/cite_cmdline.hpp jellyfish/query_cmdline.hpp	\
               jellyfish/hash_merge_cmdline.hpp				\
@@ -54,7 +54,6 @@ EXTRA_DIST += jellyfish/cite_cmdline.hpp jellyfish/query_cmdline.hpp	\
               jellyfish/simple_growing_array.hpp			\
               jellyfish/backtrace.hpp jellyfish/noop_dumper.hpp		\
               jellyfish/yaggo.hpp jellyfish/fstream_default.hpp
-
 ########################################
 # Build Jellyfish the shared library
 ########################################
@@ -74,7 +73,8 @@ libjellyfish_la_SOURCES = jellyfish/square_binary_matrix.cc		\
                           jellyfish/seq_qual_parser.cc			\
                           jellyfish/backtrace.cc jellyfish/floats.cc	\
                           jellyfish/dbg.cc				\
-                          jellyfish/allocators_mmap.cc
+                          jellyfish/allocators_mmap.cc			\
+                          jellyfish/dna_codes.cc
 libjellyfish_la_CPPFLAGS = $(AM_CPPFLAGS)
 library_includedir=$(includedir)/jellyfish-@PACKAGE_VERSION@/jellyfish
 library_include_HEADERS = jellyfish/allocators_malloc.hpp		\
@@ -121,7 +121,9 @@ library_include_HEADERS = jellyfish/allocators_malloc.hpp		\
                           jellyfish/simple_growing_array.hpp		\
                           jellyfish/toFloat.h jellyfish/eLut.h		\
                           jellyfish/dbg.hpp jellyfish/half.h		\
-                          jellyfish/backtrace.hpp
+                          jellyfish/backtrace.hpp			\
+                          jellyfish/dna_codes.hpp
+
 
 ########################################
 # Build tests
@@ -132,7 +134,8 @@ bin_generate_sequence_SOURCES = jellyfish/generate_sequence.cc		\
                                 jellyfish/square_binary_matrix.cc	\
                                 jellyfish/backtrace.cc			\
                                 jellyfish/dbg.cc jellyfish/time.cc
-bin_test_double_fifo_input_SOURCES = jellyfish/test_double_fifo_input.cc	\
+bin_test_double_fifo_input_SOURCES =						\
+                                     jellyfish/test_double_fifo_input.cc	\
                                      jellyfish/parse_dna.cc			\
                                      jellyfish/file_parser.cc			\
                                      jellyfish/sequence_parser.cc		\
@@ -140,7 +143,8 @@ bin_test_double_fifo_input_SOURCES = jellyfish/test_double_fifo_input.cc	\
                                      jellyfish/thread_exec.cc			\
                                      jellyfish/dbg.cc				\
                                      jellyfish/time.cc				\
-                                     jellyfish/allocators_mmap.cc
+                                     jellyfish/allocators_mmap.cc		\
+                                     jellyfish/dna_codes.cc
 bin_test_read_parser_SOURCES = jellyfish/test_read_parser.cc		\
                                jellyfish/file_parser.cc			\
                                jellyfish/read_parser.cc			\
@@ -164,7 +168,7 @@ TESTS = tests/generate_sequence.sh tests/serial_hashing.sh		\
         tests/multi_file_fastq.sh tests/from_stream.sh			\
         tests/parallel_fastq_sequence_hashing.sh			\
         tests/from_stream_fastq.sh tests/merge.sh tests/min_qual.sh	\
-        tests/big.sh tests/parsers.sh
+        tests/big.sh tests/parsers.sh tests/small.sh
 
 EXTRA_DIST += $(TESTS)
 clean-local: clean-local-check

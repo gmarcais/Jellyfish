@@ -18,6 +18,7 @@
 #include <pthread.h>
 #include <fstream>
 #include <exception>
+#include <memory>
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
@@ -43,6 +44,16 @@
 
 // Temporary
 //#include <jellyfish/measure_dumper.hpp>
+
+void die_on_error(std::string& err) {
+  std::cerr << "Error: " << err << std::endl;
+  exit(1);
+}
+
+void warn_on_error(std::string& err) {
+  std::cerr << "Warn: " << err << std::endl;
+}
+
 
 // TODO: This mer_counting_base stuff has become wild. Lots of code
 // duplication and slightly different behavior for each (e.g. setup of
@@ -88,6 +99,14 @@ public:
 
     typename parser_t::thread     mer_stream(parser->new_thread());
     typename hash_t::thread_ptr_t counter(hash->new_thread());
+
+    if(args->invalid_char_arg != count_args::invalid_char::ignore) {
+      if(args->invalid_char_arg == count_args::invalid_char::warn)
+        mer_stream.set_error_reporter(warn_on_error);
+      else
+        mer_stream.set_error_reporter(die_on_error);
+    }
+
     mer_stream.parse(counter);
 
     bool is_serial = sync_barrier.wait() == PTHREAD_BARRIER_SERIAL_THREAD;

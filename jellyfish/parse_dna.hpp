@@ -24,6 +24,7 @@
 #include <jellyfish/misc.hpp>
 #include <jellyfish/sequence_parser.hpp>
 #include <jellyfish/allocators_mmap.hpp>
+#include <jellyfish/dna_codes.hpp>
 
 namespace jellyfish {
   class parse_dna : public double_fifo_input<sequence_parser::sequence_t> {
@@ -44,18 +45,12 @@ namespace jellyfish {
      * A, C, G, T: map to 0, 1, 2, 3. Append to kmer
      * Other nucleic acid code: map to -1. reset kmer
      * '\n': map to -2. ignore
-     * Other ASCII: map to -3. Skip to next line
+     * Other ASCII: map to -3. Report error.
      */
-    static const uint_t codes[256];
-    static const uint_t CODE_RESET = -1;
-    static const uint_t CODE_IGNORE = -2;
-    static const uint_t CODE_COMMENT = -3;
-    static const uint_t CODE_NOT_DNA = ((uint_t)1) << (bsizeof(uint_t) - 1);
-
     static uint64_t mer_string_to_binary(const char *in, uint_t klen) {
       uint64_t res = 0;
       for(uint_t i = 0; i < klen; i++) {
-        const uint_t c = parse_dna::codes[(uint_t)*in++];
+        const uint_t c = dna_codes[(uint_t)*in++];
         if(c & CODE_NOT_DNA)
           return 0;
         res = (res << 2) | c;
@@ -101,6 +96,8 @@ namespace jellyfish {
       uint_t          cmlen;
       const bool      canonical;
       uint64_t        distinct, total;
+      typedef         void (*error_reporter)(std::string& err);
+      error_reporter  error_report;
 
     public:
       thread(parse_dna *_parser) :
@@ -108,7 +105,7 @@ namespace jellyfish {
         mer_len(_parser->mer_len), lshift(2 * (mer_len - 1)),
         kmer(0), rkmer(0), masq((1UL << (2 * mer_len)) - 1),
         cmlen(0), canonical(parser->canonical),
-        distinct(0), total(0) {}
+        distinct(0), total(0), error_report(0) {}
 
       uint64_t get_uniq() const { return 0; }
       uint64_t get_distinct() const { return distinct; }
@@ -121,9 +118,12 @@ namespace jellyfish {
           const char         *start = sequence->start;
           const char * const  end   = sequence->end;
           while(start < end) {
-            const uint_t c = codes[(uint_t)*start++];
+            const uint_t c = dna_codes[(uint_t)*start++];
             switch(c) {
             case CODE_IGNORE: break;
+            case CODE_COMMENT:
+              report_bad_input(*(start-1));
+              // Fall through
             case CODE_RESET:
               cmlen = kmer = rkmer = 0;
               break;
@@ -148,6 +148,19 @@ namespace jellyfish {
           cmlen = kmer = rkmer = 0;
           parser->release(sequence);
         }
+      }
+
+      void set_error_reporter(error_reporter e) {
+        error_report = e;
+      }
+
+    private:
+      void report_bad_input(char c) {
+        if(!error_report)
+          return;
+        std::string err("Bad character in sequence: ");
+        err += c;
+        error_report(err);
       }
     };
     friend class thread;

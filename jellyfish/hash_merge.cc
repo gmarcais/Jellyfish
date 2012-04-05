@@ -103,7 +103,7 @@ int merge_main(int argc, char *argv[])
   int num_hashes = args.input_arg.size();
 
   // this is our row of iterators
-  hash_reader_t iters[num_hashes];
+  std::vector<hash_reader_t> iters(num_hashes);
  
   // create an iterator for each hash file
   for(i = 0; i < num_hashes; i++) {

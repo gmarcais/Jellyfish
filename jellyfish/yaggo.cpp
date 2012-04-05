@@ -27,7 +27,7 @@
 namespace yaggo {
   uint32_t string::as_uint32(bool si_suffix) const {
     std::string err;
-    uint32_t res = yaggo::conv_uint<uint32_t>((const char *)this->c_str(), err, si_suffix);
+    uint32_t res = yaggo::conv_uint<uint32_t>((const char*)this->c_str(), err, si_suffix);
     if(!err.empty()) {
       std::string msg("Invalid conversion of '");
       msg += *this;
@@ -40,7 +40,7 @@ namespace yaggo {
 
   uint64_t string::as_uint64(bool si_suffix) const {
     std::string err;
-    uint64_t res = yaggo::conv_uint<uint64_t>((const char *)this->c_str(), err, si_suffix);
+    uint64_t res = yaggo::conv_uint<uint64_t>((const char*)this->c_str(), err, si_suffix);
     if(!err.empty()) {
       std::string msg("Invalid conversion of '");
       msg += *this;
@@ -53,7 +53,7 @@ namespace yaggo {
 
   int32_t string::as_int32(bool si_suffix) const {
     std::string err;
-    int32_t res = yaggo::conv_int<int32_t>((const char *)this->c_str(), err, si_suffix);
+    int32_t res = yaggo::conv_int<int32_t>((const char*)this->c_str(), err, si_suffix);
     if(!err.empty()) {
       std::string msg("Invalid conversion of '");
       msg += *this;
@@ -66,7 +66,7 @@ namespace yaggo {
 
   int64_t string::as_int64(bool si_suffix) const {
     std::string err;
-    int64_t res = yaggo::conv_int<int64_t>((const char *)this->c_str(), err, si_suffix);
+    int64_t res = yaggo::conv_int<int64_t>((const char*)this->c_str(), err, si_suffix);
     if(!err.empty()) {
       std::string msg("Invalid conversion of '");
       msg += *this;
@@ -79,7 +79,7 @@ namespace yaggo {
 
   int string::as_int(bool si_suffix) const {
     std::string err;
-    int res = yaggo::conv_int<int>((const char *)this->c_str(), err, si_suffix);
+    int res = yaggo::conv_int<int>((const char*)this->c_str(), err, si_suffix);
     if(!err.empty()) {
       std::string msg("Invalid conversion of '");
       msg += *this;
@@ -92,7 +92,7 @@ namespace yaggo {
 
   long string::as_long(bool si_suffix) const {
     std::string err;
-    long res = yaggo::conv_int<long>((const char *)this->c_str(), err, si_suffix);
+    long res = yaggo::conv_int<long>((const char*)this->c_str(), err, si_suffix);
     if(!err.empty()) {
       std::string msg("Invalid conversion of '");
       msg += *this;
@@ -105,7 +105,7 @@ namespace yaggo {
 
   double string::as_double(bool si_suffix) const {
     std::string err;
-    double res = yaggo::conv_double((const char *)this->c_str(), err, si_suffix);
+    double res = yaggo::conv_double((const char*)this->c_str(), err, si_suffix);
     if(!err.empty()) {
       std::string msg("Invalid conversion of '");
       msg += *this;
@@ -113,6 +113,14 @@ namespace yaggo {
       msg += err;
       throw std::runtime_error(msg);
     }
+    return res;
+  }
+
+  int string::as_enum(const char* const strs[]) {
+    std::string err;
+    int res = yaggo::conv_enum((const char*)this->c_str(), err, strs);
+    if(!err.empty())
+      throw std::runtime_error(err);
     return res;
   }
 
@@ -155,5 +163,22 @@ namespace yaggo {
       return (double)0.0;
     }
     return res;
+  }
+
+  int conv_enum(const char* str, std::string& err, const char* const strs[]) {
+    int res = 0;
+    for(const char* const* cstr = strs; *cstr; ++cstr, ++res)
+      if(!strcmp(*cstr, str))
+        return res;
+    err += "Invalid constant '";
+    err += str;
+    err += "'. Expected one of { ";
+    for(const char* const* cstr = strs; *cstr; ++cstr) {
+      if(cstr != strs)
+        err += ", ";
+      err += *cstr;
+    }
+    err += " }";
+    return -1;
   }
 }

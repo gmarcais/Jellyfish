@@ -120,8 +120,8 @@ namespace jellyfish {
       friend class iterator;
       iterator iterator_all() const { return iterator(this, 0, get_size()); }
       iterator iterator_slice(size_t slice_number, size_t number_of_slice) const {
-        size_t slice_size = get_size() / number_of_slice;
-        return iterator(this, slice_number * slice_size, (slice_number + 1) * slice_size);
+        std::pair<size_t, size_t> res = slice(slice_number, number_of_slice, get_size());
+        return iterator(this, res.first, res.second);
       }
 
       /**

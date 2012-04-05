@@ -25,6 +25,7 @@
 #include <jellyfish/circular_buffer.hpp>
 #include <jellyfish/floats.hpp>
 #include <jellyfish/allocators_mmap.hpp>
+#include <jellyfish/dna_codes.hpp>
 
 namespace jellyfish {
   class parse_quake : public double_fifo_input<seq_qual_parser::sequence_t> {
@@ -49,8 +50,7 @@ namespace jellyfish {
      * '\n': map to -2. ignore
      * Other ASCII: map to -3. Skip to next line
      */
-    static const uint_t codes[256];
-    static const uint_t CODE_RESET = -1;
+
     static const float proba_codes[41];
     static const float one_minus_proba_codes[41];
 
@@ -74,6 +74,8 @@ namespace jellyfish {
       circular_buffer<float>  quals;
       const char              quality_start;
       uint64_t                distinct, total;
+      typedef         void (*error_reporter)(std::string& err);
+      error_reporter  error_report;
 
     public:
       thread(parse_quake *_parser, const char _qs) :
@@ -82,7 +84,7 @@ namespace jellyfish {
         kmer(0), rkmer(0), masq((1UL << (2 * mer_len)) - 1),
         cmlen(0), canonical(parser->canonical), quals(mer_len),
         quality_start(_qs),
-        distinct(0), total(0) { }
+        distinct(0), total(0), error_report(0) { }
 
       uint64_t get_distinct() const { return distinct; }
       uint64_t get_total() const { return total; }
@@ -94,9 +96,13 @@ namespace jellyfish {
           const char         *start = sequence->start;
           const char * const  end   = sequence->end;
           while(start < end) {
-            const uint_t c = codes[(uint_t)*start++];
+            const uint_t c = dna_codes[(uint_t)*start++];
             const char   q = *start++;
             switch(c) {
+            case CODE_IGNORE: break;
+            case CODE_COMMENT:
+              report_bad_input(*(start-2));
+              // Fall through
             case CODE_RESET:
               cmlen = kmer = rkmer = 0;
               break;
@@ -109,6 +115,7 @@ namespace jellyfish {
               if(++cmlen >= mer_len) {
                 cmlen  = mer_len;
                 Float oval;
+
                 if(canonical)
                   counter->add(kmer < rkmer ? kmer : rkmer, quals.prod(), &oval);
                 else
@@ -123,6 +130,18 @@ namespace jellyfish {
           cmlen = kmer = rkmer = 0;
           parser->release(sequence);
         }
+      }
+
+      void set_error_reporter(error_reporter e) {
+        error_report = e;
+      }
+    private:
+      void report_bad_input(char c) {
+        if(!error_report)
+          return;
+        std::string error("Bad character in sequence: ");
+        error += c;
+        error_report(error);
       }
     };
     friend class thread;

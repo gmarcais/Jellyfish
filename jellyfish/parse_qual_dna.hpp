@@ -24,6 +24,7 @@
 #include <jellyfish/misc.hpp>
 #include <jellyfish/seq_qual_parser.hpp>
 #include <jellyfish/allocators_mmap.hpp>
+#include <jellyfish/dna_codes.hpp>
 
 namespace jellyfish {
   class parse_qual_dna : public double_fifo_input<seq_qual_parser::sequence_t> {
@@ -48,9 +49,6 @@ namespace jellyfish {
      * '\n': map to -2. ignore
      * Other ASCII: map to -3. Skip to next line
      */
-    static const uint_t codes[256];
-    static const uint_t CODE_RESET = -1;
-
     parse_qual_dna(const fary_t &_files, uint_t _mer_len, 
                    unsigned int nb_buffers, size_t _buffer_size,
                    const char _qs, const char _min_q); 
@@ -61,15 +59,17 @@ namespace jellyfish {
     virtual void fill();
 
     class thread {
-      parse_qual_dna         *parser;
-      bucket_t               *sequence;
-      const uint_t            mer_len, lshift;
-      uint64_t                kmer, rkmer;
-      const uint64_t          masq;
-      uint_t                  cmlen;
-      const bool              canonical;
-      const char              q_thresh;
-      uint64_t                distinct, total;
+      parse_qual_dna *parser;
+      bucket_t       *sequence;
+      const uint_t    mer_len, lshift;
+      uint64_t        kmer, rkmer;
+      const uint64_t  masq;
+      uint_t          cmlen;
+      const bool      canonical;
+      const char      q_thresh;
+      uint64_t        distinct, total;
+      typedef         void (*error_reporter)(std::string& err);
+      error_reporter  error_report;
 
     public:
       thread(parse_qual_dna *_parser, const char _qs, const char _min_q) :
@@ -78,7 +78,7 @@ namespace jellyfish {
         kmer(0), rkmer(0), masq((1UL << (2 * mer_len)) - 1),
         cmlen(0), canonical(parser->canonical),
         q_thresh(_qs + _min_q),
-        distinct(0), total(0) { }
+        distinct(0), total(0), error_report(0) { }
 
       uint64_t get_distinct() const { return distinct; }
       uint64_t get_total() const { return total; }
@@ -90,14 +90,16 @@ namespace jellyfish {
           const char         *start = sequence->start;
           const char * const  end   = sequence->end;
           while(start < end) {
-            // std::cerr << *start << " " << *(start + 1) << " "
-            //           << (void*)start << " " << (void*)end << std::endl;
-            uint_t     c = codes[(uint_t)*start++];
+            uint_t     c = dna_codes[(uint_t)*start++];
             const char q = *start++;
             if(q < q_thresh)
               c = CODE_RESET;
 
             switch(c) {
+            case CODE_IGNORE: break;
+            case CODE_COMMENT:
+              report_bad_input(*(start-1));
+              // Fall through
             case CODE_RESET:
               cmlen = kmer = rkmer = 0;
               break;
@@ -122,6 +124,19 @@ namespace jellyfish {
           cmlen = kmer = rkmer = 0;
           parser->release(sequence);
         }
+      }
+
+      void set_error_reporter(error_reporter e) {
+        error_report = e;
+      }
+      
+    private:
+      void report_bad_input(char c) {
+        if(!error_report)
+          return;
+        std::string error("Bad input: ");
+        error += c;
+        error_report(error);
       }
     };
     friend class thread;

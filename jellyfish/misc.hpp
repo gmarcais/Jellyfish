@@ -29,6 +29,7 @@
 #include <string>
 #include <new>
 #include <ostream>
+#include <utility>
 
 #define bsizeof(v)      (8 * sizeof(v))
 typedef uint_fast64_t uint_t;
@@ -123,5 +124,19 @@ void mem_copy(char *dest,  const char *src, const T &len) {
   // dumb copying char by char
   for(T i = (T)0; i < len; ++i)
     *dest++ = *src++;
+}
+
+/* Slice a large number (total) in almost equal parts. return [start,
+   end) corresponding to the ith part (0 <= i < number_of_slices)
+ */
+template<typename T>
+std::pair<T,T> slice(T i, T number_of_slices, T total) {
+  if(number_of_slices > 1)
+    --number_of_slices;
+  T slice_size = total / number_of_slices;
+  T slice_remain = total % number_of_slices;
+  T start = std::min(total, i * slice_size + i * slice_remain / number_of_slices);
+  T end = std::min(total, (i + 1) * slice_size + (i + 1) * slice_remain / number_of_slices);
+  return std::make_pair(start, end);
 }
 #endif // __MISC_HPP__

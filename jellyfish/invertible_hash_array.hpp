@@ -32,6 +32,7 @@
 #include <jellyfish/storage.hpp>
 #include <jellyfish/offsets_key_value.hpp>
 #include <jellyfish/parse_dna.hpp>
+#include <jellyfish/misc.hpp>
 
 namespace jellyfish {
   namespace invertible_hash {
@@ -295,9 +296,8 @@ namespace jellyfish {
       friend class iterator;
       iterator iterator_all() const { return iterator(this, 0, get_size()); }
       iterator iterator_slice(size_t slice_number, size_t number_of_slice) const {
-        size_t slice_size = get_size() / number_of_slice;
-        size_t start = slice_number * slice_size;
-        return iterator(this, start, start + slice_size);
+        std::pair<size_t, size_t> res = slice(slice_number, number_of_slice, get_size());
+        return iterator(this, res.first, res.second);
       }
 
       /* Why on earth doesn't inheritance with : public iterator work
@@ -556,18 +556,76 @@ namespace jellyfish {
                         full, carry_bit);
       }
 
-      bool _get_val(const size_t id, size_t &key_id, const word key, word &val, 
-                    const bool full = false, bool carry_bit = false) const {
-        word           *w, *kvw, nkey, nval;
+      /* InputIterator points to keys (words). OutputIterator points
+         to struct containing at least the fields { bool found; size_t
+         key_id; word val; }.
+       */
+      template<typename InputIterator, typename OutputIterator>
+      void get_multi_val(InputIterator key, const InputIterator& key_end,
+                         OutputIterator val, bool full, bool carry_bit) const {
+        uint64_t        phash, chash;
+        const offset_t *po, *plo, *co, *clo;
+        const word     *pw, *cw;
+
+        if(key == key_end)
+          return;
+
+        // Call __get_val with a delay. Let prefetch work while we
+        // compute the hash/get the previous key.
+        phash = hash_matrix.times(*key);
+        pw    = offsets.get_word_offset(phash & size_mask, &po, &plo, data);
+        //__builtin_prefetch(pw + po->key.woff, 0, 3);
+
+        for(++key; key != key_end; ++key, ++val) {
+          chash = hash_matrix.times(*key);
+          cw    = offsets.get_word_offset(chash & size_mask, &co, &clo, data);
+          //__builtin_prefetch(cw + co->key.woff, 0, 3);
+
+          val->found = __get_val(phash & size_mask, val->key_id, 
+                                 (phash >> lsize) & key_mask, val->val,
+                                 full, carry_bit, pw, po, plo);
+
+
+          pw    = cw;
+          po    = co;
+          plo   = clo;
+          phash = chash;
+        }
+        // Last one
+        val->found =  __get_val(phash & size_mask, val->key_id, 
+                                (phash >> lsize) & key_mask, val->val,
+                                full, carry_bit, pw, po, plo);
+      }
+
+      inline bool _get_val(const size_t id, size_t &key_id, const word key, word &val, 
+                           bool full = false, bool carry_bit = false) const {
+        const word*     w;
         const offset_t *o, *lo;
+
+        // Warm up cache
+        w   = offsets.get_word_offset(id, &o, &lo, data);
+        //__builtin_prefetch(w + o->key.woff, 0, 1);
+        return __get_val(id, key_id, key, val, full, carry_bit, w, o, lo);
+      }
+
+      bool __get_val(const size_t id, size_t &key_id, const word key, word &val, 
+                     const bool full, bool carry_bit,
+                     const word* w, const offset_t* o, const offset_t* lo) const {
+        const word     *kvw;
+        word            nkey, nval;
         size_t          cid     = id;
         uint_t          reprobe = 0;
         word            akey    = key | ((word)1 << key_off);
 
-        //        std::cout << "_get_val key" << key << std::endl;
         // Find key
         while(true) {
-          w   = offsets.get_word_offset(cid, &o, &lo, data);
+          // Prefetch next reprobe word
+          word* nw;
+          const offset_t *no, *nlo;
+          nw   = offsets.get_word_offset((id + reprobes[reprobe + 1]) & size_mask, &no, &nlo, data);
+          __builtin_prefetch(nw + no->key.woff, 0, 1);
+
+
           kvw = w + o->key.woff;
           nkey = *kvw;
       
@@ -583,8 +641,11 @@ namespace jellyfish {
           }
           if(++reprobe > reprobe_limit.val())
             return false;
-          cid = (id + reprobes[reprobe]) & size_mask;
+          cid  = (id + reprobes[reprobe]) & size_mask;
           akey = key | ((reprobe + 1) << key_off);
+          w    = nw;
+          o    = no;
+          lo   = nlo;
         }
 
         // Get value

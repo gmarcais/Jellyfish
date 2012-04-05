@@ -25,7 +25,7 @@
 
 namespace jellyfish {
   namespace raw_hash {
-    static const char *file_type = "JFRHSHDN";
+    static const char *file_type  __attribute__((used)) = "JFRHSHDN";
     struct header {
       char     type[8];
       uint64_t key_len;
@@ -96,7 +96,11 @@ namespace jellyfish {
       query(mapped_file &map) : 
         _file(map), _ary(0), _canonical(false), _cary_bit(false) { init(); }
       query(std::string filename) : 
-        _file(filename), _ary(0), _canonical(false), _cary_bit(false) { init(); }
+        _file(filename.c_str()), _ary(0), _canonical(false), _cary_bit(false)
+      { init(); }
+      query(const char* filename) : 
+        _file(filename), _ary(0), _canonical(false), _cary_bit(false)
+      { init(); }
 
       ~query() {
         if(_ary)

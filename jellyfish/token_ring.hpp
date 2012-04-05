@@ -19,6 +19,7 @@
 
 template<typename cond_t>
 class token_ring {
+public:
   class token {
     token  *next;
     bool    val;
@@ -45,6 +46,7 @@ class token_ring {
     }
   };
 
+private:
   token *first, *last;
   cond_t cond;
 

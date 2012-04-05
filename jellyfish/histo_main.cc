@@ -62,15 +62,15 @@ public:
   void start(int th_id) {
     uint64_t *hist = &data[th_id * nb_buckets];
 
-    for(size_t i = slice_id++; i <= nb_slices; i = slice_id++) {
+    for(size_t i = slice_id++; i < nb_slices; i = slice_id++) {
       typename hash_t::iterator it = hash->iterator_slice(i, nb_slices);
       while(it.next()) {
         if(it.get_val() < base)
-          hist[0]++;
+          ++hist[0];
         else if(it.get_val() > ceil)
-          hist[nb_buckets - 1]++;
+          ++hist[nb_buckets - 1];
         else
-          hist[(it.get_val() - base) / inc]++;
+          ++hist[(it.get_val() - base) / inc];
       }
     }
   }

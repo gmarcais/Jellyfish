@@ -49,6 +49,9 @@ option("lower-count", "L") {
 option("upper-count", "U") {
   description "Don't output k-mer with count > upper-count"
   uint64 }
+option("invalid-char") {
+  description "How to treat invalid characters. The char is changed to a N."
+  enum "warn", "ignore", "error" }
 option("matrix") {
   description "Hash function binary matrix"
   string; typestr "Matrix file" }

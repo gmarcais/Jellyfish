@@ -43,6 +43,8 @@ namespace yaggo {
     string() : std::string() {}
     string(const std::string &s) : std::string(s) {}
     string(const char *s) : std::string(s) {}
+    int as_enum(const char* const strs[]);
+
     uint32_t as_uint32_suffix() const { return as_uint32(true); }
     uint32_t as_uint32(bool si_suffix = false) const;
     uint64_t as_uint64_suffix() const { return as_uint64(true); }
@@ -61,6 +63,7 @@ namespace yaggo {
 
   bool adjust_double_si_suffix(double &res, const char *unit);
   double conv_double(const char *str, std::string &err, bool si_suffix);
+  int conv_enum(const char* str, std::string& err, const char* const strs[]);
 
   template<typename T>
   static bool adjust_int_si_suffix(T &res, const char *suffix) {

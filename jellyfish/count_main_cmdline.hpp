@@ -7,6 +7,11 @@
 
 class count_args {
 public:
+  struct invalid_char {
+    enum { warn, ignore, error };
+    static const char* const  strs[4];
+  };
+
   uint32_t                       mer_len_arg;
   bool                           mer_len_given;
   uint64_t                       size_arg;
@@ -33,6 +38,8 @@ public:
   bool                           lower_count_given;
   uint64_t                       upper_count_arg;
   bool                           upper_count_given;
+  int                            invalid_char_arg;
+  bool                           invalid_char_given;
   yaggo::string                  matrix_arg;
   bool                           matrix_given;
   const char *                   timing_arg;
@@ -60,6 +67,7 @@ public:
     BOTH_OPT,
     QUALITY_START_OPT,
     MIN_QUALITY_OPT,
+    INVALID_CHAR_OPT,
     MATRIX_OPT,
     TIMING_OPT,
     STATS_OPT,
@@ -86,6 +94,7 @@ public:
     min_quality_arg(0), min_quality_given(false),
     lower_count_arg(), lower_count_given(false),
     upper_count_arg(), upper_count_given(false),
+    invalid_char_arg(), invalid_char_given(false),
     matrix_arg(""), matrix_given(false),
     timing_arg(""), timing_given(false),
     stats_arg(""), stats_given(false),
@@ -114,6 +123,7 @@ public:
     min_quality_arg(0), min_quality_given(false),
     lower_count_arg(), lower_count_given(false),
     upper_count_arg(), upper_count_given(false),
+    invalid_char_arg(), invalid_char_given(false),
     matrix_arg(""), matrix_given(false),
     timing_arg(""), timing_given(false),
     stats_arg(""), stats_given(false),
@@ -143,6 +153,7 @@ public:
       {"min-quality", 1, 0, MIN_QUALITY_OPT},
       {"lower-count", 1, 0, 'L'},
       {"upper-count", 1, 0, 'U'},
+      {"invalid-char", 1, 0, INVALID_CHAR_OPT},
       {"matrix", 1, 0, MATRIX_OPT},
       {"timing", 1, 0, TIMING_OPT},
       {"stats", 1, 0, STATS_OPT},
@@ -190,17 +201,17 @@ public:
         exit(0);
       case 'm':
         mer_len_given = true;
-        mer_len_arg = yaggo::conv_uint<uint32_t>((const char *)optarg, err, false);
+        mer_len_arg = yaggo::conv_uint<uint32_t>((const char*)optarg, err, false);
         CHECK_ERR(uint32_t, optarg, "-m, --mer-len=uint32")
         break;
       case 's':
         size_given = true;
-        size_arg = yaggo::conv_uint<uint64_t>((const char *)optarg, err, true);
+        size_arg = yaggo::conv_uint<uint64_t>((const char*)optarg, err, true);
         CHECK_ERR(uint64_t, optarg, "-s, --size=uint64")
         break;
       case 't':
         threads_given = true;
-        threads_arg = yaggo::conv_uint<uint32_t>((const char *)optarg, err, false);
+        threads_arg = yaggo::conv_uint<uint32_t>((const char*)optarg, err, false);
         CHECK_ERR(uint32_t, optarg, "-t, --threads=uint32")
         break;
       case 'o':
@@ -209,12 +220,12 @@ public:
         break;
       case 'c':
         counter_len_given = true;
-        counter_len_arg = yaggo::conv_uint<uint32_t>((const char *)optarg, err, false);
+        counter_len_arg = yaggo::conv_uint<uint32_t>((const char*)optarg, err, false);
         CHECK_ERR(uint32_t, optarg, "-c, --counter-len=Length in bits")
         break;
       case OUT_COUNTER_LEN_OPT:
         out_counter_len_given = true;
-        out_counter_len_arg = yaggo::conv_uint<uint32_t>((const char *)optarg, err, false);
+        out_counter_len_arg = yaggo::conv_uint<uint32_t>((const char*)optarg, err, false);
         CHECK_ERR(uint32_t, optarg, "    --out-counter-len=Length in bytes")
         break;
       case 'C':
@@ -222,7 +233,7 @@ public:
         break;
       case 'p':
         reprobes_given = true;
-        reprobes_arg = yaggo::conv_uint<uint32_t>((const char *)optarg, err, false);
+        reprobes_arg = yaggo::conv_uint<uint32_t>((const char*)optarg, err, false);
         CHECK_ERR(uint32_t, optarg, "-p, --reprobes=uint32")
         break;
       case 'r':
@@ -236,23 +247,28 @@ public:
         break;
       case QUALITY_START_OPT:
         quality_start_given = true;
-        quality_start_arg = yaggo::conv_uint<uint32_t>((const char *)optarg, err, false);
+        quality_start_arg = yaggo::conv_uint<uint32_t>((const char*)optarg, err, false);
         CHECK_ERR(uint32_t, optarg, "    --quality-start=uint32")
         break;
       case MIN_QUALITY_OPT:
         min_quality_given = true;
-        min_quality_arg = yaggo::conv_uint<uint32_t>((const char *)optarg, err, false);
+        min_quality_arg = yaggo::conv_uint<uint32_t>((const char*)optarg, err, false);
         CHECK_ERR(uint32_t, optarg, "    --min-quality=uint32")
         break;
       case 'L':
         lower_count_given = true;
-        lower_count_arg = yaggo::conv_uint<uint64_t>((const char *)optarg, err, false);
+        lower_count_arg = yaggo::conv_uint<uint64_t>((const char*)optarg, err, false);
         CHECK_ERR(uint64_t, optarg, "-L, --lower-count=uint64")
         break;
       case 'U':
         upper_count_given = true;
-        upper_count_arg = yaggo::conv_uint<uint64_t>((const char *)optarg, err, false);
+        upper_count_arg = yaggo::conv_uint<uint64_t>((const char*)optarg, err, false);
         CHECK_ERR(uint64_t, optarg, "-U, --upper-count=uint64")
+        break;
+      case INVALID_CHAR_OPT:
+        invalid_char_given = true;
+        invalid_char_arg = yaggo::conv_enum((const char*)optarg, err, invalid_char::strs);
+        CHECK_ERR(enum, optarg, "    --invalid-char=warn|ignore|error")
         break;
       case MATRIX_OPT:
         matrix_given = true;
@@ -274,17 +290,17 @@ public:
         break;
       case BUFFERS_OPT:
         buffers_given = true;
-        buffers_arg = yaggo::conv_uint<uint64_t>((const char *)optarg, err, false);
+        buffers_arg = yaggo::conv_uint<uint64_t>((const char*)optarg, err, false);
         CHECK_ERR(uint64_t, optarg, "    --buffers=uint64")
         break;
       case BUFFER_SIZE_OPT:
         buffer_size_given = true;
-        buffer_size_arg = yaggo::conv_uint<uint64_t>((const char *)optarg, err, false);
+        buffer_size_arg = yaggo::conv_uint<uint64_t>((const char*)optarg, err, false);
         CHECK_ERR(uint64_t, optarg, "    --buffer-size=uint64")
         break;
       case OUT_BUFFER_SIZE_OPT:
         out_buffer_size_given = true;
-        out_buffer_size_arg = yaggo::conv_uint<uint64_t>((const char *)optarg, err, false);
+        out_buffer_size_arg = yaggo::conv_uint<uint64_t>((const char*)optarg, err, false);
         CHECK_ERR(uint64_t, optarg, "    --out-buffer-size=uint64")
         break;
       case LOCK_OPT:
@@ -335,6 +351,7 @@ public:
   "     --min-quality=uint32                 Minimum quality. A base with lesser quality becomes an N (0)\n" \
   " -L, --lower-count=uint64                 Don't output k-mer with count < lower-count\n" \
   " -U, --upper-count=uint64                 Don't output k-mer with count > upper-count\n" \
+  "     --invalid-char=warn|ignore|error     How to treat invalid characters. The char is changed to a N. (warn)\n" \
   "     --matrix=Matrix file                 Hash function binary matrix\n" \
   "     --timing=Timing file                 Print timing information\n" \
   "     --stats=Stats file                   Print stats\n" \
@@ -377,6 +394,7 @@ public:
     os << "min_quality_given:" << min_quality_given << " min_quality_arg:" << min_quality_arg << "\n";
     os << "lower_count_given:" << lower_count_given << " lower_count_arg:" << lower_count_arg << "\n";
     os << "upper_count_given:" << upper_count_given << " upper_count_arg:" << upper_count_arg << "\n";
+    os << "invalid_char_given:" << invalid_char_given << " invalid_char_arg:" << invalid_char_arg << "|" << invalid_char::strs[invalid_char_arg] << "\n";
     os << "matrix_given:" << matrix_given << " matrix_arg:" << matrix_arg << "\n";
     os << "timing_given:" << timing_given << " timing_arg:" << timing_arg << "\n";
     os << "stats_given:" << stats_given << " stats_arg:" << stats_arg << "\n";
@@ -391,5 +409,5 @@ public:
   }
 private:
 };
-
+const char* const count_args::invalid_char::strs[4] = { "warn", "ignore", "error", (const char*)0 };
 #endif // __COUNT_ARGS_HPP__"

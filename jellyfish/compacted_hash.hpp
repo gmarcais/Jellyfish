@@ -26,6 +26,7 @@
 #include <jellyfish/square_binary_matrix.hpp>
 #include <jellyfish/atomic_gcc.hpp>
 #include <jellyfish/parse_dna.hpp>
+#include <jellyfish/misc.hpp>
 
 namespace jellyfish {
   namespace compacted_hash {
@@ -451,7 +452,7 @@ namespace jellyfish {
         bool next() {
           if(id >= last_id)
             return false;
-          id++;
+          ++id;
           memcpy(&key, ptr, key_len);
           ptr += key_len;
           memcpy(&val, ptr, val_len);
@@ -492,10 +493,9 @@ namespace jellyfish {
       iterator get_iterator() const { return iterator_all(); }
       iterator iterator_all() const { return iterator(base, last_id, key_len, val_len, get_mer_len()); }
       iterator iterator_slice(size_t slice_number, size_t number_of_slice) const {
-        size_t  slice_size = last_id / number_of_slice;
-        size_t  start      = slice_number * slice_size;
-        char   *it_base    = base + start * record_len;
-        size_t  it_last_id = slice_size;
+        std::pair<size_t, size_t> res = slice(slice_number, number_of_slice, last_id);
+        char   *it_base    = base + res.first * record_len;
+        size_t  it_last_id = res.second - res.first;
 
         if(it_base >= file.end()) {
           it_base    = base;
