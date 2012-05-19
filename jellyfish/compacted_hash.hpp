@@ -492,10 +492,11 @@ namespace jellyfish {
 
       iterator get_iterator() const { return iterator_all(); }
       iterator iterator_all() const { return iterator(base, last_id, key_len, val_len, get_mer_len()); }
-      iterator iterator_slice(size_t slice_number, size_t number_of_slice) const {
-        std::pair<size_t, size_t> res = slice(slice_number, number_of_slice, last_id);
+      iterator iterator_slice(uint64_t slice_number, uint64_t number_of_slice) const {
+        std::pair<uint64_t, uint64_t> res =
+          slice(slice_number, number_of_slice, last_id);
         char   *it_base    = base + res.first * record_len;
-        size_t  it_last_id = res.second - res.first;
+        uint64_t  it_last_id = res.second - res.first;
 
         if(it_base >= file.end()) {
           it_base    = base;

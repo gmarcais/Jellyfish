@@ -38,7 +38,7 @@ TEST_P(ComputeOffsetsTest, CheckCoherency) {
   uint_t                             lk_len = 4;
   uint_t                             lv_len = kv_len - lk_len;
   uint_t                             i      = 0;
-  uint64_t                          *w, *pw;
+  //  uint64_t                          *w, *pw;
   
   //   /* Still missing:
   //    * - testing of value masks
@@ -47,9 +47,9 @@ TEST_P(ComputeOffsetsTest, CheckCoherency) {
   EXPECT_EQ(lv_len, this->offsets.get_lval_len());
   
   for(i = 0; true; i++) {
-    w = this->offsets.get_word_offset(i, &it, &lit, NULL);
+    this->offsets.get_word_offset(i, &it, &lit, NULL);
     if(i > 0) {
-      pw = this->offsets.get_word_offset(i-1, &pit, &lpit, NULL);
+      this->offsets.get_word_offset(i-1, &pit, &lpit, NULL);
       
       uint_t noff = pit->key.boff + kv_len;
       if(noff > 64) {
