@@ -35,29 +35,30 @@ namespace jellyfish {
       token_ring_t::token *token;
     };
 
-    uint_t                threads;
-    std::string           file_prefix;
-    size_t                buffer_size;
-    uint_t                klen, vlen;
-    uint_t                key_len, val_len;
-    size_t                record_len, nb_records, nb_blocks;
-    storage_t            *ary;
-    int                   file_index;
-    token_ring_t          tr;
-    uint64_t              lower_count, upper_count;
-    struct thread_info_t *thread_info;
-    uint64_t volatile     unique, distinct, total, max_count;
-    std::ofstream        *out;
-    locks::pthread::mutex dump_mutex;
+    uint_t                 threads;
+    std::string            file_prefix;
+    size_t                 buffer_size;
+    uint_t                 klen, vlen;
+    uint_t                 key_len, val_len;
+    size_t                 record_len, nb_records, nb_blocks;
+    storage_t             *ary;
+    int                    file_index;
+    token_ring_t           tr;
+    uint64_t               lower_count, upper_count;
+    struct thread_info_t  *thread_info;
+    uint64_t volatile      unique, distinct, total, max_count;
+    std::ofstream         *out;
+    locks::pthread::mutex  dump_mutex;
+    bool                   one_file;
 
   public:
     // klen: key field length in bits in hash (i.e before rounding up to bytes)
     // vlen: value field length in bits
     sorted_dumper(uint_t _threads, const char *_file_prefix, size_t _buffer_size, 
-                     uint_t _vlen, storage_t *_ary) :
+                  uint_t _vlen, storage_t *_ary) :
       threads(_threads), file_prefix(_file_prefix), buffer_size(_buffer_size),
       klen(_ary->get_key_len()), vlen(_vlen), ary(_ary), file_index(0),
-      tr(), lower_count(0), upper_count((uint64_t)-1)
+      tr(), lower_count(0), upper_count((uint64_t)-1), one_file(false)
     {
       key_len    = bits_to_bytes(klen);
       val_len    = bits_to_bytes(vlen);
@@ -83,6 +84,9 @@ namespace jellyfish {
       }
     }
     
+    bool get_one_file() const { return one_file; }
+    void set_one_file(bool nv) { one_file = nv; }
+
     void set_lower_count(uint64_t l) { lower_count = l; }
     void set_upper_count(uint64_t u) { upper_count = u; }
 
@@ -100,7 +104,11 @@ namespace jellyfish {
   void sorted_dumper<storage_t,atomic_t>::_dump() {
     std::ofstream _out;
     assert(dump_mutex.try_lock());
-    open_next_file(file_prefix.c_str(), &file_index, _out);
+    if(one_file) {
+      _out.open(file_prefix.c_str());
+    } else {
+      open_next_file(file_prefix.c_str(), &file_index, _out);
+    }
     out = &_out;
     unique = distinct = total = max_count = 0;
     tr.reset();

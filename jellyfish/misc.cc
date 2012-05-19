@@ -47,3 +47,16 @@ void disabled_misaligned_mem_access() {
 # endif
 #endif 
 }
+
+// Return -1 if size cannot be obtained.
+std::streamoff get_file_size(std::istream& is) {
+  if(!is.good()) return -1;
+  std::streampos cpos = is.tellg();
+  if(!is.good()) { is.clear(); return -1; }
+  is.seekg(0, std::ios::end);
+  if(!is.good()) { is.clear(); return -1; }
+  std::streamoff res = is.tellg() - cpos;
+  if(!is.good()) { is.clear(); return -1; }
+  is.seekg(cpos);
+  return res;
+}

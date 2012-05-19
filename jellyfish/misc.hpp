@@ -139,4 +139,6 @@ std::pair<T,T> slice(T i, T number_of_slices, T total) {
   T end = std::min(total, (i + 1) * slice_size + (i + 1) * slice_remain / number_of_slices);
   return std::make_pair(start, end);
 }
+
+std::streamoff get_file_size(std::istream& is);
 #endif // __MISC_HPP__

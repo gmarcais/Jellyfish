@@ -20,6 +20,7 @@ public:
   bool                           threads_given;
   yaggo::string                  output_arg;
   bool                           output_given;
+  bool                           O_flag;
   uint32_t                       counter_len_arg;
   bool                           counter_len_given;
   uint32_t                       out_counter_len_arg;
@@ -83,6 +84,7 @@ public:
     size_arg(), size_given(false),
     threads_arg(1), threads_given(false),
     output_arg("mer_counts"), output_given(false),
+    O_flag(false),
     counter_len_arg(7), counter_len_given(false),
     out_counter_len_arg(4), out_counter_len_given(false),
     both_strands_flag(false),
@@ -104,7 +106,8 @@ public:
     buffer_size_arg(8192), buffer_size_given(false),
     out_buffer_size_arg(20000000), out_buffer_size_given(false),
     lock_flag(false),
-    stream_flag(false)
+    stream_flag(false),
+    file_arg()
   { }
 
   count_args(int argc, char* argv[]) :
@@ -112,6 +115,7 @@ public:
     size_arg(), size_given(false),
     threads_arg(1), threads_given(false),
     output_arg("mer_counts"), output_given(false),
+    O_flag(false),
     counter_len_arg(7), counter_len_given(false),
     out_counter_len_arg(4), out_counter_len_given(false),
     both_strands_flag(false),
@@ -133,7 +137,8 @@ public:
     buffer_size_arg(8192), buffer_size_given(false),
     out_buffer_size_arg(20000000), out_buffer_size_given(false),
     lock_flag(false),
-    stream_flag(false)
+    stream_flag(false),
+    file_arg()
   { parse(argc, argv); }
 
   void parse(int argc, char* argv[]) {
@@ -142,6 +147,7 @@ public:
       {"size", 1, 0, 's'},
       {"threads", 1, 0, 't'},
       {"output", 1, 0, 'o'},
+      {"", 0, 0, 'O'},
       {"counter-len", 1, 0, 'c'},
       {"out-counter-len", 1, 0, OUT_COUNTER_LEN_OPT},
       {"both-strands", 0, 0, 'C'},
@@ -170,7 +176,7 @@ public:
       {"version", 0, 0, 'V'},
       {0, 0, 0, 0}
     };
-    static const char *short_options = "hVm:s:t:o:c:Cp:rqL:U:wu";
+    static const char *short_options = "hVm:s:t:o:Oc:Cp:rqL:U:wu";
 
     std::string err;
 #define CHECK_ERR(type,val,which) if(!err.empty()) { std::cerr << "Invalid " #type " '" << val << "' for [" which "]: " << err << "\n"; exit(1); }
@@ -217,6 +223,9 @@ public:
       case 'o':
         output_given = true;
         output_arg.assign(optarg);
+        break;
+      case 'O':
+        O_flag = true;
         break;
       case 'c':
         counter_len_given = true;
@@ -362,6 +371,7 @@ public:
 
   const char * help() const { return count_args_HELP; }
 #define count_args_HIDDEN "Hidden options:\n" \
+  " -O                                       Output is the file name (not a prefix) (false)\n" \
   "     --both                               Write list and raw database (false)\n" \
   " -w, --no-write                           Don't write database (false)\n" \
   " -u, --measure                            Write usage statistics (false)\n" \
@@ -383,6 +393,7 @@ public:
     os << "size_given:" << size_given << " size_arg:" << size_arg << "\n";
     os << "threads_given:" << threads_given << " threads_arg:" << threads_arg << "\n";
     os << "output_given:" << output_given << " output_arg:" << output_arg << "\n";
+    os << "O_flag:" << O_flag << "\n";
     os << "counter_len_given:" << counter_len_given << " counter_len_arg:" << counter_len_arg << "\n";
     os << "out_counter_len_given:" << out_counter_len_given << " out_counter_len_arg:" << out_counter_len_arg << "\n";
     os << "both_strands_flag:" << both_strands_flag << "\n";

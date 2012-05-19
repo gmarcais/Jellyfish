@@ -127,6 +127,14 @@ namespace jellyfish {
 
       void update_stats_with(std::ostream *out, uint64_t _unique, uint64_t _distinct,
                              uint64_t _total, uint64_t _max_count) const {
+        if(!out->good())
+          return;
+        out->seekp(0);
+        if(!out->good()) {
+          out->clear();
+          return;
+        }
+
         struct header head;
         memcpy(&head.type, file_type, sizeof(head.type));
         head.key_len     = klen;
@@ -137,7 +145,6 @@ namespace jellyfish {
         head.distinct    = _distinct;
         head.total       = _total;
         head.max_count   = _max_count;
-        out->seekp(0);
         out->write((char *)&head, sizeof(head));
       }
 
@@ -155,24 +162,26 @@ namespace jellyfish {
     
     template<typename key_t, typename val_t>
     class reader {
-      struct header              header;
-      std::ifstream             *io;
-      uint_t                     key_len;
-      SquareBinaryMatrix         hash_matrix, hash_inverse_matrix;
-      size_t                     record_len, buffer_len;
-      size_t                     size_mask;
-      char                      *buffer, *end_buffer, *ptr;
+      struct header       header;
+      std::ifstream      *io;
+      uint_t              key_len;
+      SquareBinaryMatrix  hash_matrix, hash_inverse_matrix;
+      size_t              record_len, buffer_len;
+      size_t              size_mask;
+      char               *buffer, *end_buffer, *ptr;
+      char                dna_str[33];
 
     public:
       key_t key;
       val_t val;
 
-      reader() { io = 0; buffer = 0; }
+      reader() { io = 0; buffer = 0; memset(dna_str, '\0', sizeof(dna_str)); }
       reader(std::string filename, size_t _buff_len = 10000000UL) { 
         initialize(filename, _buff_len);
       }
 
       void initialize(std::string filename, size_t _buff_len) {
+        memset(dna_str, '\0', sizeof(dna_str)); 
         io = new std::ifstream(filename.c_str());
         io->read((char *)&header, sizeof(header));
         if(!io->good())
@@ -201,15 +210,17 @@ namespace jellyfish {
 
         hash_matrix.load(io);
         hash_inverse_matrix.load(io);
-        std::streampos cpos = io->tellg();
-        io->seekg(0, std::ios::end);
-        std::streamoff list_size = io->tellg() - cpos;
-        io->seekg(cpos);
-        if(list_size - (header.distinct * record_len) != 0)
-          eraise(ErrorReading) << "'" << filename << "': " 
-                               << "Bad hash size '" << list_size 
-                               << "', expected '"
-                              << (header.distinct * record_len) << "' bytes";
+        
+        if(header.distinct != 0) {
+          std::streamoff list_size = get_file_size(*io);
+          if(list_size != (std::streamoff)-1 &&
+             list_size - (header.distinct * record_len) != 0) {
+            eraise(ErrorReading) << "'" << filename << "': " 
+                                 << "Bad hash size '" << list_size 
+                                 << "', expected '"
+                                 << (header.distinct * record_len) << "' bytes";
+          }
+        }
         key = val = 0;
         size_mask = header.size - 1;
       }
@@ -238,8 +249,16 @@ namespace jellyfish {
         hash_inverse_matrix.dump(out);
       }
 
+      key_t get_key() const { return key; }
+      val_t get_val() const { return val; }
+      
+
       void get_string(char *out) const {
         parse_dna::mer_binary_to_string(key, get_mer_len(), out);
+      }
+      char* get_dna_str() {
+        parse_dna::mer_binary_to_string(key, get_mer_len(), dna_str);
+        return dna_str;
       }
       uint64_t get_hash() const { return hash_matrix.times(key); }
       uint64_t get_pos() const { return hash_matrix.times(key) & size_mask; }
@@ -302,7 +321,7 @@ namespace jellyfish {
         last_id((file.end() - base) / record_len),
         canonical(false)
       {
-        if(file.end() - base - header.distinct * record_len != 0)
+        if(header.distinct != 0 && file.end() - base - header.distinct * record_len != 0)
           eraise(ErrorReading) << "'" << file.path() << "': " 
                                << "Bad hash size '" << (file.end() - base)
                                << "', expected '" << header.distinct * record_len << "' bytes";
@@ -326,7 +345,7 @@ namespace jellyfish {
         last_id((file.end() - base) / record_len),
         canonical(false)
       { 
-        if(file.end() - base - header.distinct * record_len != 0)
+        if(header.distinct != 0 && file.end() - base - header.distinct * record_len != 0)
           eraise(ErrorReading) << "'" << file.path() << "': " 
                                << "Bad hash size '" << (file.end() - base)
                                << "', expected '" << header.distinct * record_len << "' bytes";
@@ -425,17 +444,16 @@ namespace jellyfish {
       }
       
       class iterator {
-        char                  *base, *ptr;
-        uint64_t               last_id;
-        uint_t                 key_len;
-        uint_t                 val_len;
-        uint_t                 record_len;
-        uint_t                 mer_len;
-        uint64_t               id;
-        key_t key;
-        val_t val;
-
-        char                   dna_str[33];
+        char     *base, *ptr;
+        uint64_t  last_id;
+        uint_t    key_len;
+        uint_t    val_len;
+        uint_t    record_len;
+        uint_t    mer_len;
+        uint64_t  id;
+        key_t     key;
+        val_t     val;
+        char      dna_str[33];
 
       public:
         iterator(char *_base, uint64_t _last_id, uint_t _key_len, uint_t _val_len, uint_t _mer_len) :

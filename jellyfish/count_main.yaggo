@@ -16,6 +16,9 @@ option("threads", "t") {
 option("output", "o") {
   description "Output prefix"
   string; default "mer_counts" }
+option("O") {
+  description "Output is the file name (not a prefix)"
+  off; hidden }
 option("counter-len", "c") {
   description "Length of counting field"
   uint32; default "7"; typestr "Length in bits" }

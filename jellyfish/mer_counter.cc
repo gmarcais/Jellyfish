@@ -164,6 +164,7 @@ public:
           new inv_hash_dumper_t(args->threads_arg, args->output_arg.c_str(),
                                 args->out_buffer_size_arg, 
                                 8*args->out_counter_len_arg, ary);
+        _dumper->set_one_file(args->O_flag);
         if(args->lower_count_given)
           _dumper->set_lower_count(args->lower_count_arg);
         if(args->upper_count_given)
