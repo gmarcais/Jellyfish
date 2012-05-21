@@ -48,7 +48,7 @@ jellyfish::file_parser::file_parser(int fd, const char *path,
     eraise(FileParserError) << "Can't fstat '" << path << "'" << err::no;
   _size       = stat_buf.st_size;
   if(_do_mmap) {
-    _buffer     = (char *)mmap(0, _size , PROT_READ, MAP_SHARED, fd, 0);
+    _buffer     = (char *)mmap(0, _size , PROT_READ, MAP_PRIVATE, fd, 0);
     _is_mmapped = _buffer != MAP_FAILED;
   } else {
     _is_mmapped  = false;

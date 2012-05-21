@@ -49,7 +49,7 @@ protected:
       eraise(ErrorMMap) << "Can't stat file '" << filename << "'" << err::no;
 
     _length = stat.st_size;
-    _base = (char *)mmap(NULL, _length, PROT_READ, MAP_SHARED, fd, 0);
+    _base = (char *)mmap(NULL, _length, PROT_READ, MAP_PRIVATE, fd, 0);
     if(_base == MAP_FAILED)
       eraise(ErrorMMap) << "Can't mmap file '" << filename << "'" << err::no;
     close(fd);
