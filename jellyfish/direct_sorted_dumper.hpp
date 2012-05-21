@@ -42,13 +42,14 @@ namespace jellyfish {
     struct thread_info_t *thread_info;
     uint64_t volatile     unique, distinct, total, max_count;
     std::ofstream        *out;
+    bool                  one_file;
 
   public:
     direct_sorted_dumper(uint_t _threads, const char *_file_prefix, 
                          size_t _buffer_size, uint_t _vlen, storage_t *_ary) :
       threads(_threads), file_prefix(_file_prefix), buffer_size(_buffer_size),
       klen(_ary->get_key_len()), vlen(_vlen), ary(_ary),
-      tr()
+      tr() , one_file(false)
     {
       key_len    = bits_to_bytes(klen);
       val_len    = bits_to_bytes(vlen);
@@ -67,6 +68,9 @@ namespace jellyfish {
         delete[] thread_info;
     }
 
+    bool get_one_file() const { return one_file; }
+    void set_one_file(bool nv) { one_file = nv; }
+
     virtual void start(int i) { dump_to_file(i); }
     void dump_to_file(int i);
 
@@ -80,7 +84,11 @@ namespace jellyfish {
   template<typename storage_t, typename atomic_t>
   void direct_sorted_dumper<storage_t,atomic_t>::_dump() {
     std::ofstream _out;
-    open_next_file(file_prefix, &file_index, _out);
+    if(one_file) {
+      _out.open(file_prefix);
+    } else {
+      open_next_file(file_prefix, &file_index, _out);
+    }
     out = &_out;
     unique = distinct = total = max_count = 0;
     tr.reset();
