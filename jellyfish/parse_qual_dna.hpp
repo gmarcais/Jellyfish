@@ -108,8 +108,8 @@ namespace jellyfish {
               kmer = ((kmer << 2) & masq) | c;
               rkmer = (rkmer >> 2) | ((0x3 - c) << lshift);
               if(++cmlen >= mer_len) {
-                cmlen  = mer_len;
-                uint64_t oval;
+                cmlen = mer_len;
+                typename T::val_type oval;
                 if(canonical)
                   counter->add(kmer < rkmer ? kmer : rkmer, 1, &oval);
                 else

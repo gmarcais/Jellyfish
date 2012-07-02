@@ -255,6 +255,36 @@ public:
   }
 };
 
+class mer_counting_qual_fasta_direct : public mer_counting<jellyfish::parse_qual_dna, direct_index_t> {
+public:
+  mer_counting_qual_fasta_direct(const std::vector<const char *> &files,
+                                 count_args &_args) :
+    mer_counting<jellyfish::parse_qual_dna, direct_index_t>(_args)
+  {
+    parser = new jellyfish::parse_qual_dna(files,
+                                           args->mer_len_arg, args->buffers_arg,
+                                           args->buffer_size_arg, args->quality_start_arg,
+                                           args->min_quality_arg);
+    ary = new direct_index_t::storage_t(2 * args->mer_len_arg);
+    hash = new direct_index_t(ary);
+    if(args->no_write_flag) {
+      dumper = new jellyfish::noop_dumper();
+    } else {
+      if(args->raw_flag)
+        std::cerr << "Switch --raw not (yet) supported with direct indexing. Ignoring." << std::endl;
+      direct_index_dumper_t *_dumper =
+        new direct_index_dumper_t(args->threads_arg, args->output_arg.c_str(),
+                                  args->out_buffer_size_arg,
+                                  8*args->out_counter_len_arg,
+                                  ary);
+      _dumper->set_one_file(args->O_flag);
+      dumper = _dumper;
+    }
+    hash->set_dumper(dumper);
+    parser->set_canonical(args->both_strands_flag);
+  }
+};
+
 class mer_counting_quake : public mer_counting<jellyfish::parse_quake, fastq_hash_t> {
 public:
   mer_counting_quake(std::vector<const char *>,
@@ -297,7 +327,10 @@ int count_main(int argc, char *argv[])
   if(args.quake_flag) {
     counter = new mer_counting_quake(args.file_arg, args);
   } else if(ceilLog2((unsigned long)args.size_arg) > 2 * (unsigned long)args.mer_len_arg) {
-    counter = new mer_counting_fasta_direct(args.file_arg, args);
+    if(args.min_quality_given)
+      counter = new mer_counting_qual_fasta_direct(args.file_arg, args);
+    else
+      counter = new mer_counting_fasta_direct(args.file_arg, args);
   } else if(args.min_quality_given) {
     counter = new mer_counting_qual_fasta_hash(args.file_arg, args);
   } else {

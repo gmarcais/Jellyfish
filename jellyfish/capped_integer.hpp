@@ -46,6 +46,7 @@ namespace jellyfish {
     float to_float() const { return (float)x; }
    
     bool operator==(const capped_integer &o) { return x == o.x; }
+    bool operator!() const { return x == 0; }
     
     friend std::ostream &operator<< <> (std::ostream &os, 
                                         const capped_integer<T> &i);

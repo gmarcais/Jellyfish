@@ -19,8 +19,6 @@ $JF count --matrix seq10m_matrix_10 -m 10 -t $nCPUs \
 $JF histo ${pref}_0 > ${pref}.histo
 $JF histo ${pref}_S > ${pref}_S.histo
 check ${pref}.md5sum
-RET=$?
 
 cat ${pref}.timing
 
-exit $RET
