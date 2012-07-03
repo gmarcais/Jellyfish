@@ -58,7 +58,8 @@ namespace jellyfish {
                   uint_t _vlen, storage_t *_ary) :
       threads(_threads), file_prefix(_file_prefix), buffer_size(_buffer_size),
       klen(_ary->get_key_len()), vlen(_vlen), ary(_ary), file_index(0),
-      tr(), lower_count(0), upper_count((uint64_t)-1), one_file(false)
+      tr(), lower_count(0), upper_count(std::numeric_limits<uint64_t>::max()),
+      one_file(false)
     {
       key_len    = bits_to_bytes(klen);
       val_len    = bits_to_bytes(vlen);
