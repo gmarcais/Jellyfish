@@ -17,33 +17,36 @@
 #ifndef __DIVISOR_HPP__
 #define __DIVISOR_HPP__
 
-#include <jellyfish/misc.hpp>
 #include <stdint.h>
+#include <config.h>
+#include <jellyfish/misc.hpp>
 
 class divisor64 {
-  uint64_t d, p, m;
+  uint64_t d;
+#ifdef HAVE_INT128
+  uint64_t p, m;
+#endif
+
 public:
   // This initialization works provided that 0<=_d<2**32
   divisor64(uint64_t _d) : d(_d) {
+#ifdef HAVE_INT128
     uint64_t q = (1UL << 63) / d;
     uint64_t r = (1UL << 63) % d;
     p = ceilLog2(d) - 1;
     m = q * (1UL << (p + 2)) + div_ceil(r * (1UL << (p + 2)), d);
+#endif
   }
 
-  divisor64() : d(0), p(0), m(0) {}
+  //  divisor64() : d(0), p(0), m(0) {}
   
   uint64_t divide(uint64_t x) const {
-    __asm__("movq %0, %%rax\n\t"
-            "mulq %1\n\t"
-            "subq %%rdx, %0\n\t"
-            "shrq %0\n\t"
-            "addq %%rdx, %0\n\t"
-            "shrq %%cl, %0\n\t"
-            : "=r" (x)
-            : "r" (m), "c" (p), "0" (x)
-            : "rax", "rdx");
-    return x;
+#ifdef HAVE_INT128
+    uint64_t y = ((__int128)x * (__int128)m) >> 64;
+    return (((x - y) >> 1) + y) >> p;
+#else
+    return x / d;
+#endif
   }
 
   void division(uint64_t x, uint64_t &q, uint64_t &r) const {

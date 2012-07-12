@@ -91,7 +91,7 @@ namespace jellyfish {
       lval_len      = key_len + val_len - reprobe_len;
 
       compute_offsets();
-      bld           = divisor64(block_len);
+      //      bld           = divisor64(block_len);
     }
     uint_t get_block_len() const { return block_len; }
     uint_t get_block_word_len() const { return block_word_len; }
@@ -127,7 +127,7 @@ namespace jellyfish {
     uint_t        block_len; // Length of a block in number of entries
     uint_t        block_word_len; // Length of a block in number of words
     uint_t        reprobe_limit, reprobe_len, lval_len;
-    divisor64     bld; // Fast divisor by block_len
+    //    divisor64     bld; // Fast divisor by block_len
     offset_pair_t offsets[bsizeof(word)];
 
     void compute_offsets();

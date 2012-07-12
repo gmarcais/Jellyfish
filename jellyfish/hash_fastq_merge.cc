@@ -14,11 +14,11 @@
     along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <jellyfish/hash_fastq_merge_cmdline.hpp>
 #include <jellyfish/err.hpp>
 #include <jellyfish/misc.hpp>
 #include <jellyfish/mer_counting.hpp>
 #include <jellyfish/fastq_dumper.hpp>
+#include <jellyfish/hash_fastq_merge_cmdline.hpp>
 
 int hash_fastq_merge_main(int argc, char *argv[])
 {
