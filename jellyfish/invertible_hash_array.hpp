@@ -33,6 +33,7 @@
 #include <jellyfish/offsets_key_value.hpp>
 #include <jellyfish/parse_dna.hpp>
 #include <jellyfish/misc.hpp>
+#include <jellyfish/simple_circular_buffer.hpp>
 
 namespace jellyfish {
   namespace invertible_hash {
@@ -556,61 +557,95 @@ namespace jellyfish {
                         full, carry_bit);
       }
 
-      /* InputIterator points to keys (words). OutputIterator points
-         to struct containing at least the fields { bool found; size_t
-         key_id; word val; }.
-       */
-      template<typename InputIterator, typename OutputIterator>
-      void get_multi_val(InputIterator key, const InputIterator& key_end,
-                         OutputIterator val, bool full, bool carry_bit) const {
-        uint64_t        phash, chash;
-        const offset_t *po, *plo, *co, *clo;
-        const word     *pw, *cw;
+      // /* InputIterator points to keys (words). OutputIterator points
+      //    to struct containing at least the fields { bool found; size_t
+      //    key_id; word val; }.
+      //  */
+      // template<typename InputIterator, typename OutputIterator>
+      // void get_multi_val(InputIterator key, const InputIterator& key_end,
+      //                    OutputIterator val, bool full, bool carry_bit) const {
+      //   uint64_t        phash, chash;
+      //   const offset_t *po, *plo, *co, *clo;
+      //   const word     *pw, *cw;
 
-        if(key == key_end)
-          return;
+      //   if(key == key_end)
+      //     return;
 
-        // Call __get_val with a delay. Let prefetch work while we
-        // compute the hash/get the previous key.
-        phash = hash_matrix.times(*key);
-        pw    = offsets.get_word_offset(phash & size_mask, &po, &plo, data);
-        //__builtin_prefetch(pw + po->key.woff, 0, 3);
+      //   // Call __get_val with a delay. Let prefetch work while we
+      //   // compute the hash/get the previous key.
+      //   phash = hash_matrix.times(*key);
+      //   pw    = offsets.get_word_offset(phash & size_mask, &po, &plo, data);
+      //   //__builtin_prefetch(pw + po->key.woff, 0, 3);
 
-        for(++key; key != key_end; ++key, ++val) {
-          chash = hash_matrix.times(*key);
-          cw    = offsets.get_word_offset(chash & size_mask, &co, &clo, data);
-          //__builtin_prefetch(cw + co->key.woff, 0, 3);
+      //   for(++key; key != key_end; ++key, ++val) {
+      //     chash = hash_matrix.times(*key);
+      //     cw    = offsets.get_word_offset(chash & size_mask, &co, &clo, data);
+      //     //__builtin_prefetch(cw + co->key.woff, 0, 3);
 
-          val->found = __get_val(phash & size_mask, val->key_id, 
-                                 (phash >> lsize) & key_mask, val->val,
-                                 full, carry_bit, pw, po, plo);
+      //     val->found = __get_val(phash & size_mask, val->key_id, 
+      //                            (phash >> lsize) & key_mask, val->val,
+      //                            full, carry_bit, pw, po, plo);
 
 
-          pw    = cw;
-          po    = co;
-          plo   = clo;
-          phash = chash;
-        }
-        // Last one
-        val->found =  __get_val(phash & size_mask, val->key_id, 
-                                (phash >> lsize) & key_mask, val->val,
-                                full, carry_bit, pw, po, plo);
-      }
+      //     pw    = cw;
+      //     po    = co;
+      //     plo   = clo;
+      //     phash = chash;
+      //   }
+      //   // Last one
+      //   val->found =  __get_val(phash & size_mask, val->key_id, 
+      //                           (phash >> lsize) & key_mask, val->val,
+      //                           full, carry_bit, pw, po, plo);
+      // }
 
-      inline bool _get_val(const size_t id, size_t &key_id, const word key, word &val, 
-                           bool full = false, bool carry_bit = false) const {
+      struct prefetch_info {
         const word*     w;
         const offset_t *o, *lo;
+      };
+      typedef simple_circular_buffer::pre_alloc<prefetch_info, 8> prefetch_buffer;
 
-        // Warm up cache
-        w   = offsets.get_word_offset(id, &o, &lo, data);
-        //__builtin_prefetch(w + o->key.woff, 0, 1);
-        return __get_val(id, key_id, key, val, full, carry_bit, w, o, lo);
+      void warm_up_cache(prefetch_buffer& buffer, size_t id, bool load_lo) const {
+        buffer.clear();
+        for(int i = 0; i < buffer.capacity(); ++i) {
+          buffer.push_back();
+          prefetch_info& info = buffer.back();
+          size_t         cid  = (id + (i > 0 ? reprobes[i] : 0)) & size_mask;
+          info.w              = offsets.get_word_offset(cid, &info.o, &info.lo, data);
+          __builtin_prefetch(info.w + info.o->key.woff, 0, 1);
+          __builtin_prefetch(info.o, 0, 3);
+          if(load_lo)
+            __builtin_prefetch(info.lo, 0, 3);
+        }
+      }
+
+      void prefetch_next(prefetch_buffer& buffer, size_t id, uint_t reprobe, bool load_lo) const {
+        buffer.pop_front();
+        if(reprobe + buffer.capacity() <= reprobe_limit.val()) {
+          buffer.push_back();
+          prefetch_info& info = buffer.back();
+          size_t         fid  = (id + reprobes[reprobe + buffer.capacity() - 1]) & size_mask;
+          info.w = offsets.get_word_offset(fid, &info.o, &info.lo, data);
+          __builtin_prefetch(info.w + info.o->key.woff, 0, 1);
+          __builtin_prefetch(info.o, 0, 3);
+          if(load_lo)
+            __builtin_prefetch(info.lo, 0, 3);
+        }
+
+      }
+
+      bool _get_val(const size_t id, size_t &key_id, const word key, word &val, 
+                           bool full = false, bool carry_bit = false) const {
+        // Buffer for pre-cached information
+        prefetch_info info_ary[prefetch_buffer::capacity()];
+        prefetch_buffer buffer(info_ary);
+        warm_up_cache(buffer, id, false);
+
+        return __get_val(id, key_id, key, val, full, carry_bit, buffer);
       }
 
       bool __get_val(const size_t id, size_t &key_id, const word key, word &val, 
                      const bool full, bool carry_bit,
-                     const word* w, const offset_t* o, const offset_t* lo) const {
+                     prefetch_buffer& buffer) const {
         const word     *kvw;
         word            nkey, nval;
         size_t          cid     = id;
@@ -618,16 +653,14 @@ namespace jellyfish {
         word            akey    = key | ((word)1 << key_off);
 
         // Find key
+        const offset_t *o, *lo;
+        const word* w;
         while(true) {
-          // Prefetch next reprobe word
-          word* nw;
-          const offset_t *no, *nlo;
-          nw   = offsets.get_word_offset((id + reprobes[reprobe + 1]) & size_mask, &no, &nlo, data);
-          __builtin_prefetch(nw + no->key.woff, 0, 1);
-
-
-          kvw = w + o->key.woff;
-          nkey = *kvw;
+          prefetch_info& info = buffer.front();
+          w                   = info.w;
+          o                   = info.o;
+          kvw                 = w + o->key.woff;
+          nkey                = *kvw;
       
           if(!(nkey & o->key.lb_mask)) {
             if(o->key.mask2) {
@@ -641,11 +674,11 @@ namespace jellyfish {
           }
           if(++reprobe > reprobe_limit.val())
             return false;
+          // Do reprobe
           cid  = (id + reprobes[reprobe]) & size_mask;
           akey = key | ((reprobe + 1) << key_off);
-          w    = nw;
-          o    = no;
-          lo   = nlo;
+
+          prefetch_next(buffer, id, reprobe, false);
         }
 
         // Get value
@@ -656,8 +689,8 @@ namespace jellyfish {
         }
         bool do_reprobe = true;
         if(carry_bit) {
-          do_reprobe = val & 0x1;
-          val >>= 1;
+          do_reprobe   = val & 0x1;
+          val        >>= 1;
         }
         key_id = cid;
 
@@ -667,11 +700,17 @@ namespace jellyfish {
         if(full && do_reprobe) {
           const size_t bid = (cid + reprobes[0]) & size_mask;
           cid = bid;
+
+          warm_up_cache(buffer, bid, true);
+
           reprobe = 0;
           do {
-            w   = offsets.get_word_offset(cid, &o, &lo, data);
-            kvw = w + o->key.woff;
-            nkey = *kvw;
+            prefetch_info& info = buffer.front();
+            const word*    w    = info.w;
+            o                   = info.o;
+            lo                  = info.lo;
+            kvw                 = w + o->key.woff;
+            nkey                = *kvw;
             if(nkey & o->key.lb_mask) {
               if(lo->key.mask2) {
                 nkey = (nkey & lo->key.mask1 & ~lo->key.sb_mask1) >> lo->key.boff;
@@ -696,6 +735,8 @@ namespace jellyfish {
             }
 
             cid = (bid + reprobes[++reprobe]) & size_mask;
+            
+            prefetch_next(buffer, bid, reprobe, true);
           } while(reprobe <= reprobe_limit.val());
         }
 

@@ -93,15 +93,15 @@ library_include_HEADERS = jellyfish/allocators_malloc.hpp		\
                           jellyfish/locking_hash_counters.hpp		\
                           jellyfish/locks_pthread.hpp			\
                           jellyfish/mapped_file.hpp			\
-                          jellyfish/mer_counting.hpp jellyfish/err.hpp	\
-                          jellyfish/misc.hpp				\
+                          jellyfish/mer_counting.hpp			\
+                          jellyfish/err.hpp jellyfish/misc.hpp		\
                           jellyfish/offsets_key_value.hpp		\
                           jellyfish/reversible_hash_function.hpp	\
                           jellyfish/sorted_dumper.hpp			\
                           jellyfish/square_binary_matrix.hpp		\
                           jellyfish/storage.hpp				\
-                          jellyfish/thread_exec.hpp jellyfish/time.hpp	\
-                          jellyfish/token_ring.hpp			\
+                          jellyfish/thread_exec.hpp			\
+                          jellyfish/time.hpp jellyfish/token_ring.hpp	\
                           jellyfish/raw_dumper.hpp			\
                           jellyfish/capped_integer.hpp			\
                           jellyfish/aligned_values_array.hpp		\
@@ -122,7 +122,8 @@ library_include_HEADERS = jellyfish/allocators_malloc.hpp		\
                           jellyfish/toFloat.h jellyfish/eLut.h		\
                           jellyfish/dbg.hpp jellyfish/half.h		\
                           jellyfish/backtrace.hpp			\
-                          jellyfish/dna_codes.hpp
+                          jellyfish/dna_codes.hpp			\
+                          jellyfish/simple_circular_buffer.hpp
 
 
 ########################################
@@ -197,10 +198,10 @@ tests/parsers.log: tests/generate_sequence.log
 # Unit tests
 ########################################
 TESTS += unit_tests/unit_tests.sh
-check_PROGRAMS += bin/test_offsets_key_value
+check_PROGRAMS += bin/test_all
 
-bin_test_offsets_key_value_SOURCES = unit_tests/test_offsets_key_value.cc
-bin_test_offsets_key_value_CXXFLAGS = -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)/unit_tests/gtest
-bin_test_offsets_key_value_LDADD = libgtest_main.la
+bin_test_all_SOURCES = unit_tests/test_offsets_key_value.cc unit_tests/test_simple_circular_buffer.cc
+bin_test_all_CXXFLAGS = -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)/unit_tests/gtest
+bin_test_all_LDADD = libgtest_main.la
 
 include gtest.mk
