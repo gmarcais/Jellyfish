@@ -14,45 +14,114 @@
     along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __DIVISOR_HPP__
-#define __DIVISOR_HPP__
+#ifndef __JELLYFISH_DIVISOR_HPP__
+#define __JELLYFISH_DIVISOR_HPP__
 
 #include <stdint.h>
-#include <config.h>
 #include <jellyfish/misc.hpp>
-
-class divisor64 {
-  uint64_t d;
-#ifdef HAVE_INT128
-  uint64_t p, m;
+#ifdef HAVE_CONFIG_H
+#include <config.h>
 #endif
 
-public:
-  // This initialization works provided that 0<=_d<2**32
-  divisor64(uint64_t _d) : d(_d) {
+namespace jellyfish {
+  class divisor64 {
+    const uint64_t d_;
 #ifdef HAVE_INT128
-    uint64_t q = (1UL << 63) / d;
-    uint64_t r = (1UL << 63) % d;
-    p = ceilLog2(d) - 1;
-    m = q * (1UL << (p + 2)) + div_ceil(r * (1UL << (p + 2)), d);
+    const uint16_t p_;
+    const unsigned __int128 m_;
 #endif
-  }
-
-  //  divisor64() : d(0), p(0), m(0) {}
-  
-  uint64_t divide(uint64_t x) const {
+    
+  public:
+    divisor64(uint64_t d) : 
+      d_(d)
 #ifdef HAVE_INT128
-    uint64_t y = ((__int128)x * (__int128)m) >> 64;
-    return (((x - y) >> 1) + y) >> p;
+      , p_(ceilLog2(d_)),
+      m_((div_ceil((unsigned __int128)1 << (64 + p_), (unsigned __int128)d_)) & (uint64_t)-1)
+#endif
+    { }
+
+    divisor64() :
+      d_(0)
+#ifdef HAVE_INT128
+      , p_(0), m_(0)
+#endif
+    { }
+    
+    inline uint64_t divide(const uint64_t n) const {
+#ifdef HAVE_INT128
+      switch(m_) {
+      case 0:
+        return n >> p_;
+      default:
+        const unsigned __int128 n_ = (unsigned __int128)n;
+        return (n_ + ((n_ * m_) >> 64)) >> p_;
+      }
 #else
-    return x / d;
+      return n / d_;
 #endif
-  }
+    }
 
-  void division(uint64_t x, uint64_t &q, uint64_t &r) const {
-    q = divide(x);
-    r = x - q * d;
-  }
-};
+    inline uint64_t remainder(uint64_t n) const {
+#ifdef HAVE_INT128
+      switch(m_) {
+      case 0:
+        return n & (((uint64_t)1 << p_) - 1);
+      default:
+        return n - divide(n) * d_;
+      }
+#else
+      return n % d_;
+#endif
+    }
 
-#endif /* __DIVISOR_HPP__ */
+    // Euclidian division: d.division(n, q, r) sets q <- n / d and r
+    // <- n % d. This is faster than doing each independently.
+    inline void division(uint64_t n, uint64_t &q, uint64_t &r) const {
+#ifdef HAVE_INT128
+      switch(m_) {
+      case 0:
+        q = n >> p_;
+        r = n & (((uint64_t)1 << p_) - 1);
+        break;
+      default:
+        q = divide(n);
+        r = n - q * d_;
+        break;
+      }
+#else
+      q = n / d_;
+      r = n % d_;
+#endif
+    }
+
+    uint64_t d() const { return d_; }
+    uint64_t p() const { 
+#ifdef HAVE_INT128
+      return p_;
+#else
+      return 0;
+#endif
+    }
+    uint64_t m() const {
+#ifdef HAVE_INT128
+      return m_;
+#else
+      return 0;
+#endif
+    }
+  };
+
+  inline uint64_t operator/(uint64_t n, const divisor64& d) {
+    return d.divide(n);
+  }
+  inline uint64_t operator%(uint64_t n, const divisor64& d) {
+    return d.remainder(n);
+  }
+}
+
+inline std::ostream& operator<<(std::ostream& os, const jellyfish::divisor64& d) {
+  return os << "d:" << d.d() << ",p:" << d.p() << ",m:" << d.m();
+}
+  
+#endif /* __JELLYFISH_DIVISOR_HPP__ */
+  

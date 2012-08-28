@@ -74,27 +74,26 @@ namespace jellyfish {
       offset_t    normal;
       offset_t    large;
     } offset_pair_t;
-  
-    Offsets() {}
+    struct block_info {
+      uint_t len;
+      uint_t word_len;
+    };
+    //    Offsets() {}
 
-    Offsets(uint_t _key_len, uint_t _val_len, uint_t _reprobe_limit) {
-      init(_key_len, _val_len, _reprobe_limit);
-    }
+    Offsets(uint_t _key_len, uint_t _val_len, uint_t _reprobe_limit) :
+      key_len(_key_len),
+      val_len(_val_len),
+      reprobe_limit(_reprobe_limit),
+      reprobe_len(bitsize(reprobe_limit)),
+      lval_len(key_len + val_len - reprobe_len),
+      block(compute_offsets()),
+      bld(block.len)
+    { }
 
     ~Offsets() {}
 
-    void init(uint_t _key_len, uint_t _val_len, uint_t _reprobe_limit) {
-      key_len       = _key_len;
-      val_len       = _val_len;
-      reprobe_limit = _reprobe_limit;
-      reprobe_len   = bitsize(_reprobe_limit);
-      lval_len      = key_len + val_len - reprobe_len;
-
-      compute_offsets();
-      //      bld           = divisor64(block_len);
-    }
-    uint_t get_block_len() const { return block_len; }
-    uint_t get_block_word_len() const { return block_word_len; }
+    uint_t get_block_len() const { return block.len; }
+    uint_t get_block_word_len() const { return block.word_len; }
     uint_t get_reprobe_len() const { return reprobe_len; }
     uint_t get_key_len() const { return key_len; }
     uint_t get_val_len() const { return val_len; }
@@ -106,31 +105,28 @@ namespace jellyfish {
     // Discretize and round down number of entries according to length
     // of a block. Return in blocks the number of blocks.
     size_t floor_block(size_t entries, size_t &blocks) const {
-      blocks = entries / block_len;
-      return block_len * blocks;
+      blocks = entries / bld;
+      return block.len * blocks;
     }
 
     word *get_word_offset(size_t id, const offset_t **o, const offset_t **lo,
 			  word * const base) const {
-      uint64_t q = id / block_len;
-      uint64_t r = id % block_len;
-      // uint64_t q, r;
-      // bld.division(id, q, r);
-      word *w = base + (block_word_len * q);
+      uint64_t q, r;
+      bld.division(id, q, r);
+      word *w = base + (block.word_len * q);
       *o = &offsets[r].normal;
       *lo = &offsets[r].large;
       return w;
     }
 
   private:
-    uint_t        key_len, val_len;
-    uint_t        block_len; // Length of a block in number of entries
-    uint_t        block_word_len; // Length of a block in number of words
-    uint_t        reprobe_limit, reprobe_len, lval_len;
-    //    divisor64     bld; // Fast divisor by block_len
-    offset_pair_t offsets[bsizeof(word)];
+    const uint_t     key_len, val_len;
+    const uint_t     reprobe_limit, reprobe_len, lval_len;
+    const block_info block;
+    const divisor64  bld;       // Fast divisor by block.len
+    offset_pair_t    offsets[bsizeof(word)];
 
-    void compute_offsets();
+    block_info compute_offsets();
     bool update_current_offsets(uint_t &cword, uint_t &cboff, uint_t add);
     word mask(uint_t length, uint_t shift);
   };
@@ -154,7 +150,7 @@ namespace jellyfish {
   }
 
   template<typename word>
-  void Offsets<word>::compute_offsets()
+  typename Offsets<word>::block_info Offsets<word>::compute_offsets()
   {
     offset_pair_t *offset = offsets;
     uint_t         cword  = 0;    // current word in block
@@ -235,8 +231,8 @@ namespace jellyfish {
       offset++;
     } while(cboff != 0 && cboff < bsizeof(word) - 2);
 
-    block_len = offset - offsets;
-    block_word_len = cword + (cboff == 0 ? 0 : 1);
+    block_info res = { offset - offsets, cword + (cboff == 0 ? 0 : 1) };
+    return res;
   }
 }
 
