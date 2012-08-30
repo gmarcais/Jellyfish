@@ -71,6 +71,10 @@ class Time {
     return Time(*this) += o;
   }
 
+  bool operator<(const Time& o) const {
+    return tv.tv_sec < o.tv.tv_sec || (tv.tv_sec == o.tv.tv_sec && tv.tv_usec < o.tv.tv_usec);
+  }
+
   void now() { gettimeofday(&tv, NULL); }
   Time elapsed() const {
     return Time() - *this;

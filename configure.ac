@@ -10,9 +10,6 @@ AC_PROG_CXX
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
 
-AC_CHECK_TYPE(__int128,
-        AC_DEFINE([HAVE_INT128], [1], [Define if type __int128 is supported]))
-
 dnl define([concat], $1$2$3)dnl
 dnl define([PC_FILE], concat([jellyfish-],AC_PACKAGE_VERSION,[.pc]))
 define([PC_FILE], jellyfish-1.1.pc)
@@ -41,6 +38,10 @@ AC_ARG_WITH([half],
 AS_IF([test "x$with_half" = "xyes"],
       [AC_DEFINE([HALF_FLOATS], [1], [Define if you use half floats for qmer counting])],
       [])
+
+AC_CHECK_TYPE([__int128],
+              [AC_DEFINE([HAVE_INT128], [1], [Define if type __int128 is supported])])
+
 
 # Check the version of strerror_r
 AC_FUNC_STRERROR_R      

@@ -1,7 +1,7 @@
-#include <gtest/gtest.h>
-#include <square_binary_matrix.hpp>
-#include <time.hpp>
 #include <fstream>
+#include <gtest/gtest.h>
+#include <jellyfish/square_binary_matrix.hpp>
+#include <jellyfish/time.hpp>
 
 class RandomEnvironment : public ::testing::Environment {
  public:
@@ -92,7 +92,7 @@ TEST(SquareBinaryMatrix, Initialization) {
 #endif
   }
 
-  // spee tests
+  // speed tests
   uint64_t v1 = random_vector(VECLEN);
   uint64_t v2 = random_vector(VECLEN);
   uint64_t v3 = random_vector(VECLEN);
@@ -126,7 +126,8 @@ TEST(SquareBinaryMatrix, Initialization) {
     res_sse ^= rand_m.times_sse(v8);
   }
   Time time3;
-  std::cout << "unrolled timing " << (time2 - time1).str() <<
-    " sse timing " << (time3 - time2).str() << std::endl;
+  ASSERT_LT(time3 - time2, time2 - time1);
+  // std::cout << "unrolled timing " << (time2 - time1).str() <<
+  //   " sse timing " << (time3 - time2).str() << std::endl;
   ASSERT_EQ(res_unrolled, res_sse);
 }

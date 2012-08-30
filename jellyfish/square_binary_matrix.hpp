@@ -163,7 +163,14 @@ public:
 
   uint64_t times_unrolled(uint64_t v) const;
   uint64_t times_sse(uint64_t v) const;
-  uint64_t times(uint64_t v) const;
+  
+  inline uint64_t times(uint64_t v) const {
+#ifdef HAVE_SSE
+    return times_sse(v);
+#else
+    return times_unrolled(v);
+#endif
+  }
 
   SquareBinaryMatrix transpose() const;
   SquareBinaryMatrix operator*(const SquareBinaryMatrix &other) const;

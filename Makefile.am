@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS = -I m4
-EXTRA_DIST = m4/gnulib-cache.m4 doc/jellyfish.pdf doc/jellyfish.man README LICENSE HalfLICENSE
+EXTRA_DIST = doc/jellyfish.pdf doc/jellyfish.man README LICENSE HalfLICENSE
 man1_MANS = doc/jellyfish.man
 
 pkgconfigdir = $(libdir)/pkgconfig
@@ -200,7 +200,10 @@ tests/parsers.log: tests/generate_sequence.log
 TESTS += unit_tests/unit_tests.sh
 check_PROGRAMS += bin/test_all
 
-bin_test_all_SOURCES = unit_tests/test_offsets_key_value.cc unit_tests/test_simple_circular_buffer.cc
+bin_test_all_SOURCES = unit_tests/test_offsets_key_value.cc		\
+                       unit_tests/test_simple_circular_buffer.cc	\
+                       unit_tests/test_square_binary_matrix.cc
+bin_test_all_SOURCES += jellyfish/square_binary_matrix.cc
 bin_test_all_CXXFLAGS = -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)/unit_tests/gtest
 bin_test_all_LDADD = libgtest_main.la
 
