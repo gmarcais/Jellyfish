@@ -46,7 +46,15 @@ namespace jellyfish {
       , p_(0), m_(0)
 #endif
     { }
-    
+
+    divisor64(const divisor64& rhs) :
+      d_(rhs.d_)
+#ifdef HAVE_INT128
+      , p_(rhs.p_),
+      m_(rhs.m_)
+#endif
+    { }
+
     inline uint64_t divide(const uint64_t n) const {
 #ifdef HAVE_INT128
       switch(m_) {

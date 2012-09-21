@@ -94,13 +94,19 @@ namespace jellyfish {
 
     public:
       query(mapped_file &map) : 
-        _file(map), _ary(0), _canonical(false), _cary_bit(false) { init(); }
+        _file(map), _ary(0), _canonical(false), _cary_bit(false) { 
+        _ary = init(_file, hash_matrix, hash_inverse_matrix); 
+      }
       query(std::string filename) : 
         _file(filename.c_str()), _ary(0), _canonical(false), _cary_bit(false)
-      { init(); }
+      { 
+        _ary = init(_file, hash_matrix, hash_inverse_matrix); 
+      }
       query(const char* filename) : 
         _file(filename), _ary(0), _canonical(false), _cary_bit(false)
-      { init(); }
+      { 
+        _ary = init(_file, hash_matrix, hash_inverse_matrix); 
+      }
 
       ~query() {
         if(_ary)
@@ -155,8 +161,10 @@ namespace jellyfish {
         }
       }
 
-    private:
-      void init() {
+      
+      static storage_t* init(mapped_file& _file, 
+                             SquareBinaryMatrix& hash_matrix,
+                             SquareBinaryMatrix& hash_inverse_matrix) {
         if(_file.length() < sizeof(struct header))
           eraise(ErrorReading) << "'" << _file.path() << "': "
                                << "File truncated";
@@ -188,7 +196,7 @@ namespace jellyfish {
                                << "' not equal to key length '" << header->key_len << "'";
         if((size_t)map & 0x7)
           map += 0x8 - ((size_t)map & 0x7); // Make sure aligned for 64bits word. TODO: use alignof?
-        _ary = new storage_t(map, header->size, header->key_len, header->val_len,
+        return new storage_t(map, header->size, header->key_len, header->val_len,
                              header->max_reprobe, jellyfish::quadratic_reprobes,
                              hash_matrix, hash_inverse_matrix);
       }
