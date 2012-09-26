@@ -65,7 +65,7 @@ namespace jellyfish {
       int                current_read;
 
     public:
-      thread(fastq_read_parser *_parser) :
+      explicit thread(fastq_read_parser *_parser) :
         parser(_parser),
         sequence(0), rq(&parser->rq), wq(&parser->wq), current_read(max_nb_reads) {}
       read_t * next_read() {

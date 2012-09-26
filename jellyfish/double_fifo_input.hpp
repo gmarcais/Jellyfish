@@ -61,7 +61,7 @@ namespace jellyfish {
     
   public:
     typedef T bucket_t;
-    double_fifo_input(unsigned long _nb_buckets);
+    explicit double_fifo_input(unsigned long _nb_buckets);
     virtual ~double_fifo_input();
 
     virtual void fill() = 0;

@@ -38,7 +38,7 @@ namespace dbg {
   class stringbuf : public std::stringbuf {
   public:
     stringbuf() : std::stringbuf(std::ios_base::out) { }
-    stringbuf(const std::string &str) : 
+    explicit stringbuf(const std::string &str) : 
       std::stringbuf(str, std::ios_base::out) { }
 
     bool end_is_space() {

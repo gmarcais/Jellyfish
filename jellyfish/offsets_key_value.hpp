@@ -231,7 +231,7 @@ namespace jellyfish {
       offset++;
     } while(cboff != 0 && cboff < bsizeof(word) - 2);
 
-    block_info res = { offset - offsets, cword + (cboff == 0 ? 0 : 1) };
+    block_info res = { static_cast<uint_t>(offset - offsets), cword + (cboff == 0 ? 0 : 1) };
     return res;
   }
 }

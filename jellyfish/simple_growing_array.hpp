@@ -23,7 +23,7 @@ namespace jellyfish {
     size_t  _size;
     T      *_data;
   public:
-    simple_growing_array(size_t capacity = 100) : 
+    explicit simple_growing_array(size_t capacity = 100) : 
       _capacity(capacity / 2), _size(0), _data(0) { resize(); }
 
     virtual ~simple_growing_array() {

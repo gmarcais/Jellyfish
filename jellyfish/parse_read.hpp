@@ -55,7 +55,7 @@ namespace jellyfish {
       int         current_read;
 
     public:
-      thread(parse_read *_parser) :
+      explicit thread(parse_read *_parser) :
         parser(_parser), sequence(parser->next()),
         current_read(0) {}
 

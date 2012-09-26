@@ -100,7 +100,7 @@ namespace jellyfish {
       error_reporter  error_report;
 
     public:
-      thread(parse_dna *_parser) :
+      explicit thread(parse_dna *_parser) :
         parser(_parser), sequence(0),
         mer_len(_parser->mer_len), lshift(2 * (mer_len - 1)),
         kmer(0), rkmer(0), masq((1UL << (2 * mer_len)) - 1),

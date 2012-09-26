@@ -30,7 +30,7 @@ namespace allocators
 
   public:
     malloc() : ptr(NULL), size(0) {}
-    malloc(size_t _size) : ptr(NULL), size(0) {
+    explicit malloc(size_t _size) : ptr(NULL), size(0) {
         realloc(_size);
     }
     ~malloc() {

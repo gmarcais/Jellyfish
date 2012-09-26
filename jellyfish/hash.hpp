@@ -54,7 +54,7 @@ namespace jellyfish {
     typedef typename ary_t::iterator iterator;
 
     hash() : ary(NULL), dumper(NULL), dumping_initiated(false) {}
-    hash(ary_t *_ary) : ary(_ary), dumper(NULL), dumping_initiated(false) {}
+    explicit hash(ary_t *_ary) : ary(_ary), dumper(NULL), dumping_initiated(false) {}
 
     virtual ~hash() {}
 
@@ -129,7 +129,7 @@ namespace jellyfish {
       thread_ptr_t(const typename thread_list_t::iterator &thl) : thread_list_t::iterator(thl) {}
       typedef val_t val_type;
     };
-    //    typedef typename thread_list_t::iterator thread_ptr_t;
+    // typedef typename thread_list_t::iterator thread_ptr_t;
 
     thread_ptr_t new_thread() { 
       user_thread_lock.lock();

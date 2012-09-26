@@ -93,16 +93,16 @@ namespace jellyfish {
       SquareBinaryMatrix  hash_inverse_matrix;
 
     public:
-      query(mapped_file &map) : 
+      explicit query(mapped_file &map) : 
         _file(map), _ary(0), _canonical(false), _cary_bit(false) { 
         _ary = init(_file, hash_matrix, hash_inverse_matrix); 
       }
-      query(std::string filename) : 
+      explicit query(std::string filename) : 
         _file(filename.c_str()), _ary(0), _canonical(false), _cary_bit(false)
       { 
         _ary = init(_file, hash_matrix, hash_inverse_matrix); 
       }
-      query(const char* filename) : 
+      explicit query(const char* filename) : 
         _file(filename), _ary(0), _canonical(false), _cary_bit(false)
       { 
         _ary = init(_file, hash_matrix, hash_inverse_matrix); 

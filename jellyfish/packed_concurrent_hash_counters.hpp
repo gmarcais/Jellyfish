@@ -54,7 +54,7 @@ public:
   Key                   key;
   Val                   val;
 
-  arys_iterator(A *_ary) : ary(_ary), pos(0) {
+  explicit arys_iterator(A *_ary) : ary(_ary), pos(0) {
   }
 
   ~arys_iterator() { ary->ref_dec(); }

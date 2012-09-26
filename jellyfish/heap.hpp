@@ -68,7 +68,7 @@ namespace jellyfish {
     typedef const heap_item_t<iterator> *const_item_t;
 
     heap_t() : storage(0), elts(0), capacity_(0), h(0) { }
-    heap_t(size_t _capacity)  { initialize(_capacity); }
+    explicit heap_t(size_t _capacity)  { initialize(_capacity); }
     ~heap_t() {
       delete[] storage;
       delete[] elts;

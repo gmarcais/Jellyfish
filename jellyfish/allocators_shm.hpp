@@ -35,7 +35,7 @@ namespace allocators {
   public:
     shm() : fd(-1), ptr(MAP_FAILED), size(0), name(""),
                       unlink(true) {}
-    shm(size_t _size) :
+    explicit shm(size_t _size) :
       fd(-1), ptr(MAP_FAILED), size(0), name(""), unlink(true) {
       realloc(_size);
     }

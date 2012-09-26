@@ -45,15 +45,18 @@ namespace jellyfish {
 
   public:
     Float() : v(0.0f) {}
-    Float(int _v) : v((bits_t)_v) {}
-    Float(float_t _v) : v(_v) {}
-    Float(bits_t _v) : v(_v) {}
+    explicit Float(int _v) : v((bits_t)_v) {}
+    explicit Float(float_t _v) : v(_v) {}
+    explicit Float(bits_t _v) : v(_v) {}
 
     // static const Float zero;
     // static const Float one;
 
     const Float operator+(const Float &y) const {
       return Float(v.fv + y.v.fv);
+    }
+    const Float operator+(const float& y) const {
+      return Float(v.fv + y);
     }
 
     bits_t bits() const { return v.iv; };

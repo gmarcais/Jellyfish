@@ -30,7 +30,7 @@ namespace err {
   class code {
     int _code;
   public:
-    code(int c) : _code(c) {}
+    explicit code(int c) : _code(c) {}
     int get_code() const { return _code; }
   };
 
@@ -59,7 +59,7 @@ namespace err {
     int _errno;
   public:
     die_t() : _code(1), _errno(errno) {}
-    die_t(int c) : _code(c), _errno(errno) {}
+    explicit die_t(int c) : _code(c), _errno(errno) {}
     ~die_t() {
       std::cerr << std::endl;
       exit(_code);
@@ -112,9 +112,9 @@ namespace err {
 
 #define die if(1) err::die_t()
 #define eraise(e) if(1) err::raise_t<e>()
-#define define_error_class(name)                                    \
-  class name : public std::runtime_error {                          \
-  public: name(const std::string &txt) : std::runtime_error(txt) {} \
+#define define_error_class(name)                                        \
+  class name : public std::runtime_error {                              \
+  public: explicit name(const std::string &txt) : std::runtime_error(txt) {} \
   }
 
 #endif

@@ -27,7 +27,7 @@ namespace jellyfish {
     T         *start;
 
   public:
-    circular_buffer(int _size) : size(_size) {
+    explicit circular_buffer(int _size) : size(_size) {
       buffer = new T[size];
       end    = buffer + size;
       start  = buffer;

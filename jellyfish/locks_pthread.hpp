@@ -67,7 +67,7 @@ namespace locks {
         int _value, _wakeups;
         cond _cv;
     public:
-        Semaphore(int value) :
+        explicit Semaphore(int value) :
           _value(value),
           _wakeups(0)
         {
@@ -105,7 +105,7 @@ namespace locks {
       pthread_barrier_t _barrier;
       
     public:
-      barrier(unsigned count) {
+      explicit barrier(unsigned count) {
 
 	pthread_barrier_init(&_barrier, NULL, count);
       }
@@ -133,7 +133,7 @@ namespace locks {
       Semaphore barrier2;
 
     public:
-      barrier(unsigned cnt) 
+      explicit barrier(unsigned cnt) 
         : count(cnt), current(0), barrier1(0), barrier2(0) {
       }
 

@@ -48,7 +48,7 @@ public:
   Key key;
   Val val;
 
-  arys_iterator(A *_ary) : ary(_ary), pos(0) {
+  explicit arys_iterator(A *_ary) : ary(_ary), pos(0) {
   }
 
   ~arys_iterator() { }
@@ -108,7 +108,7 @@ public:
    * ensure proper order of deletion.
    * The constructor is not thread safe (protect by mutex)
    */
-  arys_t(unsigned long _size) : 
+  explicit arys_t(unsigned long _size) : 
     allocated(true) {
     size = 1;
     while(_size > size) { size <<= 1; }

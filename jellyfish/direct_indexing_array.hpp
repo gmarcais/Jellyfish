@@ -32,7 +32,7 @@ namespace jellyfish {
       
 
     public:
-      array(uint_t _key_len) :
+      explicit array(uint_t _key_len) :
         key_len(_key_len), size(((size_t)1) << key_len),
         mem_block(size * sizeof(bits_t)),
         data((bits_t *)mem_block.get_ptr())
@@ -65,7 +65,7 @@ namespace jellyfish {
           bits_t noval = atomic.cas(&data[key], oval, nval.bits());
           if(noval == oval) {
             if(_oval)
-              *_oval = oval;
+              *_oval = val_t(oval);
             return true;
           }
           oval = noval;
@@ -143,7 +143,7 @@ namespace jellyfish {
         out->write((char *)(data + start), length * sizeof(*data));
       }
 
-      val_t operator[](key_t key) const { return data[key]; }
+      val_t operator[](key_t key) const { return val_t(data[key]); }
     };
   }
 }

@@ -32,7 +32,7 @@ namespace jellyfish {
 #endif
     
   public:
-    divisor64(uint64_t d) : 
+    explicit divisor64(uint64_t d) : 
       d_(d)
 #ifdef HAVE_INT128
       , p_(ceilLog2(d_)),
@@ -47,7 +47,7 @@ namespace jellyfish {
 #endif
     { }
 
-    divisor64(const divisor64& rhs) :
+    explicit divisor64(const divisor64& rhs) :
       d_(rhs.d_)
 #ifdef HAVE_INT128
       , p_(rhs.p_),

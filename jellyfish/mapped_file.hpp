@@ -61,7 +61,7 @@ public:
   mapped_file(char *__base, size_t __length) :
     _unmap(false), _base(__base), _end(__base + __length), _length(__length) {}
 
-  mapped_file(const char *filename) : _path(filename), _unmap(false) {
+  explicit mapped_file(const char *filename) : _path(filename), _unmap(false) {
     map(filename);
   }
   mapped_file(const mapped_file &mf) : 
@@ -138,7 +138,7 @@ class lazy_mapped_file_t : public mapped_file {
   volatile long     used_counter;
 
 public:
-  lazy_mapped_file_t(const char *path) : 
+  explicit lazy_mapped_file_t(const char *path) : 
     mapped_file((char *)0, (size_t)0),
     _path(path), done(false), used_counter(0) {}
   

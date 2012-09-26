@@ -307,7 +307,7 @@ namespace jellyfish {
       /* Can't wait for C++0x to be finalized and call constructor
          from constructor!
        */
-      query(mapped_file &map) :
+      explicit query(mapped_file &map) :
         file(map),
         header(file.base()), 
         key_len((header.key_len / 8) + (header.key_len % 8 != 0)),
@@ -331,7 +331,7 @@ namespace jellyfish {
         get_key(last_id - 1, &last_key);
         last_pos = get_pos(last_key);
       }
-      query(std::string filename) : 
+      explicit query(std::string filename) : 
         file(filename.c_str()), 
         header(file.base()), 
         key_len((header.key_len / 8) + (header.key_len % 8 != 0)),

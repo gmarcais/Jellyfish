@@ -28,7 +28,7 @@ class Time {
 
  public:
   static const Time zero;
-  Time(bool init = true) {
+  explicit Time(bool init = true) {
     if(init)
       now();
   }

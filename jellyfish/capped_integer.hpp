@@ -33,13 +33,16 @@ namespace jellyfish {
     static const T cap = (T)-1;
 
     capped_integer() : x(0) {}
-    capped_integer(bits_t _x) : x(_x) {}
+    explicit capped_integer(bits_t _x) : x(_x) {}
 
     static const capped_integer zero;
     static const capped_integer one;
     
     const capped_integer operator+(const capped_integer y) const {
       return capped_integer((y.x > ~x) ? cap : y.x + x);
+    }
+    const capped_integer operator+(const T& y) const {
+      return capped_integer((y > ~x) ? cap : y + x);
     }
 
     bits_t bits() const { return x; }

@@ -58,7 +58,7 @@ namespace jellyfish {
     divisor64           size_div;
   
   public:
-    concurrent_queue(uint64_t _size) : 
+    explicit concurrent_queue(uint64_t _size) : 
       size(20 *_size), head(0), tail(0), closed(false), size_div(size) 
     { 
       queue = new Val *[size];

@@ -58,7 +58,7 @@ private:
 public:
   SquareBinaryMatrix() : columns(0), size(0) { }
 
-  SquareBinaryMatrix(int _size) :columns(first_alloc(_size)), size(_size) {
+  explicit SquareBinaryMatrix(int _size) :columns(first_alloc(_size)), size(_size) {
     memset(columns, '\0', sizeof(uint64_t) * _size);
   }
   SquareBinaryMatrix(const SquareBinaryMatrix &rhs) : columns(first_alloc(rhs.get_size())), size(rhs.get_size()) {
@@ -75,10 +75,10 @@ public:
     for(i = 0; i < size; i++)
       columns[i] = _columns[i] & _mask;
   }
-  SquareBinaryMatrix(const char *map) : columns(0), size(0) {
+  explicit SquareBinaryMatrix(const char *map) : columns(0), size(0) {
     read(map);
   }
-  SquareBinaryMatrix(std::istream *is) : columns(0), size(0) {
+  explicit SquareBinaryMatrix(std::istream *is) : columns(0), size(0) {
     load(is);
   }
 
