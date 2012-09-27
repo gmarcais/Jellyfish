@@ -53,7 +53,7 @@ namespace jellyfish {
   class Offsets {
   public:
     // woff: offset in words from beginning of block
-    // boff: offset in bits within that word. Past large bit.
+    // boff: offset in bits within that word. Paste large bit.
     // shift: shift in second word, if any
     // mask1: includes the large bit and the set bit if any.
     // mask2: mask in second word. Idem as mask1. 0 if fits in one word.
@@ -185,6 +185,8 @@ namespace jellyfish {
       offset->normal.val.woff  = cword;
       offset->normal.val.boff  = cboff;
       offset->normal.val.mask1 = mask(val_len, cboff);
+      if(key_len == 2 && val_len == 62)
+        std::cout << cword << " " << cboff << "\n";
       if(update_current_offsets(cword, cboff, val_len)) {
         offset->normal.val.mask2  = mask(cboff, 0);
         offset->normal.val.shift  = val_len - cboff;
@@ -209,7 +211,7 @@ namespace jellyfish {
       } else {
         offset->large.key.mask1    = mask(reprobe_len + 1, ocboff);
         offset->large.key.mask2    = 0;
-        offset->large.key.boff     = ocboff + 1;
+        offset->large.key.boff     = ocboff + 1; // TODO: this seems unecessary
         offset->large.key.shift    = 0;
         offset->large.key.cshift   = 0;
         offset->large.key.sb_mask1 = 0;
