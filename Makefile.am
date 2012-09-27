@@ -6,7 +6,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = jellyfish-1.1.pc
 
 AM_LDFLAGS = -lpthread
-AM_CPPFLAGS = -Wall -Werror -Wnon-virtual-dtor -I$(top_srcdir) -g -O3 -std=gnu++98
+AM_CPPFLAGS = -Wall -Wnon-virtual-dtor -I$(top_srcdir) -g -O3 -std=gnu++98
 AM_CXXFLAGS = -g -O3 -std=gnu++98
 
 # What to build
@@ -210,3 +210,4 @@ bin_test_all_CXXFLAGS = -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)
 bin_test_all_LDADD = libgtest_main.la
 
 include gtest.mk
+-include $(top_srcdir)/development.mk

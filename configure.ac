@@ -8,7 +8,6 @@ AC_CONFIG_HEADERS([config.h])
 AC_PROG_LIBTOOL
 AC_LANG(C++)
 
-# Checks for programs
 AC_PROG_CXX
 
 AC_ARG_VAR([MD5], [Path to md5 hashing program])
