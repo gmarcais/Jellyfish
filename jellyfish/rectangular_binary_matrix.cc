@@ -189,3 +189,12 @@ void jellyfish::RectangularBinaryMatrix::print_vector(std::ostream &os, const T 
   }
   os << "\n";
 }
+
+jellyfish::RectangularBinaryMatrix jellyfish::RectangularBinaryMatrix::randomize_pseudo_inverse(uint64_t (*rng)()) {
+  while(true) {
+    randomize(rng);
+    try {
+      return pseudo_inverse();
+    } catch(std::domain_error &e) { }
+  }
+}

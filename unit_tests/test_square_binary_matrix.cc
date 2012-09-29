@@ -1,5 +1,6 @@
 #include <fstream>
 #include <gtest/gtest.h>
+#include <unit_test/test_main.hpp>
 #include <jellyfish/square_binary_matrix.hpp>
 #include <jellyfish/time.hpp>
 
@@ -16,15 +17,6 @@ class RandomEnvironment : public ::testing::Environment {
 };
 //::testing::Environment* const foo_env = ::testing::AddGlobalTestEnvironment(new RandomEnvironment);
 
-uint64_t random_vector(int length) {
-  uint64_t _mask = (((uint64_t)1) << length) - 1;
-  uint64_t res = 0;
-  int lrm = floorLog2((unsigned long)RAND_MAX);
-  int i;
-  for(i = 0; i < length; i += lrm) 
-    res ^= (uint64_t)random() << i;
-  return res & _mask;
-}
 
 
 #define VECLEN 44

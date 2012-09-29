@@ -9,6 +9,27 @@ AM_LDFLAGS = -lpthread
 AM_CPPFLAGS = -Wall -Wnon-virtual-dtor -I$(top_srcdir) -g -O3 -std=gnu++98
 AM_CXXFLAGS = -g -O3 -std=gnu++98
 
+noinst_HEADERS = $(YAGGO_SOURCES)
+bin_PROGRAMS =
+dist_bin_SCRIPTS =
+data_DATA =
+BUILT_SOURCES = $(YAGGO_SOURCES)
+CLEANFILES =
+DISTCLEANFILES = $(BUILT_SOURCES)
+
+# Yaggo automatic rules with silencing
+V_YAGGO = $(V_YAGGO_$(V))
+V_YAGGO_ = $(V_YAGGO_$(AM_DEFAULT_VERBOSITY))
+V_YAGGO_0 = @echo "  YAGGO " $@;
+.yaggo.hpp:
+	$(V_YAGGO)$(YAGGO) --license $(srcdir)/header-license -p jellyfish/ -o $@ $<
+jellyfish/yaggo.cpp jellyfish/yaggo.hpp:
+	$(V_YAGGO)$(YAGGO) -l -p jellyfish/
+	@mv yaggo.cpp yaggo.hpp jellyfish
+
+BUILT_SOURCES += jellyfish/yaggo.cpp
+YAGGO_SOURCES = # Append all file to be built by yaggo
+
 # What to build
 # bin_PROGRAMS = bin/jellyfish
 # lib_LTLIBRARIES = libjellyfish.la
@@ -202,12 +223,22 @@ tests/parsers.log: tests/generate_sequence.log
 TESTS += unit_tests/unit_tests.sh
 check_PROGRAMS += bin/test_all
 
-bin_test_all_SOURCES = unit_tests/test_offsets_key_value.cc		\
-                       unit_tests/test_simple_circular_buffer.cc	\
-                       unit_tests/test_rectangular_binary_matrix.cc
-bin_test_all_SOURCES += jellyfish/rectangular_binary_matrix.cc jellyfish/int128.cc
+bin_test_all_SOURCES = unit_tests/test_main.cc				\
+	               unit_tests/test_misc.cc				\
+	               unit_tests/test_offsets_key_value.cc		\
+	               unit_tests/test_simple_circular_buffer.cc	\
+	               unit_tests/test_rectangular_binary_matrix.cc	\
+	               unit_tests/test_mer_dna.cc
+#                       unit_tests/test_invertible_hash_array.cc
+bin_test_all_SOURCES += jellyfish/rectangular_binary_matrix.cc		\
+                        jellyfish/int128.cc jellyfish/mer_dna.cc	\
+                        jellyfish/storage.cc jellyfish/yaggo.cpp	\
+                        jellyfish/allocators_mmap.cc			\
+                        jellyfish/square_binary_matrix.cc		\
+                        jellyfish/misc.cc
 bin_test_all_CXXFLAGS = -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)/unit_tests
-bin_test_all_LDADD = libgtest_main.la
+bin_test_all_LDADD = libgtest.la
+YAGGO_SOURCES += unit_tests/test_main_cmdline.hpp
 
 include gtest.mk
 -include $(top_srcdir)/development.mk

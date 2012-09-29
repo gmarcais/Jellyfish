@@ -23,10 +23,12 @@
 #include <iostream>
 #include <exception>
 #include <algorithm>
+#include <limits>
 #include <assert.h>
 #include <jellyfish/err.hpp>
 #include <jellyfish/misc.hpp>
 
+namespace jellyfish {
 class SquareBinaryMatrix {
 public:
   define_error_class(ErrorAllocation);
@@ -37,7 +39,7 @@ private:
   uint64_t *columns;
   int       size;
 
-  uint64_t mask() const { return (((uint64_t)1) << size) - 1; }
+  uint64_t mask() const { return std::numeric_limits<uint64_t>::max() >> (std::numeric_limits<uint64_t>::digits - size); }
   uint64_t msb() const { return ((uint64_t)1) << (size - 1); }
   uint64_t *first_alloc(size_t size) {
     uint64_t *res = calloc_align<uint64_t>((size_t)size, (size_t)16);
@@ -199,5 +201,5 @@ public:
   void print_vector(std::ostream *os, uint64_t v, bool vertical = false) const;
   std::string str_vector(uint64_t v, bool vertical = false) const;
 };
-
+} // namespace jellyfish
 #endif // __SQUARE_BINARY_MATRIX_HPP__

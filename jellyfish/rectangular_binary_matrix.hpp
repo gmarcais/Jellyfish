@@ -22,10 +22,12 @@
 #include <string.h>
 #include <assert.h>
 #include <time.h>
+#include <jellyfish/misc.hpp>
 #include <iostream>
 #include <exception>
 #include <stdexcept>
 #include <vector>
+#include <limits>
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -92,10 +94,9 @@ namespace jellyfish {
     }
 
     // Randomize the content of the matrix
-    template<typename T>
-    void randomize(T &rng) {
+    void randomize(uint64_t (*rng)()) {
       for(unsigned int i = 0; i < _c; ++i)
-        _columns[i] = (uint64_t)rng() & cmask();
+        _columns[i] = rng() & cmask();
     }
     //void randomize() { randomize(rng); }
 
@@ -145,6 +146,9 @@ namespace jellyfish {
     // identity.
     RectangularBinaryMatrix pseudo_multiplication(const RectangularBinaryMatrix &rhs) const;
 
+    // Initialize the object with a pseudo-invertible matrix and return its pseudo-inverse
+    RectangularBinaryMatrix randomize_pseudo_inverse(uint64_t (*rng)());
+
     // Return the rank of the matrix. The matrix is assumed to be
     // squared, padded above by the identity.
     unsigned int pseudo_rank() const;
@@ -162,7 +166,7 @@ namespace jellyfish {
 
     static uint64_t *alloc(unsigned int r, unsigned int c) __attribute__((malloc));
     // Mask for column word (zero msb)
-    uint64_t cmask() const { return (((uint64_t)1) << _r) - 1; }
+    uint64_t cmask() const { return std::numeric_limits<uint64_t>::max() >> (std::numeric_limits<uint64_t>::digits - _r); }
     // Nb words in vector for multiplication
     uint64_t nb_words() const { return (_c >> 6) + ((_c & 0x3f) != 0); }
     // Mask of most significant bit in most significant word of a vector
