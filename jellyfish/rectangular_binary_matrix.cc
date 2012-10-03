@@ -78,7 +78,7 @@ jellyfish::RectangularBinaryMatrix jellyfish::RectangularBinaryMatrix::pseudo_mu
       v[--j] = (uint64_t)1 << (sizeof(uint64_t) * 8 - 1);
   }
   // No more identity part to deal with
-  memset(v, '\0', sizeof(v));
+  memset(v, '\0', sizeof(uint64_t) * nb_words());
   for( ; i < _c; ++i) {
     v[0] = rhs[i];
     res.get(i) = this->times(v);

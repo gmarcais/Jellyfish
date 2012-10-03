@@ -228,15 +228,16 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_offsets_key_value.cc		\
 	               unit_tests/test_simple_circular_buffer.cc	\
 	               unit_tests/test_rectangular_binary_matrix.cc	\
-	               unit_tests/test_mer_dna.cc
-#                       unit_tests/test_invertible_hash_array.cc
+	               unit_tests/test_mer_dna.cc			\
+	               unit_tests/test_large_hash_array.cc
+
 bin_test_all_SOURCES += jellyfish/rectangular_binary_matrix.cc		\
                         jellyfish/int128.cc jellyfish/mer_dna.cc	\
                         jellyfish/storage.cc jellyfish/yaggo.cpp	\
                         jellyfish/allocators_mmap.cc			\
                         jellyfish/square_binary_matrix.cc		\
                         jellyfish/misc.cc
-bin_test_all_CXXFLAGS = -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)/unit_tests
+bin_test_all_CXXFLAGS = -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)/unit_tests -Dprotected=public
 bin_test_all_LDADD = libgtest.la
 YAGGO_SOURCES += unit_tests/test_main_cmdline.hpp
 

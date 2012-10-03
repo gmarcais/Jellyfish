@@ -46,11 +46,16 @@ AS_IF([test "x$with_half" = "xyes"],
 
 # Check that type __int128 is supported and if the
 # std::numeric_limits<__int128> specialization exists
-AC_CHECK_TYPE([__int128],
-              [AC_DEFINE([HAVE_INT128], [1], [Define if type __int128 is supported])])
-AC_CHECK_DECL([std::numeric_limits<__int128>::is_specialized], 
-              [AC_DEFINE([HAVE_NUMERIC_LIMITS128], [1], [Define if numeric limits specialization exists for __int128])],
-              [], [#include <limits>])
+AC_ARG_WITH([int128],
+            [AS_HELP_STRING([--with-int128], [enable int128])],
+            [], [with_int128=yes])
+AS_IF([test "x$with_int128" != xno],
+      [AC_CHECK_TYPE([__int128],
+                     [AC_DEFINE([HAVE_INT128], [1], [Define if type __int128 is supported])])
+       AC_CHECK_DECL([std::numeric_limits<__int128>::is_specialized], 
+                     [AC_DEFINE([HAVE_NUMERIC_LIMITS128], [1], [Define if numeric limits specialization exists for __int128])],
+                     [], [#include <limits>])
+      ])
 
 
 # Check the version of strerror_r

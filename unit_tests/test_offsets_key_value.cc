@@ -14,7 +14,6 @@ namespace {
 
 using namespace jellyfish;
 
-//class ComputeOffsetsTest : public ::testing::TestWithParam<offset_test_param>
 // Tuple is {key_len, val_len, reprobe_len}. Actual reprobe value is computed from the reprobe_len.
 class ComputeOffsetsTest : public ::testing::TestWithParam< ::std::tr1::tuple<int,int, int> >
 {
@@ -53,7 +52,7 @@ void test_key_offsets(const Offsets<uint64_t>::offset_t* it, uint_t k_len, const
   if(it->key.sb_mask1) {
     EXPECT_EQ(bsizeof(uint64_t) - it->key.boff - 1, it->key.shift) <<
       ": invalid key shift";
-    EXPECT_EQ((uint64_t)1 << (bsizeof(uint64_t) - it->key.boff + 1), 1 + (it->key.mask1 >> (it->key.boff - 1))) <<
+    EXPECT_EQ(it->key.boff == 1 ? 0 : (uint64_t)1 << (bsizeof(uint64_t) - it->key.boff + 1), 1 + (it->key.mask1 >> (it->key.boff - 1))) <<
       ": invalid key mask";
     EXPECT_EQ((uint64_t)1 << it->val.boff, 1 + it->key.mask2) <<
       ": invalid key mask2";
@@ -96,7 +95,7 @@ void test_val_offsets(const Offsets<uint64_t>::offset_t* it, uint_t v_len, const
       ": val between words, should have mask2";
     EXPECT_EQ(v_len, it->val.shift) <<
       ": invalid val shift";
-    EXPECT_EQ((uint64_t)1 << v_len, 1 + (it->val.mask1 >> it->val.boff)) <<
+    EXPECT_EQ(v_len == bsizeof(uint64_t) ? (uint64_t)0 : (uint64_t)1 << v_len, 1 + (it->val.mask1 >> it->val.boff)) <<
       ": invalid val mask1";
   }
   EXPECT_EQ(v_len, it->val.shift + it->val.cshift);
@@ -111,10 +110,12 @@ TEST_P(ComputeOffsetsTest, CheckCoherency) {
   uint_t                             lk_len = ::std::tr1::get<2>(GetParam());
   uint_t                             lv_len = std::min(kv_len - lk_len, bsizeof(uint64_t));
   uint_t                             i      = 0;
-  //  uint64_t                          *w, *pw;
 
   EXPECT_EQ(lk_len, this->offsets.get_reprobe_len());
+  EXPECT_EQ((uint64_t)1 << lk_len, this->offsets.get_reprobe_mask() + 1);
   EXPECT_EQ(lv_len, this->offsets.get_lval_len());
+
+
   for(i = 0; i < bsizeof(uint64_t); i++) {
     SCOPED_TRACE(::testing::Message() << "key:" << k_len << " val:" << v_len << " i:" << i 
                  << " lkey:" << lk_len << " lval:" << lv_len);
@@ -149,4 +150,4 @@ INSTANTIATE_TEST_CASE_P(OffsetsTest, ComputeOffsetsTest, ::testing::Combine(::te
                                                                             ::testing::Range(0, 64),    // Val lengths
                                                                             ::testing::Range(4, 9)      // Reprobe lengths
                                                                             ));
-}
+} // namespace {

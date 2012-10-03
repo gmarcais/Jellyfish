@@ -148,6 +148,7 @@ namespace jellyfish {
 
     // Initialize the object with a pseudo-invertible matrix and return its pseudo-inverse
     RectangularBinaryMatrix randomize_pseudo_inverse(uint64_t (*rng)());
+    RectangularBinaryMatrix randomize_pseudo_inverse() { return randomize_pseudo_inverse(random_bits); }
 
     // Return the rank of the matrix. The matrix is assumed to be
     // squared, padded above by the identity.
@@ -157,16 +158,7 @@ namespace jellyfish {
     void print(std::ostream &os) const;
     template<typename T>
     void print_vector(std::ostream &os, const T &v) const;
-  private:
-    // Store column by column. A column may use one word.  By
-    // convention, the "unused" bits (most significant bits) of each
-    // column are set to 0.
-    uint64_t * const   _columns;
-    const unsigned int _r, _c;
 
-    static uint64_t *alloc(unsigned int r, unsigned int c) __attribute__((malloc));
-    // Mask for column word (zero msb)
-    uint64_t cmask() const { return std::numeric_limits<uint64_t>::max() >> (std::numeric_limits<uint64_t>::digits - _r); }
     // Nb words in vector for multiplication
     uint64_t nb_words() const { return (_c >> 6) + ((_c & 0x3f) != 0); }
     // Mask of most significant bit in most significant word of a vector
@@ -177,6 +169,17 @@ namespace jellyfish {
         shift = sizeof(uint64_t) * 8;
       return (uint64_t)1 << (shift - 1);
     }
+
+  private:
+    // Store column by column. A column may use one word.  By
+    // convention, the "unused" bits (most significant bits) of each
+    // column are set to 0.
+    uint64_t * const   _columns;
+    const unsigned int _r, _c;
+
+    static uint64_t *alloc(unsigned int r, unsigned int c) __attribute__((malloc));
+    // Mask for column word (zero msb)
+    uint64_t cmask() const { return std::numeric_limits<uint64_t>::max() >> (std::numeric_limits<uint64_t>::digits - _r); }
     // Mask of highest word of a vector with _c rows (Most Significant
     // Word)
     uint64_t msw() const { return (msb() << 1) - 1; }

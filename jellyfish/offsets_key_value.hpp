@@ -93,10 +93,12 @@ public:
     block(compute_offsets()),
     bld(block.len)
   {
+    if(reprobe_len > bsizeof(word))
+      throw std::length_error("The reprobe_limit must be encoded in at most one word");
     if(val_len > bsizeof(word))
-      throw std::runtime_error("Val length must be less than the word size");
+      throw std::length_error("Val length must be less than the word size");
     if(_key_len < reprobe_len)
-      throw std::runtime_error("Key length must be at least as large as to encode the reprobe_limit");
+      throw std::length_error("Key length must be at least as large as to encode the reprobe_limit");
   }
 
   ~Offsets() {}
@@ -104,6 +106,7 @@ public:
   uint_t get_block_len() const { return block.len; }
   uint_t get_block_word_len() const { return block.word_len; }
   uint_t get_reprobe_len() const { return reprobe_len; }
+  word   get_reprobe_mask() const { return mask(reprobe_len, 0); }
   uint_t get_key_len() const { return key_len; }
   uint_t get_val_len() const { return val_len; }
   uint_t get_lval_len() const { return lval_len; }
@@ -140,7 +143,7 @@ private:
   bool add_val_offsets(uint_t &cword, uint_t &cboff, uint_t add);
   void set_key_offsets(Offsets::offset_t& key, uint_t& cword, uint_t& cboff, uint_t key_len);
   void set_val_offsets(Offsets::offset_t& val, uint_t& cword, uint_t& cboff, uint_t val_len);
-  word mask(uint_t length, uint_t shift);
+  word mask(uint_t length, uint_t shift) const;
 };
 
 template<typename word>
@@ -171,9 +174,11 @@ bool Offsets<word>::add_val_offsets(uint_t &cword, uint_t &cboff, uint_t add)
 }
 
 template<typename word>
-word Offsets<word>::mask(uint_t length, uint_t shift)
+word Offsets<word>::mask(uint_t length, uint_t shift) const
 {
-  return (((word)1u << length) - 1) << shift;
+  if(length)
+    return (((word)-1) >> (bsizeof(word) - length)) << shift;
+  return (word)0;
 }
 
 template<typename word>
@@ -233,9 +238,6 @@ typename Offsets<word>::block_info Offsets<word>::compute_offsets()
 
   memset(offsets, '\0', sizeof(offsets));
   do {
-    // if(offset - offsets == 25)
-    //   asm("int3");
-
     // Save current offsets as starting point for large key
     lcword = cword;
     lcboff = cboff;
@@ -245,41 +247,6 @@ typename Offsets<word>::block_info Offsets<word>::compute_offsets()
 
     set_key_offsets(offset->large, lcword, lcboff, reprobe_len);
     set_val_offsets(offset->large, lcword, lcboff, lval_len);
-
-    // ocboff                    = lcboff;
-    // offset->large.key.boff    = lcboff + 1;
-    // offset->large.key.lb_mask = mask(1, lcboff);
-    // if(add_key_offsets(lcword, lcboff, reprobe_len + 1)) {
-    //   add_val_offsets(lcword, lcboff, 2);
-    //   offset->large.key.mask1    = mask(bsizeof(word) - ocboff, ocboff);
-    //   offset->large.key.mask2    = mask(lcboff, 0);
-    //   offset->large.key.shift    = reprobe_len + 1 - lcboff;
-    //   offset->large.key.cshift   = lcboff - 1;
-    //   offset->large.key.sb_mask1 = mask(1, bsizeof(word) - 1);
-    //   offset->large.key.sb_mask2 = mask(1, lcboff - 1);
-    // } else {
-    //   offset->large.key.mask1    = mask(reprobe_len + 1, ocboff);
-    //   offset->large.key.mask2    = 0;
-    //   offset->large.key.boff     = ocboff + 1; // TODO: this seems unecessary
-    //   offset->large.key.shift    = 0;
-    //   offset->large.key.cshift   = 0;
-    //   offset->large.key.sb_mask1 = 0;
-    //   offset->large.key.sb_mask2 = 0;
-    // }
-    // offset->large.val.woff = lcword;
-    // offset->large.val.boff = lcboff;
-    // ocboff                 = lcboff;
-    // if(add_val_offsets(lcword, lcboff, lval_len)) {
-    //   offset->large.val.mask1  = mask(bsizeof(word) - ocboff, ocboff);
-    //   offset->large.val.mask2  = mask(lcboff, 0);
-    //   offset->large.val.shift  = bsizeof(word) - ocboff;
-    //   offset->large.val.cshift = lval_len - offset->large.val.shift;
-    // } else {
-    //   offset->large.val.mask1  = mask(lval_len, ocboff);
-    //   offset->large.val.mask2  = 0;
-    //   offset->large.val.shift  = lval_len;
-    //   offset->large.val.cshift = 0;
-    // }
 
     offset++;
   } while(cboff != 0 && cboff < bsizeof(word) - 2);

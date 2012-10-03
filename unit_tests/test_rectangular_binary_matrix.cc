@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <stdlib.h>
 #include <jellyfish/rectangular_binary_matrix.hpp>
+#include <jellyfish/mer_dna.hpp>
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -14,6 +15,7 @@
 
 namespace {
 using jellyfish::RectangularBinaryMatrix;
+using jellyfish::mer_dna;
 
 static bool allocate_matrix(unsigned int r, unsigned c) {
   RectangularBinaryMatrix m(r, c);
@@ -250,6 +252,28 @@ TEST(PseudoProduct, InitRandom) {
     EXPECT_TRUE((m.pseudo_multiplication(im)).is_low_identity());
   }
 }
+
+TEST(PseudoProduct, VectorInverseMultiplication) {
+  RectangularBinaryMatrix m(50, 132);
+  RectangularBinaryMatrix im(m.randomize_pseudo_inverse());
+  RectangularBinaryMatrix cim(im);
+  EXPECT_TRUE(cim.pseudo_multiplication(m).is_low_identity());
+
+  mer_dna::k(66);
+  mer_dna v, iv, iv2;
+  EXPECT_EQ(m.nb_words(), v.nb_words());
+
+  for(int i = 0; i < 100; ++i) {
+    SCOPED_TRACE(::testing::Message() << "i=" << i);
+    v.randomize();
+    uint64_t hash = m.times(v);
+    iv = v; iv.set_bits(0, 50, hash);
+
+    uint64_t lower = im.times(iv);
+    EXPECT_EQ(v.get_bits(0, 50), lower);
+  }
+}
+
 
 static const int speed_loop = 100000000;
 TEST(MatrixProductSpeed, Loop) {
