@@ -17,6 +17,7 @@
 
 
 #include <stdio.h>
+#include <map>
 #include <gtest/gtest.h>
 #include <jellyfish/mer_dna.hpp>
 #include <unit_tests/test_main.hpp>
@@ -147,6 +148,39 @@ TEST(MerDNASimple, SetBits) {
     EXPECT_EQ(odd_pattern, mer);
     EXPECT_EQ(odd_pattern.to_str(), mer.to_str());
   }
+}
+
+TEST(MerDNASimple, Comparators) {
+  mer_dna::k(151);
+  mer_dna ma, mc, mg, mt;
+  ma.polyA();
+  mc.polyC();
+  mg.polyG();
+  mt.polyT();
+
+  mer_dna cma(ma), cmc(mc), cmg(mg), cmt(mt);
+
+  ASSERT_TRUE(ma < mc); ASSERT_FALSE(mc < ma);
+  ASSERT_TRUE(ma < mg); ASSERT_FALSE(mg < ma);
+  ASSERT_TRUE(ma < mt); ASSERT_FALSE(mt < ma);
+  ASSERT_TRUE(mc < mg); ASSERT_FALSE(mg < mc);
+  ASSERT_TRUE(mc < mt); ASSERT_FALSE(mt < mc);
+  ASSERT_TRUE(mg < mt); ASSERT_FALSE(mt < mg);
+
+  ASSERT_FALSE(ma < ma);
+  ASSERT_FALSE(mc < mc);
+  ASSERT_FALSE(mg < mg);
+  ASSERT_FALSE(mt < mt);
+
+  std::map<mer_dna, int> map;
+  EXPECT_EQ(1, ++map[ma]);
+  EXPECT_EQ(1, ++map[mc]);
+  EXPECT_EQ(1, ++map[mg]);
+  EXPECT_EQ(1, ++map[mt]);
+  EXPECT_EQ(2, ++map[cma]);
+  EXPECT_EQ(2, ++map[cmc]);
+  EXPECT_EQ(2, ++map[cmg]);
+  EXPECT_EQ(2, ++map[cmt]);
 }
 
 // Value Type Container class

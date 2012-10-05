@@ -58,6 +58,8 @@ void test_key_offsets(const Offsets<uint64_t>::offset_t* it, uint_t k_len, const
       ": invalid key mask2";
     EXPECT_EQ(bsizeof(uint64_t) - it->key.boff - 1, it->key.shift) <<
       ": invalid key shift";
+    EXPECT_EQ((uint16_t)0, (k_len - (it->key.shift + it->key.cshift)) % (bsizeof(uint64_t) - 1)) <<
+      ": invalid sum of shift and cshift";
     if(it->key.sb_mask2)
       EXPECT_EQ(1 + it->key.mask2, (uint64_t)1 << (it->key.cshift + 1)) <<
         ": invalid key cshift";
@@ -65,6 +67,7 @@ void test_key_offsets(const Offsets<uint64_t>::offset_t* it, uint_t k_len, const
       EXPECT_EQ((uint_t)0, it->key.cshift);
     EXPECT_EQ((uint64_t)1 << 63, it->key.sb_mask1) <<
       ": invalid key key sb_mask1";
+    EXPECT_EQ(k_len - (bsizeof(uint64_t) - 1 - it->key.boff) >= bsizeof(uint64_t) - 1, it->key.full_words);
   } else {
     EXPECT_EQ(0u, it->key.shift) <<
       ": key shift should be zero, no sb_mask";
@@ -111,28 +114,32 @@ TEST_P(ComputeOffsetsTest, CheckCoherency) {
   uint_t                             lv_len = std::min(kv_len - lk_len, bsizeof(uint64_t));
   uint_t                             i      = 0;
 
-  EXPECT_EQ(lk_len, this->offsets.get_reprobe_len());
-  EXPECT_EQ((uint64_t)1 << lk_len, this->offsets.get_reprobe_mask() + 1);
-  EXPECT_EQ(lv_len, this->offsets.get_lval_len());
+  EXPECT_EQ(lk_len, this->offsets.reprobe_len());
+  EXPECT_EQ((uint64_t)1 << lk_len, this->offsets.reprobe_mask() + 1);
+  EXPECT_EQ(lv_len, this->offsets.lval_len());
 
 
   for(i = 0; i < bsizeof(uint64_t); i++) {
     SCOPED_TRACE(::testing::Message() << "key:" << k_len << " val:" << v_len << " i:" << i 
                  << " lkey:" << lk_len << " lval:" << lv_len);
-    this->offsets.get_word_offset(i, &it, &lit, NULL);
+    this->offsets.word_offset(i, &it, &lit, NULL);
     if(i > 0) {
-      this->offsets.get_word_offset(i-1, &pit, &lpit, NULL);
+      this->offsets.word_offset(i-1, &pit, &lpit, NULL);
 
       EXPECT_GE(it->key.woff, pit->key.woff) << "Current key offset larger than previous";
       EXPECT_GE(it->key.woff, pit->val.woff) << "Current key offset larger than previous val offset";
-      EXPECT_GE(it->val.woff, it->key.woff) << "Val offset larger than key offset";
-
+      EXPECT_TRUE(it->key.woff != pit->key.woff || it->key.boff > pit->key.boff)
+        << "Key bit offset did not increase within a word";
       EXPECT_EQ((pit->val.boff + v_len) % 64 + 1, it->key.boff) <<
         ": Invalid jump of bit offset";
     } // if(i > 0)
+    EXPECT_GE(it->val.woff, it->key.woff) << "Val offset larger than key offset";
+  EXPECT_TRUE(it->key.woff != it->val.woff || it->val.boff > it->key.boff)
+        << "Val bit offset did not increase within a word";
 
     EXPECT_EQ(it->key.woff, lit->key.woff);
     EXPECT_EQ(it->key.boff, lit->key.boff);
+    EXPECT_EQ(it->key.lb_mask, lit->key.lb_mask);
 
     test_key_offsets(it, k_len, "Key offsets");
     test_key_offsets(lit, lk_len, "Large key offsets");
@@ -144,6 +151,8 @@ TEST_P(ComputeOffsetsTest, CheckCoherency) {
     if(next_bit >= 62 || next_bit == 0)
       break;
   }
+
+  EXPECT_EQ(i + 1, this->offsets.block_len());
 }
 
 INSTANTIATE_TEST_CASE_P(OffsetsTest, ComputeOffsetsTest, ::testing::Combine(::testing::Range(8, 192, 2), // Key lengths

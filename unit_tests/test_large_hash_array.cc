@@ -1,4 +1,5 @@
 #include <map>
+#include <vector>
 
 #include <gtest/gtest.h>
 #include <unit_tests/test_main.hpp>
@@ -13,6 +14,7 @@ void PrintTo(jellyfish::mer_dna& m, ::std::ostream* os) {
 namespace {
 typedef jellyfish::invertible_hash::array<uint64_t> inv_array;
 typedef jellyfish::large_hash::array<jellyfish::mer_dna> large_array;
+typedef std::map<jellyfish::mer_dna, uint64_t> mer_map;
 
 using jellyfish::RectangularBinaryMatrix;
 using jellyfish::mer_dna;
@@ -23,38 +25,41 @@ class HashArray : public ::testing::TestWithParam< ::std::tr1::tuple<int,int, in
 public:
   static const size_t ary_lsize = 9;
   static const size_t ary_size = (size_t)1 << ary_lsize;
-  const int           key_len, val_len, reprobe_limit;
+  static const size_t ary_size_mask = ary_size - 1;
+  const int           key_len, val_len, reprobe_len, reprobe_limit;
   large_array         ary;
 
   HashArray() :
     key_len(::std::tr1::get<0>(GetParam())),
     val_len(::std::tr1::get<1>(GetParam())),
-    reprobe_limit(::std::tr1::get<2>(GetParam())),
-    ary(ary_size, key_len, val_len, (1 << reprobe_limit) - 2)
+    reprobe_len(::std::tr1::get<2>(GetParam())),
+    reprobe_limit((1 << reprobe_len) - 2),
+    ary(ary_size, key_len, val_len, reprobe_limit)
   { }
+
+  void SetUp() {
+    jellyfish::mer_dna::k(key_len / 2);
+  }
 
   ~HashArray() { }
 };
 
 TEST_P(HashArray, OneElement) {
-  jellyfish::mer_dna::k(key_len / 2);
   jellyfish::mer_dna m, m2, get_mer;
 
   SCOPED_TRACE(::testing::Message() << "key_len:" << key_len << " val_len:" << val_len << " reprobe:" << reprobe_limit);
 
-  RectangularBinaryMatrix matrix     = ary.get_matrix();
-  RectangularBinaryMatrix inv_matrix = ary.get_inverse_matrix();
-  EXPECT_EQ((unsigned int)ary_lsize, matrix.r());
-  EXPECT_EQ((unsigned int)key_len, matrix.c());
+  EXPECT_EQ((unsigned int)ary_lsize, ary.matrix().r());
+  EXPECT_EQ((unsigned int)key_len, ary.matrix().c());
 
-  for(uint64_t i = 0; i < ary_size; ++i) {
+  size_t start_pos = random() % (ary_size - bsizeof(uint64_t));
+  for(uint64_t i = start_pos; i < start_pos + bsizeof(uint64_t); ++i) {
     SCOPED_TRACE(::testing::Message() << "i:" << i);
     // Create mer m so that it will hash to position i
     m.randomize();
     m2 = m;
-    m2.set_bits(0, matrix.r(), (uint64_t)i);
-    m.set_bits(0, matrix.r(), inv_matrix.times(m2));
-    EXPECT_EQ(i, ary.get_matrix().times(m));
+    m2.set_bits(0, ary.matrix().r(), (uint64_t)i);
+    m.set_bits(0, ary.matrix().r(), ary.inverse_matrix().times(m2));
 
     // Add this one element to the hash
     ary.clear();
@@ -66,60 +71,88 @@ TEST_P(HashArray, OneElement) {
 
     // Every position but i in the hash should be empty
     uint64_t val;
-    for(size_t j = 0; j < ary_size; ++j) {
+    for(ssize_t j = -bsizeof(uint64_t); j <= (ssize_t)bsizeof(uint64_t); ++j) {
       SCOPED_TRACE(::testing::Message() << "j:" << j);
       val = -1;
-      ASSERT_EQ(j == id, ary.get_key_val_at_id(j, get_mer, val));
-      if(j == id) {
+      size_t jd = (start_pos + j) & ary_size_mask;
+      ASSERT_EQ(jd == id, ary.get_key_val_at_id(jd, get_mer, val));
+      if(jd == id) {
         ASSERT_EQ(m, get_mer);
-        ASSERT_EQ((uint64_t)j, val);
+        ASSERT_EQ((uint64_t)jd, val);
       }
     }
   }
 }
 
-INSTANTIATE_TEST_CASE_P(HashArrayTest, HashArray, ::testing::Combine(::testing::Range(10, 192, 2), // Key lengths
+TEST_P(HashArray, Collisions) {
+  static const int nb_collisions = 4;
+  std::vector<mer_dna> mers(nb_collisions);
+  std::vector<mer_dna> mers2(nb_collisions);
+  std::map<mer_dna, uint64_t> map;
+  ASSERT_EQ((unsigned int)key_len / 2, mer_dna::k());
+
+  SCOPED_TRACE(::testing::Message() << "key_len:" << key_len << " val_len:" << val_len << " reprobe:" << reprobe_limit);
+
+  mers[0].polyA(); mers2[0].polyA();
+  mers[1].polyC(); mers2[1].polyC();
+  mers[2].polyG(); mers2[2].polyG();
+  mers[3].polyT(); mers2[3].polyT();
+
+  size_t start_pos = random() % (ary_size - bsizeof(uint64_t));
+  for(uint64_t i = start_pos; i < start_pos + bsizeof(uint64_t); ++i) {
+    SCOPED_TRACE(::testing::Message() << "i:" << i);
+    ary.clear();
+    map.clear();
+
+    // Add mers that it will all hash to position i
+    for(int j = 0; j < nb_collisions; ++j) {
+      mers2[j].set_bits(0, ary.matrix().r(), (uint64_t)i);
+      mers[j].set_bits(0, ary.matrix().r(), ary.inverse_matrix().times(mers2[j]));
+      ary.add(mers[j], 1);
+      ++map[mers[j]];
+    }
+
+    large_array::iterator it    = ary.iterator_all();
+    size_t                count = 0;
+    while(it.next()) {
+      SCOPED_TRACE(::testing::Message() << "it.key():" << it.key());
+      ASSERT_FALSE(map.end() == map.find(it.key()));
+      EXPECT_EQ(map[it.key()], it.val());
+      ++count;
+    }
+    EXPECT_EQ(map.size(), count);
+  }
+}
+
+TEST_P(HashArray, Iterator) {
+  static const int nb_elts = 100;
+  SCOPED_TRACE(::testing::Message() << "key_len:" << key_len << " val_len:" << val_len << " reprobe:" << reprobe_limit);
+
+  mer_map            map;
+  jellyfish::mer_dna mer;
+
+  for(int i = 0; i < nb_elts; ++i) {
+    mer.randomize();
+    ASSERT_TRUE(ary.add(mer, i));
+    map[mer] += i;
+  }
+
+  large_array::iterator it = ary.iterator_all();
+  int count = 0;
+  while(it.next()) {
+    mer_map::const_iterator mit = map.find(it.key());
+    ASSERT_NE(map.end(), mit);
+    SCOPED_TRACE(::testing::Message() << "key:" << it.key());
+    EXPECT_EQ(mit->first, it.key());
+    EXPECT_EQ(mit->second, it.val());
+    ++count;
+  }
+  EXPECT_EQ(map.size(), (size_t)count);
+}
+
+INSTANTIATE_TEST_CASE_P(HashArrayTest, HashArray, ::testing::Combine(::testing::Range(10, 4 * 64, 2), // Key lengths
                                                                      ::testing::Range(1, 10),    // Val lengths
                                                                      ::testing::Range(6, 8)      // Reprobe lengths
                                                                      ));
 
-// TEST(HashArray, HundredSmallElements) {
-//   typedef jellyfish::invertible_hash::array<uint64_t> inv_array;
-//   typedef jellyfish::large_hash::array<jellyfish::mer_dna> large_array;
-//   static const size_t   ary_size      = 200;
-//   static const uint16_t key_len       = 62;
-//   static const uint16_t val_len       = 3;
-//   static const uint16_t reprobe_limit = 63;
-
-//   inv_array inv_ary(ary_size, key_len, val_len, reprobe_limit);
-//   large_array lar_ary(ary_size, key_len, val_len, reprobe_limit);
-//   std::map<uint64_t, uint64_t> map;
-//   jellyfish::mer_dna::k(key_len / 2);
-//   jellyfish::mer_dna mer;
-
-//   for(int i = 0; i < 100; ++i) {
-//     uint64_t k = random_bits(62);
-//     inv_ary.add(k, i);
-//     mer.set_bits(0, key_len, k);
-//     lar_ary.add(mer, i);
-//     map[k] = i;
-//   }
-
-//   inv_array::iterator it = inv_ary.iterator_all();
-//   large_array::iterator lit = lar_ary.iterator_all();
-//   int count = 0;
-//   while(true) {
-//     bool more = it.next();
-//     bool lmore = lit.next();
-//     EXPECT_EQ(more, lmore);
-//     if(!more || !lmore)
-//       break;
-//     ASSERT_NE(map.end(), map.find(it.key));
-//     EXPECT_EQ(map[it.key], it.val);
-//     EXPECT_EQ(it.val, lit.val);
-//     ++count;
-//   }
-//   EXPECT_EQ(map.size(), (size_t)count);
-
-// }
 }

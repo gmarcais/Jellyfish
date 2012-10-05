@@ -64,12 +64,14 @@ public:
   // sb_mask[12]: mask for set bit in words 1 to last-1 and in last word, if any. set bit is the
   //              last usable bit of the field.
   // lb_mask: mask for the large bit. It is the first bit of the key field.
+  // full words: need to copy full words
   typedef struct {
-    struct {
+    struct key {
       uint_t woff, boff, shift, cshift;
       word   mask1, mask2, sb_mask1, sb_mask2, lb_mask;
+      bool   full_words;
     } key;
-    struct {
+    struct val {
       uint_t woff, boff, shift, cshift;
       word   mask1, mask2;
     } val;
@@ -85,33 +87,34 @@ public:
   //    Offsets() {}
 
   Offsets(uint_t _key_len, uint_t _val_len, uint_t _reprobe_limit) :
-    key_len(_key_len),
-    val_len(_val_len),
-    reprobe_limit(_reprobe_limit),
-    reprobe_len(bitsize(reprobe_limit)),
-    lval_len(std::min(key_len + val_len - reprobe_len, bsizeof(word))),
+    key_len_(_key_len),
+    val_len_(_val_len),
+    reprobe_limit_(_reprobe_limit),
+    reprobe_len_(bitsize(reprobe_limit_)),
+    lval_len_(std::min(key_len_ + val_len_ - reprobe_len_, bsizeof(word))),
     block(compute_offsets()),
     bld(block.len)
   {
-    if(reprobe_len > bsizeof(word))
+    if(reprobe_len_ > bsizeof(word))
       throw std::length_error("The reprobe_limit must be encoded in at most one word");
-    if(val_len > bsizeof(word))
+    if(val_len_ > bsizeof(word))
       throw std::length_error("Val length must be less than the word size");
-    if(_key_len < reprobe_len)
+    if(key_len_ < reprobe_len_)
       throw std::length_error("Key length must be at least as large as to encode the reprobe_limit");
   }
 
   ~Offsets() {}
 
-  uint_t get_block_len() const { return block.len; }
-  uint_t get_block_word_len() const { return block.word_len; }
-  uint_t get_reprobe_len() const { return reprobe_len; }
-  word   get_reprobe_mask() const { return mask(reprobe_len, 0); }
-  uint_t get_key_len() const { return key_len; }
-  uint_t get_val_len() const { return val_len; }
-  uint_t get_lval_len() const { return lval_len; }
+  uint_t block_len() const { return block.len; }
+  uint_t block_word_len() const { return block.word_len; }
+  uint_t reprobe_len() const { return reprobe_len_; }
+  uint_t reprobe_limit() const { return reprobe_limit_; }
+  word   reprobe_mask() const { return mask(reprobe_len_, 0); }
+  uint_t key_len() const { return key_len_; }
+  uint_t val_len() const { return val_len_; }
+  uint_t lval_len() const { return lval_len_; }
   word   get_max_val(bool large) const { 
-    return (((uint64_t)1) << (large ? lval_len : val_len)) - 1;
+    return (((uint64_t)1) << (large ? lval_len_ : val_len_)) - 1;
   }
 
   // Discretize and round down number of entries according to length
@@ -121,8 +124,7 @@ public:
     return block.len * blocks;
   }
 
-  word *get_word_offset(size_t id, const offset_t **o, const offset_t **lo,
-                        word * const base) const {
+  word *word_offset(size_t id, const offset_t **o, const offset_t **lo, word * const base) const {
     uint64_t q, r;
     bld.division(id, q, r);
     word *w = base + (block.word_len * q);
@@ -132,34 +134,36 @@ public:
   }
 
 private:
-  const uint_t     key_len, val_len;
-  const uint_t     reprobe_limit, reprobe_len, lval_len;
+  const uint_t     key_len_, val_len_;
+  const uint_t     reprobe_limit_, reprobe_len_, lval_len_;
   const block_info block;
   const divisor64  bld;       // Fast divisor by block.len
   offset_pair_t    offsets[bsizeof(word)];
 
   block_info compute_offsets();
-  bool add_key_offsets(uint_t &cword, uint_t &cboff, uint_t add);
+  bool add_key_offsets(uint_t &cword, uint_t &cboff, uint_t add, bool& full_words);
   bool add_val_offsets(uint_t &cword, uint_t &cboff, uint_t add);
-  void set_key_offsets(Offsets::offset_t& key, uint_t& cword, uint_t& cboff, uint_t key_len);
-  void set_val_offsets(Offsets::offset_t& val, uint_t& cword, uint_t& cboff, uint_t val_len);
+  void set_key_offsets(Offsets::offset_t& key, uint_t& cword, uint_t& cboff, uint_t len);
+  void set_val_offsets(Offsets::offset_t& val, uint_t& cword, uint_t& cboff, uint_t len);
   word mask(uint_t length, uint_t shift) const;
 };
 
 template<typename word>
-bool Offsets<word>::add_key_offsets(uint_t &cword, uint_t &cboff, uint_t add)
+bool Offsets<word>::add_key_offsets(uint_t &cword, uint_t &cboff, uint_t add, bool& full_words)
 {
-  if(cboff + add <= bsizeof(word)) {     // Not spilling over next word
+  if(cboff + add <= bsizeof(word)) { // Not spilling over next word
     cboff  = (cboff + add) % bsizeof(word);
     cword += (cboff == 0);
     return false;
   }
 
   // Span multiple words. Take into account the extra set bit, one in each word
-  add   -= bsizeof(word) - cboff - 1; // Substract bits stored in first partial word
-  cword += 1 + add / (bsizeof(word) - 1); // Add first word plus any extra complete word
-  cboff  = add % (bsizeof(word) - 1); // Extra bits in last word
-  cboff += cboff > 0; // Add set bit in last word if use partial word
+  size_t wcap  = bsizeof(word) - 1; // Word capacity withouth set bit
+  add         -= wcap - cboff;  // Substract bits stored in first partial word including set bit
+  full_words   = add >= wcap;
+  cword       += 1 + add / wcap; // Add first word plus any extra complete word
+  cboff        = add % wcap;    // Extra bits in last word
+  cboff       += cboff > 0;     // Add set bit in last word if use partial word
   return true;
 }
 
@@ -184,26 +188,29 @@ word Offsets<word>::mask(uint_t length, uint_t shift) const
 template<typename word>
 void Offsets<word>::set_key_offsets(Offsets::offset_t& offset, uint_t& cword, uint_t& cboff, uint_t len) {
   uint_t ocboff;
+  bool   full_words;
 
   offset.key.woff    = cword;
   ocboff             = cboff;
   offset.key.boff    = cboff + 1;
   offset.key.lb_mask = mask(1, cboff);
-  if(add_key_offsets(cword, cboff, len + 1)) {
+  if(add_key_offsets(cword, cboff, len + 1, full_words)) {
     // Extra bits in last extra word
-    offset.key.mask1    = mask(bsizeof(word) - ocboff, ocboff);
-    offset.key.mask2    = mask(cboff, 0);
-    offset.key.shift    = bsizeof(word) - 1 - ocboff - 1; // -1 for large bit, -1 for set bit
-    offset.key.cshift   = cboff ? cboff - 1 : 0;
-    offset.key.sb_mask1 = mask(1, bsizeof(word) - 1);
-    offset.key.sb_mask2 = cboff ? mask(1, cboff - 1) : 0;
+    offset.key.mask1      = mask(bsizeof(word) - ocboff, ocboff);
+    offset.key.mask2      = mask(cboff, 0);
+    offset.key.shift      = bsizeof(word) - 1 - ocboff - 1; // -1 for large bit, -1 for set bit
+    offset.key.cshift     = cboff ? cboff - 1 : 0;
+    offset.key.sb_mask1   = mask(1, bsizeof(word) - 1);
+    offset.key.sb_mask2   = cboff ? mask(1, cboff - 1) : 0;
+    offset.key.full_words = full_words;
   } else {
-    offset.key.mask1    = mask(len + 1, ocboff);
-    offset.key.mask2    = 0;
-    offset.key.shift    = 0;
-    offset.key.cshift   = 0;
-    offset.key.sb_mask1 = 0;
-    offset.key.sb_mask2 = 0;
+    offset.key.mask1      = mask(len + 1, ocboff);
+    offset.key.mask2      = 0;
+    offset.key.shift      = 0;
+    offset.key.cshift     = 0;
+    offset.key.sb_mask1   = 0;
+    offset.key.sb_mask2   = 0;
+    offset.key.full_words = false;
   }
 }
 
@@ -242,11 +249,11 @@ typename Offsets<word>::block_info Offsets<word>::compute_offsets()
     lcword = cword;
     lcboff = cboff;
 
-    set_key_offsets(offset->normal, cword, cboff, key_len);
-    set_val_offsets(offset->normal, cword, cboff, val_len);
+    set_key_offsets(offset->normal, cword, cboff, key_len_);
+    set_val_offsets(offset->normal, cword, cboff, val_len_);
 
-    set_key_offsets(offset->large, lcword, lcboff, reprobe_len);
-    set_val_offsets(offset->large, lcword, lcboff, lval_len);
+    set_key_offsets(offset->large, lcword, lcboff, reprobe_len_);
+    set_val_offsets(offset->large, lcword, lcboff, lval_len_);
 
     offset++;
   } while(cboff != 0 && cboff < bsizeof(word) - 2);

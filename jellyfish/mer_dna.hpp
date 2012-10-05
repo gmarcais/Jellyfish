@@ -227,10 +227,10 @@ public:
   base_proxy<base_type> base(unsigned int i) { return base_proxy<base_type>(_data + i / wbases, 2 * (i % wbases)); }
 
   // Make current k-mer all As.
-  void polyA() { memset(_data, 0x00, sizeof(base_type) * nb_words()); }
-  void polyC() { memset(_data, 0x55, sizeof(base_type) * nb_words()); }
-  void polyG() { memset(_data, 0xaa, sizeof(base_type) * nb_words()); }
-  void polyT() { memset(_data, 0xff, sizeof(base_type) * nb_words()); }
+  void polyA() { memset(_data, 0x00, sizeof(base_type) * nb_words()); _data[nb_words() - 1] &= msw(); }
+  void polyC() { memset(_data, 0x55, sizeof(base_type) * nb_words()); _data[nb_words() - 1] &= msw(); }
+  void polyG() { memset(_data, 0xaa, sizeof(base_type) * nb_words()); _data[nb_words() - 1] &= msw(); }
+  void polyT() { memset(_data, 0xff, sizeof(base_type) * nb_words()); _data[nb_words() - 1] &= msw(); }
   void randomize() {
     for(unsigned int i = 0; i < nb_words(); ++i)
       _data[i] = random_bits(wbits);
