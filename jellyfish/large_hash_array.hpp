@@ -173,6 +173,8 @@ public:
       bool success = false;
       while(!success && id_ < end_id_)
         success = ary_->get_key_val_at_id(id_++, key_, val_);
+      if(success)
+        key_.set_bits(0, ary_->lsize_, ary_->hash_inverse_matrix_.times(key_));
 
       return success;
     }
@@ -293,15 +295,12 @@ protected:
     word           *w, *kw, nkey;
     bool            key_claimed = false;
 
-    // Akey contains what needs to be stored. For a large key, it is
-    // only the reprobe value, which starts at 0.
-    word akey = 0;
     do {
       w = offsets_.word_offset(cid, &o, &lo, data_);
       kw = w + lo->key.woff;
 
       if(lo->key.sb_mask1) { // key split on multiple words
-        nkey = (akey << lo->key.boff) | lo->key.sb_mask1 | lo->key.lb_mask;
+        nkey = (reprobe << lo->key.boff) | lo->key.sb_mask1 | lo->key.lb_mask;
         nkey &= lo->key.mask1;
 
         // Use o->key.mask1 and not lo->key.mask1 as the first one is
@@ -309,12 +308,12 @@ protected:
         // longer mask to claim it!
         key_claimed = set_key(kw, nkey, o->key.mask1, lo->key.mask1);
         if(key_claimed) {
-          nkey         = (akey >> lo->key.shift) | lo->key.sb_mask2;
+          nkey         = (reprobe >> lo->key.shift) | lo->key.sb_mask2;
           nkey        &= lo->key.mask2;
           key_claimed  = set_key(kw + 1, nkey, o->key.full_words ? fmask : o->key.mask2, lo->key.mask2);
         }
       } else { // key on 1 word
-        nkey  = (akey << lo->key.boff) | lo->key.lb_mask;
+        nkey  = (reprobe << lo->key.boff) | lo->key.lb_mask;
         nkey &= lo->key.mask1;
         key_claimed = set_key(kw, nkey, o->key.mask1, lo->key.mask1);
       }
@@ -322,7 +321,6 @@ protected:
         if(++reprobe > reprobe_limit_.val())
           return false;
         cid  = (*id + reprobes_[reprobe]) & size_mask_;
-        akey = reprobe;
       }
     } while(!key_claimed);
 
@@ -432,32 +430,33 @@ protected:
   // values are summed up.
   bool get_key_val_at_id(size_t id, mer_dna& key, word& val,
                          bool carry_bit = false) const {
-    const offset_t	*o, *lo;
-    word		*w, *kvw, key_word, kreprobe = 0;
+    const offset_t *o, *lo;
+    const word*     w        = offsets_.word_offset(id, &o, &lo, data_);
+    const word*     kvw      = w + o->key.woff;
+    word            key_word = *kvw;
+    word            kreprobe = 0;
 
-    w   = offsets_.word_offset(id, &o, &lo, data_);
-    kvw = w + o->key.woff;
-    key_word = *kvw;
-    if(key_word & o->key.lb_mask)
+    const key_offsets& key_o = o->key;
+    if(key_word & key_o.lb_mask)
       return false;
     int bits_copied = lsize_;
-    if(o->key.sb_mask1) {
-      if((key_word & o->key.sb_mask1) == 0)
+    if(key_o.sb_mask1) {
+      if((key_word & key_o.sb_mask1) == 0)
         return false;
-      kreprobe = (key_word & o->key.mask1 & ~o->key.sb_mask1) >> o->key.boff;
-      if(o->key.full_words) {
+      kreprobe = (key_word & key_o.mask1 & ~key_o.sb_mask1) >> key_o.boff;
+      if(key_o.full_words) {
         // Copy full words. First one is special
         key_word = *(kvw + 1);
-        if(offsets_.reprobe_len() < o->key.shift) {
-          key.set_bits(bits_copied, o->key.shift - offsets_.reprobe_len(), kreprobe >> offsets_.reprobe_len());
-          bits_copied += o->key.shift - offsets_.reprobe_len();
+        if(offsets_.reprobe_len() < key_o.shift) {
+          key.set_bits(bits_copied, key_o.shift - offsets_.reprobe_len(), kreprobe >> offsets_.reprobe_len());
+          bits_copied += key_o.shift - offsets_.reprobe_len();
           kreprobe    &= offsets_.reprobe_mask();
-          key.set_bits(bits_copied, wsize - 1, key_word & ~o->key.sb_mask1);
+          key.set_bits(bits_copied, wsize - 1, key_word & ~key_o.sb_mask1);
           bits_copied += wsize - 1;
         } else {
-          int reprobe_left  = offsets_.reprobe_len() - o->key.shift;
-          kreprobe         |= (key_word & (((word)1 << reprobe_left) - 1)) << o->key.shift;
-          key.set_bits(bits_copied, wsize - 1 - reprobe_left, (key_word & ~o->key.sb_mask1) >> reprobe_left);
+          int reprobe_left  = offsets_.reprobe_len() - key_o.shift;
+          kreprobe         |= (key_word & (((word)1 << reprobe_left) - 1)) << key_o.shift;
+          key.set_bits(bits_copied, wsize - 1 - reprobe_left, (key_word & ~key_o.sb_mask1) >> reprobe_left);
           bits_copied += wsize - 1 - reprobe_left;
         }
         int word_copied = 2;
@@ -465,25 +464,25 @@ protected:
           key.set_bits(bits_copied, wsize - 1, *(kvw + word_copied++) & (fmask >> 1));
           bits_copied += wsize - 1;
         }
-        if(o->key.sb_mask2)
-          key.set_bits(bits_copied, key_len_ - bits_copied, *(kvw + word_copied) & o->key.mask2 & ~o->key.sb_mask2);
-      } else if(o->key.sb_mask2) { // if(bits_copied + wsize - 1 < key_len
+        if(key_o.sb_mask2)
+          key.set_bits(bits_copied, key_len_ - bits_copied, *(kvw + word_copied) & key_o.mask2 & ~key_o.sb_mask2);
+      } else if(key_o.sb_mask2) { // if(bits_copied + wsize - 1 < key_len
         // Two words but no full words
-        key_word = *(kvw + 1) & o->key.mask2 & ~o->key.sb_mask2;
-        if(offsets_.reprobe_len() < o->key.shift) {
-          key.set_bits(bits_copied, o->key.shift - offsets_.reprobe_len(), kreprobe >> offsets_.reprobe_len());
-          bits_copied += o->key.shift - offsets_.reprobe_len();
+        key_word = *(kvw + 1) & key_o.mask2 & ~key_o.sb_mask2;
+        if(offsets_.reprobe_len() < key_o.shift) {
+          key.set_bits(bits_copied, key_o.shift - offsets_.reprobe_len(), kreprobe >> offsets_.reprobe_len());
+          bits_copied += key_o.shift - offsets_.reprobe_len();
           kreprobe    &= offsets_.reprobe_mask();
           key.set_bits(bits_copied, key_len_ - bits_copied, key_word);
         } else {
-          int reprobe_left  = offsets_.reprobe_len() - o->key.shift;
-          kreprobe         |= (key_word & (((word)1 << reprobe_left) - 1)) << o->key.shift;
+          int reprobe_left  = offsets_.reprobe_len() - key_o.shift;
+          kreprobe         |= (key_word & (((word)1 << reprobe_left) - 1)) << key_o.shift;
           key.set_bits(bits_copied, key_len_ - bits_copied, key_word >> reprobe_left);
         }
       }
-    } else { // if(o->key.sb_mask1
+    } else { // if(key_o.sb_mask1
       // Everything in 1 word
-      key_word = (key_word & o->key.mask1) >> o->key.boff;
+      key_word = (key_word & key_o.mask1) >> key_o.boff;
       if(key_word == 0)
         return false;
       kreprobe = key_word & offsets_.reprobe_mask();
@@ -495,7 +494,6 @@ protected:
       oid -= reprobes_[kreprobe - 1];
     oid &= size_mask_;
     key.set_bits(0, lsize_, oid);
-    key.set_bits(0, lsize_, hash_inverse_matrix_.times(key));
 
     val = get_val_at_id(id, w, o, carry_bit);
 
