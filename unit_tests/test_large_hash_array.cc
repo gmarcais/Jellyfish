@@ -4,16 +4,16 @@
 #include <gtest/gtest.h>
 #include <unit_tests/test_main.hpp>
 
-#include <jellyfish/invertible_hash_array.hpp>
 #include <jellyfish/large_hash_array.hpp>
 #include <jellyfish/mer_dna.hpp>
+#include <jellyfish/atomic_gcc.hpp>
+#include <jellyfish/allocators_mmap.hpp>
 
 void PrintTo(jellyfish::mer_dna& m, ::std::ostream* os) {
   *os << m.to_str();
 }
 
 namespace {
-typedef jellyfish::invertible_hash::array<uint64_t> inv_array;
 typedef jellyfish::large_hash::array<jellyfish::mer_dna> large_array;
 typedef std::map<jellyfish::mer_dna, uint64_t> mer_map;
 

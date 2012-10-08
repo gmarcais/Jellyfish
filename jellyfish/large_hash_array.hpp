@@ -18,6 +18,8 @@
 #define __JELLYFISH_LARGE_HASH_ARRAY_HPP__
 
 #include <jellyfish/storage.hpp>
+#include <jellyfish/atomic_gcc.hpp>
+#include <jellyfish/allocators_mmap.hpp>
 #include <jellyfish/offsets_key_value.hpp>
 #include <jellyfish/misc.hpp>
 #include <jellyfish/err.hpp>
@@ -48,7 +50,7 @@ public:
 // bits [start, start + len). Start and len may not be aligned to word
 // boundaries. On the other hand, len is guaranteed to be <
 // sizeof(uint64_t). I.e. never more than 1 word is fetched or set.
-template<typename Key, typename word = uint64_t, typename atomic_t = atomic::gcc, typename mem_block_t = allocators::mmap>
+template<typename Key, typename word = uint64_t, typename atomic_t = ::atomic::gcc, typename mem_block_t = ::allocators::mmap>
 class array {
   define_error_class(ErrorAllocation);
 
