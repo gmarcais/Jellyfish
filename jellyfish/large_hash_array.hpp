@@ -134,7 +134,7 @@ public:
    * matrix product, the hsb are assume to be equal to the key itself
    * (the matrix has a partial identity on the first rows).
    */
-  inline bool add(const key_type&key, mapped_type val, bool* is_new, size_t* id) {
+  inline bool add(const key_type& key, mapped_type val, bool* is_new, size_t* id) {
     uint64_t hash = hash_matrix_.times(key);
     return add_rec(hash & size_mask_, key, val, false, is_new, id);
   }
@@ -142,6 +142,54 @@ public:
     bool is_new;
     size_t id;
     return add(key, val, &is_new, &id);
+  }
+
+  inline bool get_val_for_key(const key_type& key, mapped_type* val, bool carry_bit = false) const {
+    key_type tmp_key;
+    size_t   id;
+    return get_val_for_key(key, val, tmp_key, &id, carry_bit);
+  }
+
+  bool get_val_for_key(const key_type& key, mapped_type* val, key_type& tmp_key,
+                       size_t* id, bool carry_bit = false) const {
+    const word*     w;
+    const offset_t* o;
+    if(!get_key_id(key, id, tmp_key, &w, &o))
+      return false;
+    *val = get_val_at_id(*id, w, o, true, carry_bit);
+    return true;
+  }
+
+  inline bool get_key_id(const key_type& key, size_t* id) const {
+    key_type        tmp_key;
+    const word*     w;
+    const offset_t* o;
+    return get_key_id(key, id, tmp_key, &w, &o);
+  }
+
+  bool get_key_id(const key_type& key, size_t* id, key_type& tmp_key, const word** w, const offset_t** o) const {
+    const size_t oid = hash_matrix_.times(key) & size_mask_;
+    size_t       cid = oid;
+
+    for(uint_t reprobe = 0; reprobe < reprobe_limit_.val(); ++reprobe, cid = (oid + reprobes_[reprobe]) & size_mask_) {
+      key_status st = get_key_at_id(cid, tmp_key, w, o);
+      switch(st) {
+      case EMPTY:
+        return false;
+      case FILLED:
+        if(oid != tmp_key.get_bits(0, lsize_))
+          break;
+        tmp_key.set_bits(0, lsize_, key.get_bits(0, lsize_));
+        if(tmp_key != key)
+          break;
+        *id = cid;
+        return true;
+      default:
+        break;
+      }
+    }
+
+    return false;
   }
 
   //////////////////////////////
@@ -170,13 +218,13 @@ public:
     size_t id() const { return id_ - 1; }
 
     bool next() {
-      bool success = false;
-      while(!success && id_ < end_id_)
+      key_status success = EMPTY;
+      while(success != FILLED && id_ < end_id_)
         success = ary_->get_key_val_at_id(id_++, key_, val_);
-      if(success)
+      if(success == FILLED)
         key_.set_bits(0, ary_->lsize_, ary_->hash_inverse_matrix_.times(key_));
 
-      return success;
+      return success == FILLED;
     }
   };
   friend class iterator;
@@ -422,14 +470,28 @@ protected:
     return nval & (~(mask >> shift));
   }
 
+
+  enum key_status { FILLED, EMPTY, LBSET};
   // Return the key and value at position id. If the slot at id is
   // empty or has the large bit set, returns false. Otherwise, returns
   // the key and the value is the sum of all the entries in the hash
   // table for that key. I.e., the table is search forward for entries
   // with large bit set pointing back to the key at id, and all those
   // values are summed up.
-  bool get_key_val_at_id(size_t id, mer_dna& key, word& val,
-                         bool carry_bit = false) const {
+  key_status get_key_val_at_id(size_t id, key_type& key, word& val, const bool carry_bit = false) const {
+    const word*     w;
+    const offset_t* o;
+
+    key_status st = get_key_at_id(id, key, &w, &o);
+    if(st != FILLED)
+       return st;
+
+    val = get_val_at_id(id, w, o, true, carry_bit);
+
+    return FILLED;
+  }
+
+  key_status get_key_at_id(size_t id, key_type& key, const word** w_, const offset_t** o_) const {
     const offset_t *o, *lo;
     const word*     w        = offsets_.word_offset(id, &o, &lo, data_);
     const word*     kvw      = w + o->key.woff;
@@ -438,11 +500,11 @@ protected:
 
     const key_offsets& key_o = o->key;
     if(key_word & key_o.lb_mask)
-      return false;
+      return LBSET;
     int bits_copied = lsize_;
     if(key_o.sb_mask1) {
       if((key_word & key_o.sb_mask1) == 0)
-        return false;
+        return EMPTY;
       kreprobe = (key_word & key_o.mask1 & ~key_o.sb_mask1) >> key_o.boff;
       if(key_o.full_words) {
         // Copy full words. First one is special
@@ -484,23 +546,26 @@ protected:
       // Everything in 1 word
       key_word = (key_word & key_o.mask1) >> key_o.boff;
       if(key_word == 0)
-        return false;
+        return EMPTY;
       kreprobe = key_word & offsets_.reprobe_mask();
       key.set_bits(bits_copied, raw_key_len_, key_word >> offsets_.reprobe_len());
     }
-    // Compute missing part of key with inverse matrix
+    // Compute missing oid so that the original key can be computed
+    // back through the inverse matrix.
     size_t oid = id; // Original id
     if(kreprobe > 1)
       oid -= reprobes_[kreprobe - 1];
     oid &= size_mask_;
     key.set_bits(0, lsize_, oid);
 
-    val = get_val_at_id(id, w, o, carry_bit);
+    *w_ = w;
+    *o_ = o;
 
-    return true;
+    return FILLED;
   }
 
-  word get_val_at_id(const size_t id, const word* w, const offset_t* o, const bool carry_bit = false) const {
+  word get_val_at_id(const size_t id, const word* w, const offset_t* o, const bool reprobe = true,
+                     const bool carry_bit = false) const {
     word            val = 0;
     // First part of value
     const word* kvw = w + o->val.woff;
@@ -509,9 +574,9 @@ protected:
       val |= ((*(kvw+1)) & o->val.mask2) << o->val.shift;
 
     // Do we want to get the large value
-    bool do_reprobe = true;
-    if(carry_bit) {
-      do_reprobe   = val & 0x1;
+    bool do_reprobe = reprobe;
+    if(carry_bit && do_reprobe) {
+      do_reprobe   = do_reprobe && (val & 0x1);
       val        >>= 1;
     }
     if(!do_reprobe)

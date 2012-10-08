@@ -3,6 +3,7 @@
 
 #include <gtest/gtest.h>
 #include <unit_tests/test_main.hpp>
+
 #include <jellyfish/invertible_hash_array.hpp>
 #include <jellyfish/large_hash_array.hpp>
 #include <jellyfish/mer_dna.hpp>
@@ -75,9 +76,9 @@ TEST_P(HashArray, OneElement) {
       SCOPED_TRACE(::testing::Message() << "j:" << j);
       val = -1;
       size_t jd = (start_pos + j) & ary_size_mask;
-      ASSERT_EQ(jd == id, ary.get_key_val_at_id(jd, get_mer, val));
+      ASSERT_EQ(jd == id, ary.get_key_val_at_id(jd, get_mer, val) == large_array::FILLED);
       if(jd == id) {
-        ASSERT_EQ(m, get_mer);
+        ASSERT_EQ(m2, get_mer);
         ASSERT_EQ((uint64_t)jd, val);
       }
     }
@@ -148,6 +149,15 @@ TEST_P(HashArray, Iterator) {
     ++count;
   }
   EXPECT_EQ(map.size(), (size_t)count);
+
+  for(mer_map::const_iterator it = map.begin(); it != map.end(); ++it) {
+    SCOPED_TRACE(::testing::Message() << "key:" << it->first);
+    uint64_t val;
+    size_t   id;
+    EXPECT_TRUE(ary.get_key_id(it->first, &id));
+    EXPECT_TRUE(ary.get_val_for_key(it->first, &val));
+    EXPECT_EQ(it->second, val);
+  }
 }
 
 INSTANTIATE_TEST_CASE_P(HashArrayTest, HashArray, ::testing::Combine(::testing::Range(10, 4 * 64, 2), // Key lengths
