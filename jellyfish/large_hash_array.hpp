@@ -146,6 +146,19 @@ public:
     return add(key, val, &is_new, &id);
   }
 
+  inline bool set(const key_type& key) {
+    bool   is_new;
+    size_t id;
+    return set(key, &is_new, &id);
+  }
+  bool set(const key_type& key, bool* is_new, size_t* id) {
+    word*           w;
+    const offset_t* o;
+
+    *id = hash_matrix_.times(key) & size_mask_;
+    return claim_key(key, is_new, id, &o, &w);
+  }
+
   inline bool get_val_for_key(const key_type& key, mapped_type* val, bool carry_bit = false) const {
     key_type tmp_key;
     size_t   id;
@@ -168,6 +181,13 @@ public:
     const offset_t* o;
     return get_key_id(key, id, tmp_key, &w, &o);
   }
+
+  inline bool get_key_id(const key_type& key, size_t* id, key_type& tmp_key) const {
+    const word*     w;
+    const offset_t* o;
+    return get_key_id(key, id, tmp_key, &w, &o);
+  }
+
 
   bool get_key_id(const key_type& key, size_t* id, key_type& tmp_key, const word** w, const offset_t** o) const {
     const size_t oid = hash_matrix_.times(key) & size_mask_;

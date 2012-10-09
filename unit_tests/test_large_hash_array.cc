@@ -16,6 +16,7 @@ void PrintTo(jellyfish::mer_dna& m, ::std::ostream* os) {
 namespace {
 typedef jellyfish::large_hash::array<jellyfish::mer_dna> large_array;
 typedef std::map<jellyfish::mer_dna, uint64_t> mer_map;
+typedef std::set<jellyfish::mer_dna> mer_set;
 
 using jellyfish::RectangularBinaryMatrix;
 using jellyfish::mer_dna;
@@ -157,6 +158,38 @@ TEST_P(HashArray, Iterator) {
     EXPECT_TRUE(ary.get_key_id(it->first, &id));
     EXPECT_TRUE(ary.get_val_for_key(it->first, &val));
     EXPECT_EQ(it->second, val);
+  }
+}
+
+TEST(HashSet, Set) {
+  static const int lsize = 16;
+  static const int size = 1 << lsize;
+  static const int nb_elts = 2 * size / 3;
+
+  large_array ary(size, 100, 0, 126);
+  mer_set     set;
+  mer_dna::k(50);
+  mer_dna     mer;
+
+  for(int i = 0; i < nb_elts; ++i) {
+    mer.randomize();
+    bool   is_new;
+    size_t id;
+    ASSERT_TRUE(ary.set(mer, &is_new, &id));
+    ASSERT_EQ(set.insert(mer).second, is_new);
+  }
+
+  mer_dna tmp_mer;
+  for(mer_set::const_iterator it = set.begin(); it != set.end(); ++it) {
+    SCOPED_TRACE(::testing::Message() << "key:" << *it);
+    size_t   id;
+    EXPECT_TRUE(ary.get_key_id(*it, &id, tmp_mer));
+  }
+
+  for(int i = 0; i < nb_elts; ++i) {
+    mer.randomize();
+    size_t id;
+    EXPECT_EQ(set.find(mer) != set.end(), ary.get_key_id(mer, &id));
   }
 }
 
