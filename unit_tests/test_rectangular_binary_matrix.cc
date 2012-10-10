@@ -32,7 +32,6 @@ TEST(RectangularBinaryMatrix, InitSizes) {
   EXPECT_THROW(allocate_matrix(100, 100) == true, std::out_of_range);
   EXPECT_THROW(allocate_matrix(0, 100) == true, std::out_of_range);
   EXPECT_THROW(allocate_matrix(10, 0) == true, std::out_of_range);
-  EXPECT_THROW(allocate_matrix(10, 6) == true, std::out_of_range);
 }
 
 TEST(RectangularBinaryMatrix, Copy) {
@@ -65,81 +64,90 @@ TEST(RectangularBinaryMatrix, InitRaw) {
 }
 
 TEST(RectangularBinaryMatrix, LowIdentity) {
-  RectangularBinaryMatrix m(30, 100);
-  EXPECT_TRUE(!m.is_low_identity());
+  for(int r = 2; r < 64; r += 2) {
+    for(int c = 2; c < 100; c += 2) {
+      SCOPED_TRACE(::testing::Message() << "matrix " << r << "x" << c);
+      RectangularBinaryMatrix m(r, c); // Matrix should be zeroed out
+      mer_dna::k(c);
+      mer_dna v;
+      v.randomize();
 
-  m.init_low_identity();
-  EXPECT_EQ((uint64_t)1, m[m.c() - 1]);
-  for(unsigned int i = m.c() - 1; i > m.c() - m.r(); --i)
-    EXPECT_EQ(m[i] << 1, m[i-1]);
-  for(unsigned int i = 0; i < m.c() - m.r(); ++i)
-    EXPECT_EQ((uint64_t)0, m[i]);
-  EXPECT_TRUE(m.is_low_identity());
+      EXPECT_FALSE(m.is_low_identity());
+      m.init_low_identity();
+      EXPECT_TRUE(m.is_low_identity());
 
-  m.randomize(random_bits);
-  EXPECT_TRUE(!m.is_low_identity()); // This could fail with some VERY low probability
+      uint64_t res = m.times(v);
+      EXPECT_EQ(v.get_bits(0, std::min(r, c)), res);
+    }
+  }
 }
 
 /******************************
  * Matrix Vector product
  ******************************/
-class MatrixVectorProd : public ::testing::Test {
+class MatrixVectorProd : public ::testing::TestWithParam< ::std::tr1::tuple<int, int> > {
 public:
-  RectangularBinaryMatrix mo, me, mw, mf;
-  MatrixVectorProd() : mo(51, 101), me(50, 100), mw(30, 64), mf(64,64) {
-    mo.randomize(random_bits);
-    me.randomize(random_bits);
-    mw.randomize(random_bits);
-    mf.randomize(random_bits);
+  unsigned int row, col;
+  RectangularBinaryMatrix m;
+  MatrixVectorProd() :
+    row(::std::tr1::get<0>(GetParam())),
+    col(::std::tr1::get<1>(GetParam())),
+    m(row, col)
+  {
+    m.randomize(random_bits);
   }
 };
 
-TEST_F(MatrixVectorProd, Checks) {
-  EXPECT_EQ((unsigned int)51, mo.r());
-  EXPECT_EQ((unsigned int)101, mo.c());
-  EXPECT_EQ((unsigned int)50, me.r());
-  EXPECT_EQ((unsigned int)100, me.c());
-  EXPECT_EQ((unsigned int)30, mw.r());
-  EXPECT_EQ((unsigned int)64, mw.c());
-  EXPECT_EQ((unsigned int)64, mf.r());
-  EXPECT_EQ((unsigned int)64, mf.c());
-
-  EXPECT_FALSE(mo.is_zero());
-  EXPECT_FALSE(me.is_zero());
-  EXPECT_FALSE(mw.is_zero());
-  EXPECT_FALSE(mf.is_zero());
+TEST_P(MatrixVectorProd, Checks) {
+  EXPECT_EQ(row, m.r());
+  EXPECT_EQ(col, m.c());
+  EXPECT_FALSE(m.is_zero());
 }
 
-TEST_F(MatrixVectorProd, AllOnes) {
+TEST_P(MatrixVectorProd, AllOnes) {
   uint64_t v[2], res = 0;
   v[0] = v[1] = (uint64_t)-1;
-  for(unsigned int i = 0; i < mo.c(); ++i)
-    res ^= mo[i];
-  EXPECT_EQ(res, mo.times_loop(v));
-  res = 0;
-  for(unsigned int i = 0; i < me.c(); ++i)
-    res ^= me[i];
-  EXPECT_EQ(res, me.times_loop(v));
-  res = 0;
-  for(unsigned int i = 0; i < mw.c(); ++i)
-    res ^= mw[i];
-  EXPECT_EQ(res, mw.times_loop(v));
+  for(unsigned int i = 0; i < m.c(); ++i)
+    res ^= m[i];
+  EXPECT_EQ(res, m.times_loop(v));
+#ifdef HAVE_INT128
+  EXPECT_EQ(res, m.times_128(v));
+#endif
+#ifdef HAVE_SSE
+  EXPECT_EQ(res, m.times_sse(v));
+#endif
 }
-TEST_F(MatrixVectorProd, EveryOtherOnes) {
+
+TEST_P(MatrixVectorProd, EveryOtherOnes) {
   uint64_t v[2], res = 0;
   v[0] = 0xaaaaaaaaaaaaaaaaUL;
   v[1] = 0xaaaaaaaaaaaaaaaaUL;
-  for(unsigned int i = 1; i < mo.c(); i += 2)
-    res ^= mo[i];
-  EXPECT_EQ(res, mo.times_loop(v));
-  res = 0;
-  for(unsigned int i = 0; i < me.c(); i += 2)
-    res ^= me[i];
-  EXPECT_EQ(res, me.times_loop(v));
+  for(unsigned int i = 0; i < m.c(); i += 2)
+    res ^= m[i];
+  EXPECT_EQ(res, m.times_loop(v));
+#ifdef HAVE_INT128
+  EXPECT_EQ(res, m.times_128(v));
+#endif
+#ifdef HAVE_SSE
+  EXPECT_EQ(res, m.times_sse(v));
+#endif
+
+  v[0] >>= 1;
+  v[1] >>= 1;
+  res    = 0;
+  for(unsigned int i = 1; i < m.c(); i += 2)
+    res ^= m[i];
+  EXPECT_EQ(res, m.times_loop(v));
+#ifdef HAVE_INT128
+  EXPECT_EQ(res, m.times_128(v));
+#endif
+#ifdef HAVE_SSE
+  EXPECT_EQ(res, m.times_sse(v));
+#endif
 }
 
 #if HAVE_SSE || HAVE_INT128
-TEST_F(MatrixVectorProd, Optimizations) {
+TEST_P(MatrixVectorProd, Optimizations) {
   static const int nb_tests = 100;
   for(int i = 0; i < nb_tests; ++i) {
     unsigned int r = 2 * (random() % 31 + 1);
@@ -163,6 +171,9 @@ TEST_F(MatrixVectorProd, Optimizations) {
   }
 }
 #endif // HAVE_SSE || HAVE_INT128
+
+INSTANTIATE_TEST_CASE_P(MatrixVectorProdTest, MatrixVectorProd, ::testing::Combine(::testing::Range(1, 65, 1), // rows
+                                                                                   ::testing::Range(2, 100, 2))); // cols
 
 /******************************
  * Matrix product and inverse
@@ -211,8 +222,9 @@ TEST(PseudoProduct, Parity) {
 TEST(PseudoProduct, Inverse) {
   int full_rank = 0, singular = 0;
   for(unsigned int i = 0; i < 500; ++i) {
-    unsigned int r = 2 * (random() % 31 + 1);
-    unsigned int c = 2 * (random() % 100) + r;
+    unsigned int r = random() % 63 + 1;
+    unsigned int c = 2 * ((random() % 100) + 1);
+    SCOPED_TRACE(::testing::Message() << "Dimension " << r << "x" << c);
     RectangularBinaryMatrix m(r, c);
     m.randomize(random_bits);
     RectangularBinaryMatrix s(m);
@@ -222,7 +234,8 @@ TEST(PseudoProduct, Inverse) {
       EXPECT_THROW(m.pseudo_inverse(), std::domain_error);
     } else {
       ++full_rank;
-      RectangularBinaryMatrix inv = m.pseudo_inverse();
+      RectangularBinaryMatrix inv(m);
+      EXPECT_NO_THROW(inv = m.pseudo_inverse());
       RectangularBinaryMatrix i = inv.pseudo_multiplication(m);
       EXPECT_TRUE(i.is_low_identity());
     }
@@ -283,7 +296,7 @@ TEST(MatrixProductSpeed, Loop) {
   for(unsigned int j = 0; j < nb_words; ++j)
     v[j] = random_bits();
 
-  uint64_t res = 0;
+  volatile uint64_t res = 0;
   for(int i = 0; i < speed_loop; ++i)
     res ^= m.times_loop((uint64_t*)v);
 }
@@ -296,7 +309,7 @@ TEST(MatrixProductSpeed, SSE) {
   for(unsigned int j = 0; j < nb_words; ++j)
     v[j] = random_bits();
 
-  uint64_t res = 0;
+  volatile uint64_t res = 0;
   for(int i = 0; i < speed_loop; ++i)
     res ^= m.times_sse((uint64_t*)v);
 }
@@ -310,7 +323,7 @@ TEST(MatrixProductSpeed, U128) {
   for(unsigned int j = 0; j < nb_words; ++j)
     v[j] = random_bits();
 
-  uint64_t res = 0;
+  volatile uint64_t res = 0;
   for(int i = 0; i < speed_loop; ++i)
     res ^= m.times_128((uint64_t*)v);
 }

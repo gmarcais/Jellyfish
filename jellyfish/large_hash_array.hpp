@@ -97,8 +97,8 @@ public:
     size_mask_(size_ - 1),
     reprobe_limit_(reprobe_limit, reprobes, size_),
     key_len_(key_len),
-    raw_key_len_(key_len_ - lsize_),
-    offsets_(key_len_ - lsize_ + bitsize(reprobe_limit_.val() + 1), val_len, reprobe_limit_.val() + 1),
+    raw_key_len_(key_len_ > lsize_ ? key_len_ - lsize_ : 0),
+    offsets_(raw_key_len_ + bitsize(reprobe_limit_.val() + 1), val_len, reprobe_limit_.val() + 1),
     mem_block_(div_ceil(size_, (size_t)offsets_.block_len()) * offsets_.block_word_len() * sizeof(word)),
     data_((word *)mem_block_.get_ptr()),
     reprobes_(reprobes),
@@ -346,9 +346,10 @@ protected:
     // reprobe value. nkey is the temporary word containing the part
     // to be stored in the current word kw (+ some offset).
     word      akey          = 1; // start reprobe value == 0. Store reprobe value + 1
-    const int to_copy       = std::min((int)(wsize - offsets_.reprobe_len()), key_len_ - lsize_);
-    akey                   |= key.get_bits(lsize_, to_copy) << offsets_.reprobe_len();
-    const int abits_copied  = lsize_ + to_copy; // Bits from original key already copied, explicitly or implicitly
+    const int to_copy       = std::min((uint16_t)(wsize - offsets_.reprobe_len()), raw_key_len_);
+    const int implied_copy  = std::min(key_len_, lsize_);
+    akey                   |= key.get_bits(implied_copy, to_copy) << offsets_.reprobe_len();
+    const int abits_copied  = implied_copy + to_copy; // Bits from original key already copied, explicitly or implicitly
 
     do {
       int bits_copied = abits_copied;
@@ -365,7 +366,7 @@ protected:
         if(key_claimed) {
           nkey = akey >> o->key.shift;
           if(o->key.full_words) {
-            // Copy full words. First one is special 
+            // Copy full words. First one is special
             nkey                  |= key.get_bits(bits_copied, o->key.shift - 1) << (wsize - o->key.shift);
             bits_copied           += o->key.shift - 1;
             nkey                  |= o->key.sb_mask1; // Set bit is MSB
@@ -596,7 +597,8 @@ protected:
     const key_offsets& key_o = o->key;
     if(key_word & key_o.lb_mask)
       return LBSET;
-    int bits_copied = lsize_;
+    const int implied_copy = std::min(lsize_, key_len_);
+    int       bits_copied  = implied_copy;
     if(key_o.sb_mask1) {
       if((key_word & key_o.sb_mask1) == 0)
         return EMPTY;
@@ -646,7 +648,9 @@ protected:
       key.set_bits(bits_copied, raw_key_len_, key_word >> offsets_.reprobe_len());
     }
     // Compute missing oid so that the original key can be computed
-    // back through the inverse matrix.
+    // back through the inverse matrix. Although the key may have a
+    // length of key_len_, which may be less than lsize_, assume that
+    // it still fit here as lsize_ is less than a word length. Need all lsize_.
     size_t oid = id; // Original id
     if(kreprobe > 1)
       oid -= reprobes_[kreprobe - 1];

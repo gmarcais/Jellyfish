@@ -17,12 +17,16 @@
 #include <new>
 #include <stdexcept>
 #include <vector>
+#include <sstream>
 #include <assert.h>
 #include <jellyfish/rectangular_binary_matrix.hpp>
 
 uint64_t *jellyfish::RectangularBinaryMatrix::alloc(unsigned int r, unsigned int c) {
-  if(r > (sizeof(uint64_t) * 8) || r == 0 || r > c)
-    throw std::out_of_range("Invalid number of rows or columns");
+  if(r > (sizeof(uint64_t) * 8) || r == 0 || c == 0) {
+    std::ostringstream err;
+    err << "Invalid matrix size " << r << "x" << c;
+    throw std::out_of_range(err.str());
+  }
   void *mem;
   // Make sure the number of words allocated is a multiple of
   // 8. Necessary for loop unrolling of vector multiplication
@@ -35,18 +39,23 @@ uint64_t *jellyfish::RectangularBinaryMatrix::alloc(unsigned int r, unsigned int
 
 void jellyfish::RectangularBinaryMatrix::init_low_identity() {
   memset(_columns, '\0', sizeof(uint64_t) * _c);
-  _columns[_c - _r ] = (uint64_t)1 << (_r - 1);
-  for(unsigned int i = _c - _r + 1; i < _c; ++i)
+  unsigned int row = std::min(_c, _r);
+  unsigned int col = _c - row;
+  _columns[col] = (uint64_t)1 << (row - 1);
+  for(unsigned int i = col + 1; i < _c; ++i)
     _columns[i] = _columns[i - 1] >> 1;
 }
 
 bool jellyfish::RectangularBinaryMatrix::is_low_identity() {
-  for(unsigned int i = 0; i < _c - _r; ++i)
+  unsigned int row = std::min(_c, _r);
+  unsigned int col = _c - row;
+
+  for(unsigned int i = 0; i < col; ++i)
     if(_columns[i])
       return false;
-  if(_columns[_c - _r] != (uint64_t)1 << (_r - 1))
+  if(_columns[col] != (uint64_t)1 << (row - 1))
     return false;
-  for(unsigned int i = _c - _r + 1; i < _c; ++i)
+  for(unsigned int i = col + 1; i < _c; ++i)
     if(_columns[i] != _columns[i - 1] >> 1)
       return false;
   return true;
@@ -64,8 +73,11 @@ jellyfish::RectangularBinaryMatrix jellyfish::RectangularBinaryMatrix::pseudo_mu
   memset(v, '\0', sizeof(uint64_t) * nb_words());
   unsigned int j = nb_words() - 1;
   v[j]           = msb();
+  const unsigned int row = std::min(_c, _r);
+  const unsigned int col = _c - row;
+
   unsigned int i;
-  for(i = 0; i < _c - _r; ++i) {
+  for(i = 0; i < col; ++i) {
     // Set the lower part to rhs and do vector multiplication
     v[0] ^= rhs[i];
     res.get(i) = this->times(&v[0]);
@@ -94,8 +106,10 @@ unsigned int jellyfish::RectangularBinaryMatrix::pseudo_rank() const {
   RectangularBinaryMatrix pivot(*this);
 
   // Make the matrix lower triangular.
-  uint64_t mask = (uint64_t)1 << (_r - 1);
-  for(unsigned int i = _c - _r; i < _c; ++i, mask >>= 1) {
+  unsigned int srow = std::min(_r, _c);
+  unsigned int scol = _c - srow;
+  uint64_t mask = (uint64_t)1 << (srow - 1);
+  for(unsigned int i = scol; i < _c; ++i, mask >>= 1) {
     if(!(pivot.get(i) & mask)) {
       // current column has a 0 in the diagonal. XOR it with another
       // column to get a 1.
@@ -131,8 +145,10 @@ jellyfish::RectangularBinaryMatrix jellyfish::RectangularBinaryMatrix::pseudo_in
   // operation to res.
 
   // Make pivot lower triangular.
-  mask = (uint64_t)1 << (_r - 1);
-  for(i = _c - _r; i < _c; ++i, mask >>= 1) {
+  unsigned int srow = std::min(_r, _c);
+  unsigned int scol = _c - srow;
+  mask = (uint64_t)1 << (srow - 1);
+  for(i = scol; i < _c; ++i, mask >>= 1) {
     if(!(pivot.get(i) & mask)) {
       // current column has a 0 in the diagonal. XOR it with another
       // column to get a 1.
@@ -155,9 +171,9 @@ jellyfish::RectangularBinaryMatrix jellyfish::RectangularBinaryMatrix::pseudo_in
     }
   }
 
-  // Make pivot the identity
-  mask = (uint64_t)1 << (_r - 1);
-  for(i = _c - _r; i < _c; ++i, mask >>= 1) {
+  // Make pivot the lower identity
+  mask = (uint64_t)1 << (srow - 1);
+  for(i = scol; i < _c; ++i, mask >>= 1) {
     for(j = 0; j < i; ++j) {
       if(pivot.get(j) & mask) {
         pivot.get(j) ^= pivot.get(i);

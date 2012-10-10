@@ -55,6 +55,7 @@ TEST_P(HashArray, OneElement) {
   EXPECT_EQ((unsigned int)key_len, ary.matrix().c());
 
   size_t start_pos = random() % (ary_size - bsizeof(uint64_t));
+  size_t mask = (size_t)key_len >= bsizeof(size_t) ? (size_t)-1 : ((size_t)1 << key_len) - 1;
   for(uint64_t i = start_pos; i < start_pos + bsizeof(uint64_t); ++i) {
     SCOPED_TRACE(::testing::Message() << "i:" << i);
     // Create mer m so that it will hash to position i
@@ -69,7 +70,9 @@ TEST_P(HashArray, OneElement) {
     size_t id     = -1;
     ary.add(m, i, &is_new, &id);
     EXPECT_TRUE(is_new);
-    EXPECT_EQ((size_t)i, id);
+    // Only expected to agree on the length of the key. Applies only
+    // if key_len < lsize. The bits above key_len are pseudo-random
+    EXPECT_EQ((size_t)i & mask, id & mask);
 
     // Every position but i in the hash should be empty
     uint64_t val;
@@ -130,12 +133,20 @@ TEST_P(HashArray, Iterator) {
   static const int nb_elts = 100;
   SCOPED_TRACE(::testing::Message() << "key_len:" << key_len << " val_len:" << val_len << " reprobe:" << reprobe_limit);
 
+  // Don't test for this combination as the number of entries used by
+  // each key is too large (no bits from key harvested for second
+  // entry). Hence the array fills up and we get an error.
+  if((size_t)key_len < ary_lsize && val_len < 2)
+    return;
+
   mer_map            map;
   jellyfish::mer_dna mer;
 
   for(int i = 0; i < nb_elts; ++i) {
+    SCOPED_TRACE(::testing::Message() << "i:" << i);
     mer.randomize();
     ASSERT_TRUE(ary.add(mer, i));
+    //    std::cout << ary.top_reprobe() << std::endl;
     map[mer] += i;
   }
 
@@ -194,7 +205,7 @@ TEST(HashSet, Set) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(HashArrayTest, HashArray, ::testing::Combine(::testing::Range(10, 4 * 64, 2), // Key lengths
+INSTANTIATE_TEST_CASE_P(HashArrayTest, HashArray, ::testing::Combine(::testing::Range(8, 4 * 64, 2), // Key lengths
                                                                      ::testing::Range(1, 10),    // Val lengths
                                                                      ::testing::Range(6, 8)      // Reprobe lengths
                                                                      ));

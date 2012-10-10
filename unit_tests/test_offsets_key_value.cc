@@ -134,8 +134,8 @@ TEST_P(ComputeOffsetsTest, CheckCoherency) {
         ": Invalid jump of bit offset";
     } // if(i > 0)
     EXPECT_GE(it->val.woff, it->key.woff) << "Val offset larger than key offset";
-  EXPECT_TRUE(it->key.woff != it->val.woff || it->val.boff > it->key.boff)
-        << "Val bit offset did not increase within a word";
+    EXPECT_TRUE(it->key.woff != it->val.woff || it->val.boff > it->key.boff)
+      << "Val bit offset did not increase within a word";
 
     EXPECT_EQ(it->key.woff, lit->key.woff);
     EXPECT_EQ(it->key.boff, lit->key.boff);

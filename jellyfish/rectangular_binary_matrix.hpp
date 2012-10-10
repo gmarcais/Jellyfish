@@ -241,15 +241,15 @@ namespace jellyfish {
 
     uint64_t *p = _columns + _c - 8;
 
-    register xmm_t acc;
-    register xmm_t load;
+    register xmm_t acc  = acc ^ acc;
+    register xmm_t load = load ^ load;
 
-    // Zero out acc
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wuninitialized"
-    asm("pxor %0,%0\n\t" : "=x"(acc) : "0"(acc));
-    asm("pxor %0,%0\n\t" : "=x"(load) : "0"(load));
-#pragma GCC diagnostic pop
+//     // Zero out acc
+// #pragma GCC diagnostic push
+// #pragma GCC diagnostic ignored "-Wuninitialized"
+//     asm("pxor %0,%0\n\t" : "=x"(acc) : "0"(acc));
+//     asm("pxor %0,%0\n\t" : "=x"(load) : "0"(load));
+// #pragma GCC diagnostic pop
 
     // i is the lower 2 bits of x, and an index into the smear array. Compute res ^= smear[i] & p[j].
 #define AND_XOR(off)                                                    \
