@@ -101,7 +101,6 @@ public:
 TEST_P(MatrixVectorProd, Checks) {
   EXPECT_EQ(row, m.r());
   EXPECT_EQ(col, m.c());
-  EXPECT_FALSE(m.is_zero());
 }
 
 TEST_P(MatrixVectorProd, AllOnes) {
