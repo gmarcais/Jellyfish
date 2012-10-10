@@ -1,6 +1,6 @@
 /* Jellyfish
  * Copyright (C) 2012  Genome group at University of Maryland.
- * 
+ *
  * This program is free software: you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
  * published by the Free Software Foundation, either version 3 of the
@@ -22,7 +22,7 @@
 
 namespace jellyfish {
   namespace simple_circular_buffer {
-    
+
     // T: type of element in container. D: type of derived class for
     // CRTP. A: allocator type.
     template<typename T, typename D>
@@ -44,7 +44,7 @@ namespace jellyfish {
         front_ = back_;
         full_  = false;
       }
-      
+
       // Valid only if empty() is false
       T& front() {
         return data_[front_];
@@ -87,16 +87,16 @@ namespace jellyfish {
         int s = back_ - front_;
         return s < 0 ? s + static_cast<const D*>(this)->capacity() : s;
       }
-    
+
     protected:
-      int next_index(int i) const { 
+      int next_index(int i) const {
         return (i + 1) % static_cast<const D*>(this)->capacity();
       }
       int prev_index(int i) const {
         return i ? i - 1 : static_cast<const D*>(this)->capacity() - 1;
       }
       T* data() const { return data_; }
-    
+
       T*   data_;
       int  front_, back_;
       bool full_;
@@ -125,7 +125,7 @@ namespace jellyfish {
     //   typedef base<T, dyn<T, A>, A> super;
     // public:
     //   explicit dyn(int size, const T v = T()) : super(size, v), capa_(size) { }
-    
+
     //   int capacity() const { return capa_; }
     //   int capa_;
     // };

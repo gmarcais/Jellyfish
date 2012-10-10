@@ -151,8 +151,9 @@ TEST_P(HashArray, Iterator) {
   }
   EXPECT_EQ(map.size(), (size_t)count);
 
-  for(mer_map::const_iterator it = map.begin(); it != map.end(); ++it) {
-    SCOPED_TRACE(::testing::Message() << "key:" << it->first);
+  int i = 0;
+  for(mer_map::const_iterator it = map.begin(); it != map.end(); ++it, ++i) {
+    SCOPED_TRACE(::testing::Message() << "i:" << i << " key:" << it->first);
     uint64_t val;
     size_t   id;
     EXPECT_TRUE(ary.get_key_id(it->first, &id));

@@ -79,7 +79,7 @@ check_PROGRAMS =
 ########################################
 # Build Jellyfish the shared library
 ########################################
-# libjellyfish_la_LDFLAGS = -version-info 3:0:0
+libjellyfish_la_LDFLAGS = -version-info 2:0:0
 libjellyfish_la_SOURCES = jellyfish/rectangular_binary_matrix.cc	\
                           jellyfish/int128.cc jellyfish/mer_dna.cc	\
                           jellyfish/storage.cc jellyfish/yaggo.cpp	\

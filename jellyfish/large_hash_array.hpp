@@ -25,6 +25,7 @@
 #include <jellyfish/err.hpp>
 #include <jellyfish/mer_dna.hpp>
 #include <jellyfish/rectangular_binary_matrix.hpp>
+#include <jellyfish/simple_circular_buffer.hpp>
 
 namespace jellyfish { namespace large_hash {
 /* Contains an integer, the reprobe limit. It is capped based on the
@@ -159,12 +160,21 @@ public:
     return claim_key(key, is_new, id, &o, &w);
   }
 
+  // Get the value, stored in *val, associated with key. If the key is
+  // not found, false is returned, otherwise true is returned and *val
+  // is updated. If carry_bit is true, then the first bit of the key
+  // field indicates whether we should reprobe to get the complete
+  // value.
   inline bool get_val_for_key(const key_type& key, mapped_type* val, bool carry_bit = false) const {
     key_type tmp_key;
     size_t   id;
     return get_val_for_key(key, val, tmp_key, &id, carry_bit);
   }
 
+  // Optimization version. A tmp_key buffer is passed and the id where
+  // the key was found is return in *id. If get_val_for_key is called
+  // many times consecutively, it may be faster to pass the same
+  // tmp_key buffer instead of allocating it every time.
   bool get_val_for_key(const key_type& key, mapped_type* val, key_type& tmp_key,
                        size_t* id, bool carry_bit = false) const {
     const word*     w;
@@ -175,6 +185,8 @@ public:
     return true;
   }
 
+  // Get the id of the key in the hash. Returns true if the key is
+  // found in the hash, false otherwise.
   inline bool get_key_id(const key_type& key, size_t* id) const {
     key_type        tmp_key;
     const word*     w;
@@ -182,19 +194,62 @@ public:
     return get_key_id(key, id, tmp_key, &w, &o);
   }
 
+  // Optimization version where a tmp_key buffer is provided instead
+  // of being allocated. May be faster if many calls to get_key_id are
+  // made consecutively by passing the same tmp_key each time.
   inline bool get_key_id(const key_type& key, size_t* id, key_type& tmp_key) const {
     const word*     w;
     const offset_t* o;
     return get_key_id(key, id, tmp_key, &w, &o);
   }
 
+protected:
+  // Information and methods to manage the prefetched data.
+  struct prefetch_info {
+    size_t          id;
+    const word*     w;
+    const offset_t *o, *lo;
+  };
+  typedef simple_circular_buffer::pre_alloc<prefetch_info, 8> prefetch_buffer;
 
+  void warm_up_cache(prefetch_buffer& buffer, size_t oid) const {
+    buffer.clear();
+    for(int i = 0; i < buffer.capacity(); ++i) {
+      buffer.push_back();
+      prefetch_info& info = buffer.back();
+      info.id             = (oid + (i > 0 ? reprobes_[i] : 0)) & size_mask_;
+      info.w              = offsets_.word_offset(info.id, &info.o, &info.lo, data_);
+      __builtin_prefetch(info.w + info.o->key.woff, 0, 1);
+      __builtin_prefetch(info.o, 0, 3);
+    }
+  }
+
+  void prefetch_next(prefetch_buffer& buffer, size_t oid, uint_t reprobe) const {
+    buffer.pop_front();
+    if(reprobe + buffer.capacity() <= reprobe_limit_.val()) {
+      buffer.push_back();
+      prefetch_info& info = buffer.back();
+      info.id             = (oid + reprobes_[reprobe + buffer.capacity() - 1]) & size_mask_;
+      info.w              = offsets_.word_offset(info.id, &info.o, &info.lo, data_);
+      __builtin_prefetch(info.w + info.o->key.woff, 0, 1);
+      __builtin_prefetch(info.o, 0, 3);
+    }
+  }
+
+public:
+  // Optimization version again. Also return the word and the offset
+  // information where the key was found. These can be used later one
+  // to fetch the value associated with the key.
   bool get_key_id(const key_type& key, size_t* id, key_type& tmp_key, const word** w, const offset_t** o) const {
     const size_t oid = hash_matrix_.times(key) & size_mask_;
-    size_t       cid = oid;
+    prefetch_info info_ary[prefetch_buffer::capacity()];
+    prefetch_buffer buffer(info_ary);
+    warm_up_cache(buffer, oid);
 
-    for(uint_t reprobe = 0; reprobe < reprobe_limit_.val(); ++reprobe, cid = (oid + reprobes_[reprobe]) & size_mask_) {
-      key_status st = get_key_at_id(cid, tmp_key, w, o);
+    for(uint_t reprobe = 0; reprobe < reprobe_limit_.val(); ++reprobe) {
+      prefetch_info& info = buffer.front();
+      key_status st       = get_key_at_id(info.id, tmp_key, info.w, info.o);
+
       switch(st) {
       case EMPTY:
         return false;
@@ -204,12 +259,16 @@ public:
         tmp_key.set_bits(0, lsize_, key.get_bits(0, lsize_));
         if(tmp_key != key)
           break;
-        *id = cid;
+        *id = info.id;
+        *w  = info.w;
+        *o  = info.o;
         return true;
       default:
         break;
       }
-    }
+
+      prefetch_next(buffer, oid, reprobe + 1);
+    } // for
 
     return false;
   }
@@ -344,7 +403,7 @@ protected:
         if(++reprobe > reprobe_limit_.val())
           return false;
         cid = (*id + reprobes_[reprobe]) & size_mask_;
-        akey = (akey & ~offsets_.reprobe_mask()) | (reprobe + 1); // TODO: msb_hash_key | ((reprobe + 1) << key_off);
+        akey = (akey & ~offsets_.reprobe_mask()) | (reprobe + 1);
       }
     } while(!key_claimed);
 
@@ -513,9 +572,23 @@ protected:
     return FILLED;
   }
 
-  key_status get_key_at_id(size_t id, key_type& key, const word** w_, const offset_t** o_) const {
-    const offset_t *o, *lo;
-    const word*     w        = offsets_.word_offset(id, &o, &lo, data_);
+  // Get a the key at the given id. It also returns the word and
+  // offset information in w and o. The return value is EMPTY (no key
+  // at id), FILLED (there is a key at id), LBSET (the large bit is
+  // set, hence the key is only a pointer back to the real key).
+  //
+  // The key returned contains the original id in the hash as its
+  // lsize_ lsb bits. To obtain the full key, one needs to compute the
+  // product with the inverse matrix to get the lsb bits.
+  inline key_status get_key_at_id(size_t id, key_type& key, const word** w, const offset_t** o) const {
+    const offset_t *lo;
+    *w = offsets_.word_offset(id, o, &lo, data_);
+    return get_key_at_id(id, key, *w, *o);
+  }
+
+  // Sam as above, but it assume that the word w and o for id have
+  // already be computed (like already prefetched).
+  key_status get_key_at_id(size_t id, key_type&key, const word* w, const offset_t* o) const {
     const word*     kvw      = w + o->key.woff;
     word            key_word = *kvw;
     word            kreprobe = 0;
@@ -579,9 +652,6 @@ protected:
       oid -= reprobes_[kreprobe - 1];
     oid &= size_mask_;
     key.set_bits(0, lsize_, oid);
-
-    *w_ = w;
-    *o_ = o;
 
     return FILLED;
   }
