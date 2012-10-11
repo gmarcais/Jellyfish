@@ -10,6 +10,9 @@ AC_LANG(C++)
 
 AC_PROG_CXX
 
+# Major version of the library
+AC_SUBST([PACKAGE_LIB], [2.0])
+
 # Check for md5 or md5sum
 AC_ARG_VAR([MD5], [Path to md5 hashing program])
 AS_IF([test "x$MD5" = "x"], AC_CHECK_PROG([MD5], [md5sum], [md5sum]), [])

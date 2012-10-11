@@ -32,7 +32,7 @@ YAGGO_SOURCES = # Append all file to be built by yaggo
 
 # What to build
 # bin_PROGRAMS = bin/jellyfish
-lib_LTLIBRARIES = libjellyfish.la
+lib_LTLIBRARIES = libjellyfish-2.0.la
 # check_PROGRAMS = bin/generate_sequence bin/test_double_fifo_input	\
 #                  bin/test_read_parser
 check_PROGRAMS =
@@ -79,8 +79,9 @@ check_PROGRAMS =
 ########################################
 # Build Jellyfish the shared library
 ########################################
-libjellyfish_la_LDFLAGS = -version-info 2:0:0
-libjellyfish_la_SOURCES = jellyfish/rectangular_binary_matrix.cc	\
+libjellyfish_2_0_la_LDFLAGS = -version-info 2:0:0
+libjellyfish_2_0_la_SOURCES =				\
+                          jellyfish/rectangular_binary_matrix.cc	\
                           jellyfish/int128.cc jellyfish/mer_dna.cc	\
                           jellyfish/storage.cc jellyfish/yaggo.cpp	\
                           jellyfish/allocators_mmap.cc			\
@@ -104,7 +105,7 @@ libjellyfish_la_SOURCES = jellyfish/rectangular_binary_matrix.cc	\
                           # jellyfish/dbg.cc #				\
                           jellyfish/allocators_mmap.cc #		\
                           jellyfish/dna_codes.cc
-libjellyfish_la_CPPFLAGS = $(AM_CPPFLAGS)
+libjellyfish_2_0_la_CPPFLAGS = $(AM_CPPFLAGS)
 library_includedir=$(includedir)/jellyfish-@PACKAGE_VERSION@/jellyfish
 library_include_HEADERS = jellyfish/allocators_mmap.hpp			\
                           jellyfish/backtrace.hpp			\
