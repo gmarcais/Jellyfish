@@ -11,7 +11,7 @@ AM_CXXFLAGS = -g -O3
 
 # What to build
 bin_PROGRAMS = bin/jellyfish
-lib_LTLIBRARIES = libjellyfish.la
+lib_LTLIBRARIES = libjellyfish-1.1.la
 check_PROGRAMS = bin/generate_sequence bin/test_double_fifo_input	\
                  bin/test_read_parser
 
@@ -57,8 +57,8 @@ EXTRA_DIST += jellyfish/cite_cmdline.hpp jellyfish/query_cmdline.hpp	\
 ########################################
 # Build Jellyfish the shared library
 ########################################
-libjellyfish_la_LDFLAGS = -version-info 2:0:1
-libjellyfish_la_SOURCES = jellyfish/square_binary_matrix.cc		\
+libjellyfish_1_1_la_LDFLAGS = -version-info 1:1:0
+libjellyfish_1_1_la_SOURCES = jellyfish/square_binary_matrix.cc		\
                           jellyfish/err.cc jellyfish/misc.cc		\
                           jellyfish/storage.cc				\
                           jellyfish/thread_exec.cc jellyfish/time.cc	\
@@ -75,7 +75,7 @@ libjellyfish_la_SOURCES = jellyfish/square_binary_matrix.cc		\
                           jellyfish/dbg.cc				\
                           jellyfish/allocators_mmap.cc			\
                           jellyfish/dna_codes.cc
-libjellyfish_la_CPPFLAGS = $(AM_CPPFLAGS)
+libjellyfish_1_1_la_CPPFLAGS = $(AM_CPPFLAGS)
 library_includedir=$(includedir)/jellyfish-@PACKAGE_VERSION@/jellyfish
 library_include_HEADERS = jellyfish/allocators_malloc.hpp		\
                           jellyfish/allocators_mmap.hpp			\
