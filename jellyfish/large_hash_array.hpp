@@ -36,7 +36,7 @@ namespace jellyfish { namespace large_hash {
 class reprobe_limit_t {
   uint_t limit;
 public:
-  reprobe_limit_t(uint_t _limit, size_t *_reprobes, size_t _size) :
+  reprobe_limit_t(uint_t _limit, const size_t *_reprobes, size_t _size) :
     limit(_limit)
   {
     while(_reprobes[limit] >= _size && limit >= 1)
@@ -72,7 +72,7 @@ class array {
   mem_block_t              mem_block_;
   word                    *data_;
   atomic_t                 atomic_;
-  size_t                  *reprobes_;
+  const size_t            *reprobes_;
   RectangularBinaryMatrix  hash_matrix_;
   RectangularBinaryMatrix  hash_inverse_matrix_;
 
@@ -91,7 +91,7 @@ public:
         uint16_t key_len, // Size of key in bits
         uint16_t val_len, // Size of val in bits
         uint16_t reprobe_limit, // Maximum reprobe
-        size_t* reprobes = jellyfish::quadratic_reprobes) : // Reprobing policy
+        const size_t* reprobes = jellyfish::quadratic_reprobes) : // Reprobing policy
     lsize_(ceilLog2(size)),
     size_((size_t)1 << lsize_),
     size_mask_(size_ - 1),
@@ -117,6 +117,7 @@ public:
   uint_t key_len() const { return key_len_; }
   uint_t val_len() const { return offsets_.val_len(); }
 
+  const size_t* reprobes() const { return reprobes_; }
   uint_t max_reprobe() const { return reprobe_limit_.val(); }
   size_t max_reprobe_offset() const { return reprobes_[reprobe_limit_.val()]; }
 

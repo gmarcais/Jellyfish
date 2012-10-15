@@ -18,7 +18,7 @@
 #include <jellyfish/storage.hpp>
 
 namespace jellyfish {
-size_t _quadratic_reprobes[257] = {
+const size_t _quadratic_reprobes[257] = {
       1,
       1,     3,     6,    10,    15,    21,    28,    36,    45,    55,
      66,    78,    91,   105,   120,   136,   153,   171,   190,   210,
@@ -47,5 +47,5 @@ size_t _quadratic_reprobes[257] = {
   29161, 29403, 29646, 29890, 30135, 30381, 30628, 30876, 31125, 31375,
   31626, 31878, 32131, 32385, 32640, 32896
 };
-size_t *quadratic_reprobes = _quadratic_reprobes;
+const size_t *quadratic_reprobes = _quadratic_reprobes;
 }

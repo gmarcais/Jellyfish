@@ -25,43 +25,43 @@ namespace locks {
     {
       pthread_mutex_t   _mutex;
       pthread_cond_t	_cond;
-      
+
     public:
-      cond() { 
+      cond() {
         pthread_mutex_init(&_mutex, NULL);
         pthread_cond_init(&_cond, NULL);
       }
-      
+
       ~cond() {
         pthread_cond_destroy(&_cond);
         pthread_mutex_destroy(&_mutex);
       }
-      
+
       inline void lock() { pthread_mutex_lock(&_mutex); }
       inline void unlock() { pthread_mutex_unlock(&_mutex); }
       inline void wait() { pthread_cond_wait(&_cond, &_mutex); }
       inline void signal() { pthread_cond_signal(&_cond); }
       inline void broadcast() { pthread_cond_broadcast(&_cond); }
     };
-    
+
     class mutex
     {
       pthread_mutex_t     _mutex;
-    
+
     public:
       mutex() {
         pthread_mutex_init(&_mutex, NULL);
       }
-    
+
       ~mutex() {
         pthread_mutex_destroy(&_mutex);
       }
-    
+
       inline void lock() { pthread_mutex_lock(&_mutex); }
       inline void unlock() { pthread_mutex_unlock(&_mutex); }
       inline bool try_lock() { return !pthread_mutex_trylock(&_mutex); }
     };
-    
+
     class Semaphore
     {
         int _value, _wakeups;
@@ -103,26 +103,26 @@ namespace locks {
     class barrier
     {
       pthread_barrier_t _barrier;
-      
+
     public:
       explicit barrier(unsigned count) {
 
 	pthread_barrier_init(&_barrier, NULL, count);
       }
-      
+
       ~barrier() {
 	pthread_barrier_destroy(&_barrier);
       }
-      
-      inline int wait() {
-	return pthread_barrier_wait(&_barrier);
+
+      inline bool wait() {
+	return pthread_barrier_wait(&_barrier) == PTHREAD_BARRIER_SERIAL_THREAD;
       }
     };
 
 #else
-#  ifndef PTHREAD_BARRIER_SERIAL_THREAD
-#    define  PTHREAD_BARRIER_SERIAL_THREAD 1
-#  endif
+// #  ifndef PTHREAD_BARRIER_SERIAL_THREAD
+// #    define  PTHREAD_BARRIER_SERIAL_THREAD 1
+// #  endif
 
     class barrier
     {
@@ -133,21 +133,20 @@ namespace locks {
       Semaphore barrier2;
 
     public:
-      explicit barrier(unsigned cnt) 
+      explicit barrier(unsigned cnt)
         : count(cnt), current(0), barrier1(0), barrier2(0) {
       }
 
       ~barrier() {}
 
       inline int wait() {
-        int ret = 0;
+        bool ret = false;
         barlock.lock();
         current += 1;
         if(current == count) {
-          ret = PTHREAD_BARRIER_SERIAL_THREAD;
-          for(int i=0; i<count;i++) {
+          ret = true;
+          for(int i=0; i<count;i++)
             barrier1.signal();
-          }
         }
         barlock.unlock();
         barrier1.wait(); // wait for n threads to arrive
