@@ -113,8 +113,8 @@ protected:
       return true;
 
     // Copy data from old to new
-    uint16_t                 id       = atomic_t::fetch_add(&size_thid_, (uint16_t)1);
-    typename array::iterator it       = ary_->iterator_slice(id, nb_threads_);
+    uint16_t                       id = atomic_t::fetch_add(&size_thid_, (uint16_t)1);
+    typename array::eager_iterator it = ary_->iterator_slice(id, nb_threads_);
     while(it.next())
       my_ary->add(it.key(), it.val());
 

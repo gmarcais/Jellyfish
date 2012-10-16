@@ -117,7 +117,7 @@ TEST_P(HashArray, Collisions) {
       ++map[mers[j]];
     }
 
-    large_array::iterator it    = ary.iterator_all();
+    large_array::eager_iterator it    = ary.iterator_all();
     size_t                count = 0;
     while(it.next()) {
       SCOPED_TRACE(::testing::Message() << "it.key():" << it.key());
@@ -150,11 +150,13 @@ TEST_P(HashArray, Iterator) {
     map[mer] += i;
   }
 
-  large_array::iterator      it  = ary.iterator_all();
-  large_array::lazy_iterator lit = ary.lazy_iterator_all();
+  large_array::eager_iterator it     = ary.iterator_all();
+  large_array::lazy_iterator  lit    = ary.lazy_iterator_all();
+  large_array::iterator       stl_it = ary.begin();
   int count = 0;
-  while(it.next()) {
+  for( ; it.next(); ++stl_it) {
     ASSERT_TRUE(lit.next());
+    ASSERT_NE(ary.end(), stl_it);
     mer_map::const_iterator mit = map.find(it.key());
     ASSERT_NE(map.end(), mit);
     SCOPED_TRACE(::testing::Message() << "key:" << it.key());
@@ -162,10 +164,14 @@ TEST_P(HashArray, Iterator) {
     EXPECT_EQ(mit->second, it.val());
     EXPECT_EQ(mit->first, lit.key());
     EXPECT_EQ(mit->second, lit.val());
+    EXPECT_EQ(mit->first, stl_it->first);
+    EXPECT_EQ(mit->second, stl_it->second);
     EXPECT_EQ(it.id(), lit.id());
+    EXPECT_EQ(it.id(), stl_it.id());
     ++count;
   }
   EXPECT_FALSE(lit.next());
+  EXPECT_EQ(ary.end(), stl_it);
   EXPECT_EQ(map.size(), (size_t)count);
 
   int i = 0;

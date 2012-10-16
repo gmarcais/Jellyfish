@@ -61,7 +61,7 @@ TEST(HashCounterCooperative, SizeDouble) {
   hash_adder adder(hash, nb, nb_threads);
   adder.exec_join(nb_threads);
 
-  hash_counter::array::iterator it = hash.ary()->iterator_all();
+  hash_counter::array::eager_iterator it = hash.ary()->iterator_all();
   while(it.next())
     EXPECT_EQ(adder.val(it.key()), it.val());
   EXPECT_LT((size_t)(nb_threads * nb), hash.size());
