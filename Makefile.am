@@ -6,7 +6,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = jellyfish-1.9.pc
 
 AM_LDFLAGS = -lpthread
-AM_CPPFLAGS = -Wall -Wnon-virtual-dtor -I$(top_srcdir) -g -O3 -std=gnu++98
+AM_CPPFLAGS = -Wall -Wnon-virtual-dtor -I$(top_srcdir) -I$(top_srcdir)/include -g -O3 -std=gnu++98
 AM_CXXFLAGS = -g -O3 -std=gnu++98
 
 noinst_HEADERS = $(YAGGO_SOURCES) jellyfish/yaggo.hpp
@@ -107,6 +107,7 @@ libjellyfish_2_0_la_SOURCES =				\
                           jellyfish/dna_codes.cc
 libjellyfish_2_0_la_CPPFLAGS = $(AM_CPPFLAGS)
 library_includedir=$(includedir)/jellyfish-@PACKAGE_VERSION@/jellyfish
+JFI = include/jflib
 library_include_HEADERS = jellyfish/allocators_mmap.hpp			\
                           jellyfish/backtrace.hpp			\
                           jellyfish/atomic_gcc.hpp			\
@@ -117,7 +118,10 @@ library_include_HEADERS = jellyfish/allocators_mmap.hpp			\
                           jellyfish/int128.hpp				\
                           jellyfish/rectangular_binary_matrix.hpp	\
                           jellyfish/mer_dna.hpp jellyfish/storage.hpp	\
-                          jellyfish/simple_circular_buffer.hpp
+                          jellyfish/simple_circular_buffer.hpp		\
+                          $(JFI)/circular_buffer.hpp			\
+                          $(JFI)/atomic_field.hpp			\
+                          $(JFI)/compare_and_swap.hpp
 
 
 # library_include_HEADERS = jellyfish/allocators_malloc.hpp		\
@@ -250,13 +254,14 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_simple_circular_buffer.cc	\
 	               unit_tests/test_rectangular_binary_matrix.cc	\
 	               unit_tests/test_mer_dna.cc			\
-	               unit_tests/test_large_hash_array.cc
+	               unit_tests/test_large_hash_array.cc		\
+	               unit_tests/test_cooperative_pool.cc
 
 bin_test_all_SOURCES += jellyfish/rectangular_binary_matrix.cc		\
                         jellyfish/int128.cc jellyfish/mer_dna.cc	\
                         jellyfish/storage.cc jellyfish/yaggo.cpp	\
                         jellyfish/allocators_mmap.cc			\
-                        jellyfish/misc.cc
+                        jellyfish/misc.cc jellyfish/thread_exec.cc
 bin_test_all_CXXFLAGS = -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)/unit_tests -Dprotected=public
 bin_test_all_LDADD = libgtest.la
 YAGGO_SOURCES += unit_tests/test_main_cmdline.hpp
