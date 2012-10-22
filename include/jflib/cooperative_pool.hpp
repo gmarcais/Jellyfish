@@ -1,30 +1,81 @@
-/*  This file is part of Jellyfish.
+/*  This file is part of Jflib.
 
-    Jellyfish is free software: you can redistribute it and/or modify
+    Jflib is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    Jellyfish is distributed in the hope that it will be useful,
+    Jflib is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
+    along with Jflib.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-#ifndef __JELLYFISH_JFLIB_COOPERATIVE_POOL_HPP__
-#define __JELLYFISH_JFLIB_COOPERATIVE_POOL_HPP__
+#ifndef __JFLIB_COOPERATIVE_POOL_HPP__
+#define __JFLIB_COOPERATIVE_POOL_HPP__
+
+#include <assert.h>
 
 #include <jflib/circular_buffer.hpp>
 #include <jflib/compare_and_swap.hpp>
-/// Cooperative pool
+#include <jflib/locks_pthread.hpp>
 
-namespace jellyfish { namespace jflib {
+/// Cooperative pool. Provide a link between a producer and many
+/// consumers. It is cooperative in the sense that there is no
+/// dedicated thread to the producer. When the number of elements in
+/// the queue from the producer to the consumer is less than half,
+/// then the thread requesting an element attempts to become the
+/// producer. It stays a producer until the producer to consumer queue
+/// is full.
+///
+/// This class must be subclassed using CRTP. `T` is the type of the
+/// element passed around in the queues. The derived class must
+/// implement the method `bool produce(T& e)`. It is called when a
+/// thread has become a producer. It must set in `e` the new element,
+/// unless there is nothing more to produce. It returns `true` if
+/// there is nothing more to produce (and `e` is not used), `false`
+/// otherwise.
+///
+/// The following example will produce the integers `[0, 1000000]`:
+///
+/// ~~~{.cc}
+/// class sequence : public cooperative_bool<sequence, int> {
+///   int cur_;
+/// public:
+///   sequence() : cur_(0) { }
+///   bool produce(int& e) {
+///     if(cur_ <= 1000000) {
+///       e = cur_++;
+///       return false;
+///     }
+///     return true;
+///   }
+/// };
+/// ~~~
+///
+/// To access the elements (or the jobs) of the sequence, instantiate
+/// a `sequence::job` object and check that it is not empty. If empty,
+/// the sequence is over.
+///
+/// ~~~{.cc}
+/// sequence seq; // Sequence, instantiated in main thread
+/// // In each consumer thread:
+/// while(true) {
+///   sequence::job j(seq);
+///   if(j.is_empty())
+///     break;
+///   // Do computation using *j and j->
+/// }
+/// ~~~
+
+namespace jflib {
 template<typename D, typename T>
 class cooperative_pool {
+public:
   typedef jflib::circular_buffer<uint32_t> cbT;
   typedef T                                element_type;
 
@@ -34,8 +85,7 @@ class cooperative_pool {
   cbT           prod_cons_;     // FIFO from Producers to Consumers
   int           has_producer_;  // Tell whether a thread is acting as a producer
 
-  // Small class with RAII. that take a token in an atomic fashion (like
-  // has_producer_). Release token when going out of scope.
+  // RAII token.
   class take_token {
     int* const token_;
     const bool has_token_;
@@ -43,6 +93,7 @@ class cooperative_pool {
     take_token(int* token) : token_(token), has_token_(cas(token_, 0, 1)) { }
     ~take_token() {
       if(has_token_)
+        //        cas(token_, 1, 0); // Guaranteed to succeed. Memory barrier
         jflib::a_store(token_, 0);
     }
     bool has_token() const { return has_token_; }
@@ -52,14 +103,16 @@ public:
   cooperative_pool(uint32_t size) :
     size_(size),
     elts_(new element_type[size_]),
-    cons_prod_(size),
-    prod_cons_(size),
+    cons_prod_(size_ + 100),
+    prod_cons_(size_ + 100),
     has_producer_(0)
   {
     // Every element is empty and ready to be filled by the producer
     for(size_t i = 0; i < size_; ++i)
-      cons_prod_.enqueue(i);
+      cons_prod_.enqueue_no_check(i);
   }
+
+  ~cooperative_pool() { delete [] elts_; }
 
   uint32_t size() const { return size_; }
 
@@ -67,14 +120,15 @@ public:
   // is done and we should stop processing.
   class job {
     cooperative_pool& cp_;
-    uint32_t          i_;       // Index of element
+    const uint32_t    i_;       // Index of element
   public:
     job(cooperative_pool& cp) : cp_(cp), i_(cp_.get_element()) { }
     ~job() { release(); }
 
     void release() {
-      if(!is_empty())
-        cp_.cons_prod_.enqueue(i_);
+      if(!is_empty()) {
+        cp_.cons_prod_.enqueue_no_check(i_);
+      }
     }
     bool is_empty() const { return i_ == cbT::guard; }
 
@@ -94,6 +148,12 @@ private:
     int iteration = 0;
 
     while(true) {
+      // If less than half full -> try to fill up producer to consumer
+      // queue. Disregard return value: in any every case will
+      // attempt to get an element for ourselves
+      if(prod_cons_.fill() < prod_cons_.size() / 2)
+        become_producer();
+
       uint32_t i = prod_cons_.dequeue();
       if(i != cbT::guard)
         return i;
@@ -101,50 +161,46 @@ private:
       // Try to become producer
       switch(become_producer()) {
       case PRODUCER_PRODUCED:
-        iteration = 0;
+        iteration = 0; // Produced. Attempt anew to get an element
         break;
       case PRODUCER_DONE:
-        return cbT::guard;
+        return prod_cons_.dequeue();
       case PRODUCER_EXISTS:
-        delay(iteration);
+        delay(iteration++); // Already a producer. Wait a bit it adds things to queue
+        break;
       }
     }
   }
 
   PRODUCER_STATUS become_producer() {
+    if(prod_cons_.is_closed())
+      return PRODUCER_DONE;
+
     // Mark that we have a produce (myself). If not, return. Token
-    // will be release automatically at end of method
+    // will be release automatically at end of method.
     take_token producer_token(&has_producer_);
     if(!producer_token.has_token())
       return PRODUCER_EXISTS;
 
-    if(prod_cons_.is_closed())
-      return PRODUCER_DONE;
-
-    uint32_t i;
+    uint32_t i = cbT::guard;
     try {
-      while(true) {
+      while(true) { // Only way out is if produce method is done (returns true or throw an exception)
         i = cons_prod_.dequeue();
         if(i == cbT::guard)
           return PRODUCER_PRODUCED;
 
-        bool done = static_cast<D*>(this)->produce(elts_[i]);
-        if(done) {
-          cons_prod_.enqueue(i);
-          prod_cons_.close();
-          return PRODUCER_DONE;
-        }
+        if(static_cast<D*>(this)->produce(elts_[i])) // produce returns true if done
+          break;
 
-        prod_cons_.enqueue(i);
+        prod_cons_.enqueue_no_check(i);
       }
-    } catch(...) {
-      // Is threw an exception -> same as being done
-      cons_prod_.enqueue(i);
-      prod_cons_.close();
-      return PRODUCER_DONE;
-    }
+    } catch(...) { }       // Threw an exception -> same as being done
 
-    return PRODUCER_PRODUCED; // never reached
+    // Producing is done
+    cons_prod_.enqueue_no_check(i);
+    prod_cons_.close();
+
+    return PRODUCER_DONE;
   }
 
   // First 16 operations -> no delay. Then exponential back-off up to a second.
@@ -156,5 +212,5 @@ private:
   }
 };
 
-} } // namespace jellyfish { namespace jflib {
-#endif /* __JELLYFISH_JFLIB_COOPERATIVE_POOL_HPP__ */
+} // namespace jflib {
+#endif /* __JFLIB_COOPERATIVE_POOL_HPP__ */

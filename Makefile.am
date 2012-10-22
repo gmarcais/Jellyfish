@@ -112,8 +112,7 @@ library_include_HEADERS = jellyfish/allocators_mmap.hpp			\
                           jellyfish/backtrace.hpp			\
                           jellyfish/atomic_gcc.hpp			\
                           jellyfish/large_hash_array.hpp		\
-                          jellyfish/divisor.hpp jellyfish/err.hpp	\
-                          jellyfish/misc.hpp				\
+                          jellyfish/err.hpp jellyfish/misc.hpp		\
                           jellyfish/offsets_key_value.hpp		\
                           jellyfish/int128.hpp				\
                           jellyfish/rectangular_binary_matrix.hpp	\
@@ -121,7 +120,8 @@ library_include_HEADERS = jellyfish/allocators_mmap.hpp			\
                           jellyfish/simple_circular_buffer.hpp		\
                           $(JFI)/circular_buffer.hpp			\
                           $(JFI)/atomic_field.hpp			\
-                          $(JFI)/compare_and_swap.hpp
+                          $(JFI)/compare_and_swap.hpp			\
+                          $(JFI)/divisor.hpp
 
 
 # library_include_HEADERS = jellyfish/allocators_malloc.hpp		\
@@ -254,15 +254,15 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_simple_circular_buffer.cc	\
 	               unit_tests/test_rectangular_binary_matrix.cc	\
 	               unit_tests/test_mer_dna.cc			\
-	               unit_tests/test_large_hash_array.cc		\
-	               unit_tests/test_cooperative_pool.cc
+	               unit_tests/test_large_hash_array.cc
 
 bin_test_all_SOURCES += jellyfish/rectangular_binary_matrix.cc		\
                         jellyfish/int128.cc jellyfish/mer_dna.cc	\
                         jellyfish/storage.cc jellyfish/yaggo.cpp	\
                         jellyfish/allocators_mmap.cc			\
                         jellyfish/misc.cc jellyfish/thread_exec.cc
-bin_test_all_CXXFLAGS = -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)/unit_tests -Dprotected=public
+bin_test_all_CPPFLAGS = -Dprotected=public -Dprivate=public
+bin_test_all_CXXFLAGS = -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)/unit_tests -I$(top_srcdir)/include
 bin_test_all_LDADD = libgtest.la
 YAGGO_SOURCES += unit_tests/test_main_cmdline.hpp
 noinst_HEADERS += unit_tests/test_main.hpp

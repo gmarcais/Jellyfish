@@ -1,27 +1,38 @@
-/*  This file is part of Jellyfish.
+/*  This file is part of Jflib.
 
-    Jellyfish is free software: you can redistribute it and/or modify
+    Jflib is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    Jellyfish is distributed in the hope that it will be useful,
+    Jflib is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
+    along with Jflib.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-#ifndef __JELLYFISH_JFLIB_COMPARE_AND_SWAP_HPP__
-#define __JELLYFISH_JFLIB_COMPARE_AND_SWAP_HPP__
+#ifndef _JFLIB_COMPARE_AND_SWAP_H_
+#define _JFLIB_COMPARE_AND_SWAP_H_
 
 #include <sys/types.h>
 #include <stdint.h>
 
-namespace jellyfish { namespace jflib {
+namespace jflib {
+  // // Atomic load (get) and store (set). For now assume that the
+  // // architecture does this based on the virtual key word (true for
+  // // x86_64). TODO: improve on other architectures.
+  // template<typename T>
+  // T a_get(const T &x) { return *(volatile T*)&x; }
+  // template<typename T, typename U>
+  // T &a_set(T &lhs, const U &rhs) {
+  //   *(volatile T*)&lhs = rhs;
+  //   return lhs;
+  // }
+
   // Numeric type of length rounded up to the size of a
   // word. Undefined, and raise a compilation error, if the length is
   // not a machine word size
@@ -63,7 +74,7 @@ namespace jellyfish { namespace jflib {
     T cv;
     return cas(ptr, ov, nv, &cv);
   }
-} } // namespace jellyfish { namespace fjlib {
+}
 
 
-#endif /* __JELLYFISH_JFLIB_COMPARE_AND_SWAP_HPP__ */
+#endif /* _JFLIB_COMPARE_AND_SWAP_H_ */

@@ -1,29 +1,29 @@
-/*  This file is part of Jellyfish.
+/*  This file is part of Jflib.
 
-    Jellyfish is free software: you can redistribute it and/or modify
+    Jflib is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    Jellyfish is distributed in the hope that it will be useful,
+    Jflib is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
+    along with Jflib.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __JELLYFISH_JFLIB_ATOMIC_FIELD_HPP__
-#define __JELLYFISH_JFLIB_ATOMIC_FIELD_HPP__
 
-#include <assert.h>
+#ifndef _JFLIB_ATOMIC_FIELD_H_
+#define _JFLIB_ATOMIC_FIELD_H_
+
 #include <jflib/compare_and_swap.hpp>
 
-namespace jellyfish { namespace jflib {
+namespace jflib {
   /* Define a_get, a_set and a_update
    */
-  template<typename T>
+  template <typename T>
   T a_load(T *x) { return *(volatile T*)x; }
   template<typename T, typename U>
   T a_store(T* lhs, const U& rhs) {
@@ -55,18 +55,18 @@ namespace jellyfish { namespace jflib {
   /* POD with atomic operators.
    */
   template<typename T>
-  struct atomic_pod { 
+  struct atomic_pod {
     typedef T type;
     T x;
   };
 
-#define AF_COMPOUND_ASSIGN(op)                          \
-  template<typename T, typename U>                      \
+#define AF_COMPOUND_ASSIGN(op)                                          \
+  template<typename T, typename U>                                      \
   T operator op ## = (atomic_pod<T> &x, const U &rhs) { \
     T ov(a_load(&x.x));                                 \
-    T nv(ov op rhs);                                    \
-    while(!cas(&x.x, ov, nv, &ov)) { nv = ov op rhs; }  \
-    return nv;                                          \
+    T nv(ov op rhs);                                                    \
+    while(!cas(&x.x, ov, nv, &ov)) { nv = ov op rhs; }                  \
+    return nv;                                                          \
   }
   AF_COMPOUND_ASSIGN(+);
   AF_COMPOUND_ASSIGN(-);
@@ -79,10 +79,16 @@ namespace jellyfish { namespace jflib {
   AF_COMPOUND_ASSIGN(|);
   AF_COMPOUND_ASSIGN(^);
 
+  /** Set value to f(value).
+   * @return f(value)
+   *
+   * The function f may be called more than once. Be careful about
+   * side effects (probably better if f has no side effects).
+   */
   template<typename T>
   T a_load(atomic_pod<T> &x) { return a_load(&x.x); }
   template<typename T, typename U>
-  T a_store(atomic_pod<T> &lhs, const U &rhs) { 
+  T a_store(atomic_pod<T> &lhs, const U &rhs) {
     return a_store(&lhs.x, rhs);
   }
   template<typename T>
@@ -111,7 +117,7 @@ namespace jellyfish { namespace jflib {
   atomic_field<T>& a_store(atomic_field<T>& lhs, const U& rhs) { a_store((atomic_pod<T>&)lhs, rhs); return lhs; }
   template<typename T>
   T a_update(atomic_field<T>& x, T (*f)(T)) { return a_update((atomic_pod<T>&)x, f); }
-  
+
 
   /* Allows atomic operation on any (already allocated) data.
    */
@@ -145,8 +151,7 @@ namespace jellyfish { namespace jflib {
   AR_COMPOUND_ASSIGN(&);
   AR_COMPOUND_ASSIGN(|);
   AR_COMPOUND_ASSIGN(^);
+}
 
-} } // namespace jellyfish { namespace jflib {
 
-
-#endif /* __JELLYFISH_JFLIB_ATOMIC_FIELD_HPP__ */
+#endif /* _JFLIB_ATOMIC_FIELD_H_ */

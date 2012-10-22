@@ -17,11 +17,13 @@
 #ifndef __JELLYFISH_OFFSETS_KEY_VALUE_HPP__
 #define __JELLYFISH_OFFSETS_KEY_VALUE_HPP__
 
-#include <jellyfish/misc.hpp>
-#include <jellyfish/divisor.hpp>
 #include <signal.h>
 
+#include <jellyfish/misc.hpp>
+
 namespace jellyfish {
+#include <jflib/divisor.hpp>
+
 /* A word is whatever aligned type used for atomic operations
  * (CAS). Typically, a uint64_t. We store pairs of (key, value), in a
  * bit packed fashion. The key and value can have abritrary size as
@@ -113,7 +115,7 @@ public:
   uint_t key_len() const { return key_len_; }
   uint_t val_len() const { return val_len_; }
   uint_t lval_len() const { return lval_len_; }
-  word   get_max_val(bool large) const { 
+  word   get_max_val(bool large) const {
     return (((uint64_t)1) << (large ? lval_len_ : val_len_)) - 1;
   }
 
@@ -134,10 +136,10 @@ public:
   }
 
 private:
-  const uint_t     key_len_, val_len_;
-  const uint_t     reprobe_limit_, reprobe_len_, lval_len_;
-  const block_info block;
-  const divisor64  bld;       // Fast divisor by block.len
+  const uint_t           key_len_, val_len_;
+  const uint_t           reprobe_limit_, reprobe_len_, lval_len_;
+  const block_info       block;
+  const jflib::divisor64 bld;   // Fast divisor by block.len
   offset_pair_t    offsets[bsizeof(word)];
 
   block_info compute_offsets();
