@@ -116,6 +116,9 @@ public:
 
   uint32_t size() const { return size_; }
 
+  element_type* element_begin() { return elts_; }
+  element_type* element_end() { return elts_ + size_; }
+
   // Contains a filled element or is empty. In which case the producer
   // is done and we should stop processing.
   class job {
