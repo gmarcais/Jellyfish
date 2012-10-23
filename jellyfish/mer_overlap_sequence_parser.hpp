@@ -40,6 +40,7 @@ class mer_overlap_sequence_parser : public jflib::cooperative_pool<mer_overlap_s
   file_type                      type;
   StreamIterator                 current_file;
   StreamIterator                 stream_end;
+  size_t                         current_seq_len;
 
 public:
   /// Size is the number of buffer to keep around. It should be larger
@@ -56,7 +57,8 @@ public:
     buffer(new char[size * buf_size]),
     type(DONE_TYPE),
     current_file(begin),
-    stream_end(end)
+    stream_end(end),
+    current_seq_len(0)
   {
     for(sequence_ptr* it = super::element_begin(); it != super::element_end(); ++it)
       it->start = it->end = buffer + (it - super::element_begin()) * buf_size;
@@ -87,14 +89,13 @@ protected:
       type = FASTA_TYPE;
       ignore_line(); // Pass header
       break;
-      //    case '@': type = FASTQ_TYPE; break;
+    case '@':
+      type = FASTQ_TYPE;
+      ignore_line(); // Pass header
+      break;
     default:
       eraise(std::runtime_error) << "Unsupported format"; // Better error management
     }
-  }
-
-  inline void ignore_line() {
-    current_file->ignore(std::numeric_limits<std::streamsize>::max(), '\n');
   }
 
   inline bool produce(sequence_ptr& buff) {
@@ -103,7 +104,7 @@ protected:
       read_fasta(buff);
       return false;
     case FASTQ_TYPE:
-      eraise(std::runtime_error) << "Type not yet supported";
+      read_fastq(buff);
       return false;
     case DONE_TYPE:
       return true;
@@ -120,18 +121,10 @@ protected:
     // Here, the current_file is assumed to always point to some
     // sequence (or EOF). Never at header.
     while(*current_file && read < buf_size_ - mer_len_ - 1) {
-      while(*current_file && read < buf_size_ - 1 && current_file->peek() != '>') {
-        // Skip new lines -> get below does like them
-        while(current_file->peek() == '\n')
-          current_file->get();
-        current_file->get(buff.start + read, buf_size_ - read);
-        read += current_file->gcount();
-        while(current_file->peek() == '\n')
-          current_file->get(); // Skip new line
-      }
+      read += read_sequence(read, buff.start, '>');
       if(current_file->peek() == '>') {
         *(buff.start + read++) = 'N'; // Add N between reads
-        ignore_line(); // Skip header
+        ignore_line(); // Skip to next sequence (skip headers, quals, ...)
       }
     }
     buff.end = buff.start + read;
@@ -145,6 +138,82 @@ protected:
     if(have_seam)
       memcpy(seam_buffer, buff.end - mer_len_ + 1, mer_len_ - 1);
   }
+
+  void read_fastq(sequence_ptr& buff) {
+    size_t read = 0;
+    if(have_seam) {
+      memcpy(buff.start, seam_buffer, mer_len_ - 1);
+      read = mer_len_ - 1;
+    }
+
+    // Here, the current_file is assumed to always point to some
+    // sequence (or EOF). Never at header.
+    while(*current_file && read < buf_size_ - mer_len_ - 1) {
+      size_t nread     = read_sequence(read, buff.start, '+');
+      read            += nread;
+      current_seq_len += nread;
+      if(current_file->peek() == '+') {
+        skip_quals(current_seq_len);
+        if(*current_file) {
+          *(buff.start + read++) = 'N'; // Add N between reads
+          ignore_line(); // Skip sequence header
+        }
+        current_seq_len = 0;
+      }
+    }
+    buff.end = buff.start + read;
+
+    if(!*current_file) {
+      have_seam       = false;
+      current_seq_len = 0;
+      open_next_file();
+      return;
+    }
+    have_seam = read >= mer_len_ - 1;
+    if(have_seam)
+      memcpy(seam_buffer, buff.end - mer_len_ + 1, mer_len_ - 1);
+  }
+
+  size_t read_sequence(const size_t read, char* const start, const char stop) {
+    size_t nread = read;
+    while(*current_file && nread < buf_size_ - 1 && current_file->peek() != stop) {
+      // Skip new lines -> get below does like them
+      skip_newlines();
+      current_file->get(start + nread, buf_size_ - nread);
+      nread += current_file->gcount();
+      skip_newlines();
+    }
+    return nread - read;
+  }
+
+  inline void ignore_line() {
+    current_file->ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+  }
+
+  inline void skip_newlines() {
+    while(current_file->peek() == '\n')
+      current_file->get();
+  }
+
+  // Skip quals header and qual values (read_len) of them.
+  void skip_quals(size_t read_len) {
+    ignore_line();
+    size_t quals = 0;
+    while(current_file->good() && quals < read_len) {
+      skip_newlines();
+      current_file->ignore(read_len - quals + 1, '\n');
+      quals += current_file->gcount();
+      if(*current_file)
+        ++read_len;
+    }
+    skip_newlines();
+    if(quals == read_len && (peek() == '@' || peek() == EOF))
+      return;
+
+    eraise(std::runtime_error) << "Invalid fastq sequence";
+  }
+
+  char peek() { return current_file->peek(); }
 };
 }
 
