@@ -143,7 +143,7 @@ public:
     job(const job& rhs) { }
     job& operator=(const job& rhs) { }
   };
-  friend job;
+  friend class job;
 
 private:
   enum PRODUCER_STATUS { PRODUCER_PRODUCED, PRODUCER_DONE, PRODUCER_EXISTS };
