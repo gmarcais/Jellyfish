@@ -42,6 +42,21 @@ class generic_file_header {
     ~buffer() { delete [] data; }
   };
 
+  struct restore_fmtflags {
+    std::ostream&      os_;
+    std::ios::fmtflags flags_;
+    std::streamsize    width_;
+    char               fill_;
+    restore_fmtflags(std::ostream& os) :
+      os_(os), flags_(os.flags(std::ios::fmtflags())), width_(os.width()), fill_(os.fill())
+    { }
+    ~restore_fmtflags() {
+      os_.flags(flags_);
+      os_.width(width_);
+      os_.fill(fill_);
+    }
+  };
+
   static void chomp(std::string& s) {
     size_t found  = s.find_last_not_of(" \t\f\v\n\r");
     if (found != std::string::npos)
@@ -51,7 +66,7 @@ class generic_file_header {
   }
 
 public:
-  explicit generic_file_header(int alignment = 8)
+  explicit generic_file_header(int alignment = 0)
   {
     root_["alignment"] = alignment;
   }
@@ -64,22 +79,26 @@ public:
   /// terse JSON format, followed by some padding to align according
   /// to the `alignment_` member.
   void write(std::ostream& os) const {
+    restore_fmtflags flags(os);
     Json::FastWriter writer;
     std::string      header = writer.write(root_);
     chomp(header);
 
-    std::ostringstream size_stream;
-    size_stream << header.size();
-    os << size_stream.str() << header;
-
-    int align = alignment();
+    int align   = alignment();
+    int padding = 0;
+    size_t hlen = header.size();
     if(align > 0) {
-      int padding = ((size_t)size_stream.tellp() + header.size()) % align;
-      if(padding) {
-        char pad[align - padding];
-        memset(pad, '\0', align - padding);
-        os.write(pad, align - padding);
-      }
+      padding = (MAX_HEADER_DIGITS + header.size()) % align;
+      if(padding)
+        hlen += align - padding;
+    }
+    os << std::dec << std::right << std::setw(MAX_HEADER_DIGITS) << std::setfill('0') << hlen;
+    os << std::setw(0) << header;
+
+    if(padding) {
+      char pad[align - padding];
+      memset(pad, '\0', align - padding);
+      os.write(pad, align - padding);
     }
   }
 
@@ -94,7 +113,7 @@ public:
     int i;
     for(i = 0; i < MAX_HEADER_DIGITS && isdigit(is.peek()); ++i)
       len += is.get();
-    if(i == MAX_HEADER_DIGITS || is.peek() != '{')
+    if(is.peek() != '{')
       return false;
     unsigned long hlen = atol(len.c_str());
     if(hlen < 2)
@@ -104,18 +123,13 @@ public:
     is.read(hbuf.data, hlen);
     if(!is.good())
       return false;
+    const char* end = hbuf.data + hlen;
+    while(end > hbuf.data && *(end - 1) == '\0') --end;
 
     Json::Reader reader;
-    if(!reader.parse(hbuf.data, hbuf.data + is.gcount(), root_, false))
+    if(!reader.parse(hbuf.data, end, root_, false))
       return false;
 
-    int align = alignment();
-    if(align == 0)
-      return true;
-    int padding = (len.size() + is.gcount()) % align;
-    if(padding == 0)
-      return true;
-    is.ignore(align - padding);
     return true;
   }
 
