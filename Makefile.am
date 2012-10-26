@@ -6,7 +6,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = jellyfish-1.9.pc
 
 AM_LDFLAGS = -lpthread
-AM_CPPFLAGS = -Wall -Wnon-virtual-dtor -I$(top_srcdir) -I$(top_srcdir)/include -g -O3 -std=gnu++98
+AM_CPPFLAGS = -Wall -Wnon-virtual-dtor -I$(top_srcdir) -I$(top_srcdir)/include -g -O3 -std=gnu++98 -DJSON_IS_AMALGAMATION=1
 AM_CXXFLAGS = -g -O3 -std=gnu++98
 
 noinst_HEADERS = $(YAGGO_SOURCES) jellyfish/yaggo.hpp
@@ -248,21 +248,21 @@ tests/parsers.log: tests/generate_sequence.log
 TESTS += unit_tests/unit_tests.sh
 check_PROGRAMS += bin/test_all
 
-bin_test_all_SOURCES = unit_tests/test_main.cc				\
-	               unit_tests/test_misc.cc				\
+bin_test_all_SOURCES = unit_tests/test_main.cc unit_tests/test_misc.cc	\
 	               unit_tests/test_offsets_key_value.cc		\
 	               unit_tests/test_simple_circular_buffer.cc	\
 	               unit_tests/test_rectangular_binary_matrix.cc	\
 	               unit_tests/test_mer_dna.cc			\
 	               unit_tests/test_large_hash_array.cc		\
-	               unit_tests/test_mer_overlap_sequence_parser.cc
+	               unit_tests/test_mer_overlap_sequence_parser.cc	\
+	               unit_tests/test_file_header.cc
 
 bin_test_all_SOURCES += jellyfish/rectangular_binary_matrix.cc		\
                         jellyfish/int128.cc jellyfish/mer_dna.cc	\
                         jellyfish/storage.cc jellyfish/yaggo.cpp	\
-                        jellyfish/allocators_mmap.cc			\
-                        jellyfish/misc.cc jellyfish/thread_exec.cc
-bin_test_all_CPPFLAGS = -Dprotected=public -Dprivate=public
+                        jellyfish/allocators_mmap.cc jellyfish/misc.cc	\
+                        jellyfish/thread_exec.cc jellyfish/jsoncpp.cpp
+bin_test_all_CPPFLAGS = -Dprotected=public -Dprivate=public -DJSON_IS_AMALGAMATION=1
 bin_test_all_CXXFLAGS = -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)/unit_tests -I$(top_srcdir)/include
 bin_test_all_LDADD = libgtest.la
 YAGGO_SOURCES += unit_tests/test_main_cmdline.hpp
