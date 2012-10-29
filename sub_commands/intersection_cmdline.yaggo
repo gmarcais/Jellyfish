@@ -1,0 +1,20 @@
+purpose "Compute the intersection of many genomes and k-mers unique to each genome"
+
+description "Given <n> input files, each representing a genome, this command will output <n+1> files. For each input file '<file.fa>', the output file 'uniq_<file.fa>' will contain a list of k-mers unique to that genome. The output file 'intersection' will be a list of k-mers common to all genomes"
+
+option("s", "size") {
+  description "Initial size of hash"
+  uint64; suffix; required }
+option("m", "mer") {
+  description "Mer length"
+  uint32; required }
+option("i", "intersection") {
+  description "Intersection file"
+  c_string; default "intersection" }
+option("p", "prefix") {
+  description "Prefix for each unique file"
+  c_string; default "uniq_" }
+option("genome") {
+  description "Input genome sequence, in FASTA or FASTQ format"
+  c_string; typestr "path"
+  multiple; at_least 2 }

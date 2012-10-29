@@ -31,8 +31,8 @@ BUILT_SOURCES += jellyfish/yaggo.cpp
 YAGGO_SOURCES = # Append all file to be built by yaggo
 
 # What to build
-# bin_PROGRAMS = bin/jellyfish
-lib_LTLIBRARIES = libjellyfish-2.0.la
+bin_PROGRAMS += bin/jf-comosid
+#lib_LTLIBRARIES = libjellyfish-2.0.la
 # check_PROGRAMS = bin/generate_sequence bin/test_double_fifo_input	\
 #                  bin/test_read_parser
 check_PROGRAMS =
@@ -40,28 +40,8 @@ check_PROGRAMS =
 ########################################
 # Build Jellyfish the exec
 ########################################
-# bin_jellyfish_SOURCES = jellyfish/jellyfish.cc jellyfish/stats_main.cc	\
-#                         jellyfish/hash_merge.cc jellyfish/storage.cc	\
-#                         jellyfish/misc.cc jellyfish/err.cc		\
-#                         jellyfish/mer_counter.cc			\
-#                         jellyfish/histo_main.cc jellyfish/dump_main.cc	\
-#                         jellyfish/time.cc jellyfish/thread_exec.cc	\
-#                         jellyfish/query_main.cc				\
-#                         jellyfish/square_binary_matrix.cc		\
-#                         jellyfish/dump_fastq_main.cc			\
-#                         jellyfish/histo_fastq_main.cc			\
-#                         jellyfish/cite.cc jellyfish/parse_dna.cc	\
-#                         jellyfish/file_parser.cc			\
-#                         jellyfish/parse_quake.cc			\
-#                         jellyfish/parse_qual_dna.cc			\
-#                         jellyfish/sequence_parser.cc			\
-#                         jellyfish/seq_qual_parser.cc			\
-#                         jellyfish/half.cpp				\
-#                         jellyfish/hash_fastq_merge.cc jellyfish/dbg.cc	\
-#                         jellyfish/mapped_file.cc			\
-#                         jellyfish/backtrace.cc jellyfish/floats.cc	\
-#                         jellyfish/allocators_mmap.cc			\
-#                         jellyfish/yaggo.cpp jellyfish/dna_codes.cc
+bin_jf_comosid_SOURCES = sub_commands/intersection_main.cc jellyfish/intersection_array.hpp
+YAGGO_SOURCES += sub_commands/intersection_cmdline.hpp
 
 # EXTRA_DIST += jellyfish/cite_cmdline.hpp jellyfish/query_cmdline.hpp	\
 #               jellyfish/hash_merge_cmdline.hpp				\
@@ -79,13 +59,13 @@ check_PROGRAMS =
 ########################################
 # Build Jellyfish the shared library
 ########################################
-libjellyfish_2_0_la_LDFLAGS = -version-info 2:0:0
-libjellyfish_2_0_la_SOURCES =				\
-                          jellyfish/rectangular_binary_matrix.cc	\
-                          jellyfish/int128.cc jellyfish/mer_dna.cc	\
-                          jellyfish/storage.cc jellyfish/yaggo.cpp	\
-                          jellyfish/allocators_mmap.cc			\
-                          jellyfish/misc.cc
+# libjellyfish_2_0_la_LDFLAGS = -version-info 2:0:0
+# libjellyfish_2_0_la_SOURCES =				\
+#                           jellyfish/rectangular_binary_matrix.cc	\
+#                           jellyfish/int128.cc jellyfish/mer_dna.cc	\
+#                           jellyfish/storage.cc jellyfish/yaggo.cpp	\
+#                           jellyfish/allocators_mmap.cc			\
+#                           jellyfish/misc.cc
 
 #                          libjellyfish_la_SOURCES =			\
                           jellyfish/square_binary_matrix.cc #		\
@@ -257,7 +237,8 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_large_hash_array.cc		\
 	               unit_tests/test_mer_overlap_sequence_parser.cc	\
 	               unit_tests/test_file_header.cc			\
-	               unit_tests/test_mer_iterator.cc
+	               unit_tests/test_mer_iterator.cc			\
+	               unit_tests/test_intersection.cc
 
 bin_test_all_SOURCES += jellyfish/rectangular_binary_matrix.cc		\
                         jellyfish/int128.cc jellyfish/mer_dna.cc	\
