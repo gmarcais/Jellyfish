@@ -45,7 +45,7 @@ TEST(IntersectionArray, Mers) {
     ary.postprocess(0, true);
 
     // Second file. Contains the second third of uniq mers and the last
-    // two thrids of the multiple mers.
+    // two thirds of the multiple mers.
     for(mer_set::const_iterator it = all.begin(); it != all.end(); ++it)
       ary.add(*it);
     for(int i = 0; i < nb_mers / 3; ++i, ++uit)
@@ -75,14 +75,14 @@ TEST(IntersectionArray, Mers) {
 
   for(mer_set::const_iterator it = mult.begin(); it != mult.end(); ++it) {
     inter_array::mer_info info = ary[*it];
-    EXPECT_FALSE(info.info.unique);
+    EXPECT_TRUE(info.info.uniq);
     EXPECT_TRUE(info.info.mult);
     EXPECT_FALSE(info.info.all);
   }
 
   for(mer_set::const_iterator it = uniq.begin(); it != uniq.end(); ++it) {
     inter_array::mer_info info = ary[*it];
-    EXPECT_TRUE(info.info.unique);
+    EXPECT_TRUE(info.info.uniq);
     EXPECT_FALSE(info.info.mult);
     EXPECT_FALSE(info.info.all);
   }

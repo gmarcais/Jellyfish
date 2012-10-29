@@ -16,34 +16,34 @@ class intersection_array {
 
   array*                  ary_;
   array*                  new_ary_;
-  char*                   mer_status_;
-  char*                   new_mer_status_;
+  unsigned char*                   mer_status_;
+  unsigned char*                   new_mer_status_;
   uint16_t                nb_threads_;
   locks::pthread::barrier size_barrier_;
   volatile uint16_t       size_thid_, done_threads_;
 
   union mer_info2 {
-    char raw;
+    unsigned char raw;
     struct info {
-      char set1:1;    // Set in current file
-      char unique1:1; // Unique
-      char mult1:1;   // Non-unique
-      char all1:1;    // In all files
-      char set2:1;
-      char unique2:1;
-      char mult2:1;
-      char all2:1;
+      unsigned char set1:1;    // Set in current file
+      unsigned char uniq1:1; // Unique
+      unsigned char mult1:1;   // Non-unique
+      unsigned char all1:1;    // In all files
+      unsigned char set2:1;
+      unsigned char uniq2:1;
+      unsigned char mult2:1;
+      unsigned char all2:1;
     } info;
   };
 
 public:
   union mer_info {
-    char raw;
+    unsigned char raw;
     struct info {
-      char set:1;    // Set in current file
-      char unique:1; // Unique
-      char mult:1;   // Non-unique
-      char all:1;    // In all files
+      unsigned char set:1;    // Set in current file
+      unsigned char uniq:1; // Unique
+      unsigned char mult:1;   // Non-unique
+      unsigned char all:1;    // In all files
     } info;
   };
 
@@ -52,7 +52,7 @@ public:
                      uint16_t nb_threads) : // Number of threads accessing hash (cooperative)
     ary_(new array(size, key_len, 0, 126, jellyfish::quadratic_reprobes)),
     new_ary_(0),
-    mer_status_(new char[ary_->size() / 2]), // TODO: change this to a mmap allocated area?
+    mer_status_(new unsigned char[ary_->size() / 2]), // TODO: change this to a mmap allocated area?
     new_mer_status_(0),
     nb_threads_(nb_threads),
     size_barrier_(nb_threads),
@@ -84,7 +84,7 @@ public:
     while(!ary_->set(k, &is_new, &id))
       double_size();
 
-    char oinfo;
+    unsigned char oinfo;
     mer_info2 ninfo;
     ninfo.raw = mer_status_[id / 2];
     do {
@@ -100,32 +100,32 @@ public:
   /// Post-process mer status after a file.
   void postprocess(uint16_t thid, bool first) {
     const std::pair<size_t,size_t> part = slice((size_t)thid, (size_t)nb_threads_, size() / 2);
-    for(size_t i = part.first; i < part.second; ++i) {
-      mer_info2& info = *reinterpret_cast<mer_info2*>(&mer_status_[i]);
-      if(info.info.set1) { // If set in this file
-        info.info.set1 = 0;
-        if(first)
-          info.info.all1 = 1;
-        if(info.info.unique1) { // Unique if first time seen
-          info.info.unique1 = 0;
-          info.info.mult1   = 1;
-        } else                       // Already seen -> not unique
-          info.info.unique1 = 1;
-      } else { // Not set in this file -> not in all
-        info.info.all1 = 0;
+    if(first) {
+      for(size_t i = part.first; i < part.second; ++i) {
+        unsigned char& info = mer_status_[i];
+        switch(info) {
+        case 0x1 : info = 0xa;  break;
+        case 0x10: info = 0xa0; break;
+        case 0x11: info = 0xaa; break;
+        }
       }
+    } else {
+      for(size_t i = part.first; i < part.second; ++i) {
+        mer_info2& info = *reinterpret_cast<mer_info2*>(&mer_status_[i]);
+        // Update all
+        info.info.all1 &= info.info.set1;
+        info.info.all2 &= info.info.set2;
 
-      if(info.info.set2) { // If set in this file
-        info.info.set2 = 0;
-        if(first)
-          info.info.all2 = 1;
-        if(info.info.unique2) { // Unique if first time seen
-          info.info.unique2 = 0;
-          info.info.mult2   = 1;
-        } else                       // Already seen -> not unique
-          info.info.unique2 = 1;
-      } else { // Not set in this file -> not in all
-        info.info.all2 = 0;
+        // Update mult and uniq
+        // info.raw |= ((info.raw & 0x11) << 2) & ((info.raw & 0x22) << 1);
+        // info.raw |= (info.raw & 0x11) << 1;
+        info.info.mult1 |= info.info.set1 & info.info.uniq1;
+        info.info.uniq1 |= info.info.set1;
+        info.info.mult2 |= info.info.set2 & info.info.uniq2;
+        info.info.uniq2 |= info.info.set2;
+
+        // Reset raw
+        info.raw &= 0xee;
       }
     }
   }
@@ -138,7 +138,7 @@ public:
     if(!ary_->get_key_id(k, &id))
       return res;
 
-    char raw = mer_status_[id / 2];
+    unsigned char raw = mer_status_[id / 2];
     if(id & 0x1)
       raw >>= 4;
     res.raw = raw;
