@@ -1,6 +1,7 @@
 #ifndef __JELLYFISH_INTERSECTION_ARRAY_HPP__
 #define __JELLYFISH_INTERSECTION_ARRAY_HPP__
 
+#include <jflib/compare_and_swap.hpp>
 #include <jellyfish/large_hash_array.hpp>
 #include <jellyfish/atomic_gcc.hpp>
 #include <jellyfish/locks_pthread.hpp>
@@ -8,12 +9,12 @@
 
 namespace jellyfish {
 
-#include <jflib/compare_and_swap.hpp>
-
 template<typename Key>
 class intersection_array {
+public:
   typedef large_hash::array<Key> array;
 
+protected:
   array*                  ary_;
   array*                  new_ary_;
   unsigned char*          mer_status_;
@@ -68,8 +69,10 @@ public:
   }
 
   size_t size() const { return ary_->size(); }
-  uint16_t key_len() const { ary_->key_len(); }
+  uint16_t key_len() const { return ary_->key_len(); }
   uint16_t nb_threads() const { return nb_threads_; }
+
+  array* ary() { return ary_; }
 
   /// Signify that current thread is done and wait for all threads to
   /// be done as well.
@@ -141,8 +144,6 @@ public:
     return info_at(id);
   }
 
-
-protected:
   mer_info info_at(size_t id) const {
     mer_info res;
     res.raw = mer_status_[id / 2];
@@ -152,6 +153,7 @@ protected:
     return res;
   }
 
+protected:
   void add_new(const Key& k, mer_info i) {
     bool   is_new;
     size_t id;

@@ -35,9 +35,10 @@ public:
     if(job_->is_empty()) {
       delete job_;
       job_ = 0;
+    } else {
+      cseq_ = (*job_)->start;
+      this->operator++();
     }
-    cseq_ = (*job_)->start;
-    this->operator++();
   }
   mer_iterator() : job_(0), cseq_(0), filled_(0) { }
   //  mer_iterator(const mer_iterator& rhs) : job_(rhs.job_), cseq_(rhs.cseq_), m_(rhs.m_), filled_(rhs.filled_) { }
@@ -57,8 +58,9 @@ public:
         job_->next();
         if(job_->is_empty()) {
           delete job_;
-          job_  = 0;
-          cseq_ = 0;
+          job_    = 0;
+          cseq_   = 0;
+          filled_ = 0;
           return *this;
         }
         cseq_   = (*job_)->start;

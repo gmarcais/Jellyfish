@@ -31,7 +31,7 @@ BUILT_SOURCES += jellyfish/yaggo.cpp
 YAGGO_SOURCES = # Append all file to be built by yaggo
 
 # What to build
-bin_PROGRAMS += bin/jf-comosid
+bin_PROGRAMS += bin/jf-cosmosid
 #lib_LTLIBRARIES = libjellyfish-2.0.la
 # check_PROGRAMS = bin/generate_sequence bin/test_double_fifo_input	\
 #                  bin/test_read_parser
@@ -40,7 +40,13 @@ check_PROGRAMS =
 ########################################
 # Build Jellyfish the exec
 ########################################
-bin_jf_comosid_SOURCES = sub_commands/intersection_main.cc jellyfish/intersection_array.hpp
+bin_jf_cosmosid_SOURCES = sub_commands/intersection_main.cc		\
+                          jellyfish/intersection_array.hpp		\
+                          jellyfish/misc.cc				\
+                          jellyfish/allocators_mmap.cc			\
+                          jellyfish/rectangular_binary_matrix.cc	\
+                          jellyfish/storage.cc				\
+                          jellyfish/thread_exec.cc
 YAGGO_SOURCES += sub_commands/intersection_cmdline.hpp
 
 # EXTRA_DIST += jellyfish/cite_cmdline.hpp jellyfish/query_cmdline.hpp	\
@@ -156,12 +162,13 @@ library_include_HEADERS = jellyfish/allocators_mmap.hpp			\
 ########################################
 # Build tests
 ########################################
-# bin_generate_sequence_SOURCES = jellyfish/generate_sequence.cc		\
-#                                 jellyfish/misc.cc			\
-#                                 jellyfish/mersenne.cpp			\
-#                                 jellyfish/square_binary_matrix.cc	\
-#                                 jellyfish/backtrace.cc			\
-#                                 jellyfish/dbg.cc jellyfish/time.cc
+bin_generate_sequence_SOURCES = jellyfish/generate_sequence.cc		\
+                                jellyfish/misc.cc			\
+                                jellyfish/mersenne.cpp			\
+                                jellyfish/square_binary_matrix.cc	\
+                                jellyfish/backtrace.cc			\
+                                jellyfish/dbg.cc jellyfish/time.cc
+YAGGO_SOURCES += jellyfish/generate_sequence_cmdline.hpp
 # bin_test_double_fifo_input_SOURCES =						\
 #                                      jellyfish/test_double_fifo_input.cc	\
 #                                      jellyfish/parse_dna.cc			\
@@ -226,7 +233,7 @@ tests/parsers.log: tests/generate_sequence.log
 # Unit tests
 ########################################
 TESTS += unit_tests/unit_tests.sh
-check_PROGRAMS += bin/test_all
+check_PROGRAMS += bin/test_all bin/generate_sequence
 
 bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_misc.cc				\
