@@ -79,6 +79,7 @@ public:
   typedef jflib::circular_buffer<uint32_t> cbT;
   typedef T                                element_type;
 
+private:
   uint32_t      size_;
   element_type* elts_;
   cbT           cons_prod_;     // FIFO from Consumers to Producers
@@ -99,6 +100,7 @@ public:
     bool has_token() const { return has_token_; }
   };
 
+  explicit cooperative_pool(const cooperative_pool& rhs) : size_(0), elts_(0), cons_prod_(0), prod_cons_(0), has_producer_(0) { }
 public:
   cooperative_pool(uint32_t size) :
     size_(size),
@@ -123,7 +125,7 @@ public:
   // is done and we should stop processing.
   class job {
     cooperative_pool& cp_;
-    const uint32_t    i_;       // Index of element
+    uint32_t          i_;       // Index of element
   public:
     job(cooperative_pool& cp) : cp_(cp), i_(cp_.get_element()) { }
     ~job() { release(); }
@@ -134,6 +136,10 @@ public:
       }
     }
     bool is_empty() const { return i_ == cbT::guard; }
+    void next() {
+      release();
+      i_ = cp_.get_element();
+    }
 
     element_type& operator*() { return cp_.elts_[i_]; }
     element_type* operator->() { return &cp_.elts_[i_]; }
@@ -144,6 +150,38 @@ public:
     job& operator=(const job& rhs) { }
   };
   friend class job;
+
+  /// STL compliant iterator
+  class iterator : public std::iterator<std::input_iterator_tag, element_type> {
+    job* j_;
+  public:
+    iterator() : j_(0) { }
+    iterator(cooperative_pool& cp) : j_(new job(cp)) { }
+    iterator(const iterator& rhs) : j_(rhs.j_) { }
+
+    bool operator==(const iterator& rhs) const { return j_ == rhs.j_; }
+    bool operator!=(const iterator& rhs) const { return j_ != rhs.j_; }
+    element_type& operator*() { return j_->operator*(); }
+    element_type* operator->() { return j_->operator->(); }
+
+    iterator& operator++() {
+      j_->next();
+      if(j_->is_empty()) {
+        delete j_;
+        j_ = 0;
+      }
+      return *this;
+    }
+
+    iterator operator++(int) {
+      iterator res(*this);
+      ++*this;
+      return res;
+    }
+  };
+  iterator begin() { return iterator(*this); }
+  const iterator begin() const { return iterator(*this); }
+  const iterator end() const { return iterator(); }
 
 private:
   enum PRODUCER_STATUS { PRODUCER_PRODUCED, PRODUCER_DONE, PRODUCER_EXISTS };

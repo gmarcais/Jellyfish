@@ -17,6 +17,7 @@
 #ifndef __JELLYFISH_MER_OVELAP_SEQUENCE_PARSER_H_
 #define __JELLYFISH_MER_OVELAP_SEQUENCE_PARSER_H_
 
+#include <stdint.h>
 #include <jellyfish/err.hpp>
 
 namespace jellyfish {
@@ -70,6 +71,8 @@ public:
     delete [] buffer;
     delete [] seam_buffer;
   }
+
+  file_type get_type() const { return type; }
 
 protected:
   void open_next_file() {
