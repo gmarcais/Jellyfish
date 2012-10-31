@@ -70,7 +70,7 @@ cmd_func cmd_list[] = {
 
 void __sos(std::ostream *os)
 {
-  *os << "Usage: jellyfish <cmd> [options] arg..."  << std::endl <<
+  *os << "Usage: jf-cosmosid <cmd> [options] arg..."  << std::endl <<
     "Where <cmd> is one of: ";
   bool comma = false;
   for(cmd_func *ccmd = cmd_list; ccmd->func != sos; ccmd++) {
