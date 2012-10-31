@@ -47,7 +47,6 @@ public:
   void load_in_files(int thid) {
     unsigned int   file_index = 0;
     std::ifstream* file       = 0;
-    bool           first      = true;
 
     while(true) {
       if(thid == 0) {
@@ -61,8 +60,7 @@ public:
       if(!parser_)
         break;
 
-      add_mers_to_ary(thid, first);
-      first = false;
+      add_mers_to_ary(thid);
       barrier_.wait();
       if(thid == 0) {
         delete parser_;
@@ -73,11 +71,11 @@ public:
     }
   }
 
-  void add_mers_to_ary(int thid, bool first) {
+  void add_mers_to_ary(int thid) {
     for(mer_iterator mers(*parser_) ; mers; ++mers)
       ary_.add(*mers);
     ary_.done();
-    ary_.postprocess(thid, first);
+    ary_.postprocess(thid);
   }
 
 
@@ -103,7 +101,7 @@ public:
     inter_array::array::lazy_iterator it = ary_.ary()->lazy_iterator_slice(thid, nb_threads_);
     while(out && it.next()) {
       inter_array::mer_info info = ary_.info_at(it.id());
-      if(info.info.all) {
+      if(!info.info.nall) {
         out << it.key() << "\n";
         out << jflib::endr;
       }

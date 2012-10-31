@@ -27,13 +27,14 @@ jellyfish/yaggo.cpp jellyfish/yaggo.hpp:
 	$(V_YAGGO)$(YAGGO) -l -p jellyfish/
 	@mv yaggo.cpp yaggo.hpp jellyfish
 
+JFI = include/jflib
 BUILT_SOURCES += jellyfish/yaggo.cpp
-YAGGO_SOURCES = # Append all file to be built by yaggo
+YAGGO_SOURCES = # Append all files to be built by yaggo
 
 # What to build
 bin_PROGRAMS += bin/jf-cosmosid
 #lib_LTLIBRARIES = libjellyfish-2.0.la
-# check_PROGRAMS = bin/generate_sequence bin/test_double_fifo_input	\
+#check_PROGRAMS = bin/generate_sequence bin/test_double_fifo_input	\
 #                  bin/test_read_parser
 check_PROGRAMS =
 
@@ -47,7 +48,29 @@ bin_jf_cosmosid_SOURCES = sub_commands/intersection_main.cc		\
                           jellyfish/rectangular_binary_matrix.cc	\
                           jellyfish/storage.cc				\
                           jellyfish/thread_exec.cc
+
 YAGGO_SOURCES += sub_commands/intersection_cmdline.hpp
+
+noinst_HEADERS += jellyfish/thread_exec.hpp				\
+                  jellyfish/rectangular_binary_matrix.hpp		\
+                  jellyfish/misc.hpp jellyfish/allocators_mmap.hpp	\
+                  jellyfish/storage.hpp jellyfish/err.hpp		\
+                  jellyfish/misc.hpp jellyfish/intersection_array.hpp	\
+                  jellyfish/large_hash_array.hpp			\
+                  jellyfish/storage.hpp jellyfish/atomic_gcc.hpp	\
+                  jellyfish/allocators_mmap.hpp				\
+                  jellyfish/offsets_key_value.hpp			\
+                  jellyfish/mer_dna.hpp					\
+                  jellyfish/mer_overlap_sequence_parser.hpp		\
+                  jellyfish/locks_pthread.hpp				\
+                  jellyfish/simple_circular_buffer.hpp			\
+                  jellyfish/mer_iterator.hpp
+
+noinst_HEADERS += $(JFI)/cooperative_pool.hpp				\
+                  $(JFI)/circular_buffer.hpp $(JFI)/atomic_field.hpp	\
+                  $(JFI)/locks_pthread.hpp $(JFI)/multiplexed_io.hpp	\
+                  $(JFI)/compare_and_swap.hpp $(JFI)/divisor.hpp	\
+                  $(JFI)/pool.hpp
 
 # EXTRA_DIST += jellyfish/cite_cmdline.hpp jellyfish/query_cmdline.hpp	\
 #               jellyfish/hash_merge_cmdline.hpp				\
@@ -91,23 +114,22 @@ YAGGO_SOURCES += sub_commands/intersection_cmdline.hpp
                           # jellyfish/dbg.cc #				\
                           jellyfish/allocators_mmap.cc #		\
                           jellyfish/dna_codes.cc
-libjellyfish_2_0_la_CPPFLAGS = $(AM_CPPFLAGS)
-library_includedir=$(includedir)/jellyfish-@PACKAGE_VERSION@/jellyfish
-JFI = include/jflib
-library_include_HEADERS = jellyfish/allocators_mmap.hpp			\
-                          jellyfish/backtrace.hpp			\
-                          jellyfish/atomic_gcc.hpp			\
-                          jellyfish/large_hash_array.hpp		\
-                          jellyfish/err.hpp jellyfish/misc.hpp		\
-                          jellyfish/offsets_key_value.hpp		\
-                          jellyfish/int128.hpp				\
-                          jellyfish/rectangular_binary_matrix.hpp	\
-                          jellyfish/mer_dna.hpp jellyfish/storage.hpp	\
-                          jellyfish/simple_circular_buffer.hpp		\
-                          $(JFI)/circular_buffer.hpp			\
-                          $(JFI)/atomic_field.hpp			\
-                          $(JFI)/compare_and_swap.hpp			\
-                          $(JFI)/divisor.hpp
+# libjellyfish_2_0_la_CPPFLAGS = $(AM_CPPFLAGS)
+# library_includedir=$(includedir)/jellyfish-@PACKAGE_VERSION@/jellyfish
+# library_include_HEADERS = jellyfish/allocators_mmap.hpp			\
+#                           jellyfish/backtrace.hpp			\
+#                           jellyfish/atomic_gcc.hpp			\
+#                           jellyfish/large_hash_array.hpp		\
+#                           jellyfish/err.hpp jellyfish/misc.hpp		\
+#                           jellyfish/offsets_key_value.hpp		\
+#                           jellyfish/int128.hpp				\
+#                           jellyfish/rectangular_binary_matrix.hpp	\
+#                           jellyfish/mer_dna.hpp jellyfish/storage.hpp	\
+#                           jellyfish/simple_circular_buffer.hpp		\
+#                           $(JFI)/circular_buffer.hpp			\
+#                           $(JFI)/atomic_field.hpp			\
+#                           $(JFI)/compare_and_swap.hpp			\
+#                           $(JFI)/divisor.hpp
 
 
 # library_include_HEADERS = jellyfish/allocators_malloc.hpp		\
@@ -232,7 +254,7 @@ tests/parsers.log: tests/generate_sequence.log
 ########################################
 # Unit tests
 ########################################
-TESTS += unit_tests/unit_tests.sh
+TESTS += unit_tests/unit_tests.sh tests/test_intersection.sh
 check_PROGRAMS += bin/test_all bin/generate_sequence
 
 bin_test_all_SOURCES = unit_tests/test_main.cc				\

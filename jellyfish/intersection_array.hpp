@@ -15,36 +15,37 @@ public:
   typedef large_hash::array<Key> array;
 
 protected:
+  typedef uint64_t status_w; // Type to store the mer status
+  static const uint16_t status_size = 4; // Nb of bits in a status
+  static const size_t status_pw = (8 * sizeof(status_w)) / status_size; // Nb of status per word
+
+  // sbits<b>::v has the b-th bits (starting at 0) set in every 4 bit group
+  template<unsigned int b, int l = sizeof(status_w) - 1>
+  struct sbits {
+    static const status_w v = sbits<b, 0>::v | (sbits<b, l - 1>::v << 8);
+  };
+  template<unsigned int b>
+  struct sbits<b, 0> {
+    static const status_w v = (status_w)0x11 << b;
+  };
+
   array*                  ary_;
   array*                  new_ary_;
-  unsigned char*          mer_status_;
-  unsigned char*          new_mer_status_;
+  status_w*               mer_status_;
+  status_w*               new_mer_status_;
   uint16_t                nb_threads_;
   locks::pthread::barrier size_barrier_;
   volatile uint16_t       size_thid_, done_threads_;
 
-  union mer_info2 {
-    unsigned char raw;
-    struct info {
-      unsigned char set1:1;    // Set in current file
-      unsigned char uniq1:1; // Unique
-      unsigned char mult1:1;   // Non-unique
-      unsigned char all1:1;    // In all files
-      unsigned char set2:1;
-      unsigned char uniq2:1;
-      unsigned char mult2:1;
-      unsigned char all2:1;
-    } info;
-  };
 
 public:
   union mer_info {
     unsigned char raw;
     struct info {
-      unsigned char set:1;    // Set in current file
-      unsigned char uniq:1; // Unique
-      unsigned char mult:1;   // Non-unique
-      unsigned char all:1;    // In all files
+      unsigned char set:1;      // Set in current file
+      unsigned char uniq:1;     // Unique (if mult is 0)
+      unsigned char mult:1;     // Non-unique
+      unsigned char nall:1;     // Not in all files
     } info;
   };
 
@@ -53,14 +54,14 @@ public:
                      uint16_t nb_threads) : // Number of threads accessing hash (cooperative)
     ary_(new array(size, key_len, 0, 126, jellyfish::quadratic_reprobes)),
     new_ary_(0),
-    mer_status_(new unsigned char[ary_->size() / 2]), // TODO: change this to a mmap allocated area?
+    mer_status_(new status_w[ary_->size() / status_pw]), // TODO: change this to a mmap allocated area?
     new_mer_status_(0),
     nb_threads_(nb_threads),
     size_barrier_(nb_threads),
     size_thid_(0),
     done_threads_(0)
   {
-    memset(mer_status_, '\0', ary_->size() / 2);
+    memset(mer_status_, '\0', sizeof(status_w) * ary_->size() / status_pw);
   }
 
   ~intersection_array() {
@@ -82,54 +83,36 @@ public:
   }
 
   void add(const Key& k) {
-    bool   is_new;
-    size_t id;
+    bool   is_new = false;
+    size_t id     = 0;
     while(!ary_->set(k, &is_new, &id))
       double_size();
 
-    unsigned char oinfo;
-    mer_info2 ninfo;
-    ninfo.raw = mer_status_[id / 2];
+    // Set lower bit of the status (the set bit)
+    status_w oinfo = 0;
+    status_w ninfo = mer_status_[id / status_pw];
+    status_w mask  = (status_w)1 << (status_size * (id % status_pw));
     do {
-      oinfo = ninfo.raw;
-      if(id & 0x1)
-        ninfo.info.set2 = 1;
-      else
-        ninfo.info.set1 = 1;
-      ninfo.raw = atomic::gcc::cas(&mer_status_[id / 2], oinfo, ninfo.raw);
-    } while(oinfo != ninfo.raw);
+      oinfo  = ninfo;
+      ninfo |= mask;
+      ninfo  = atomic::gcc::cas(&mer_status_[id / status_pw], oinfo, ninfo);
+    } while(oinfo != ninfo);
   }
 
   /// Post-process mer status after a file.
-  void postprocess(uint16_t thid, bool first) {
-    const std::pair<size_t,size_t> part = slice((size_t)thid, (size_t)nb_threads_, size() / 2);
-    if(first) {
-      for(size_t i = part.first; i < part.second; ++i) {
-        unsigned char& info = mer_status_[i];
-        switch(info) {
-        case 0x1 : info = 0xa;  break;
-        case 0x10: info = 0xa0; break;
-        case 0x11: info = 0xaa; break;
-        }
-      }
-    } else {
-      for(size_t i = part.first; i < part.second; ++i) {
-        mer_info2& info = *reinterpret_cast<mer_info2*>(&mer_status_[i]);
-        // Update all
-        info.info.all1 &= info.info.set1;
-        info.info.all2 &= info.info.set2;
+  void postprocess(uint16_t thid) {
+    const std::pair<size_t,size_t> part = slice((size_t)thid, (size_t)nb_threads_, size() / status_pw);
+    for(size_t i = part.first; i < part.second; ++i) {
+      status_w info = mer_status_[i];
+      // Update nall: nall (3rd bit) is 1 if the set bit (0th bit) is 0.
+      info |= (~info & sbits<0>::v) << 3;
+      // Update mult: mult (2nd bit) is 1 if the set bit (0th bit) and the uniq bit (1th bit) are 1
+      info |= ((info & sbits<0>::v) << 2) & ((info & sbits<1>::v) << 1);
+      // Update uniq: uniq (1st bit) is 1 if the set bit (0th bit) is 1
+      info |= (info & sbits<0>::v) << 1;
 
-        // Update mult and uniq
-        // info.raw |= ((info.raw & 0x11) << 2) & ((info.raw & 0x22) << 1);
-        // info.raw |= (info.raw & 0x11) << 1;
-        info.info.mult1 |= info.info.set1 & info.info.uniq1;
-        info.info.uniq1 |= info.info.set1;
-        info.info.mult2 |= info.info.set2 & info.info.uniq2;
-        info.info.uniq2 |= info.info.set2;
-
-        // Reset raw
-        info.raw &= 0xee;
-      }
+      // Store result and zero set bits (0th bit)
+      mer_status_[i] = info & ~sbits<0>::v;
     }
   }
 
@@ -146,9 +129,8 @@ public:
 
   mer_info info_at(size_t id) const {
     mer_info res;
-    res.raw = mer_status_[id / 2];
-    if(id & 0x1)
-      res.raw >>= 4;
+    status_w raw = mer_status_[id / status_pw];
+    res.raw = raw >> (status_size * (id % status_pw));
 
     return res;
   }
@@ -159,17 +141,16 @@ protected:
     size_t id;
     new_ary_->set(k, &is_new, &id);
 
-    unsigned char oinfo;
-    unsigned char ninfo = new_mer_status_[id / 2];
+    status_w oinfo;
+    status_w ninfo = new_mer_status_[id / status_pw];
+    size_t   shift = status_size * (id % status_pw);
+    status_w mask  = ~((status_w)0xf << shift);
+    status_w val   = (status_w)i.raw << shift;
     do {
       oinfo = ninfo;
-      if(id & 0x1)
-        ninfo = (ninfo & 0xf) | (i.raw << 4);
-      else
-        ninfo = (ninfo & 0xf0) | (i.raw & 0xf);
-      ninfo = atomic::gcc::cas(&new_mer_status_[id / 2], oinfo, ninfo);
+      ninfo = (ninfo & mask) | val;
+      ninfo = atomic::gcc::cas(&new_mer_status_[id / status_pw], oinfo, ninfo);
     } while(oinfo != ninfo);
-
   }
 
   bool double_size() {
@@ -177,8 +158,8 @@ protected:
       // Serial thread -> allocate new array for size doubling
       if(done_threads_ < nb_threads_) {
         new_ary_        = new array(ary_->size() * 2, ary_->key_len(), 0, 126, jellyfish::quadratic_reprobes);
-        new_mer_status_ = new unsigned char[ary_->size()];
-        memset(new_mer_status_, '\0', ary_->size());
+        new_mer_status_ = new status_w[new_ary_->size() / status_pw];
+        memset(new_mer_status_, '\0', sizeof(status_w) * new_ary_->size() / status_pw);
         size_thid_      = 0;
       } else {
         new_ary_        = 0;

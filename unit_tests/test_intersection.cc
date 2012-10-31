@@ -35,7 +35,7 @@ void insert_mers(inter_array& ary, const int nb_mers, const mer_set& all, const 
   mer_set::const_iterator mit1third = mit;
   for(int i = 0; i < nb_mers / 3; ++i, ++mit)
     ary.add(*mit);
-  ary.postprocess(0, true);
+  ary.postprocess(0);
 
   // Second file. Contains the second third of uniq mers and the last
   // two thirds of the multiple mers.
@@ -45,7 +45,7 @@ void insert_mers(inter_array& ary, const int nb_mers, const mer_set& all, const 
     ary.add(*uit);
   for(mer_set::const_iterator it = mit1third; it != mult.end(); ++it)
     ary.add(*it);
-  ary.postprocess(0, false);
+  ary.postprocess(0);
 
   // Third file. Contains the last third of uniq mers, and the first
   // and last thirds of the multiple mers.
@@ -58,7 +58,7 @@ void insert_mers(inter_array& ary, const int nb_mers, const mer_set& all, const 
     ary.add(*nmit);
   for( ; mit != mult.end(); ++mit)
     ary.add(*mit);
-  ary.postprocess(0, false);
+  ary.postprocess(0);
 }
 
 TEST(IntersectionArray, Mers) {
@@ -73,7 +73,7 @@ TEST(IntersectionArray, Mers) {
 
   for(mer_set::const_iterator it = all.begin(); it != all.end(); ++it) {
     inter_array::mer_info info = ary[*it];
-    EXPECT_TRUE(info.info.all);
+    EXPECT_FALSE(info.info.nall);
     EXPECT_TRUE(info.info.mult);
     EXPECT_TRUE(info.info.uniq);
   }
@@ -82,14 +82,14 @@ TEST(IntersectionArray, Mers) {
     inter_array::mer_info info = ary[*it];
     EXPECT_TRUE(info.info.uniq);
     EXPECT_TRUE(info.info.mult);
-    EXPECT_FALSE(info.info.all);
+    EXPECT_TRUE(info.info.nall);
   }
 
   for(mer_set::const_iterator it = uniq.begin(); it != uniq.end(); ++it) {
     inter_array::mer_info info = ary[*it];
     EXPECT_TRUE(info.info.uniq);
     EXPECT_FALSE(info.info.mult);
-    EXPECT_FALSE(info.info.all);
+    EXPECT_TRUE(info.info.nall);
   }
 }
 
