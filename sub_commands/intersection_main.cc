@@ -157,7 +157,7 @@ public:
   }
 };
 
-int main(int argc, char* argv[]) {
+int intersection_main(int argc, char* argv[]) {
   args.parse(argc, argv);
   jellyfish::mer_dna::k(args.mer_arg);
 

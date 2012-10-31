@@ -22,16 +22,17 @@
 
 typedef int (main_func_t)(int argc, char *argv[]);
 
-main_func_t count_main;
-main_func_t stats_main;
-main_func_t merge_main;
-main_func_t histo_main;
-main_func_t query_main;
-main_func_t dump_main;
-main_func_t cite_main;
-main_func_t dump_fastq_main;
-main_func_t histo_fastq_main;
-main_func_t hash_fastq_merge_main;
+main_func_t intersection_main;
+// main_func_t count_main;
+// main_func_t stats_main;
+// main_func_t merge_main;
+// main_func_t histo_main;
+// main_func_t query_main;
+// main_func_t dump_main;
+// main_func_t cite_main;
+// main_func_t dump_fastq_main;
+// main_func_t histo_fastq_main;
+// main_func_t hash_fastq_merge_main;
 main_func_t sos;
 main_func_t version;
 main_func_t jf_main;
@@ -42,17 +43,17 @@ struct cmd_func {
   main_func_t *func;
 };
 cmd_func cmd_list[] = {
-  {"count",             &count_main},
-  {"stats",             &stats_main},
-  {"histo",             &histo_main},
-  {"dump",              &dump_main},
-  {"merge",             &merge_main},
-  {"query",             &query_main},
-  {"cite",              &cite_main},
-  {"qhisto",            &histo_fastq_main},
-  {"qdump",             &dump_fastq_main},
-  {"qmerge",            &hash_fastq_merge_main},
-  {"jf",                &jf_main},
+  {"intersection",      &intersection_main},
+  // {"count",             &count_main},
+  // {"stats",             &stats_main},
+  // {"histo",             &histo_main},
+  // {"dump",              &dump_main},
+  // {"merge",             &merge_main},
+  // {"query",             &query_main},
+  // {"cite",              &cite_main},
+  // {"qhisto",            &histo_fastq_main},
+  // {"qdump",             &dump_fastq_main},
+  // {"qmerge",            &hash_fastq_merge_main},
 
   /* help in all its form. Must be first non-command */
   {"help",              &sos},
@@ -80,37 +81,6 @@ void __sos(std::ostream *os)
   *os << "Options:" << std::endl <<
     "  --version        Display version" << std::endl <<
     "  --help           Display this message" << std::endl;
-}
-
-int jf_main(int argc, char* argv[]) {
-  const char* aa =
-    "                   .......\n"
-    "          ..........      .....\n"
-    "       ....                   ....\n"
-    "      ..     /-+       +---\\     ...\n"
-    "      .     /--|       +----\\      ...\n"
-    "     ..                              ...\n"
-    "     .                                 .\n"
-    "     ..      +----------------+         .\n"
-    "      .      |. AAGATGGAGCGC .|         ..\n"
-    "      .      |---.        .--/           .\n"
-    "     ..          \\--------/     .        .\n"
-    "     .     .            ..     ..        .\n"
-    "     .    ... .....   .....    ..        ..\n"
-    "     .   .. . .   .  ..   .   ....        .\n"
-    "     .  ..  . ..   . .    ..  .  .         .\n"
-    "     . ..   .  .   ...     . ..  ..        .\n"
-    "    ....    . ..   ..      ...    ..       .\n"
-    "   .. .     ...     .      ..      ..      .\n"
-    "   . ..      .      .       .       ...    ..\n"
-    "   ...       .      .      ..         ...   .\n"
-    "   .         ..     .      ..           .....\n"
-    "  ____  ____  ._    __   _  _  ____  ____  ___  _   _\n"
-    " (_  _)( ___)(  )  (  ) ( \\/ )( ___)(_  _)/ __)( )_( )\n"
-    ".-_)(   )__)  )(__  )(__ \\  /  )__)  _)(_ \\__ \\ ) _ ( \n"
-    "\\____) (____)(____)(____)(__) (__)  (____)(___/(_) (_)\n";
-  std::cout << aa;
-  return 0;
 }
 
 int sos(int argc, char *argv[])

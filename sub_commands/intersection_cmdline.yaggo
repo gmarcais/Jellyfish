@@ -1,11 +1,12 @@
-purpose "Compute the intersection of many genomes and k-mers unique to each genome"
+purpose "Compute the k-mers intersection of many genomes and k-mers unique to each genome"
+package "jf-cosmosid intersection"
 
 description(<<EOS)
 Given <n> input files, each representing a genome, this command will
 output <n+1> files. For each input file '<file.fa>', the output file
 'uniq_<file.fa>' will contain a list of k-mers unique to that
 genome. The output file 'intersection' will be a list of k-mers common
-to all genomes
+to all genomes.
 EOS
 
 option("s", "size") {
