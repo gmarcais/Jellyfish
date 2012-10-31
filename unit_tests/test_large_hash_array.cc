@@ -150,16 +150,22 @@ TEST_P(HashArray, Iterator) {
     map[mer] += i;
   }
 
-  large_array::iterator it = ary.iterator_all();
+  large_array::iterator      it  = ary.iterator_all();
+  large_array::lazy_iterator lit = ary.lazy_iterator_all();
   int count = 0;
   while(it.next()) {
+    ASSERT_TRUE(lit.next());
     mer_map::const_iterator mit = map.find(it.key());
     ASSERT_NE(map.end(), mit);
     SCOPED_TRACE(::testing::Message() << "key:" << it.key());
     EXPECT_EQ(mit->first, it.key());
     EXPECT_EQ(mit->second, it.val());
+    EXPECT_EQ(mit->first, lit.key());
+    EXPECT_EQ(mit->second, lit.val());
+    EXPECT_EQ(it.id(), lit.id());
     ++count;
   }
+  EXPECT_FALSE(lit.next());
   EXPECT_EQ(map.size(), (size_t)count);
 
   int i = 0;

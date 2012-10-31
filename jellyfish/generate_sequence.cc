@@ -25,6 +25,8 @@
 #include <jellyfish/randomc.h>
 #include <jellyfish/generate_sequence_cmdline.hpp>
 
+using jellyfish::SquareBinaryMatrix;
+
 class rDNAg_t {
 public:
   rDNAg_t(CRandomMersenne *_rng) : rng(_rng), i(15), buff(0) {}
@@ -62,11 +64,11 @@ void create_path(char *path, unsigned int path_size, const char *ext, bool many,
 int main(int argc, char *argv[])
 {
   generate_sequence_args args(argc, argv);
-  
+
   if(args.verbose_flag)
     std::cout << "Seed: " << args.seed_arg << "\n";
   CRandomMersenne rng(args.seed_arg);
-  
+
   // Generate matrices
   uint64_t lines[64];
   for(unsigned int j = 0; j < args.mer_arg.size(); j++) {
@@ -84,7 +86,7 @@ int main(int argc, char *argv[])
       } catch(SquareBinaryMatrix::SingularMatrix &e) {}
     }
     char path[4096];
-    int len = snprintf(path, sizeof(path), "%s_matrix_%d", args.output_arg, 
+    int len = snprintf(path, sizeof(path), "%s_matrix_%d", args.output_arg,
                        args.mer_arg[j]);
     if(len < 0)
       die << "Error creating the matrix file '" << path << "'" << err::no;
@@ -100,15 +102,15 @@ int main(int argc, char *argv[])
       die << "Error while writing matrix '" << path << "'" << err::no;
     fd.close();
   }
-  
+
   // Output sequence
   rDNAg_t rDNAg(&rng);
   char path[4096];
   bool many = args.length_arg.size() > 1;
-  
+
   for(unsigned int i = 0; i < args.length_arg.size(); ++i) {
     size_t length = args.length_arg[i];
-  
+
     if(args.fastq_flag) {
       create_path(path, sizeof(path), "fq", many, i, args.output_arg);
       std::ofstream fd(path);
@@ -140,21 +142,16 @@ int main(int argc, char *argv[])
         std::cout << "Creating fasta file '" << path << "'\n";
 
       size_t read_length = args.read_length_given ? args.read_length_arg : length;
-      size_t total_len = 0;
-      size_t read = 0;
-      long rid = 0;
-      fd << ">read" << ++rid << "\n";
-      while(total_len < length) {
-        for(int base = 0; base < 70 && total_len < length && read < read_length; 
-            base++) {
-          fd << rDNAg.letter();
-          total_len++;
-          read++;
-        }
-        fd << "\n";
-        if(read >= read_length) {
-          fd << ">read" << ++rid << "\n";
-          read = 0;
+      long rid = 1;
+      for(size_t total_len = 0; total_len < length; ++rid) {
+        fd << ">read" << rid << "\n";
+        for(size_t read = 0; read < read_length && total_len < length; ) {
+          for(size_t base = 0 ; base < 70 && total_len < length && read < read_length; base++) {
+            fd << rDNAg.letter();
+            total_len++;
+            read++;
+          }
+          fd << "\n";
         }
       }
       if(!fd.good())

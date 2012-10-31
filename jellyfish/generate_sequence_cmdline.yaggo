@@ -24,4 +24,4 @@ option("verbose", "v") {
   flag; off }
 arg("length") {
   description "Length of sequence to generate"
-  uint64; multiple; at_least 1 }
+  uint64; suffix; multiple; at_least 1 }

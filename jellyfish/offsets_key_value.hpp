@@ -20,9 +20,9 @@
 #include <signal.h>
 
 #include <jellyfish/misc.hpp>
+#include <jflib/divisor.hpp>
 
 namespace jellyfish {
-#include <jflib/divisor.hpp>
 
 /* A word is whatever aligned type used for atomic operations
  * (CAS). Typically, a uint64_t. We store pairs of (key, value), in a

@@ -27,41 +27,54 @@ jellyfish/yaggo.cpp jellyfish/yaggo.hpp:
 	$(V_YAGGO)$(YAGGO) -l -p jellyfish/
 	@mv yaggo.cpp yaggo.hpp jellyfish
 
+JFI = include/jflib
 BUILT_SOURCES += jellyfish/yaggo.cpp
-YAGGO_SOURCES = # Append all file to be built by yaggo
+YAGGO_SOURCES = # Append all files to be built by yaggo
 
 # What to build
-# bin_PROGRAMS = bin/jellyfish
-lib_LTLIBRARIES = libjellyfish-2.0.la
-# check_PROGRAMS = bin/generate_sequence bin/test_double_fifo_input	\
+bin_PROGRAMS += bin/jf-cosmosid
+#lib_LTLIBRARIES = libjellyfish-2.0.la
+#check_PROGRAMS = bin/generate_sequence bin/test_double_fifo_input	\
 #                  bin/test_read_parser
 check_PROGRAMS =
 
 ########################################
 # Build Jellyfish the exec
 ########################################
-# bin_jellyfish_SOURCES = jellyfish/jellyfish.cc jellyfish/stats_main.cc	\
-#                         jellyfish/hash_merge.cc jellyfish/storage.cc	\
-#                         jellyfish/misc.cc jellyfish/err.cc		\
-#                         jellyfish/mer_counter.cc			\
-#                         jellyfish/histo_main.cc jellyfish/dump_main.cc	\
-#                         jellyfish/time.cc jellyfish/thread_exec.cc	\
-#                         jellyfish/query_main.cc				\
-#                         jellyfish/square_binary_matrix.cc		\
-#                         jellyfish/dump_fastq_main.cc			\
-#                         jellyfish/histo_fastq_main.cc			\
-#                         jellyfish/cite.cc jellyfish/parse_dna.cc	\
-#                         jellyfish/file_parser.cc			\
-#                         jellyfish/parse_quake.cc			\
-#                         jellyfish/parse_qual_dna.cc			\
-#                         jellyfish/sequence_parser.cc			\
-#                         jellyfish/seq_qual_parser.cc			\
-#                         jellyfish/half.cpp				\
-#                         jellyfish/hash_fastq_merge.cc jellyfish/dbg.cc	\
-#                         jellyfish/mapped_file.cc			\
-#                         jellyfish/backtrace.cc jellyfish/floats.cc	\
-#                         jellyfish/allocators_mmap.cc			\
-#                         jellyfish/yaggo.cpp jellyfish/dna_codes.cc
+bin_jf_cosmosid_SOURCES = jellyfish/jellyfish.cc			\
+                          sub_commands/intersection_main.cc		\
+                          jellyfish/intersection_array.hpp		\
+                          jellyfish/misc.cc				\
+                          jellyfish/allocators_mmap.cc			\
+                          jellyfish/rectangular_binary_matrix.cc	\
+                          jellyfish/storage.cc				\
+                          jellyfish/thread_exec.cc
+
+YAGGO_SOURCES += sub_commands/intersection_cmdline.hpp
+
+noinst_HEADERS += jellyfish/thread_exec.hpp				\
+                  jellyfish/rectangular_binary_matrix.hpp		\
+                  jellyfish/misc.hpp jellyfish/allocators_mmap.hpp	\
+                  jellyfish/storage.hpp jellyfish/err.hpp		\
+                  jellyfish/misc.hpp jellyfish/intersection_array.hpp	\
+                  jellyfish/large_hash_array.hpp			\
+                  jellyfish/storage.hpp jellyfish/atomic_gcc.hpp	\
+                  jellyfish/allocators_mmap.hpp				\
+                  jellyfish/offsets_key_value.hpp			\
+                  jellyfish/mer_dna.hpp					\
+                  jellyfish/mer_overlap_sequence_parser.hpp		\
+                  jellyfish/locks_pthread.hpp				\
+                  jellyfish/simple_circular_buffer.hpp			\
+                  jellyfish/mer_iterator.hpp jellyfish/backtrace.hpp	\
+                  jellyfish/int128.hpp jellyfish/file_header.hpp
+
+noinst_HEADERS += include/json/json.h
+
+noinst_HEADERS += $(JFI)/cooperative_pool.hpp				\
+                  $(JFI)/circular_buffer.hpp $(JFI)/atomic_field.hpp	\
+                  $(JFI)/locks_pthread.hpp $(JFI)/multiplexed_io.hpp	\
+                  $(JFI)/compare_and_swap.hpp $(JFI)/divisor.hpp	\
+                  $(JFI)/pool.hpp $(JFI)/tmpstream.hpp
 
 # EXTRA_DIST += jellyfish/cite_cmdline.hpp jellyfish/query_cmdline.hpp	\
 #               jellyfish/hash_merge_cmdline.hpp				\
@@ -79,13 +92,13 @@ check_PROGRAMS =
 ########################################
 # Build Jellyfish the shared library
 ########################################
-libjellyfish_2_0_la_LDFLAGS = -version-info 2:0:0
-libjellyfish_2_0_la_SOURCES =				\
-                          jellyfish/rectangular_binary_matrix.cc	\
-                          jellyfish/int128.cc jellyfish/mer_dna.cc	\
-                          jellyfish/storage.cc jellyfish/yaggo.cpp	\
-                          jellyfish/allocators_mmap.cc			\
-                          jellyfish/misc.cc
+# libjellyfish_2_0_la_LDFLAGS = -version-info 2:0:0
+# libjellyfish_2_0_la_SOURCES =				\
+#                           jellyfish/rectangular_binary_matrix.cc	\
+#                           jellyfish/int128.cc jellyfish/mer_dna.cc	\
+#                           jellyfish/storage.cc jellyfish/yaggo.cpp	\
+#                           jellyfish/allocators_mmap.cc			\
+#                           jellyfish/misc.cc
 
 #                          libjellyfish_la_SOURCES =			\
                           jellyfish/square_binary_matrix.cc #		\
@@ -105,23 +118,22 @@ libjellyfish_2_0_la_SOURCES =				\
                           # jellyfish/dbg.cc #				\
                           jellyfish/allocators_mmap.cc #		\
                           jellyfish/dna_codes.cc
-libjellyfish_2_0_la_CPPFLAGS = $(AM_CPPFLAGS)
-library_includedir=$(includedir)/jellyfish-@PACKAGE_VERSION@/jellyfish
-JFI = include/jflib
-library_include_HEADERS = jellyfish/allocators_mmap.hpp			\
-                          jellyfish/backtrace.hpp			\
-                          jellyfish/atomic_gcc.hpp			\
-                          jellyfish/large_hash_array.hpp		\
-                          jellyfish/err.hpp jellyfish/misc.hpp		\
-                          jellyfish/offsets_key_value.hpp		\
-                          jellyfish/int128.hpp				\
-                          jellyfish/rectangular_binary_matrix.hpp	\
-                          jellyfish/mer_dna.hpp jellyfish/storage.hpp	\
-                          jellyfish/simple_circular_buffer.hpp		\
-                          $(JFI)/circular_buffer.hpp			\
-                          $(JFI)/atomic_field.hpp			\
-                          $(JFI)/compare_and_swap.hpp			\
-                          $(JFI)/divisor.hpp
+# libjellyfish_2_0_la_CPPFLAGS = $(AM_CPPFLAGS)
+# library_includedir=$(includedir)/jellyfish-@PACKAGE_VERSION@/jellyfish
+# library_include_HEADERS = jellyfish/allocators_mmap.hpp			\
+#                           jellyfish/backtrace.hpp			\
+#                           jellyfish/atomic_gcc.hpp			\
+#                           jellyfish/large_hash_array.hpp		\
+#                           jellyfish/err.hpp jellyfish/misc.hpp		\
+#                           jellyfish/offsets_key_value.hpp		\
+#                           jellyfish/int128.hpp				\
+#                           jellyfish/rectangular_binary_matrix.hpp	\
+#                           jellyfish/mer_dna.hpp jellyfish/storage.hpp	\
+#                           jellyfish/simple_circular_buffer.hpp		\
+#                           $(JFI)/circular_buffer.hpp			\
+#                           $(JFI)/atomic_field.hpp			\
+#                           $(JFI)/compare_and_swap.hpp			\
+#                           $(JFI)/divisor.hpp
 
 
 # library_include_HEADERS = jellyfish/allocators_malloc.hpp		\
@@ -176,12 +188,18 @@ library_include_HEADERS = jellyfish/allocators_mmap.hpp			\
 ########################################
 # Build tests
 ########################################
-# bin_generate_sequence_SOURCES = jellyfish/generate_sequence.cc		\
-#                                 jellyfish/misc.cc			\
-#                                 jellyfish/mersenne.cpp			\
-#                                 jellyfish/square_binary_matrix.cc	\
-#                                 jellyfish/backtrace.cc			\
-#                                 jellyfish/dbg.cc jellyfish/time.cc
+bin_generate_sequence_SOURCES = jellyfish/generate_sequence.cc		\
+                                jellyfish/misc.cc			\
+                                jellyfish/mersenne.cpp			\
+                                jellyfish/square_binary_matrix.cc	\
+                                jellyfish/backtrace.cc			\
+                                jellyfish/dbg.cc jellyfish/time.cc
+
+noinst_HEADERS += jellyfish/square_binary_matrix.hpp	\
+                  jellyfish/randomc.h jellyfish/dbg.hpp	\
+                  jellyfish/time.hpp
+
+YAGGO_SOURCES += jellyfish/generate_sequence_cmdline.hpp
 # bin_test_double_fifo_input_SOURCES =						\
 #                                      jellyfish/test_double_fifo_input.cc	\
 #                                      jellyfish/parse_dna.cc			\
@@ -224,7 +242,7 @@ EXTRA_DIST += $(TESTS)
 clean-local: clean-local-check
 .PHONY: clean-local-check
 clean-local-check:
-	-cd tests; rm -f seq10m* seq1m* *_0 *_1 *_2 *_S *.md5sum *.histo *.stats *.timing *.query *.dump *.fa
+	-cd tests; rm -f seq10m* seq1m* *_0 *_1 *_2 *_S *.md5sum *.histo *.stats *.timing *.query *.dump *.fa intersection
 
 tests/serial_hashing.log: tests/generate_sequence.log
 tests/parallel_hashing.log: tests/generate_sequence.log
@@ -245,17 +263,20 @@ tests/parsers.log: tests/generate_sequence.log
 ########################################
 # Unit tests
 ########################################
-TESTS += unit_tests/unit_tests.sh
-check_PROGRAMS += bin/test_all
+TESTS += unit_tests/unit_tests.sh tests/test_intersection.sh
+check_PROGRAMS += bin/test_all bin/generate_sequence
 
-bin_test_all_SOURCES = unit_tests/test_main.cc unit_tests/test_misc.cc	\
+bin_test_all_SOURCES = unit_tests/test_main.cc				\
+	               unit_tests/test_misc.cc				\
 	               unit_tests/test_offsets_key_value.cc		\
 	               unit_tests/test_simple_circular_buffer.cc	\
 	               unit_tests/test_rectangular_binary_matrix.cc	\
 	               unit_tests/test_mer_dna.cc			\
 	               unit_tests/test_large_hash_array.cc		\
 	               unit_tests/test_mer_overlap_sequence_parser.cc	\
-	               unit_tests/test_file_header.cc
+	               unit_tests/test_file_header.cc			\
+	               unit_tests/test_mer_iterator.cc			\
+	               unit_tests/test_intersection.cc
 
 bin_test_all_SOURCES += jellyfish/rectangular_binary_matrix.cc		\
                         jellyfish/int128.cc jellyfish/mer_dna.cc	\

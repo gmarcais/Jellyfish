@@ -17,10 +17,11 @@
 #ifndef __JELLYFISH_MER_OVELAP_SEQUENCE_PARSER_H_
 #define __JELLYFISH_MER_OVELAP_SEQUENCE_PARSER_H_
 
+#include <stdint.h>
+#include <jflib/cooperative_pool.hpp>
 #include <jellyfish/err.hpp>
 
 namespace jellyfish {
-#include <jflib/cooperative_pool.hpp>
 
 struct sequence_ptr {
   char* start;
@@ -52,9 +53,9 @@ public:
     super(size),
     mer_len_(mer_len),
     buf_size_(buf_size),
-    have_seam(false),
-    seam_buffer(new char[mer_len - 1]),
     buffer(new char[size * buf_size]),
+    seam_buffer(new char[mer_len - 1]),
+    have_seam(false),
     type(DONE_TYPE),
     current_file(begin),
     stream_end(end),
@@ -69,6 +70,22 @@ public:
   ~mer_overlap_sequence_parser() {
     delete [] buffer;
     delete [] seam_buffer;
+  }
+
+  file_type get_type() const { return type; }
+
+  inline bool produce(sequence_ptr& buff) {
+    switch(type) {
+    case FASTA_TYPE:
+      read_fasta(buff);
+      return false;
+    case FASTQ_TYPE:
+      read_fastq(buff);
+      return false;
+    case DONE_TYPE:
+      return true;
+    }
+    return true;
   }
 
 protected:
@@ -98,19 +115,6 @@ protected:
     }
   }
 
-  inline bool produce(sequence_ptr& buff) {
-    switch(type) {
-    case FASTA_TYPE:
-      read_fasta(buff);
-      return false;
-    case FASTQ_TYPE:
-      read_fastq(buff);
-      return false;
-    case DONE_TYPE:
-      return true;
-    }
-  }
-
   void read_fasta(sequence_ptr& buff) {
     size_t read = 0;
     if(have_seam) {
@@ -134,7 +138,7 @@ protected:
       open_next_file();
       return;
     }
-    have_seam = read >= mer_len_ - 1;
+    have_seam = read >= (size_t)(mer_len_ - 1);
     if(have_seam)
       memcpy(seam_buffer, buff.end - mer_len_ + 1, mer_len_ - 1);
   }
@@ -169,7 +173,7 @@ protected:
       open_next_file();
       return;
     }
-    have_seam = read >= mer_len_ - 1;
+    have_seam = read >= (size_t)(mer_len_ - 1);
     if(have_seam)
       memcpy(seam_buffer, buff.end - mer_len_ + 1, mer_len_ - 1);
   }

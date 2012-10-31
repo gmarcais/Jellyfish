@@ -1,4 +1,4 @@
-AC_INIT([jellyfish], [1.9.0beta], [gmarcais@umd.edu])
+AC_INIT([jf-cosmosid], [0.0.1], [guillaume@marcais.net])
 AC_CANONICAL_HOST
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([subdir-objects foreign parallel-tests color-tests])
@@ -69,5 +69,3 @@ AC_CHECK_MEMBER([siginfo_t.si_int],
                 [], [[#include <signal.h>]])
 
 AC_OUTPUT
-
-

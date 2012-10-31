@@ -315,6 +315,57 @@ public:
     return iterator(this, res.first, res.second);
   }
 
+  class lazy_iterator {
+  protected:
+    const array    *ary_;
+    size_t          start_id_, id_, end_id_;
+    const word*     w_;
+    const offset_t *o_;
+
+    bool        reversed_key_;
+    key_type    key_;
+
+  public:
+    lazy_iterator(const array *ary, size_t start, size_t end) :
+      ary_(ary),
+      start_id_(start > ary->size() ? ary->size() : start),
+      id_(start),
+      end_id_(end > ary->size() ? ary->size() : end),
+      w_(0), o_(0),
+      reversed_key_(false)
+    {}
+
+    uint64_t start() const { return start_id_; }
+    uint64_t end() const { return end_id_; }
+    const key_type& key() {
+      if(!reversed_key_) {
+        key_.set_bits(0, ary_->lsize_, ary_->hash_inverse_matrix_.times(key_));
+        reversed_key_ = true;
+      }
+      return key_;
+    }
+    const mapped_type val() const {
+      return ary_->get_val_at_id(id_ - 1, w_, o_, true, false);
+    }
+    size_t id() const { return id_ - 1; }
+
+    bool next() {
+      reversed_key_      = false;
+      key_status success = EMPTY;
+      while(success != FILLED && id_ < end_id_)
+        success = ary_->get_key_at_id(id_++, key_, &w_, &o_);
+
+      return success == FILLED;
+    }
+  };
+  friend class lazy_iterator;
+  lazy_iterator lazy_iterator_all() const { return lazy_iterator(this, 0, size()); }
+  lazy_iterator lazy_iterator_slice(size_t slice_number, size_t number_of_slice) const {
+    std::pair<size_t, size_t> res = slice(slice_number, number_of_slice, size());
+    return lazy_iterator(this, res.first, res.second);
+  }
+
+
 protected:
   // Claim a key with the large bit not set. I.e. first entry for a key.
   //
