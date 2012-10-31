@@ -65,13 +65,16 @@ noinst_HEADERS += jellyfish/thread_exec.hpp				\
                   jellyfish/mer_overlap_sequence_parser.hpp		\
                   jellyfish/locks_pthread.hpp				\
                   jellyfish/simple_circular_buffer.hpp			\
-                  jellyfish/mer_iterator.hpp jellyfish/backtrace.hpp
+                  jellyfish/mer_iterator.hpp jellyfish/backtrace.hpp	\
+                  jellyfish/int128.hpp jellyfish/file_header.hpp
+
+noinst_HEADERS += include/json/json.h
 
 noinst_HEADERS += $(JFI)/cooperative_pool.hpp				\
                   $(JFI)/circular_buffer.hpp $(JFI)/atomic_field.hpp	\
                   $(JFI)/locks_pthread.hpp $(JFI)/multiplexed_io.hpp	\
                   $(JFI)/compare_and_swap.hpp $(JFI)/divisor.hpp	\
-                  $(JFI)/pool.hpp
+                  $(JFI)/pool.hpp $(JFI)/tmpstream.hpp
 
 # EXTRA_DIST += jellyfish/cite_cmdline.hpp jellyfish/query_cmdline.hpp	\
 #               jellyfish/hash_merge_cmdline.hpp				\
@@ -191,6 +194,11 @@ bin_generate_sequence_SOURCES = jellyfish/generate_sequence.cc		\
                                 jellyfish/square_binary_matrix.cc	\
                                 jellyfish/backtrace.cc			\
                                 jellyfish/dbg.cc jellyfish/time.cc
+
+noinst_HEADERS += jellyfish/square_binary_matrix.hpp	\
+                  jellyfish/randomc.h jellyfish/dbg.hpp	\
+                  jellyfish/time.hpp
+
 YAGGO_SOURCES += jellyfish/generate_sequence_cmdline.hpp
 # bin_test_double_fifo_input_SOURCES =						\
 #                                      jellyfish/test_double_fifo_input.cc	\
@@ -234,7 +242,7 @@ EXTRA_DIST += $(TESTS)
 clean-local: clean-local-check
 .PHONY: clean-local-check
 clean-local-check:
-	-cd tests; rm -f seq10m* seq1m* *_0 *_1 *_2 *_S *.md5sum *.histo *.stats *.timing *.query *.dump *.fa
+	-cd tests; rm -f seq10m* seq1m* *_0 *_1 *_2 *_S *.md5sum *.histo *.stats *.timing *.query *.dump *.fa intersection
 
 tests/serial_hashing.log: tests/generate_sequence.log
 tests/parallel_hashing.log: tests/generate_sequence.log

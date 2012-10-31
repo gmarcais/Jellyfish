@@ -16,7 +16,7 @@ $GS -o intersection_mult -s 3348383312 -r $RLEN $MULT
 cat intersection_all.fa intersection_mult.fa intersection_uniq.fa > uniq.fa
 cat intersection_mult.fa intersection_all.fa > mult.fa
 
-time $JF -s 2M -m $MLEN -t 1 uniq.fa mult.fa intersection_all.fa
+time $JF intersection -s 2M -m $MLEN -t 1 uniq.fa mult.fa intersection_all.fa
 
 test "$((($RLEN - $MLEN + 1) * ($ALL / $RLEN)))" = "$(wc -l < intersection)"
 test "$((($RLEN - $MLEN + 1) * ($UNIQ / $RLEN)))" = "$(wc -l < uniq_uniq.fa)"
