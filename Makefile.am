@@ -41,7 +41,8 @@ check_PROGRAMS =
 ########################################
 # Build Jellyfish the exec
 ########################################
-bin_jf_cosmosid_SOURCES = sub_commands/intersection_main.cc		\
+bin_jf_cosmosid_SOURCES = jellyfish/jellyfish.cc			\
+                          sub_commands/intersection_main.cc		\
                           jellyfish/intersection_array.hpp		\
                           jellyfish/misc.cc				\
                           jellyfish/allocators_mmap.cc			\
@@ -64,7 +65,7 @@ noinst_HEADERS += jellyfish/thread_exec.hpp				\
                   jellyfish/mer_overlap_sequence_parser.hpp		\
                   jellyfish/locks_pthread.hpp				\
                   jellyfish/simple_circular_buffer.hpp			\
-                  jellyfish/mer_iterator.hpp
+                  jellyfish/mer_iterator.hpp jellyfish/backtrace.hpp
 
 noinst_HEADERS += $(JFI)/cooperative_pool.hpp				\
                   $(JFI)/circular_buffer.hpp $(JFI)/atomic_field.hpp	\
