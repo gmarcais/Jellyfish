@@ -27,16 +27,27 @@ V_YAGGO_0 = @echo "  YAGGO " $@;
 YAGGO_SOURCES = # Append all file to be built by yaggo
 
 # What to build
-# bin_PROGRAMS = bin/jellyfish
+bin_PROGRAMS += bin/jellyfish
 lib_LTLIBRARIES = libjellyfish-2.0.la
 LDADD = libjellyfish-2.0.la
-# check_PROGRAMS = bin/generate_sequence bin/test_double_fifo_input	\
+# check_PROGRAMS =  bin/test_double_fifo_input	\
 #                  bin/test_read_parser
-check_PROGRAMS =
+check_PROGRAMS = bin/generate_sequence
 
 ########################################
 # Build Jellyfish the exec
 ########################################
+bin_jellyfish_SOURCES = sub_commands/jellyfish.cc			\
+                        sub_commands/count_main.cc			\
+                        jellyfish/storage.cc jellyfish/misc.cc		\
+                        jellyfish/err.cc jellyfish/thread_exec.cc	\
+                        jellyfish/rectangular_binary_matrix.cc		\
+                        jellyfish/mer_dna.cc jellyfish/yaggo.cpp	\
+                        jellyfish/allocators_mmap.cc			\
+                        jellyfish/int128.cc
+
+YAGGO_SOURCES += sub_commands/count_main_cmdline.hpp
+
 # bin_jellyfish_SOURCES = jellyfish/jellyfish.cc jellyfish/stats_main.cc	\
 #                         jellyfish/hash_merge.cc jellyfish/storage.cc	\
 #                         jellyfish/misc.cc jellyfish/err.cc		\
@@ -176,12 +187,12 @@ library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
 ########################################
 # Build tests
 ########################################
-# bin_generate_sequence_SOURCES = jellyfish/generate_sequence.cc		\
-#                                 jellyfish/misc.cc			\
-#                                 jellyfish/mersenne.cpp			\
-#                                 jellyfish/square_binary_matrix.cc	\
-#                                 jellyfish/backtrace.cc			\
-#                                 jellyfish/dbg.cc jellyfish/time.cc
+bin_generate_sequence_SOURCES = jellyfish/generate_sequence.cc		\
+                                jellyfish/misc.cc			\
+                                jellyfish/mersenne.cpp			\
+                                jellyfish/square_binary_matrix.cc	\
+                                jellyfish/backtrace.cc			\
+                                jellyfish/dbg.cc jellyfish/time.cc
 # bin_test_double_fifo_input_SOURCES =						\
 #                                      jellyfish/test_double_fifo_input.cc	\
 #                                      jellyfish/parse_dna.cc			\
@@ -208,7 +219,8 @@ TEST_EXTENSIONS = .sh
 SH_LOG_COMPILER = /bin/sh
 AM_SH_LOG_FLAGS =
 
-TESTS =
+TESTS = tests/generate_sequence.sh tests/serial_hashing.sh	\
+        tests/parallel_hashing.sh
 # TESTS = tests/generate_sequence.sh tests/serial_hashing.sh		\
 #         tests/parallel_hashing.sh tests/serial_direct_indexing.sh	\
 #         tests/parallel_direct_indexing.sh tests/raw_hash.sh		\
@@ -259,7 +271,8 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_file_header.cc			\
 	               unit_tests/test_mer_iterator.cc			\
 	               unit_tests/test_hash_counter.cc			\
-	               unit_tests/test_mer_heap.cc
+	               unit_tests/test_mer_heap.cc			\
+	               unit_tests/test_stream_iterator.cc
 
 bin_test_all_SOURCES += jellyfish/thread_exec.cc	\
                         jellyfish/jsoncpp.cpp
