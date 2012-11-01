@@ -38,13 +38,8 @@ check_PROGRAMS = bin/generate_sequence
 # Build Jellyfish the exec
 ########################################
 bin_jellyfish_SOURCES = sub_commands/jellyfish.cc			\
-                        sub_commands/count_main.cc			\
-                        jellyfish/storage.cc jellyfish/misc.cc		\
-                        jellyfish/err.cc jellyfish/thread_exec.cc	\
-                        jellyfish/rectangular_binary_matrix.cc		\
-                        jellyfish/mer_dna.cc				\
-                        jellyfish/allocators_mmap.cc			\
-                        jellyfish/int128.cc
+                        sub_commands/count_main.cc jellyfish/err.cc	\
+                        jellyfish/thread_exec.cc
 
 YAGGO_SOURCES += sub_commands/count_main_cmdline.hpp
 
@@ -69,11 +64,7 @@ YAGGO_SOURCES += sub_commands/count_main_cmdline.hpp
 #                         jellyfish/mapped_file.cc			\
 #                         jellyfish/backtrace.cc jellyfish/floats.cc	\
 #                         jellyfish/allocators_mmap.cc			\
-<<<<<<< HEAD
-#                          jellyfish/dna_codes.cc
-=======
 #                         jellyfish/dna_codes.cc
->>>>>>> Don't use yaggo.[ch]pp with yaggo 1.3.0
 
 # bin_jellyfish_LDFLAGS = $(AM_LDFLAGS)
 # if ALL_STATIC
@@ -192,7 +183,6 @@ library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
 # Build tests
 ########################################
 bin_generate_sequence_SOURCES = jellyfish/generate_sequence.cc		\
-                                jellyfish/misc.cc			\
                                 jellyfish/mersenne.cpp			\
                                 jellyfish/square_binary_matrix.cc	\
                                 jellyfish/backtrace.cc			\

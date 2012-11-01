@@ -560,8 +560,8 @@ public:
   // array. large is set to true is setting a large key (upon
   // recurrence if there is a carry).
   bool add_rec(size_t id, const key_type& key, word val, bool large, bool* is_new, size_t* eid) {
-    const offset_t	*ao;
-    word		*w;
+    const offset_t *ao = 0;
+    word	   *w  = 0;
 
     bool claimed = false;
     if(large)
