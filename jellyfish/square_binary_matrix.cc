@@ -19,6 +19,7 @@
 #include <iostream>
 #include <sstream>
 
+namespace jellyfish{
 void SquareBinaryMatrix::init_random() {
   uint64_t _mask = mask();
   int i, j;
@@ -278,3 +279,4 @@ uint64_t SquareBinaryMatrix::times_unrolled(uint64_t v) const {
   return res;
 }
 
+} // namespace jellyfish

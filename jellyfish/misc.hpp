@@ -31,6 +31,8 @@
 #include <ostream>
 #include <utility>
 
+
+namespace jellyfish {
 #define bsizeof(v)      (8 * sizeof(v))
 typedef uint_fast64_t uint_t;
 //#define UINT_C(x)       
@@ -140,5 +142,8 @@ std::pair<T,T> slice(T i, T number_of_slices, T total) {
   return std::make_pair(start, end);
 }
 
+uint64_t random_bits(int length);
+inline uint64_t random_bits() { return random_bits(64); }
+} // namespace jellyfish
 std::streamoff get_file_size(std::istream& is);
 #endif // __MISC_HPP__

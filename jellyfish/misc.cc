@@ -20,6 +20,7 @@ n    the Free Software Foundation, either version 3 of the License, or
 #include <jellyfish/err.hpp>
 #include <jellyfish/backtrace.hpp>
 
+namespace jellyfish {
 uint64_t bogus_sum(void *data, size_t len) {
   uint64_t res = 0, tmp = 0;
   uint64_t *ptr = (uint64_t *)data;
@@ -60,3 +61,21 @@ std::streamoff get_file_size(std::istream& is) {
   is.seekg(cpos);
   return res;
 }
+
+template<long int n>
+struct ConstFloorLog2 {
+  static const int val = ConstFloorLog2<n / 2>::val + 1;
+};
+template<>
+struct ConstFloorLog2<1> {
+  static const int val = 0;
+};
+// Return length random bits
+uint64_t random_bits(int length) {
+  uint64_t res = 0;
+  for(int i = 0; i < length; i += ConstFloorLog2<RAND_MAX>::val) {
+    res ^= (uint64_t)random() << i;
+  }
+  return res & ((uint64_t)-1 >> (bsizeof(uint64_t) - length));
+}
+} // namespace jellyfish

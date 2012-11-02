@@ -14,24 +14,10 @@
     along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __JELLYFISH_STORAGE_HPP__
-#define __JELLYFISH_STORAGE_HPP__
 
-#include <stdlib.h>
-#include <stdint.h>
-#include <jellyfish/misc.hpp>
+#include <jellyfish/mer_dna.hpp>
 
-namespace jellyfish {
-
-  class storage_t {
-  public:
-    storage_t() {}
-    virtual ~storage_t() {}
-  };
-
-  // Entry 0 is used only when switching to a large field
-  extern size_t *quadratic_reprobes;
-
-}
-
-#endif // __STORAGE_HPP__
+namespace jellyfish { namespace mer_dna_ns {
+const char* const error_different_k = "Length of k-mers are different";
+const char* const error_short_string = "Input string is to short";
+} } // namespace jellyfish { namespace mer_dna_ns
