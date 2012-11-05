@@ -36,7 +36,7 @@ TEST(MerIterator, Sequence) {
   parser_type parser(mer_dna::k(), 10, 100, &input_fasta, &input_fasta + 1);
   mer_iterator_type mit(parser);
   for(string_vector::const_iterator it = sequences.begin(); it != sequences.end(); ++it) {
-    std::cerr << (it - sequences.begin()) << ":" << it->size() << ":" << *it << "\n";
+    //    std::cerr << (it - sequences.begin()) << ":" << it->size() << ":" << *it << "\n";
     if(it->size() >= mer_dna::k()) {
       for(int i = 0; i < it->size() - (mer_dna::k() - 1); ++i, ++mit) {
         //        std::cerr << "i:" << i << " " << "\n";

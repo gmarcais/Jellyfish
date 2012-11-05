@@ -45,7 +45,7 @@ TEST(FileHeader, WriteRead) {
   const string ah("After header");
   os << ah;
 
-  std::cerr << os.str() << "\n";
+  //  std::cerr << os.str() << "\n";
   istringstream is(os.str());
 
   generic_file_header hr;
