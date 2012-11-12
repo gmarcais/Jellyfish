@@ -17,6 +17,14 @@
 #ifndef __JELLYFISH_FILE_HEADER_HPP__
 #define __JELLYFISH_FILE_HEADER_HPP__
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#ifdef HAVE_NSGETEXECUTABLEPATH
+#include <mach-o/dyld.h>
+#endif
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/utsname.h>
@@ -189,6 +197,30 @@ protected:
   }
 
   std::string get_exe_path() const {
+#ifdef HAVE_NSGETEXECUTABLEPATH
+    return get_exe_path_macosx();
+#else
+    return get_exe_path_linux();
+#endif
+  }
+
+#ifdef HAVE_NSGETEXECUTABLEPATH
+  std::string get_exe_path_macosx() const {
+#ifdef MAXPATHLEN
+    size_t len = MAXPATHLEN;
+#else
+    size_t len = 1024;
+#endif
+
+    char path[len + 1];
+    if(_NSGetExecutablePath(path, (uint32_t*)&len) == -1)
+      return "";
+
+    return std::string(path);
+  }
+#endif // HAVE_NSGETEXECUTABLEPATH
+
+  std::string get_exe_path_linux() const {
 #ifdef PATH_MAX
     size_t len = PATH_MAX;
 #else

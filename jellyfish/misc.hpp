@@ -35,7 +35,7 @@
 namespace jellyfish {
 #define bsizeof(v)      (8 * sizeof(v))
 typedef uint_fast64_t uint_t;
-//#define UINT_C(x)       
+//#define UINT_C(x)
 #define PRIUINTu PRIuFAST64
 #define PRIUINTx PRIxFAST64
 
@@ -46,13 +46,13 @@ inline int leading_zeroes(unsigned long long x) { return __builtin_clzll(x); }
 
 
 template <typename T>
-unsigned int floorLog2(T n) {
+uint16_t floorLog2(T n) {
   return sizeof(T) * 8 - 1 - leading_zeroes(n);
 }
 
 template<typename T>
-uint_t ceilLog2(T n) {
-  uint_t r = floorLog2(n);
+uint16_t ceilLog2(T n) {
+  uint16_t r = floorLog2(n);
   return n > (((T)1) << r) ? r + 1 : r;
 }
 
@@ -63,7 +63,7 @@ T div_ceil(T a, T b) {
 }
 
 template<typename T>
-uint_t bitsize(T n) {
+uint16_t bitsize(T n) {
   return floorLog2(n) + 1;
 }
 

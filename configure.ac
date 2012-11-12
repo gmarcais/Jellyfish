@@ -61,6 +61,14 @@ AS_IF([test "x$with_int128" != xno],
       ])
 
 
+# On MacOS X, use _NSGetExecutablePath to find path to own executable
+AC_MSG_CHECKING([for _NSGetExecutablePath])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <mach-o/dyld.h>]],
+                                   [[_NSGetExecutablePath(0, 0);]])],
+                  [AC_MSG_RESULT([yes])]
+                  [AC_DEFINE([HAVE_NSGETEXECUTABLEPATH], [1], [Used to find executable path on MacOS X])],
+                  [AC_MSG_RESULT([no])])
+
 # Check the version of strerror_r
 AC_FUNC_STRERROR_R      
 AC_CHECK_HEADERS([execinfo.h])

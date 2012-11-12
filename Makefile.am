@@ -92,13 +92,12 @@ noinst_HEADERS += $(JFI)/cooperative_pool.hpp				\
 ########################################
 # Build Jellyfish the shared library
 ########################################
-# libjellyfish_2_0_la_LDFLAGS = -version-info 2:0:0
-# libjellyfish_2_0_la_SOURCES =				\
-#                           jellyfish/rectangular_binary_matrix.cc	\
-#                           jellyfish/int128.cc jellyfish/mer_dna.cc	\
-#                           jellyfish/storage.cc jellyfish/yaggo.cpp	\
-#                           jellyfish/allocators_mmap.cc			\
-#                           jellyfish/misc.cc
+libjellyfish_2_0_la_LDFLAGS = -version-info 2:0:0
+libjellyfish_2_0_la_SOURCES = jellyfish/rectangular_binary_matrix.cc	\
+                          jellyfish/mer_dna.cc jellyfish/storage.cc	\
+                          jellyfish/yaggo.cpp				\
+                          jellyfish/allocators_mmap.cc			\
+                          jellyfish/misc.cc jellyfish/int128.cc
 
 #                          libjellyfish_la_SOURCES =			\
                           jellyfish/square_binary_matrix.cc #		\
@@ -279,10 +278,14 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_intersection.cc
 
 bin_test_all_SOURCES += jellyfish/rectangular_binary_matrix.cc		\
-                        jellyfish/int128.cc jellyfish/mer_dna.cc	\
-                        jellyfish/storage.cc jellyfish/yaggo.cpp	\
-                        jellyfish/allocators_mmap.cc jellyfish/misc.cc	\
-                        jellyfish/thread_exec.cc jellyfish/jsoncpp.cpp
+                        jellyfish/mer_dna.cc jellyfish/storage.cc	\
+                        jellyfish/yaggo.cpp				\
+                        jellyfish/allocators_mmap.cc			\
+                        jellyfish/misc.cc jellyfish/thread_exec.cc	\
+                        jellyfish/jsoncpp.cpp
+
+bin_test_all_SOURCES += jellyfish/int128.cc
+
 bin_test_all_CPPFLAGS = -Dprotected=public -Dprivate=public -DJSON_IS_AMALGAMATION=1
 bin_test_all_CXXFLAGS = -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)/unit_tests -I$(top_srcdir)/include
 bin_test_all_LDADD = libgtest.la

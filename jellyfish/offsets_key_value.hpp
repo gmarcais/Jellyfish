@@ -18,6 +18,8 @@
 #define __JELLYFISH_OFFSETS_KEY_VALUE_HPP__
 
 #include <signal.h>
+#include <iostream>
+#include <sstream>
 
 #include <jellyfish/misc.hpp>
 #include <jflib/divisor.hpp>
@@ -69,13 +71,13 @@ public:
   // full words: need to copy full words
   typedef struct {
     struct key {
-      uint_t woff, boff, shift, cshift;
-      word   mask1, mask2, sb_mask1, sb_mask2, lb_mask;
-      bool   full_words;
+      unsigned int woff, boff, shift, cshift;
+      word     mask1, mask2, sb_mask1, sb_mask2, lb_mask;
+      bool     full_words;
     } key;
     struct val {
-      uint_t woff, boff, shift, cshift;
-      word   mask1, mask2;
+      unsigned int woff, boff, shift, cshift;
+      word     mask1, mask2;
     } val;
   } offset_t;
   typedef struct {
@@ -83,22 +85,26 @@ public:
     offset_t    large;
   } offset_pair_t;
   struct block_info {
-    uint_t len;
-    uint_t word_len;
+    unsigned int len;
+    unsigned int word_len;
   };
   //    Offsets() {}
 
-  Offsets(uint_t _key_len, uint_t _val_len, uint_t _reprobe_limit) :
+  Offsets(unsigned int _key_len, unsigned int _val_len, unsigned int _reprobe_limit) :
     key_len_(_key_len),
     val_len_(_val_len),
     reprobe_limit_(_reprobe_limit),
     reprobe_len_(bitsize(reprobe_limit_)),
-    lval_len_(std::min(key_len_ + val_len_ - reprobe_len_, bsizeof(word))),
+    lval_len_(std::min(key_len_ + val_len_ - reprobe_len_, (unsigned int)bsizeof(word))),
     block(compute_offsets()),
     bld(block.len)
   {
-    if(reprobe_len_ > bsizeof(word))
-      throw std::length_error("The reprobe_limit must be encoded in at most one word");
+    if(reprobe_len_ > bsizeof(word)) {
+      std::ostringstream err;
+      err << "The reprobe_limit (" << reprobe_limit_ << ", " << reprobe_len_
+          << ") must be encoded in at most one word (" << bsizeof(word) << ")";
+      throw std::length_error(err.str());
+    }
     if(val_len_ > bsizeof(word))
       throw std::length_error("Val length must be less than the word size");
     if(key_len_ < reprobe_len_)
@@ -107,14 +113,14 @@ public:
 
   ~Offsets() {}
 
-  uint_t block_len() const { return block.len; }
-  uint_t block_word_len() const { return block.word_len; }
-  uint_t reprobe_len() const { return reprobe_len_; }
-  uint_t reprobe_limit() const { return reprobe_limit_; }
+  unsigned int block_len() const { return block.len; }
+  unsigned int block_word_len() const { return block.word_len; }
+  unsigned int reprobe_len() const { return reprobe_len_; }
+  unsigned int reprobe_limit() const { return reprobe_limit_; }
   word   reprobe_mask() const { return mask(reprobe_len_, 0); }
-  uint_t key_len() const { return key_len_; }
-  uint_t val_len() const { return val_len_; }
-  uint_t lval_len() const { return lval_len_; }
+  unsigned int key_len() const { return key_len_; }
+  unsigned int val_len() const { return val_len_; }
+  unsigned int lval_len() const { return lval_len_; }
   word   get_max_val(bool large) const {
     return (((uint64_t)1) << (large ? lval_len_ : val_len_)) - 1;
   }
@@ -136,22 +142,22 @@ public:
   }
 
 private:
-  const uint_t           key_len_, val_len_;
-  const uint_t           reprobe_limit_, reprobe_len_, lval_len_;
+  const unsigned int           key_len_, val_len_;
+  const unsigned int           reprobe_limit_, reprobe_len_, lval_len_;
   const block_info       block;
   const jflib::divisor64 bld;   // Fast divisor by block.len
   offset_pair_t    offsets[bsizeof(word)];
 
   block_info compute_offsets();
-  bool add_key_offsets(uint_t &cword, uint_t &cboff, uint_t add, bool& full_words);
-  bool add_val_offsets(uint_t &cword, uint_t &cboff, uint_t add);
-  void set_key_offsets(Offsets::offset_t& key, uint_t& cword, uint_t& cboff, uint_t len);
-  void set_val_offsets(Offsets::offset_t& val, uint_t& cword, uint_t& cboff, uint_t len);
-  word mask(uint_t length, uint_t shift) const;
+  bool add_key_offsets(unsigned int &cword, unsigned int &cboff, unsigned int add, bool& full_words);
+  bool add_val_offsets(unsigned int &cword, unsigned int &cboff, unsigned int add);
+  void set_key_offsets(Offsets::offset_t& key, unsigned int& cword, unsigned int& cboff, unsigned int len);
+  void set_val_offsets(Offsets::offset_t& val, unsigned int& cword, unsigned int& cboff, unsigned int len);
+  word mask(unsigned int length, unsigned int shift) const;
 };
 
 template<typename word>
-bool Offsets<word>::add_key_offsets(uint_t &cword, uint_t &cboff, uint_t add, bool& full_words)
+bool Offsets<word>::add_key_offsets(unsigned int &cword, unsigned int &cboff, unsigned int add, bool& full_words)
 {
   if(cboff + add <= bsizeof(word)) { // Not spilling over next word
     cboff  = (cboff + add) % bsizeof(word);
@@ -170,9 +176,9 @@ bool Offsets<word>::add_key_offsets(uint_t &cword, uint_t &cboff, uint_t add, bo
 }
 
 template<typename word>
-bool Offsets<word>::add_val_offsets(uint_t &cword, uint_t &cboff, uint_t add)
+bool Offsets<word>::add_val_offsets(unsigned int &cword, unsigned int &cboff, unsigned int add)
 {
-  uint_t ocword  = cword;
+  unsigned int ocword  = cword;
   cboff         += add;
   cword         += cboff / bsizeof(word);
   cboff          = cboff % bsizeof(word);
@@ -180,7 +186,7 @@ bool Offsets<word>::add_val_offsets(uint_t &cword, uint_t &cboff, uint_t add)
 }
 
 template<typename word>
-word Offsets<word>::mask(uint_t length, uint_t shift) const
+word Offsets<word>::mask(unsigned int length, unsigned int shift) const
 {
   if(length)
     return (((word)-1) >> (bsizeof(word) - length)) << shift;
@@ -188,8 +194,8 @@ word Offsets<word>::mask(uint_t length, uint_t shift) const
 }
 
 template<typename word>
-void Offsets<word>::set_key_offsets(Offsets::offset_t& offset, uint_t& cword, uint_t& cboff, uint_t len) {
-  uint_t ocboff;
+void Offsets<word>::set_key_offsets(Offsets::offset_t& offset, unsigned int& cword, unsigned int& cboff, unsigned int len) {
+  unsigned int ocboff;
   bool   full_words;
 
   offset.key.woff    = cword;
@@ -217,8 +223,8 @@ void Offsets<word>::set_key_offsets(Offsets::offset_t& offset, uint_t& cword, ui
 }
 
 template <typename word>
-void Offsets<word>::set_val_offsets(Offsets::offset_t& offset, uint_t& cword, uint_t& cboff, uint_t len) {
-  uint_t ocboff;
+void Offsets<word>::set_val_offsets(Offsets::offset_t& offset, unsigned int& cword, unsigned int& cboff, unsigned int len) {
+  unsigned int ocboff;
 
   offset.val.woff  = cword;
   offset.val.boff  = cboff;
@@ -240,10 +246,10 @@ template<typename word>
 typename Offsets<word>::block_info Offsets<word>::compute_offsets()
 {
   offset_pair_t *offset = offsets;
-  uint_t         cword  = 0;    // current word in block
-  uint_t         cboff  = 0;    // current offset in word
-  uint_t         lcword;        // idem for large fields
-  uint_t         lcboff;
+  unsigned int         cword  = 0;    // current word in block
+  unsigned int         cboff  = 0;    // current offset in word
+  unsigned int         lcword;        // idem for large fields
+  unsigned int         lcboff;
 
   memset(offsets, '\0', sizeof(offsets));
   do {
@@ -260,7 +266,7 @@ typename Offsets<word>::block_info Offsets<word>::compute_offsets()
     offset++;
   } while(cboff != 0 && cboff < bsizeof(word) - 2);
 
-  block_info res = { static_cast<uint_t>(offset - offsets), cword + (cboff == 0 ? 0 : 1) };
+  block_info res = { static_cast<unsigned int>(offset - offsets), cword + (cboff == 0 ? 0 : 1) };
   return res;
 }
 } // namespace jellyfish
