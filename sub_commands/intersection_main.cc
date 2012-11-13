@@ -161,6 +161,21 @@ int intersection_main(int argc, char* argv[]) {
   args.parse(argc, argv);
   jellyfish::mer_dna::k(args.mer_arg);
 
+  if(!args.size_given && !args.mem_given)
+    args.error("One of [-s, --size] or --mem is required");
+
+  if(args.mem_info_flag) {
+    inter_array::usage_info info(args.mer_arg);
+    if(args.size_given)
+      std::cout << info.mem(args.size_arg) << "\n";
+    else
+      std::cout << info.size(args.mem_arg) << "\n";
+    exit(EXIT_SUCCESS);
+  }
+
+  if(args.genome_arg.size() < 2)
+    args.error("Requires at least 2 arguments.");
+
   inter_array ary(args.size_arg, jellyfish::mer_dna::k() * 2, args.thread_arg);
   compute_intersection workers(args.thread_arg, ary, args.genome_arg);
   workers.exec_join(args.thread_arg);

@@ -11,7 +11,10 @@ EOS
 
 option("s", "size") {
   description "Initial size of hash"
-  uint64; suffix; required }
+  uint64; suffix }
+option("mem") {
+  description "Compute size to use (at most) that much memory"
+  uint64; suffix; conflict "size" }
 option("m", "mer") {
   description "Mer length"
   uint32; required }
@@ -24,7 +27,10 @@ option("i", "intersection") {
 option("p", "prefix") {
   description "Prefix for each unique file"
   c_string; default "uniq_" }
+option("mem-info") {
+  description "Given a size or memory limit, print other parameter"
+  off }
 arg("genome") {
   description "Input genome sequence, in FASTA or FASTQ format"
   c_string; typestr "path"
-  multiple; at_least 2 }
+  multiple }

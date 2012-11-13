@@ -108,4 +108,19 @@ TEST(IntersectionArray, Doubling) {
   ary_small.done();
 }
 
+TEST(IntersectionArray, Info) {
+  for(int iteration = 0; iteration < 100; ++iteration) {
+    size_t                  mem     = jellyfish::random_bits(48);
+    uint16_t                key_len = jellyfish::random_bits(7) + 1;
+    inter_array::usage_info info(key_len);
+
+    SCOPED_TRACE(::testing::Message() << "iteration:" << iteration << " mem:" << mem
+                 << " key_len:" << key_len);
+    uint16_t size_bits  = info.size_bits(mem);
+    ASSERT_LE(info.mem((size_t)1 << size_bits), mem);
+    ASSERT_GT(info.mem((size_t)1 << (size_bits + 1)), mem);
+  }
+
+}
+
 } // namespace {

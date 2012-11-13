@@ -49,6 +49,31 @@ public:
     } info;
   };
 
+  struct usage_info {
+    uint16_t key_len_;
+    usage_info(uint16_t key_len) : key_len_(key_len) { }
+
+    size_t mem(size_t size) {
+      typename array::usage_info array_info(key_len_, 0, 126);
+      return array_info.mem(size) + sizeof(status_w) * (array_info.asize(size) / status_pw);
+    }
+
+    /// Maximum size for a given maximum memory.
+    size_t size(size_t mem) { return (size_t)1 << size_bits(mem); }
+
+    struct fit_in {
+      usage_info* i_;
+      size_t      mem_;
+      fit_in(usage_info* i, size_t mem) : i_(i), mem_(mem) { }
+      bool operator()(uint16_t size_bits) const { return i_->mem((size_t)1 << size_bits) < mem_; }
+    };
+
+    uint16_t size_bits(size_t mem) {
+      uint16_t res = *binary_search_first_false(pointer_integer<uint16_t>(0), pointer_integer<uint16_t>(64), fit_in(this, mem));
+      return res > 0 ? res - 1 : 0;
+    }
+  };
+
   intersection_array(size_t   size, // Initial size of hash
                      uint16_t key_len, // Size of mer
                      uint16_t nb_threads) : // Number of threads accessing hash (cooperative)
