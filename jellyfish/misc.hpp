@@ -30,6 +30,7 @@
 #include <new>
 #include <ostream>
 #include <utility>
+#include <iterator>
 
 
 namespace jellyfish {
@@ -135,10 +136,10 @@ template<typename T>
 std::pair<T,T> slice(T i, T number_of_slices, T total) {
   if(number_of_slices > 1)
     --number_of_slices;
-  T slice_size = total / number_of_slices;
+  T slice_size   = total / number_of_slices;
   T slice_remain = total % number_of_slices;
-  T start = std::min(total, i * slice_size + i * slice_remain / number_of_slices);
-  T end = std::min(total, (i + 1) * slice_size + (i + 1) * slice_remain / number_of_slices);
+  T start        = std::min(total, i * slice_size + i * slice_remain / number_of_slices);
+  T end          = std::min(total, (i + 1) * slice_size + (i + 1) * slice_remain / number_of_slices);
   return std::make_pair(start, end);
 }
 
@@ -146,4 +147,87 @@ uint64_t random_bits(int length);
 inline uint64_t random_bits() { return random_bits(64); }
 } // namespace jellyfish
 std::streamoff get_file_size(std::istream& is);
+
+/// Find the first element for which the predicate p is false. The
+/// input range [first, last) is assumed to be sorted according to the
+/// predicate p: p(x) is false and p(y) is true implies x comes after
+/// y in the input range. (I.e., the elements for which p(x) is true
+/// come first followed by the elements for which p(x) is false).
+template <class ForwardIterator, class Predicate>
+ForwardIterator binary_search_first_false(ForwardIterator first, ForwardIterator last, Predicate p)
+{
+  ForwardIterator it;
+  typename std::iterator_traits<ForwardIterator>::difference_type count, step;
+  count = std::distance(first,last);
+  while(count>0) {
+    it = first; step = count / 2; std::advance(it,step);
+    if(p(*it)) {
+      first  = ++it;
+      count -= step + 1;
+    } else
+      count=step;
+  }
+  return first;
+}
+
+/// An integer type which behaves like a random pointer to
+/// itself. Meaning, with `it(5)`, then `*it == 5` and `*++it ==
+/// 6`. In other words, it is a pointer to an array `a` initialized
+/// with `a[i] = i`, except the array is not instantiated and does not
+/// have a fixed size.
+template<typename T>
+class pointer_integer : public std::iterator<std::random_access_iterator_tag, T> {
+    T x_;
+  typedef typename std::iterator<std::random_access_iterator_tag, T> super;
+ public:
+  typedef T                                 value_type;
+  typedef typename super::difference_type   difference_type;
+  typedef typename super::pointer           pointer;
+  typedef typename super::reference         reference;
+  typedef typename super::iterator_category iterator_category;
+
+  pointer_integer() : x_(0) { }
+  pointer_integer(T x) : x_(x) { }
+  pointer_integer(const pointer_integer& rhs) : x_(rhs.x_) { }
+  pointer_integer& operator=(const pointer_integer& rhs) {
+    x_ = rhs.x_;
+    return *this;
+  }
+  pointer_integer& operator++() { ++x_; return *this; }
+  pointer_integer operator++(int) {
+    pointer_integer res(*this);
+    ++x_;
+    return res;
+  }
+  pointer_integer& operator--() { --x_; return *this; }
+  pointer_integer operator--(int) {
+    pointer_integer res(*this);
+    --x_;
+    return res;
+  }
+
+  bool operator==(const pointer_integer& rhs) const { return x_ == rhs.x_; }
+  bool operator!=(const pointer_integer& rhs) const { return x_ != rhs.x_; }
+  bool operator<(const pointer_integer& rhs) const { return x_ < rhs.x_; }
+  bool operator>(const pointer_integer& rhs) const { return x_ > rhs.x_; }
+  bool operator<=(const pointer_integer& rhs) const { return x_ <= rhs.x_; }
+  bool operator>=(const pointer_integer& rhs) const { return x_ >= rhs.x_; }
+
+  reference operator*() { return x_; }
+  pointer operator->() { return &x_; } // Probably useless
+
+  difference_type operator-(pointer_integer& rhs) { return x_ - rhs.x_; }
+
+  pointer_integer operator+(T x) const { return pointer_integer(x_ + x); }
+  pointer_integer operator-(T x) const { return pointer_integer(x_ - x); }
+  pointer_integer& operator+=(T x) { x_ += x; return *this; }
+  pointer_integer& operator-=(T x) { x_ -= x; return *this; }
+
+  value_type operator[](T i) const { return x_ + i; }
+};
+
+template<typename T>
+pointer_integer<T> operator+(T x, pointer_integer<T>& p) { return pointer_integer<T>(x + *p); }
+template<typename T>
+pointer_integer<T> operator-(T x, pointer_integer<T>& p) { return pointer_integer<T>(x - *p); }
 #endif // __MISC_HPP__
