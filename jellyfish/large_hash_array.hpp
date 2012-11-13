@@ -87,6 +87,60 @@ public:
   typedef value_type*       pointer;
   typedef const value_type* const_pointer;
 
+  /// Give information about memory usage and array size.
+  struct usage_info {
+    uint16_t key_len_, val_len_, reprobe_limit_;
+    size_t*  reprobes_;
+
+    usage_info(uint16_t key_len, uint16_t val_len, uint16_t reprobe_limit,
+               size_t* reprobes = jellyfish::quadratic_reprobes) :
+      key_len_(key_len), val_len_(val_len), reprobe_limit_(reprobe_limit), reprobes_(reprobes) { }
+
+    /// Memory usage for a given size.
+    size_t mem(size_t size) {
+      uint16_t lsize(ceilLog2(size));
+      size_t asize((size_t)1 << lsize);
+      reprobe_limit_t areprobe_limit(reprobe_limit_, reprobes_, asize);
+      uint16_t raw_key_len(key_len_ > lsize ? key_len_ - lsize : 0);
+      Offsets<word> offsets(raw_key_len + bitsize(areprobe_limit.val() + 1), val_len_,
+                            areprobe_limit.val() + 1);
+      return div_ceil(asize,
+                      (size_t)offsets.block_len()) * offsets.block_word_len() * sizeof(word) + sizeof(array) + sizeof(Offsets<word>);
+    }
+
+    /// Actual size for a given size.
+    size_t asize(size_t size) { return (size_t)1 << ceilLog2(size); }
+
+    struct fit_in {
+      usage_info* i_;
+      size_t      mem_;
+      fit_in(usage_info* i, size_t mem) : i_(i), mem_(mem) { }
+      bool operator()(uint16_t size_bits) const { return i_->mem((size_t)1 << size_bits) < mem_; }
+    };
+
+    /// Maximum size for a given maximum memory.
+    size_t size(size_t mem) { return (size_t)1 << size_bits(mem); }
+
+    /// Log of maximum size for a given maximum memory
+    uint16_t size_bits(size_t mem) {
+      uint16_t res = *binary_search_first_false(pointer_integer<uint16_t>(0), pointer_integer<uint16_t>(64),
+                                              fit_in(this, mem));
+      return res > 0 ? res - 1 : 0;
+    }
+
+    size_t size_bits_linear(size_t mem) {
+      fit_in predicate(this, mem);
+      uint16_t i = 0;
+      for( ; i < 64; ++i)
+        if(!predicate(i))
+           break;
+
+      return i > 0 ? i - 1 : 0;
+    }
+
+  };
+
+
   array(size_t size, // Size of hash. To be rounded up to a power of 2
         uint16_t key_len, // Size of key in bits
         uint16_t val_len, // Size of val in bits

@@ -179,6 +179,11 @@ TEST_P(HashArray, Iterator) {
   }
 }
 
+INSTANTIATE_TEST_CASE_P(HashArrayTest, HashArray, ::testing::Combine(::testing::Range(8, 4 * 64, 2), // Key lengths
+                                                                     ::testing::Range(1, 10),    // Val lengths
+                                                                     ::testing::Range(6, 8)      // Reprobe lengths
+                                                                     ));
+
 TEST(HashSet, Set) {
   static const int lsize = 16;
   static const int size = 1 << lsize;
@@ -211,9 +216,20 @@ TEST(HashSet, Set) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(HashArrayTest, HashArray, ::testing::Combine(::testing::Range(8, 4 * 64, 2), // Key lengths
-                                                                     ::testing::Range(1, 10),    // Val lengths
-                                                                     ::testing::Range(6, 8)      // Reprobe lengths
-                                                                     ));
+TEST(Hash, Info) {
+  for(int iteration = 0; iteration < 100; ++iteration) {
+    size_t                  mem     = random_bits(48);
+    uint16_t                key_len = random_bits(7) + 1;
+    uint16_t                val_len = random_bits(4) + 1;
+    large_array::usage_info info(key_len, val_len, 126);
 
+    SCOPED_TRACE(::testing::Message() << "iteration:" << iteration << " mem:" << mem
+                 << " key_len:" << key_len << " val_len:" << val_len);
+    uint16_t size_bits = info.size_bits(mem);
+    uint16_t size2_bits = info.size_bits_linear(mem);
+    ASSERT_EQ(size2_bits, size_bits);
+    ASSERT_LE(info.mem((size_t)1 << size_bits), mem);
+    ASSERT_GT(info.mem((size_t)1 << (size_bits + 1)), mem);
+  }
+}
 }
