@@ -3,6 +3,8 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <map>
+#include <sstream>
 
 #include <jellyfish/thread_exec.hpp>
 #include <jellyfish/intersection_array.hpp>
@@ -17,6 +19,7 @@ typedef jellyfish::intersection_array<jellyfish::mer_dna> inter_array;
 typedef std::vector<const char*> file_vector;
 typedef jellyfish::mer_overlap_sequence_parser<std::ifstream*> sequence_parser;
 typedef jellyfish::mer_iterator<sequence_parser, jellyfish::mer_dna> mer_iterator;
+typedef std::map<std::string, int> name_map;
 
 intersection_cmdline args;
 
@@ -26,6 +29,7 @@ class compute_intersection : public thread_exec {
   locks::pthread::barrier barrier_;
   inter_array&            ary_;
   file_vector&            files_;
+  name_map                map_;
 
   sequence_parser* volatile      parser_;
   jflib::o_multiplexer* volatile multiplexer_;
@@ -51,9 +55,11 @@ public:
     while(true) {
       if(thid == 0) {
         if(file_index != files_.size()) {
-          file    = new std::ifstream(files_[file_index++]);
-          parser_ = new sequence_parser(jellyfish::mer_dna::k(), 3 * nb_threads_, 4096,
-                                        file, file + 1);
+          unsigned int cindex = file_index++;
+          file                = new std::ifstream(files_[cindex]);
+          parser_             = new sequence_parser(jellyfish::mer_dna::k(), 3 * nb_threads_, 4096, file, file + 1);
+          if(args.verbose_flag)
+            std::cout << "Load in file '" << files_[cindex] << "'\n";
         }
       }
       barrier_.wait();
@@ -84,6 +90,8 @@ public:
     if(thid == 0) {
       file_out     = new std::ofstream(args.intersection_arg);
       multiplexer_ = new jflib::o_multiplexer(file_out, 3 * nb_threads_, 4096);
+      if(args.verbose_flag)
+        std::cout << "Writing intersection mers in '" << args.intersection_arg << "'\n";
     }
 
     barrier_.wait();
@@ -119,10 +127,21 @@ public:
           unsigned int cindex    = file_index++;
           file                   = new std::ifstream(files_[cindex]);
           parser_                = new sequence_parser(jellyfish::mer_dna::k(), 3 * nb_threads_, 4096, file, file + 1);
-          std::string  out_name  = args.prefix_arg;
-          out_name              += files_[cindex];
-          out                    = new std::ofstream(out_name.c_str());
-          multiplexer_           = new jflib::o_multiplexer(out, 3 * nb_threads_, 4096);
+          std::ostringstream  out_name;
+          out_name << args.prefix_arg;
+          const char* basename   = strrchr(files_[cindex], '/');
+          if(basename == 0)
+            basename = files_[cindex];
+          else
+            ++basename;
+          int count = map_[basename]++;
+          if(count > 0)
+            out_name << count << "_";
+          out_name << basename;
+          out          = new std::ofstream(out_name.str().c_str());
+          multiplexer_ = new jflib::o_multiplexer(out, 3 * nb_threads_, 4096);
+          if(args.verbose_flag)
+            std::cout << "Writing unique mers of '" << files_[cindex] << "' to '" << out_name.str() << "'\n";
         }
       }
       barrier_.wait();

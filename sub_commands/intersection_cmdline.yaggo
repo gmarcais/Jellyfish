@@ -30,6 +30,9 @@ option("p", "prefix") {
 option("mem-info") {
   description "Given a size or memory limit, print other parameter"
   off }
+option("v", "verbose") {
+  description "Display more information"
+  off }
 arg("genome") {
   description "Input genome sequence, in FASTA or FASTQ format"
   c_string; typestr "path"
