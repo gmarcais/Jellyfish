@@ -23,3 +23,10 @@ test "$((($RLEN - $MLEN + 1) * ($UNIQ / $RLEN)))" = "$(wc -l < uniq_uniq.fa)"
 test "0" = "$(wc -l < uniq_mult.fa)"
 test "0" = "$(wc -l < uniq_intersection_all.fa)"
 
+# Same specifying memory instead of size
+time $JF intersection --mem 8M -i intersection2 -p uniq2_ -m $MLEN -t 1 uniq.fa mult.fa intersection_all.fa
+
+test "$((($RLEN - $MLEN + 1) * ($ALL / $RLEN)))" = "$(wc -l < intersection2)"
+test "$((($RLEN - $MLEN + 1) * ($UNIQ / $RLEN)))" = "$(wc -l < uniq2_uniq.fa)"
+test "0" = "$(wc -l < uniq2_mult.fa)"
+test "0" = "$(wc -l < uniq2_intersection_all.fa)"
