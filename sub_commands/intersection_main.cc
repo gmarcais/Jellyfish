@@ -176,6 +176,11 @@ int intersection_main(int argc, char* argv[]) {
   if(args.genome_arg.size() < 2)
     args.error("Requires at least 2 arguments.");
 
+  if(args.mem_given) {
+    inter_array::usage_info info(args.mer_arg);
+    args.size_arg = info.size(args.mem_arg);
+  }
+
   inter_array ary(args.size_arg, jellyfish::mer_dna::k() * 2, args.thread_arg);
   compute_intersection workers(args.thread_arg, ary, args.genome_arg);
   workers.exec_join(args.thread_arg);
