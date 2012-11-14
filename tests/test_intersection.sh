@@ -32,3 +32,11 @@ test "$((($RLEN - $MLEN + 1) * ($ALL / $RLEN)))" = "$(wc -l < intersection2)"
 test "$((($RLEN - $MLEN + 1) * ($UNIQ / $RLEN)))" = "$(wc -l < uniq2_uniq.fa)"
 test "0" = "$(wc -l < uniq2_1_uniq.fa)"
 test "0" = "$(wc -l < uniq2_intersection_all.fa)"
+
+# Same but with canonical mers
+time $JF intersection --verbose -C -s 2M -m $MLEN -t 1 -p uniqC_ -i intersectionC uniq.fa mult.fa intersection_all.fa
+
+test "$((($RLEN - $MLEN + 1) * ($ALL / $RLEN)))" = "$(wc -l < intersectionC)"
+test "$((($RLEN - $MLEN + 1) * ($UNIQ / $RLEN)))" = "$(wc -l < uniqC_uniq.fa)"
+test "0" = "$(wc -l < uniqC_mult.fa)"
+test "0" = "$(wc -l < uniqC_intersection_all.fa)"

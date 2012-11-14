@@ -78,7 +78,7 @@ public:
   }
 
   void add_mers_to_ary(int thid) {
-    for(mer_iterator mers(*parser_) ; mers; ++mers)
+    for(mer_iterator mers(*parser_, args.canonical_flag) ; mers; ++mers)
       ary_.add(*mers);
     ary_.done();
     ary_.postprocess(thid);
@@ -166,7 +166,7 @@ public:
   void output_uniq_mers_file(int thid) {
     jflib::omstream out(*multiplexer_);
 
-    for(mer_iterator mers(*parser_); mers; ++mers) {
+    for(mer_iterator mers(*parser_, args.canonical_flag); mers; ++mers) {
       inter_array::mer_info info = ary_[*mers];
       if(!info.info.mult) {
         out << *mers << "\n";

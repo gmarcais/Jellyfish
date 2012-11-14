@@ -18,6 +18,9 @@ option("mem") {
 option("m", "mer") {
   description "Mer length"
   uint32; required }
+option("C", "canonical") {
+  description "Consider canonical mers"
+  off }
 option("t", "thread") {
   description "Number of threads"
   uint32; default "1" }
