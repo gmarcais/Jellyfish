@@ -30,7 +30,7 @@ namespace jellyfish {
   };
 
   // Entry 0 is used only when switching to a large field
-  extern size_t *quadratic_reprobes;
+  extern const size_t *quadratic_reprobes;
 
 }
 

@@ -256,7 +256,8 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_large_hash_array.cc		\
 	               unit_tests/test_mer_overlap_sequence_parser.cc	\
 	               unit_tests/test_file_header.cc			\
-	               unit_tests/test_mer_iterator.cc
+	               unit_tests/test_mer_iterator.cc			\
+	               unit_tests/test_hash_counter.cc
 
 bin_test_all_SOURCES += jellyfish/rectangular_binary_matrix.cc		\
                         jellyfish/mer_dna.cc jellyfish/storage.cc	\

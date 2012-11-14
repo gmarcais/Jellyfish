@@ -134,12 +134,14 @@ void mem_copy(char *dest,  const char *src, const T &len) {
  */
 template<typename T>
 std::pair<T,T> slice(T i, T number_of_slices, T total) {
-  if(number_of_slices > 1)
-    --number_of_slices;
-  T slice_size   = total / number_of_slices;
-  T slice_remain = total % number_of_slices;
-  T start        = std::min(total, i * slice_size + i * slice_remain / number_of_slices);
-  T end          = std::min(total, (i + 1) * slice_size + (i + 1) * slice_remain / number_of_slices);
+  const T slice_size   = total / number_of_slices;
+  const T slice_remain = total % number_of_slices;
+
+  const T start = std::max((T)0,
+                           std::min(total, i * slice_size + (i > 0 ? slice_remain : 0)));
+  const T end   = std::max((T)0,
+                           std::min(total, (i + 1) * slice_size + slice_remain));
+
   return std::make_pair(start, end);
 }
 

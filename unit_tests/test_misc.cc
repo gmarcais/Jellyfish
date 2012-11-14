@@ -51,4 +51,25 @@ TEST(BinarySearchFirst, Int) {
     EXPECT_EQ(i, *binary_search_first_false(pointer_integer<int>(0), pointer_integer<int>(size),
                                             std::bind2nd(std::less<int>(), i)));
 }
+
+TEST(Slices, NonOverlapAll) {
+  for(int iteration = 0; iteration < 100; ++iteration) {
+    unsigned int size      = random_bits(20);
+    unsigned int nb_slices = random_bits(4) + 1;
+    SCOPED_TRACE(::testing::Message() << "iteration:" << iteration
+                 << " size:" << size << " nb_slices:" << nb_slices);
+
+    unsigned int total = 0;
+    unsigned int prev  = 0;
+    for(unsigned int i = 0; i < nb_slices; ++i) {
+      SCOPED_TRACE(::testing::Message() << "i:" << i);
+      std::pair<unsigned int, unsigned int> b = jellyfish::slice(i, nb_slices, size);
+      ASSERT_EQ(prev, b.first);
+      ASSERT_GT(b.second, b.first);
+      total += b.second - b.first;
+      prev   = b.second;
+    }
+    ASSERT_EQ(size, total);
+  }
+}
 }

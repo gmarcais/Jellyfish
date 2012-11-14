@@ -26,6 +26,7 @@
 #include <jellyfish/mer_dna.hpp>
 #include <jellyfish/rectangular_binary_matrix.hpp>
 #include <jellyfish/simple_circular_buffer.hpp>
+#include <jellyfish/large_hash_iterator.hpp>
 
 namespace jellyfish { namespace large_hash {
 /* Contains an integer, the reprobe limit. It is capped based on the
@@ -36,7 +37,7 @@ namespace jellyfish { namespace large_hash {
 class reprobe_limit_t {
   uint_t limit;
 public:
-  reprobe_limit_t(uint_t _limit, size_t *_reprobes, size_t _size) :
+  reprobe_limit_t(uint_t _limit, const size_t *_reprobes, size_t _size) :
     limit(_limit)
   {
     while(_reprobes[limit] >= _size && limit >= 1)
@@ -60,9 +61,23 @@ class array {
   //  static const word fmask = std::numeric_limits<word>::max(); // Mask full of ones
 #define fmask (std::numeric_limits<word>::max())
 
+public:
+  typedef word              data_word;
   typedef typename Offsets<word>::offset_t offset_t;
   typedef typename offset_t::key key_offsets;
   typedef typename offset_t::val val_offsets;
+
+  typedef Key                 key_type;
+  typedef uint64_t            mapped_type;
+  typedef std::pair<Key&, mapped_type> value_type;
+  typedef stl_iterator<array> iterator;
+  typedef stl_iterator<array> const_iterator;
+  typedef value_type&         reference;
+  typedef const value_type&   const_reference;
+  typedef value_type*         pointer;
+  typedef const value_type*   const_pointer;
+
+protected:
   uint16_t                 lsize_; // log of size
   size_t                   size_, size_mask_;
   reprobe_limit_t          reprobe_limit_;
@@ -72,28 +87,18 @@ class array {
   mem_block_t              mem_block_;
   word                    *data_;
   atomic_t                 atomic_;
-  size_t                  *reprobes_;
+  const size_t            *reprobes_;
   RectangularBinaryMatrix  hash_matrix_;
   RectangularBinaryMatrix  hash_inverse_matrix_;
 
-
 public:
-  typedef Key               key_type;
-  typedef uint64_t          mapped_type;
-  typedef std::pair<const   Key, uint64_t> value_type;
-  // TODO: iterators
-  typedef value_type&       reference;
-  typedef const value_type& const_reference;
-  typedef value_type*       pointer;
-  typedef const value_type* const_pointer;
-
   /// Give information about memory usage and array size.
   struct usage_info {
-    uint16_t key_len_, val_len_, reprobe_limit_;
-    size_t*  reprobes_;
+    uint16_t      key_len_, val_len_, reprobe_limit_;
+    const size_t* reprobes_;
 
     usage_info(uint16_t key_len, uint16_t val_len, uint16_t reprobe_limit,
-               size_t* reprobes = jellyfish::quadratic_reprobes) :
+               const size_t* reprobes = jellyfish::quadratic_reprobes) :
       key_len_(key_len), val_len_(val_len), reprobe_limit_(reprobe_limit), reprobes_(reprobes) { }
 
     /// Memory usage for a given size.
@@ -145,7 +150,7 @@ public:
         uint16_t key_len, // Size of key in bits
         uint16_t val_len, // Size of val in bits
         uint16_t reprobe_limit, // Maximum reprobe
-        size_t* reprobes = jellyfish::quadratic_reprobes) : // Reprobing policy
+        const size_t* reprobes = quadratic_reprobes) : // Reprobing policy
     lsize_(ceilLog2(size)),
     size_((size_t)1 << lsize_),
     size_mask_(size_ - 1),
@@ -171,6 +176,7 @@ public:
   uint_t key_len() const { return key_len_; }
   uint_t val_len() const { return offsets_.val_len(); }
 
+  const size_t* reprobes() const { return reprobes_; }
   uint_t max_reprobe() const { return reprobe_limit_.val(); }
   size_t max_reprobe_offset() const { return reprobes_[reprobe_limit_.val()]; }
 
@@ -330,7 +336,12 @@ public:
   //////////////////////////////
   // Iterator
   //////////////////////////////
-  class iterator {
+  const_iterator begin() { return const_iterator(this); }
+  const_iterator begin() const { return const_iterator(this); }
+  const_iterator end() { return const_iterator(); }
+  const_iterator end() const { return const_iterator(); }
+
+  class eager_iterator {
   protected:
     const array	*ary_;
     size_t	 start_id_, id_, end_id_;
@@ -339,7 +350,7 @@ public:
     mapped_type val_;
 
   public:
-    iterator(const array *ary, size_t start, size_t end) :
+    eager_iterator(const array *ary, size_t start, size_t end) :
       ary_(ary),
       start_id_(start > ary->size() ? ary->size() : start),
       id_(start),
@@ -362,11 +373,11 @@ public:
       return success == FILLED;
     }
   };
-  friend class iterator;
-  iterator iterator_all() const { return iterator(this, 0, size()); }
-  iterator iterator_slice(size_t slice_number, size_t number_of_slice) const {
+  friend class eager_iterator;
+  eager_iterator iterator_all() const { return eager_iterator(this, 0, size()); }
+  eager_iterator iterator_slice(size_t slice_number, size_t number_of_slice) const {
     std::pair<size_t, size_t> res = slice(slice_number, number_of_slice, size());
-    return iterator(this, res.first, res.second);
+    return eager_iterator(this, res.first, res.second);
   }
 
   class lazy_iterator {
@@ -382,9 +393,9 @@ public:
   public:
     lazy_iterator(const array *ary, size_t start, size_t end) :
       ary_(ary),
-      start_id_(start > ary->size() ? ary->size() : start),
+      start_id_(ary ? (start > ary->size() ? ary->size() : start) : 0),
       id_(start),
-      end_id_(end > ary->size() ? ary->size() : end),
+      end_id_(ary ? (end > ary->size() ? ary->size() : end) : 0),
       w_(0), o_(0),
       reversed_key_(false)
     {}
@@ -398,7 +409,7 @@ public:
       }
       return key_;
     }
-    const mapped_type val() const {
+    mapped_type val() const {
       return ary_->get_val_at_id(id_ - 1, w_, o_, true, false);
     }
     size_t id() const { return id_ - 1; }

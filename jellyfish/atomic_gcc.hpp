@@ -47,7 +47,7 @@ namespace atomic
       T ncount = *ptr, count;
       do {
 	count = ncount;
-	ncount = cas((T *)ptr, count, count + x);
+	ncount = cas((T *)ptr, count, (T)(count + x));
       } while(ncount != count);
       return count;
     }
