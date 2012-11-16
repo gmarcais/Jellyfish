@@ -21,6 +21,11 @@ typedef std::set<jellyfish::mer_dna> mer_set;
 using jellyfish::RectangularBinaryMatrix;
 using jellyfish::mer_dna;
 
+typedef large_array::iterator stl_iterator;
+typedef large_array::eager_iterator eager_iterator;
+typedef large_array::lazy_iterator lazy_iterator;
+typedef large_array::region_iterator region_iterator;
+
 // Tuple is {key_len, val_len, reprobe_len}.
 class HashArray : public ::testing::TestWithParam< ::std::tr1::tuple<int,int, int> >
 {
@@ -117,8 +122,8 @@ TEST_P(HashArray, Collisions) {
       ++map[mers[j]];
     }
 
-    large_array::eager_iterator it    = ary.iterator_all();
-    size_t                count = 0;
+    lazy_iterator it    = ary.iterator_all<lazy_iterator>();
+    size_t        count = 0;
     while(it.next()) {
       SCOPED_TRACE(::testing::Message() << "it.key():" << it.key());
       ASSERT_FALSE(map.end() == map.find(it.key()));
@@ -150,9 +155,9 @@ TEST_P(HashArray, Iterator) {
     map[mer] += i;
   }
 
-  large_array::eager_iterator it     = ary.iterator_all();
-  large_array::lazy_iterator  lit    = ary.lazy_iterator_all();
-  large_array::iterator       stl_it = ary.begin();
+  eager_iterator it     = ary.iterator_all<eager_iterator>();
+  lazy_iterator  lit    = ary.iterator_all<lazy_iterator>();
+  stl_iterator   stl_it = ary.iterator_all<stl_iterator>();
   int count = 0;
   for( ; it.next(); ++stl_it) {
     ASSERT_TRUE(lit.next());
@@ -172,6 +177,23 @@ TEST_P(HashArray, Iterator) {
   }
   EXPECT_FALSE(lit.next());
   EXPECT_EQ(ary.end(), stl_it);
+  EXPECT_EQ(map.size(), (size_t)count);
+
+  count               = 0;
+  const int nb_slices = 10;
+  for(int i = 0; i < nb_slices; ++i) {
+    SCOPED_TRACE(::testing::Message() << "slice:" << i << " nb_slices:" << nb_slices);
+    region_iterator rit = ary.iterator_slice<region_iterator>(i, 10);
+    while(rit.next()) {
+      ASSERT_GE(rit.oid(), rit.start());
+      ASSERT_LT(rit.oid(), rit.end());
+      mer_map::const_iterator mit = map.find(rit.key());
+      ASSERT_NE(map.end(), mit);
+      EXPECT_EQ(mit->first, rit.key());
+      EXPECT_EQ(mit->second, rit.val());
+      ++count;
+    }
+  }
   EXPECT_EQ(map.size(), (size_t)count);
 
   int i = 0;

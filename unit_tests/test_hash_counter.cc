@@ -8,6 +8,7 @@
 namespace {
 using jellyfish::mer_dna;
 typedef jellyfish::cooperative::hash_counter<mer_dna> hash_counter;
+typedef hash_counter::array::lazy_iterator lazy_iterator;
 
 class hash_adder : public thread_exec {
   typedef std::map<mer_dna, uint64_t> map;
@@ -61,7 +62,7 @@ TEST(HashCounterCooperative, SizeDouble) {
   hash_adder adder(hash, nb, nb_threads);
   adder.exec_join(nb_threads);
 
-  hash_counter::array::eager_iterator it = hash.ary()->iterator_all();
+  lazy_iterator it = hash.ary()->iterator_all<lazy_iterator>();
   while(it.next())
     EXPECT_EQ(adder.val(it.key()), it.val());
   EXPECT_LT((size_t)(nb_threads * nb), hash.size());

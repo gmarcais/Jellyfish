@@ -31,14 +31,16 @@ namespace jellyfish{ namespace cooperative {
 template<typename Key, typename word = uint64_t, typename atomic_t = ::atomic::gcc, typename mem_block_t = ::allocators::mmap>
 class hash_counter {
 public:
-  typedef large_hash::array<Key, word, atomic_t, mem_block_t> array;
-  typedef typename array::key_type        key_type;
-  typedef typename array::mapped_type     mapped_type;
-  typedef typename array::value_type      value_type;
-  typedef typename array::reference       reference;
-  typedef typename array::const_reference const_reference;
-  typedef typename array::pointer         pointer;
-  typedef typename array::const_pointer   const_pointer;
+  typedef typename large_hash::array<Key, word, atomic_t, mem_block_t> array;
+  typedef typename array::key_type                                     key_type;
+  typedef typename array::mapped_type                                  mapped_type;
+  typedef typename array::value_type                                   value_type;
+  typedef typename array::reference                                    reference;
+  typedef typename array::const_reference                              const_reference;
+  typedef typename array::pointer                                      pointer;
+  typedef typename array::const_pointer                                const_pointer;
+  typedef typename array::eager_iterator                               eager_iterator;
+  typedef typename array::lazy_iterator                                lazy_iterator;
 
 protected:
   array*                  ary_;
@@ -113,8 +115,12 @@ protected:
       return true;
 
     // Copy data from old to new
-    uint16_t                       id = atomic_t::fetch_add(&size_thid_, (uint16_t)1);
-    typename array::eager_iterator it = ary_->iterator_slice(id, nb_threads_);
+    uint16_t       id = atomic_t::fetch_add(&size_thid_, (uint16_t)1);
+    // Why doesn't the following work? Seems like a bug to
+    // me. Equivalent call works in test_large_hash_array. Or am I
+    // missing something?
+    // eager_iterator it = ary_->iterator_slice<eager_iterator>(id, nb_threads_);
+    eager_iterator it = ary_->eager_slice(id, nb_threads_);
     while(it.next())
       my_ary->add(it.key(), it.val());
 
