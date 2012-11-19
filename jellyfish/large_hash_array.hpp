@@ -62,20 +62,29 @@ class array {
 #define fmask (std::numeric_limits<word>::max())
 
 public:
-  typedef word              data_word;
+  typedef word                             data_word;
   typedef typename Offsets<word>::offset_t offset_t;
-  typedef typename offset_t::key key_offsets;
-  typedef typename offset_t::val val_offsets;
+  typedef typename offset_t::key           key_offsets;
+  typedef typename offset_t::val           val_offsets;
 
-  typedef Key                 key_type;
-  typedef uint64_t            mapped_type;
+  typedef Key                          key_type;
+  typedef uint64_t                     mapped_type;
   typedef std::pair<Key&, mapped_type> value_type;
-  typedef stl_iterator<array> iterator;
-  typedef stl_iterator<array> const_iterator;
-  typedef value_type&         reference;
-  typedef const value_type&   const_reference;
-  typedef value_type*         pointer;
-  typedef const value_type*   const_pointer;
+  typedef stl_iterator_base<array>     iterator;
+  typedef stl_iterator_base<array>     const_iterator;
+  typedef value_type&                  reference;
+  typedef const value_type&            const_reference;
+  typedef value_type*                  pointer;
+  typedef const value_type*            const_pointer;
+
+  typedef eager_iterator_base<array>  eager_iterator;
+  typedef lazy_iterator_base<array>   lazy_iterator;
+  typedef region_iterator_base<array> region_iterator;
+
+  /// Status of a (key,value) pair. LBSET means that the large bit is
+  /// set. Hence, it contains a pointer back to the original key and a
+  /// large value.
+  enum key_status { FILLED, EMPTY, LBSET};
 
 protected:
   uint16_t                 lsize_; // log of size
@@ -189,6 +198,51 @@ public:
   void clear() {
     memset(data_, '\0', mem_block_.get_size());
   }
+
+  /* The storage of the hash is organized in "blocks". A (key,value)
+   * pair always start at bit 0 of the block. The following methods
+   * work with the blocks of the hash.
+   */
+
+  /**
+   * Number of blocks that fit in a given amount of memory. Given an
+   * amount of memory mem, it returns the number of blocks that fit
+   * into mem and the actual memory these many blocks use.
+   */
+  std::pair<size_t, size_t> blocks_in_memory(size_t mem) const { return offsets_.blocks_in_memory(mem); }
+
+
+  /**
+   * Convert coordinate from (start, blen) given in blocks to
+   * coordinate in char* and length in bytes. It also makes sure that
+   * the pointer and length returned do not go beyond allocated
+   * memory.
+   */
+  void block_to_ptr(const size_t start, const size_t blen,
+                    char **start_ptr, size_t *memlen) const {
+    *start_ptr    = (char *)(data_ + start * offsets_.get_block_word_len());
+    char *end_ptr = (char *)mem_block_.get_ptr() + mem_block_.get_size();
+
+    if(*start_ptr >= end_ptr) {
+      *memlen = 0;
+      return;
+    }
+    *memlen = blen * offsets_.get_block_word_len() * sizeof(word);
+    if(*start_ptr + *memlen > end_ptr)
+      *memlen = end_ptr - *start_ptr;
+  }
+
+  /**
+   * Zero out blocks in [start, start+length), where start and
+   * length are given in number of blocks.
+   **/
+  void zero_blocks(const size_t start, const size_t length) {
+    char   *start_ptr;
+    size_t  memlen;
+    block_to_ptr(start, length, &start_ptr, &memlen);
+    memset(start_ptr, '\0', memlen);
+  }
+
 
   /**
    * Use hash values as counters.
@@ -341,97 +395,22 @@ public:
   const_iterator end() { return const_iterator(); }
   const_iterator end() const { return const_iterator(); }
 
-  class eager_iterator {
-  protected:
-    const array	*ary_;
-    size_t	 start_id_, id_, end_id_;
-
-    key_type    key_;
-    mapped_type val_;
-
-  public:
-    eager_iterator(const array *ary, size_t start, size_t end) :
-      ary_(ary),
-      start_id_(start > ary->size() ? ary->size() : start),
-      id_(start),
-      end_id_(end > ary->size() ? ary->size() : end)
-    {}
-
-    uint64_t start() const { return start_id_; }
-    uint64_t end() const { return end_id_; }
-    const key_type& key() const { return key_; }
-    const mapped_type& val() const { return val_; }
-    size_t id() const { return id_ - 1; }
-
-    bool next() {
-      key_status success = EMPTY;
-      while(success != FILLED && id_ < end_id_)
-        success = ary_->get_key_val_at_id(id_++, key_, val_);
-      if(success == FILLED)
-        key_.set_bits(0, ary_->lsize_, ary_->hash_inverse_matrix_.times(key_));
-
-      return success == FILLED;
-    }
-  };
-  friend class eager_iterator;
-  eager_iterator iterator_all() const { return eager_iterator(this, 0, size()); }
-  eager_iterator iterator_slice(size_t slice_number, size_t number_of_slice) const {
-    std::pair<size_t, size_t> res = slice(slice_number, number_of_slice, size());
-    return eager_iterator(this, res.first, res.second);
+/// Get a slice of an array as an iterator
+  template<typename Iterator>
+  Iterator iterator_slice(size_t index, size_t nb_slices) const {
+    std::pair<size_t, size_t> res = slice(index, nb_slices, size());
+    return Iterator(this, res.first, res.second);
   }
 
-  class lazy_iterator {
-  protected:
-    const array    *ary_;
-    size_t          start_id_, id_, end_id_;
-    const word*     w_;
-    const offset_t *o_;
+  template<typename Iterator>
+  Iterator iterator_all() const { return iterator_slice<Iterator>(0, 1); }
 
-    bool        reversed_key_;
-    key_type    key_;
-
-  public:
-    lazy_iterator(const array *ary, size_t start, size_t end) :
-      ary_(ary),
-      start_id_(ary ? (start > ary->size() ? ary->size() : start) : 0),
-      id_(start),
-      end_id_(ary ? (end > ary->size() ? ary->size() : end) : 0),
-      w_(0), o_(0),
-      reversed_key_(false)
-    {}
-
-    uint64_t start() const { return start_id_; }
-    uint64_t end() const { return end_id_; }
-    const key_type& key() {
-      if(!reversed_key_) {
-        key_.set_bits(0, ary_->lsize_, ary_->hash_inverse_matrix_.times(key_));
-        reversed_key_ = true;
-      }
-      return key_;
-    }
-    mapped_type val() const {
-      return ary_->get_val_at_id(id_ - 1, w_, o_, true, false);
-    }
-    size_t id() const { return id_ - 1; }
-
-    bool next() {
-      reversed_key_      = false;
-      key_status success = EMPTY;
-      while(success != FILLED && id_ < end_id_)
-        success = ary_->get_key_at_id(id_++, key_, &w_, &o_);
-
-      return success == FILLED;
-    }
-  };
-  friend class lazy_iterator;
-  lazy_iterator lazy_iterator_all() const { return lazy_iterator(this, 0, size()); }
-  lazy_iterator lazy_iterator_slice(size_t slice_number, size_t number_of_slice) const {
-    std::pair<size_t, size_t> res = slice(slice_number, number_of_slice, size());
-    return lazy_iterator(this, res.first, res.second);
+  // See hash_counter.hpp for why we added this method. It should not
+  // be needed, but I can't get the thing to compile without :(.
+  eager_iterator eager_slice(size_t index, size_t nb_slices) const {
+    return iterator_slice<eager_iterator>(index, nb_slices);
   }
 
-
-protected:
   // Claim a key with the large bit not set. I.e. first entry for a key.
   //
   // id is input/output. Equal to hash & size_maks on input. Equal to
@@ -668,8 +647,6 @@ protected:
     return nval & (~(mask >> shift));
   }
 
-
-  enum key_status { FILLED, EMPTY, LBSET};
   // Return the key and value at position id. If the slot at id is
   // empty or has the large bit set, returns false. Otherwise, returns
   // the key and the value is the sum of all the entries in the hash
@@ -779,6 +756,9 @@ protected:
   word get_val_at_id(const size_t id, const word* w, const offset_t* o, const bool reprobe = true,
                      const bool carry_bit = false) const {
     word            val = 0;
+    if(val_len() == 0)
+      return val;
+
     // First part of value
     const word* kvw = w + o->val.woff;
     val = ((*kvw) & o->val.mask1) >> o->val.boff;

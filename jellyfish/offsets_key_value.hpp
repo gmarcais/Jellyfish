@@ -125,11 +125,12 @@ public:
     return (((uint64_t)1) << (large ? lval_len_ : val_len_)) - 1;
   }
 
-  // Discretize and round down number of entries according to length
-  // of a block. Return in blocks the number of blocks.
-  size_t floor_block(size_t entries, size_t &blocks) const {
-    blocks = entries / bld;
-    return block.len * blocks;
+  /// Number of blocks that fit in a given amount of memory. Given an
+  /// amount of memory mem, it returns the number of blocks that fit
+  /// into mem and the actual memory this many block use.
+  std::pair<size_t, size_t> blocks_in_memory(size_t mem) const {
+    size_t blocks = mem / bld;
+    return std::make_pair(blocks, blocks * block.len);
   }
 
   word *word_offset(size_t id, const offset_t **o, const offset_t **lo, word * const base) const {
