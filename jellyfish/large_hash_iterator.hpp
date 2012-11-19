@@ -143,7 +143,7 @@ public:
     ary_(ary), mask_(ary->size() - 1),
     start_id_(ary ? std::min(start, ary->size()) : 0),
     end_id_(ary ? std::min(end, ary->size()) : 0),
-    mid_(ary ? end_id_ - start_id_ + std::min(ary->max_reprobe_offset(), ary->size() - (end_id_ - start_id_)) : 0),
+    mid_(ary ? end_id_ - start_id_ + ary->max_reprobe_offset() : 0),
     oid_(end_id_), id_(0), w_(0), o_(0),
     reversed_key_(false)
   {}
@@ -158,6 +158,9 @@ public:
   mapped_type val() const {
     return ary_->get_val_at_id(id(), w_, o_, true, false);
   }
+  uint64_t pos() const{
+    return oid_;
+  }
 
   size_t start() { return start_id_; }
   size_t end() { return end_id_; }
@@ -168,13 +171,17 @@ public:
   size_t oid() const { return oid_; }
 
   bool next() {
-    reversed_key_ = false;
-    oid_          = end_id_;
-    while((oid_ < start_id_ || oid_ >= end_id_) && id_ < mid_)
-      if(ary_->get_key_at_id((start_id_ + id_++) & mask_, key_, &w_, &o_) == array::FILLED)
+    reversed_key_  = false;
+    bool found_oid = false;
+    while(!found_oid && id_ < mid_) {
+      if(ary_->get_key_at_id((start_id_ + id_++) & mask_, key_, &w_, &o_) == array::FILLED) {
         oid_ = key_.get_bits(0, ary_->lsize());
+        found_oid = oid_ >= start_id_ && oid_ < end_id_ &&
+          oid_ <= start_id_ + id_ && start_id_ + id_ < oid_ + ary_->max_reprobe_offset();
+      }
+    }
 
-    return oid_ >= start_id_ && oid_ < end_id_;
+    return found_oid;
   }
 };
 

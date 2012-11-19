@@ -180,10 +180,10 @@ TEST_P(HashArray, Iterator) {
   EXPECT_EQ(map.size(), (size_t)count);
 
   count               = 0;
-  const int nb_slices = 10;
+  const int nb_slices = 1;
   for(int i = 0; i < nb_slices; ++i) {
     SCOPED_TRACE(::testing::Message() << "slice:" << i << " nb_slices:" << nb_slices);
-    region_iterator rit = ary.iterator_slice<region_iterator>(i, 10);
+    region_iterator rit = ary.iterator_slice<region_iterator>(i, nb_slices);
     while(rit.next()) {
       ASSERT_GE(rit.oid(), rit.start());
       ASSERT_LT(rit.oid(), rit.end());

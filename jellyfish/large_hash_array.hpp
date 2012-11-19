@@ -199,6 +199,51 @@ public:
     memset(data_, '\0', mem_block_.get_size());
   }
 
+  /* The storage of the hash is organized in "blocks". A (key,value)
+   * pair always start at bit 0 of the block. The following methods
+   * work with the blocks of the hash.
+   */
+
+  /**
+   * Number of blocks that fit in a given amount of memory. Given an
+   * amount of memory mem, it returns the number of blocks that fit
+   * into mem and the actual memory these many blocks use.
+   */
+  std::pair<size_t, size_t> blocks_in_memory(size_t mem) const { return offsets_.blocks_in_memory(mem); }
+
+
+  /**
+   * Convert coordinate from (start, blen) given in blocks to
+   * coordinate in char* and length in bytes. It also makes sure that
+   * the pointer and length returned do not go beyond allocated
+   * memory.
+   */
+  void block_to_ptr(const size_t start, const size_t blen,
+                    char **start_ptr, size_t *memlen) const {
+    *start_ptr    = (char *)(data_ + start * offsets_.get_block_word_len());
+    char *end_ptr = (char *)mem_block_.get_ptr() + mem_block_.get_size();
+
+    if(*start_ptr >= end_ptr) {
+      *memlen = 0;
+      return;
+    }
+    *memlen = blen * offsets_.get_block_word_len() * sizeof(word);
+    if(*start_ptr + *memlen > end_ptr)
+      *memlen = end_ptr - *start_ptr;
+  }
+
+  /**
+   * Zero out blocks in [start, start+length), where start and
+   * length are given in number of blocks.
+   **/
+  void zero_blocks(const size_t start, const size_t length) {
+    char   *start_ptr;
+    size_t  memlen;
+    block_to_ptr(start, length, &start_ptr, &memlen);
+    memset(start_ptr, '\0', memlen);
+  }
+
+
   /**
    * Use hash values as counters.
    *
@@ -711,6 +756,9 @@ public:
   word get_val_at_id(const size_t id, const word* w, const offset_t* o, const bool reprobe = true,
                      const bool carry_bit = false) const {
     word            val = 0;
+    if(val_len() == 0)
+      return val;
+
     // First part of value
     const word* kvw = w + o->val.woff;
     val = ((*kvw) & o->val.mask1) >> o->val.boff;

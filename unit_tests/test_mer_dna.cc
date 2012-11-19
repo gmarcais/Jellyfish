@@ -181,6 +181,38 @@ TEST(MerDNASimple, Comparators) {
   EXPECT_EQ(2, ++map[cmc]);
   EXPECT_EQ(2, ++map[cmg]);
   EXPECT_EQ(2, ++map[cmt]);
+
+  mer_dna m1, m2;
+  for(int i = 0; i < 1000; ++i) {
+    m1.randomize();
+    m2.randomize();
+    SCOPED_TRACE(::testing::Message() << "m1:" << m1 << " m2:" << m2);
+    ASSERT_FALSE(m1 == m2); // Very small probability to fail (k == 151)
+
+    EXPECT_TRUE(m1 == m1);
+    EXPECT_FALSE(m1 < m1);
+    EXPECT_FALSE(m1 > m1);
+    EXPECT_TRUE(m1 <= m1);
+    EXPECT_TRUE(m1 >= m1);
+
+    EXPECT_TRUE(m2 == m2);
+    EXPECT_FALSE(m2 < m2);
+    EXPECT_FALSE(m2 > m2);
+    EXPECT_TRUE(m2 <= m2);
+    EXPECT_TRUE(m2 >= m2);
+
+    EXPECT_EQ(m1.to_str().compare(m2.to_str()) < 0, m1 < m2); // Comparison is lexicographic
+
+    EXPECT_TRUE(m1 < m2 || m2 < m1);
+    EXPECT_TRUE(m1 <= m2 || m2 <= m1);
+    EXPECT_FALSE(m1 <= m2 && m2 <= m1);
+    EXPECT_TRUE(m1 > m2 || m2 > m1);
+    EXPECT_TRUE(m1 >= m2 || m2 >= m1);
+    EXPECT_FALSE(m1 >= m2 && m2 >= m1);
+
+    EXPECT_NE(m1 < m2, m1 >= m2);
+    EXPECT_NE(m1 < m2, m1 > m2);
+  }
 }
 
 // Value Type Container class

@@ -223,6 +223,15 @@ public:
     }
     return false;
   }
+  bool operator<=(const mer_base& rhs) const {
+    return *this < rhs || *this == rhs;
+  }
+  bool operator>(const mer_base& rhs) const {
+    return !(*this <= rhs);
+  }
+  bool operator>=(const mer_base& rhs) const {
+    return !(*this < rhs);
+  }
 
   base_proxy<base_type> base(unsigned int i) { return base_proxy<base_type>(_data + i / wbases, 2 * (i % wbases)); }
 
