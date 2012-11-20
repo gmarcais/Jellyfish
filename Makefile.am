@@ -247,8 +247,7 @@ tests/parsers.log: tests/generate_sequence.log
 TESTS += unit_tests/unit_tests.sh
 check_PROGRAMS += bin/test_all
 
-bin_test_all_SOURCES = unit_tests/test_main.cc				\
-	               unit_tests/test_misc.cc				\
+bin_test_all_SOURCES = unit_tests/test_main.cc unit_tests/test_misc.cc	\
 	               unit_tests/test_offsets_key_value.cc		\
 	               unit_tests/test_simple_circular_buffer.cc	\
 	               unit_tests/test_rectangular_binary_matrix.cc	\
@@ -258,7 +257,8 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_file_header.cc			\
 	               unit_tests/test_mer_iterator.cc			\
 	               unit_tests/test_hash_counter.cc			\
-	               unit_tests/test_mer_heap.cc
+	               unit_tests/test_mer_heap.cc			\
+	               unit_tests/test_bstream.cc
 
 bin_test_all_SOURCES += jellyfish/rectangular_binary_matrix.cc		\
                         jellyfish/mer_dna.cc jellyfish/storage.cc	\
