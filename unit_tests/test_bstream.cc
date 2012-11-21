@@ -63,7 +63,12 @@ TEST(Bstream, WriteRead) {
     m2.set_bits(bits, rlen, ibs.read(rlen));
     bits += rlen;
   } while(bits < 2 * m2.k());
+  ibs.align();
 
   EXPECT_EQ(m, m2);
+  EXPECT_TRUE(ibs.stream().good());
+
+  ibs.read(1);
+  EXPECT_FALSE(ibs.stream().good());
 }
 }
