@@ -422,7 +422,7 @@ public:
     base_type res = _data[q] >> r;
     if(len > wbits - r)
       res |= _data[q + 1] << (wbits - r);
-    return res & (((base_type)1 << len) - 1);
+    return res & (len < wbits ? ((base_type)1 << len) - 1 : (base_type)-1);
   }
 
   // Set bits [start, start+len). Same restriction as get_bits.
@@ -437,7 +437,7 @@ public:
       mask = ((base_type)1 << (len - left)) - 1;
       _data[q + 1] = (_data[q + 1] & ~mask) | (v >> (left));
     } else {
-      mask = (((base_type)1 << len) - 1) << r;
+      mask = (len < wbits ? ((base_type)1 << len) - 1 : (base_type)-1) << r;
       _data[q] = (_data[q] & ~mask) | (v << r);
     }
   }

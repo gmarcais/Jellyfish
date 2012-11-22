@@ -42,10 +42,12 @@ TEST(Bstream, WriteRead) {
 
   std::ostringstream            os;
   jellyfish::obstream<uint64_t> obs(os);
+  std::vector<size_t> rlens;
 
   size_t bits = 0;
   do {
-    size_t rlen = std::min(random_bits(6), 2 * mer_dna::k() - bits);
+    size_t rlen = std::min(random_bits(6) + 1, 2 * mer_dna::k() - bits);
+    rlens.push_back(rlen);
     obs.write(m.get_bits(bits, rlen), rlen);
     bits += rlen;
   } while(bits < 2 * m.k());
@@ -58,8 +60,10 @@ TEST(Bstream, WriteRead) {
 
   mer_dna m2;
   bits = 0;
+  int i = 0;
   do {
-    size_t rlen = random_bits(6);
+    //    size_t rlen = std::min(random_bits(6) + 1, 2 * mer_dna::k() - bits);
+    size_t rlen = rlens[i++];
     m2.set_bits(bits, rlen, ibs.read(rlen));
     bits += rlen;
   } while(bits < 2 * m2.k());
@@ -68,7 +72,7 @@ TEST(Bstream, WriteRead) {
   EXPECT_EQ(m, m2);
   EXPECT_TRUE(ibs.stream().good());
 
-  ibs.read(1);
+  ibs.read(64);
   EXPECT_FALSE(ibs.stream().good());
 }
 }

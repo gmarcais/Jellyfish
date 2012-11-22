@@ -215,6 +215,19 @@ TEST(MerDNASimple, Comparators) {
   }
 }
 
+TEST(MerDNASimple, SetGet) {
+  mer_dna::k(150);
+
+  mer_dna m;
+  for(int i = 0; i < 2 * mer_dna::k(); ++i) {
+    for(int j = 0; j < std::min(8 * sizeof(mer_dna::base_type), (size_t)(2 * mer_dna::k() - i)); ++j) {
+      mer_dna::base_type w = ::random_bits(j);
+      m.set_bits(0, j, w);
+      EXPECT_EQ(w, m.get_bits(0, j));
+    }
+  }
+}
+
 // Value Type Container class
 template <typename T, int N>
 class VTC {
@@ -380,6 +393,7 @@ TYPED_TEST(MerDNA, GetBits) {
     EXPECT_EQ(y, m.get_bits(start, len));
   }
 }
+
 TYPED_TEST(MerDNA, GetBases) {
   typename TypeParam::Type m(this->GetParam());
 

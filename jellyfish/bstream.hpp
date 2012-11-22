@@ -37,13 +37,13 @@ public:
 
   /// Write at most a word. Must satisfy len < bword
   void write(word w, size_t len) {
-    w      &= ((word)1 << len) - 1;
+    w      &= len < bword ? ((word)1 << len) - 1 : (word)-1;
     buffer |= w << boff;
     boff   += len;
     if(boff >= bword) {
       os_->write((const char*)&buffer, sizeof(word));
       boff   -= bword;
-      buffer  = w >> (len - boff);
+      buffer  = (len - boff < bword) ? w >> (len - boff) : 0;
     }
   }
 
@@ -81,12 +81,17 @@ public:
       size_t used   = len - bleft;
       res          |= buffer << bleft;
       bleft         = bword - used;
-      buffer      >>= used;
+      buffer        = used < bword ? buffer >> used : 0;
     } else {
-      buffer >>= len;
-      bleft   -= len;
+      if(len < bword) {
+        buffer >>= len;
+        bleft   -= len;
+      } else {
+        buffer = 0;
+        bleft  = 0;
+      }
     }
-    return res & ((word)1 << len) - 1;
+    return res & (len < bword ? ((word)1 << len) - 1 : (word)-1);
   }
 
   /// Read and ignore up to next word boundary.
