@@ -1,4 +1,4 @@
-/*  This file is part of Jellyfish.
+ /*  This file is part of Jellyfish.
 
     Jellyfish is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
 #include <jellyfish/atomic_gcc.hpp>
 #include <jellyfish/misc.hpp>
 #include <jellyfish/rectangular_binary_matrix.hpp>
+#include <jellyfish/bstream.hpp>
 
 namespace jellyfish {
 namespace compacted_hash {
@@ -32,108 +33,200 @@ namespace compacted_hash {
 /// binary part of the file. The header parsing is not done.
 
 /// On disk format is bit packed. Every block starts aligned on a word
-/// boundary. It contains an absolute offset corresponding to the
-/// offset in the original hash table, written as a word (default to
-/// uint64_t). It is followed by a list of (short key, relative
-/// offset, value). The short key is only the higher bits of the key
-/// stored in the hash. The offset is the relative offset since the
-/// previous key. Value is the value. These triplets are bit packed.
+/// boundary. It contains an id corresponding to the position in the
+/// original hash table, written as a word (default to uint64_t). It
+/// is followed by a list of (short key, offset, value). The short key
+/// is only the higher bits of the key stored in the hash. The offset
+/// is the change in position since the previous key. Value is the
+/// value. These triplets are bit packed.
 ///
 /// Each block contains the same number of triplets and hence every
-/// block has the same length. The relative offset should use just
-/// enough bits to encode the maximum gap of offsets in the hash
-/// table.
-
+/// block has the same length. 
+///
+/// An offset of 0 is meaningful (the two mers hashed to the same
+/// position) and is treated normally. An offset equal to the max
+/// value (field set to all 1s) has a special meaning. In that case,
+/// there is no key and the key field is used to encode a larger
+/// offset. The actual offset is the value of the offset field plus
+/// what is stored in the first word of the key field (or part of the
+/// word if the key field is smaller than a word).
+///
+/// The offset stored in the key field of all 1s is special: it is
+/// used as a end of stream marker. The last word in the stream is
+/// padded with 1s. The end of the stream is detected either by an EOR
+/// of a maximum offset stored in the key field.
+///
 /// Key is assumed to have the method 'word get_bits(uint start, uint
 /// len)' (see mer_dna.hpp).
-template<typename Key, typename Val = uint64_t, typename word = uint64_t>
-class writer {
-  obstream<word> os_;
+
+template<typename word>
+struct base {
   const uint16_t key_len_, short_key_len_, off_len_, val_len_;
   const uint16_t block_word_len_, block_len_;
-  uint16_t       index_;        // triplet index in block
-  word           offset_;       // current absolute offset
+  const word     max_offset_;     // special treatment if offset equal to max
+  const word     max_key_offset_; // maximum offset that can be encoded in key field
 
   static const size_t bword = sizeof(word) * 8;
 
+  base(uint16_t key_len, // Length of key
+       uint16_t short_key_len, // Length of short key (i.e. minus implied by position)
+       uint16_t off_len, // offset length. off_len <= (key_len - short_key_len)
+       uint16_t val_len, // Length of value in bits
+       uint16_t approx_block_len = 1024) : // Approximative number of triplets per block
+    key_len_(key_len),
+    short_key_len_(short_key_len),
+    off_len_(std::min(key_len_ - short_key_len_, (int)off_len)),
+    val_len_(val_len),
+    block_word_len_(approx_block_len * (short_key_len_ + off_len_ + val_len_) / sizeof(word)),
+    block_len_(block_word_len_ * sizeof(word) / (short_key_len_ + off_len_ + val_len_)),
+    max_offset_(bitmask<word>(off_len_)),
+    max_key_offset_(bitmask<word>(short_key_len_))
+  {}
+
+  uint16_t key_len() const { return key_len_; }
+  uint16_t short_key_len() const { return short_key_len_; }
+  uint16_t off_len() const { return off_len_; }
+  uint16_t val_len() const { return val_len_; }
+  uint16_t block_word_len() const { return block_word_len_; }
+  uint16_t block_len() const { return block_len_; }
+  word max_offset() const { return max_offset_; }
+  word max_key_offset() const { return max_key_offset_; }
+};
+template<typename word>
+const size_t base<word>::bword;
+
+template<typename Key, typename Val = uint64_t, typename word = uint64_t>
+class writer : public base<word> {
+  typedef base<word> super;
+
+  obstream<word> os_;
+  uint16_t       index_;          // triplet index in block
+  word           id_;             // current position in hash
+
 public:
   writer(std::ostream& os, // Stream to write to
-         uint16_t key_len, // Length of key
-         uint16_t short_key_len, // Length of short key (i.e. minus implied by position)
-         uint16_t off_len, // Relative offset length. off_len <= (key_len - short_key_len)
-         uint16_t val_len, // Length of value in bits
-         uint16_t approx_block_len = 1024) : // Approximative number of triplets per block
-    os_(os), key_len_(key_len), short_key_len_(short_key_len), off_len_(off_len), val_len_(val_len),
-    block_word_len_(approx_block_len * (short_key_len + off_len + val_len) / sizeof(words)),
-    block_len_(block_word_len_ * size(words) / (short_key_len + off_len + val_len)),
-    index_(block_len_), offset_(0)
+         uint16_t key_len, uint16_t short_key_len, uint16_t off_len, uint16_t val_len,
+         uint16_t approx_block_len = 1024) :
+    super(key_len, short_key_len, off_len, val_len, approx_block_len),
+    os_(os),
+    index_(super::block_len_),
+    id_(0)
   { }
 
-  /// Write a (key, off, val) triplet. It is assumed that the offset
-  /// is larger than the current offset_.
-  void write(const Key& key, Val& val, word offset) {
-    if(index == block_len_) {
-      os_.align();
-      os_.write(offset, bword);
-      offset_ = offset;
-      index = 0;
+  ~writer() {
+    os_.one_pad();
+  }
+
+  /// Write a (key, off, val) triplet. It is assumed that the id
+  /// is not less than the current id_.
+  void write(const Key& key, Val val, word id) {
+    while(true) {
+      if(index_ < super::block_len_) {
+        ++index_;
+      } else {
+        id_    = id;
+        index_ = 0;
+        os_.align();
+        os_.write(id_, super::bword);
+        break;
+      }
+      if(id < id_ + super::max_offset_)
+        break;
+
+      // Offset to large to encode in the offset field. Special treatment: use key field.
+      word aoffset = std::min(super::max_key_offset_ - 1, id - id_ - super::max_offset_);
+      os_.write(aoffset, std::min(super::bword, (size_t)super::short_key_len_));
+      for(uint16_t i = super::bword; i < super::short_key_len_; i += super::bword) {
+        size_t len = std::min((size_t)(super::short_key_len_ - i), super::bword);
+        os_.write((word)0, len);
+      }
+      os_.write(super::max_offset_, super::off_len_);
+      os_.write((word)0, super::val_len_);
+
+      id_ += aoffset + super::max_offset_;
     }
 
-    for(uint16_t i = key_len - short_key_len; i < key_len; i += bword) {
-      size_t len = std::min((size_t)(key_len - i), bword);
+    for(uint16_t i = super::key_len_ - super::short_key_len_; i < super::key_len_; i += super::bword) {
+      size_t len = std::min((size_t)(super::key_len_ - i), super::bword);
       os_.write(key.get_bits(i, len), len);
     }
-    os_.write(offset - offset_, off_len_);
-    os_.write(val, val_len_);
-    offset_ = offset;
-    ++index;
+    os_.write(id - id_, super::off_len_);
+    os_.write(val, super::val_len_);
+    id_ = id;
   }
 };
 
 template<typename Key, typename Val = uint64_t, typename word = uint64_t>
-class stream_iterator {
-public:
-  ibstream<word> is_;
-  const uint16_t key_len_, short_key_len_, off_len_, val_len_;
-  const uint16_t block_word_len_, block_len_;
-  uint16_t       index_;        // triplet index in block
-  word           offset_;       // current absolute offset
+class stream_iterator : public base<word> {
+  typedef base<word> super;
 
-  Key            k;
-  Val            v;
-
-  static const size_t bword = sizeof(word) * 8;
+  ibstream<word>          is_;
+  uint16_t                index_; // triplet index in block
+  word                    id_;  // current position
+  RectangularBinaryMatrix inv_;
+  Key                     key_;
+  Val                     val_;
+  bool                    reversed_key_;
 
 public:
-  stream_iterator(std::istream& os, // Stream to write to
-                  uint16_t key_len, // Length of key
-                  uint16_t short_key_len, // Length of short key (i.e. minus implied by position)
-                  uint16_t off_len, // Relative offset length. off_len <= (key_len - short_key_len)
-                  uint16_t val_len, // Length of value in bits
-                  RectangularBinaryMatrix inv, // Inverse matrix to compute key
-                  uint16_t approx_block_len = 1024) : // Approximative number of triplets per block
-    os_(os), key_len_(key_len), short_key_len_(short_key_len), off_len_(off_len), val_len_(val_len),
-    block_word_len_(approx_block_len * (short_key_len + off_len + val_len) / sizeof(words)),
-    block_len_(block_word_len_ * size(words) / (short_key_len + off_len + val_len)),
-    index_(block_len_), offset_(0)
+  stream_iterator(std::istream& is, // Stream to write to
+                  uint16_t key_len, uint16_t short_key_len, uint16_t off_len, uint16_t val_len,
+                  RectangularBinaryMatrix inv, uint16_t approx_block_len = 1024) :
+    super(key_len, short_key_len, off_len, val_len, approx_block_len),
+    is_(is),
+    index_(super::block_len_),
+    id_(0),
+    inv_(inv),
+    reversed_key_(false)
   { }
 
+  const Key& key() {
+    if(!reversed_key_) {
+      key_.set_bits(0, super::key_len_ - super::short_key_len_, inv_.times(key_));
+      reversed_key_ = true;
+    }
+    return key_;
+  }
+  Val val() const { return val_; }
+  size_t id() const { return id_; }
+
   bool next() {
-    if(index_ == block_len_) {
-      is_.align();
-      offset_ = is_.read(bword);
-      index_ = 0;
+    while(true) {
+      if(index_ < super::block_len_) {
+        ++index_;
+      } else {
+        is_.align();
+        id_ = is_.read(super::bword);
+        index_ = 0;
+      }
+
+      reversed_key_ = false;
+      for(uint16_t i = super::key_len_ - super::short_key_len_; i < super::key_len_; i += super::bword) {
+        size_t len = std::min((size_t)(super::key_len_ - i), super::bword);
+        word w = is_.read(len);
+        key_.set_bits(i, len, w);
+      }
+      word offset = is_.read(super::off_len_);
+      val_        = is_.read(super::val_len_);
+
+      if(!is_.stream().good())
+        return false;
+
+      if(offset < super::max_offset_) {
+        id_ += offset;
+        key_.set_bits(0, super::key_len_ - super::short_key_len_, id_);
+        return true;
+      }
+
+      // offset is == to max_offset_. Special treatment
+      word aoffset = key_.get_bits(super::key_len_ - super::short_key_len_, std::min((size_t)super::short_key_len_, super::bword));
+      if(aoffset == super::max_key_offset_)
+        return false;
+      id_ += super::max_offset_ + aoffset;
     }
 
-    for(uint16_t i = key_len - short_key_len; i < key_len; i += bword) {
-      size_t len = std::min((size_t)(key_len - i), bword);
-      k.set_bits(i, len, is_.read(len));
-    }
-    offset += is_.read(off_len_);
-    k.set_bits(0, key_len - short_key_len, offset);
-    val = is_.read(val_len_);
-
-    return is_.stream.good();
+    // Never reached
+    return true;
   }
 };
 

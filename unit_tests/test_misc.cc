@@ -72,4 +72,20 @@ TEST(Slices, NonOverlapAll) {
     ASSERT_EQ(size, total);
   }
 }
+
+TEST(Shifts, LeftRight) {
+  for(uint64_t s = 0, m = 1; s < 65; ++s, m *= 2) {
+    uint64_t x = random_bits(64);
+    SCOPED_TRACE(::testing::Message() << "s:" << s << " m:" << m
+                 << " x:" << x);
+    EXPECT_EQ(m ? x / m : 0, jellyfish::rshift(x, s));
+    EXPECT_EQ(x * m, jellyfish::lshift(x, s));
+  }
+}
+
+TEST(BitMask, Create) {
+  for(uint64_t s = 0, m = 1; s < 65; ++s, m *= 2) {
+    EXPECT_EQ(m, jellyfish::bitmask<uint64_t>(s) + 1);
+  }
+}
 }

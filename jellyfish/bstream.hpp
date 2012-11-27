@@ -35,21 +35,33 @@ public:
 
   const std::ostream& stream() const { return *os_; }
 
-  /// Write at most a word. Must satisfy len < bword
+  /// Write at most a word. Must satisfy len <= bword
   void write(word w, size_t len) {
-    w      &= len < bword ? ((word)1 << len) - 1 : (word)-1;
+    static size_t written = 0;
+    w      &= bitmask<word>(len);
+    written += len;
     buffer |= w << boff;
     boff   += len;
     if(boff >= bword) {
       os_->write((const char*)&buffer, sizeof(word));
       boff   -= bword;
-      buffer  = (len - boff < bword) ? w >> (len - boff) : 0;
+      buffer  = rshift(w, len - boff);
     }
   }
 
   /// Align to the next word
   void align() {
     if(boff > 0) {
+      os_->write((const char*)&buffer, sizeof(word));
+      buffer = 0;
+      boff   = 0;
+    }
+  }
+
+  /// Pad stream with 1s until next word
+  void one_pad() {
+    if(boff > 0) {
+      buffer |= bitmask<word>(bword) << boff;
       os_->write((const char*)&buffer, sizeof(word));
       buffer = 0;
       boff   = 0;
@@ -72,7 +84,7 @@ public:
 
   const std::istream& stream() const { return *is_; }
 
-  /// Read at most a word. Must satisfy len < bword
+  /// Read at most a word. Must satisfy len <= bword
   word read(size_t len) {
     word res;
     res = buffer;
@@ -81,17 +93,15 @@ public:
       size_t used   = len - bleft;
       res          |= buffer << bleft;
       bleft         = bword - used;
-      buffer        = used < bword ? buffer >> used : 0;
+      buffer        = rshift(buffer, used);
     } else {
-      if(len < bword) {
-        buffer >>= len;
-        bleft   -= len;
-      } else {
-        buffer = 0;
-        bleft  = 0;
-      }
+      buffer  = rshift(buffer, len);
+      bleft  -= len;
     }
-    return res & (len < bword ? ((word)1 << len) - 1 : (word)-1);
+    static size_t _read = 0;
+
+    _read += len;
+    return res & bitmask<word>(len);
   }
 
   /// Read and ignore up to next word boundary.

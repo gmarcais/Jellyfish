@@ -92,6 +92,21 @@ inline uint64_t reverse_bits(uint64_t v) {
   return v;
 }
 
+template<typename T>
+T rshift(T x, size_t s) {
+  return s < (8 * sizeof(T)) ? x >> s : x ^ x;
+}
+
+template<typename T>
+T lshift(T x, size_t s) {
+  return s < (8 * sizeof(T)) ? x << s : x ^ x;
+}
+
+template<typename T>
+T bitmask(size_t len) {
+  return lshift<T>(static_cast<T>(1), len) - static_cast<T>(1);
+}
+
 uint64_t bogus_sum(void *data, size_t len);
 
 template <typename T>
