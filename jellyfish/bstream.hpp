@@ -58,6 +58,19 @@ public:
     }
   }
 
+  /// Align to the next byte
+  void byte_align() {
+    size_t remain = boff % 8;
+    if(remain) {
+      boff += 8 - remain;
+      if(boff == bword) {
+        os_->write((const char*)&buffer, sizeof(word));
+        buffer = 0;
+        boff   = 0;
+      }
+    }
+  }
+
   /// Pad stream with 1s until next word
   void one_pad() {
     if(boff > 0) {
