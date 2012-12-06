@@ -46,7 +46,7 @@ void __int128_ns::__print_bases(std::ostream& prefix, std::ostream& os,
   }
 }
 
-
+#ifndef HAVE_NUMERIC_LIMITS128
 const int std::numeric_limits<__int128>::digits;
 const int std::numeric_limits<__int128>::digits10;
 const bool std::numeric_limits<__int128>::is_signed;
@@ -90,4 +90,5 @@ const bool std::numeric_limits<unsigned __int128>::is_modulo;
 const bool std::numeric_limits<unsigned __int128>::traps;
 const bool std::numeric_limits<unsigned __int128>::tinyness_before;
 const std::float_round_style std::numeric_limits<unsigned __int128>::round_style;
+#endif 
 #endif
