@@ -1,4 +1,4 @@
-AC_INIT([jellyfish], [1.1.7], [gmarcais@umd.edu])
+AC_INIT([jellyfish], [1.1.8], [gmarcais@umd.edu])
 AC_CANONICAL_HOST
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([subdir-objects foreign parallel-tests color-tests])
@@ -50,6 +50,16 @@ AC_CHECK_HEADERS([execinfo.h])
 AC_CHECK_MEMBER([siginfo_t.si_int],
                 [AC_DEFINE([HAVE_SI_INT], [1], [Define if siginfo_t.si_int exists])],
                 [], [[#include <signal.h>]])
+
+# --enable-all-static
+# Do not use libtool if building all static
+AC_ARG_ENABLE([all-static],
+              [AC_HELP_STRING([--enable-all-static], [create statically linked executable])])
+STATIC_FLAGS=
+AS_IF([test x$enable_all_static = xyes],
+      [AC_SUBST([STATIC_FLAGS], ["-static -static-libstdc++"])])
+AM_CONDITIONAL([ALL_STATIC], [test x$enable_all_static = xyes])
+AC_MSG_NOTICE([enable_all_static is $enable_all_static])
 
 LT_INIT
 AC_OUTPUT

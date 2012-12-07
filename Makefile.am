@@ -8,38 +8,37 @@ pkgconfig_DATA = jellyfish-1.1.pc
 AM_LDFLAGS = -lpthread
 AM_CPPFLAGS = -Wall -Wnon-virtual-dtor -I$(top_srcdir)
 AM_CXXFLAGS = -g -O3
+LDADD = libjellyfish-1.1.la
 
 # What to build
-bin_PROGRAMS = bin/jellyfish
 lib_LTLIBRARIES = libjellyfish-1.1.la
+
+bin_PROGRAMS = bin/jellyfish
 check_PROGRAMS = bin/generate_sequence bin/test_double_fifo_input	\
                  bin/test_read_parser
+
 
 ########################################
 # Build Jellyfish the exec
 ########################################
-bin_jellyfish_SOURCES = jellyfish/jellyfish.cc jellyfish/stats_main.cc	\
-                        jellyfish/hash_merge.cc jellyfish/storage.cc	\
-                        jellyfish/misc.cc jellyfish/err.cc		\
-                        jellyfish/mer_counter.cc			\
-                        jellyfish/histo_main.cc jellyfish/dump_main.cc	\
-                        jellyfish/time.cc jellyfish/thread_exec.cc	\
-                        jellyfish/query_main.cc				\
-                        jellyfish/square_binary_matrix.cc		\
-                        jellyfish/dump_fastq_main.cc			\
-                        jellyfish/histo_fastq_main.cc			\
-                        jellyfish/cite.cc jellyfish/parse_dna.cc	\
-                        jellyfish/file_parser.cc			\
-                        jellyfish/parse_quake.cc			\
-                        jellyfish/parse_qual_dna.cc			\
-                        jellyfish/sequence_parser.cc			\
-                        jellyfish/seq_qual_parser.cc			\
-                        jellyfish/half.cpp				\
-                        jellyfish/hash_fastq_merge.cc jellyfish/dbg.cc	\
-                        jellyfish/mapped_file.cc			\
-                        jellyfish/backtrace.cc jellyfish/floats.cc	\
-                        jellyfish/allocators_mmap.cc			\
-                        jellyfish/yaggo.cpp jellyfish/dna_codes.cc
+bin_jellyfish_SOURCES = jellyfish/jellyfish.cc			\
+                        jellyfish/stats_main.cc			\
+                        jellyfish/hash_merge.cc			\
+                        jellyfish/mer_counter.cc		\
+                        jellyfish/histo_main.cc			\
+                        jellyfish/dump_main.cc			\
+                        jellyfish/query_main.cc			\
+                        jellyfish/dump_fastq_main.cc		\
+                        jellyfish/histo_fastq_main.cc		\
+                        jellyfish/cite.cc			\
+                        jellyfish/hash_fastq_merge.cc		\
+                        jellyfish/yaggo.cpp
+# bin_jellyfish_LDADD = libjellyfish-1.1.la
+
+bin_jellyfish_LDFLAGS = $(AM_LDFLAGS)
+if ALL_STATIC
+  bin_jellyfish_LDFLAGS += -all-static
+endif
 
 EXTRA_DIST += jellyfish/cite_cmdline.hpp jellyfish/query_cmdline.hpp	\
               jellyfish/hash_merge_cmdline.hpp				\
@@ -54,28 +53,29 @@ EXTRA_DIST += jellyfish/cite_cmdline.hpp jellyfish/query_cmdline.hpp	\
               jellyfish/simple_growing_array.hpp			\
               jellyfish/backtrace.hpp jellyfish/noop_dumper.hpp		\
               jellyfish/yaggo.hpp jellyfish/fstream_default.hpp
+
 ########################################
 # Build Jellyfish the shared library
 ########################################
+libjellyfish_srcs = jellyfish/square_binary_matrix.cc		\
+                       jellyfish/err.cc jellyfish/misc.cc		\
+                       jellyfish/storage.cc jellyfish/thread_exec.cc	\
+                       jellyfish/time.cc jellyfish/file_parser.cc	\
+                       jellyfish/read_parser.cc				\
+                       jellyfish/parse_read.cc jellyfish/half.cpp	\
+                       jellyfish/mapped_file.cc				\
+                       jellyfish/parse_dna.cc				\
+                       jellyfish/parse_quake.cc				\
+                       jellyfish/parse_qual_dna.cc			\
+                       jellyfish/sequence_parser.cc			\
+                       jellyfish/seq_qual_parser.cc			\
+                       jellyfish/backtrace.cc jellyfish/floats.cc	\
+                       jellyfish/dbg.cc jellyfish/allocators_mmap.cc	\
+                       jellyfish/dna_codes.cc
+
+libjellyfish_1_1_la_SOURCES = $(libjellyfish_srcs)
 libjellyfish_1_1_la_LDFLAGS = -version-info 1:1:0
-libjellyfish_1_1_la_SOURCES = jellyfish/square_binary_matrix.cc		\
-                          jellyfish/err.cc jellyfish/misc.cc		\
-                          jellyfish/storage.cc				\
-                          jellyfish/thread_exec.cc jellyfish/time.cc	\
-                          jellyfish/file_parser.cc			\
-                          jellyfish/read_parser.cc			\
-                          jellyfish/parse_read.cc jellyfish/half.cpp	\
-                          jellyfish/mapped_file.cc			\
-                          jellyfish/parse_dna.cc			\
-                          jellyfish/parse_quake.cc			\
-                          jellyfish/parse_qual_dna.cc			\
-                          jellyfish/sequence_parser.cc			\
-                          jellyfish/seq_qual_parser.cc			\
-                          jellyfish/backtrace.cc jellyfish/floats.cc	\
-                          jellyfish/dbg.cc				\
-                          jellyfish/allocators_mmap.cc			\
-                          jellyfish/dna_codes.cc
-libjellyfish_1_1_la_CPPFLAGS = $(AM_CPPFLAGS)
+
 library_includedir=$(includedir)/jellyfish-@PACKAGE_VERSION@/jellyfish
 library_include_HEADERS = jellyfish/allocators_malloc.hpp		\
                           jellyfish/allocators_mmap.hpp			\
@@ -130,28 +130,9 @@ library_include_HEADERS = jellyfish/allocators_malloc.hpp		\
 # Build tests
 ########################################
 bin_generate_sequence_SOURCES = jellyfish/generate_sequence.cc		\
-                                jellyfish/misc.cc			\
-                                jellyfish/mersenne.cpp			\
-                                jellyfish/square_binary_matrix.cc	\
-                                jellyfish/backtrace.cc			\
-                                jellyfish/dbg.cc jellyfish/time.cc
-bin_test_double_fifo_input_SOURCES =						\
-                                     jellyfish/test_double_fifo_input.cc	\
-                                     jellyfish/parse_dna.cc			\
-                                     jellyfish/file_parser.cc			\
-                                     jellyfish/sequence_parser.cc		\
-                                     jellyfish/backtrace.cc			\
-                                     jellyfish/thread_exec.cc			\
-                                     jellyfish/dbg.cc				\
-                                     jellyfish/time.cc				\
-                                     jellyfish/allocators_mmap.cc		\
-                                     jellyfish/dna_codes.cc
-bin_test_read_parser_SOURCES = jellyfish/test_read_parser.cc		\
-                               jellyfish/file_parser.cc			\
-                               jellyfish/read_parser.cc			\
-                               jellyfish/parse_read.cc			\
-                               jellyfish/dbg.cc jellyfish/backtrace.cc	\
-                               jellyfish/time.cc
+                                jellyfish/mersenne.cpp
+bin_test_double_fifo_input_SOURCES = jellyfish/test_double_fifo_input.cc
+bin_test_read_parser_SOURCES = jellyfish/test_read_parser.cc
 EXTRA_DIST += jellyfish/randomc.h jellyfish/generate_sequence_cmdline.hpp
 
 ########################################
@@ -203,9 +184,8 @@ check_PROGRAMS += bin/test_all
 bin_test_all_SOURCES = unit_tests/test_offsets_key_value.cc		\
                        unit_tests/test_simple_circular_buffer.cc	\
                        unit_tests/test_square_binary_matrix.cc
-bin_test_all_SOURCES += jellyfish/square_binary_matrix.cc
 bin_test_all_CXXFLAGS = -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)/unit_tests/gtest
-bin_test_all_LDADD = libgtest_main.la
+bin_test_all_LDADD = libgtest_main.a libgtest.a $(LDADD)
 
 include gtest.mk
 -include $(top_srcdir)/development.mk
