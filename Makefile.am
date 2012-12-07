@@ -33,6 +33,7 @@ YAGGO_SOURCES = # Append all file to be built by yaggo
 # What to build
 # bin_PROGRAMS = bin/jellyfish
 lib_LTLIBRARIES = libjellyfish-2.0.la
+LDADD = libjellyfish-2.0.la
 # check_PROGRAMS = bin/generate_sequence bin/test_double_fifo_input	\
 #                  bin/test_read_parser
 check_PROGRAMS =
@@ -63,6 +64,12 @@ check_PROGRAMS =
 #                         jellyfish/allocators_mmap.cc			\
 #                         jellyfish/yaggo.cpp jellyfish/dna_codes.cc
 
+# bin_jellyfish_LDFLAGS = $(AM_LDFLAGS)
+# if ALL_STATIC
+#   bin_jellyfish_LDFLAGS += -all-static
+# endif
+
+
 # EXTRA_DIST += jellyfish/cite_cmdline.hpp jellyfish/query_cmdline.hpp	\
 #               jellyfish/hash_merge_cmdline.hpp				\
 #               jellyfish/histo_main_cmdline.hpp				\
@@ -82,7 +89,6 @@ check_PROGRAMS =
 libjellyfish_2_0_la_LDFLAGS = -version-info 2:0:0
 libjellyfish_2_0_la_SOURCES = jellyfish/rectangular_binary_matrix.cc	\
                           jellyfish/mer_dna.cc jellyfish/storage.cc	\
-                          jellyfish/yaggo.cpp				\
                           jellyfish/allocators_mmap.cc			\
                           jellyfish/misc.cc jellyfish/int128.cc
 
@@ -104,7 +110,7 @@ libjellyfish_2_0_la_SOURCES = jellyfish/rectangular_binary_matrix.cc	\
                           # jellyfish/dbg.cc #				\
                           jellyfish/allocators_mmap.cc #		\
                           jellyfish/dna_codes.cc
-libjellyfish_2_0_la_CPPFLAGS = $(AM_CPPFLAGS)
+
 library_includedir=$(includedir)/jellyfish-@PACKAGE_VERSION@/jellyfish
 JFI = include/jflib
 library_include_HEADERS = jellyfish/allocators_mmap.hpp			\
@@ -260,18 +266,11 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_hash_counter.cc			\
 	               unit_tests/test_mer_heap.cc
 
-bin_test_all_SOURCES += jellyfish/rectangular_binary_matrix.cc		\
-                        jellyfish/mer_dna.cc jellyfish/storage.cc	\
-                        jellyfish/yaggo.cpp				\
-                        jellyfish/allocators_mmap.cc			\
-                        jellyfish/misc.cc jellyfish/thread_exec.cc	\
+bin_test_all_SOURCES += jellyfish/yaggo.cpp jellyfish/thread_exec.cc	\
                         jellyfish/jsoncpp.cpp
-
-bin_test_all_SOURCES += jellyfish/int128.cc
-
 bin_test_all_CPPFLAGS = -Dprotected=public -Dprivate=public -DJSON_IS_AMALGAMATION=1
 bin_test_all_CXXFLAGS = -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)/unit_tests -I$(top_srcdir)/include
-bin_test_all_LDADD = libgtest.la
+bin_test_all_LDADD = libgtest.la $(LDADD)
 YAGGO_SOURCES += unit_tests/test_main_cmdline.hpp
 noinst_HEADERS += unit_tests/test_main.hpp
 
