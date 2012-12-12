@@ -38,8 +38,13 @@ check_PROGRAMS = bin/generate_sequence
 # Build Jellyfish the exec
 ########################################
 bin_jellyfish_SOURCES = sub_commands/jellyfish.cc			\
-                        sub_commands/count_main.cc jellyfish/err.cc	\
-                        jellyfish/thread_exec.cc
+                        sub_commands/count_main.cc			\
+                        jellyfish/storage.cc jellyfish/misc.cc		\
+                        jellyfish/err.cc jellyfish/thread_exec.cc	\
+                        jellyfish/rectangular_binary_matrix.cc		\
+                        jellyfish/mer_dna.cc				\
+                        jellyfish/allocators_mmap.cc			\
+                        jellyfish/int128.cc
 
 YAGGO_SOURCES += sub_commands/count_main_cmdline.hpp
 
