@@ -42,7 +42,7 @@ bin_jellyfish_SOURCES = sub_commands/jellyfish.cc			\
                         jellyfish/storage.cc jellyfish/misc.cc		\
                         jellyfish/err.cc jellyfish/thread_exec.cc	\
                         jellyfish/rectangular_binary_matrix.cc		\
-                        jellyfish/mer_dna.cc jellyfish/yaggo.cpp	\
+                        jellyfish/mer_dna.cc				\
                         jellyfish/allocators_mmap.cc			\
                         jellyfish/int128.cc
 
@@ -69,7 +69,11 @@ YAGGO_SOURCES += sub_commands/count_main_cmdline.hpp
 #                         jellyfish/mapped_file.cc			\
 #                         jellyfish/backtrace.cc jellyfish/floats.cc	\
 #                         jellyfish/allocators_mmap.cc			\
+<<<<<<< HEAD
 #                          jellyfish/dna_codes.cc
+=======
+#                         jellyfish/dna_codes.cc
+>>>>>>> Don't use yaggo.[ch]pp with yaggo 1.3.0
 
 # bin_jellyfish_LDFLAGS = $(AM_LDFLAGS)
 # if ALL_STATIC
