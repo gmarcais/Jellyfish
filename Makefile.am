@@ -120,7 +120,8 @@ library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
                           $(JFI)/circular_buffer.hpp			\
                           $(JFI)/atomic_field.hpp			\
                           $(JFI)/compare_and_swap.hpp			\
-                          $(JFI)/divisor.hpp
+                          $(JFI)/divisor.hpp				\
+                          $(JFI)/large_hash_iterator.hpp
 
 
 # library_include_HEADERS = jellyfish/allocators_malloc.hpp		\
