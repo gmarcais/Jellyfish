@@ -18,7 +18,7 @@
 #ifndef _JFLIB_ATOMIC_FIELD_H_
 #define _JFLIB_ATOMIC_FIELD_H_
 
-#include <jflib/compare_and_swap.hpp>
+#include <jellyfish/compare_and_swap.hpp>
 
 namespace jflib {
   /* Define a_get, a_set and a_update

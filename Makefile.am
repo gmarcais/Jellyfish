@@ -9,7 +9,7 @@ AM_LDFLAGS = -lpthread
 AM_CPPFLAGS = -Wall -Wnon-virtual-dtor -I$(top_srcdir) -I$(top_srcdir)/include -g -O3 -std=gnu++98 -DJSON_IS_AMALGAMATION=1
 AM_CXXFLAGS = -g -O3 -std=gnu++98
 
-noinst_HEADERS = $(YAGGO_SOURCES) jellyfish/yaggo.hpp
+noinst_HEADERS = $(YAGGO_SOURCES)
 bin_PROGRAMS =
 dist_bin_SCRIPTS =
 data_DATA =
@@ -22,12 +22,8 @@ V_YAGGO = $(V_YAGGO_$(V))
 V_YAGGO_ = $(V_YAGGO_$(AM_DEFAULT_VERBOSITY))
 V_YAGGO_0 = @echo "  YAGGO " $@;
 .yaggo.hpp:
-	$(V_YAGGO)$(YAGGO) --license $(srcdir)/header-license -p jellyfish/ -o $@ $<
-jellyfish/yaggo.cpp jellyfish/yaggo.hpp:
-	$(V_YAGGO)$(YAGGO) -l -p jellyfish/
-	@mv yaggo.cpp yaggo.hpp jellyfish
+	$(V_YAGGO)$(YAGGO) --license $(srcdir)/header-license -o $@ $<
 
-BUILT_SOURCES += jellyfish/yaggo.cpp
 YAGGO_SOURCES = # Append all file to be built by yaggo
 
 # What to build
@@ -62,7 +58,7 @@ check_PROGRAMS =
 #                         jellyfish/mapped_file.cc			\
 #                         jellyfish/backtrace.cc jellyfish/floats.cc	\
 #                         jellyfish/allocators_mmap.cc			\
-#                         jellyfish/yaggo.cpp jellyfish/dna_codes.cc
+#                          jellyfish/dna_codes.cc
 
 # bin_jellyfish_LDFLAGS = $(AM_LDFLAGS)
 # if ALL_STATIC
@@ -82,15 +78,15 @@ check_PROGRAMS =
 #               jellyfish/double_fifo_input.hpp				\
 #               jellyfish/simple_growing_array.hpp			\
 #               jellyfish/backtrace.hpp jellyfish/noop_dumper.hpp		\
-#               jellyfish/yaggo.hpp jellyfish/fstream_default.hpp
+#               jellyfish/fstream_default.hpp
 ########################################
 # Build Jellyfish the shared library
 ########################################
 libjellyfish_2_0_la_LDFLAGS = -version-info 2:0:0
-libjellyfish_2_0_la_SOURCES = jellyfish/rectangular_binary_matrix.cc	\
-                          jellyfish/mer_dna.cc jellyfish/storage.cc	\
-                          jellyfish/allocators_mmap.cc			\
-                          jellyfish/misc.cc jellyfish/int128.cc
+libjellyfish_2_0_la_SOURCES = lib/rectangular_binary_matrix.cc		\
+                              lib/mer_dna.cc lib/storage.cc		\
+                              lib/allocators_mmap.cc lib/misc.cc	\
+                              lib/int128.cc
 
 #                          libjellyfish_la_SOURCES =			\
                           jellyfish/square_binary_matrix.cc #		\
@@ -112,17 +108,15 @@ libjellyfish_2_0_la_SOURCES = jellyfish/rectangular_binary_matrix.cc	\
                           jellyfish/dna_codes.cc
 
 library_includedir=$(includedir)/jellyfish-@PACKAGE_VERSION@/jellyfish
-JFI = include/jflib
-library_include_HEADERS = jellyfish/allocators_mmap.hpp			\
-                          jellyfish/backtrace.hpp			\
-                          jellyfish/atomic_gcc.hpp			\
-                          jellyfish/large_hash_array.hpp		\
-                          jellyfish/err.hpp jellyfish/misc.hpp		\
-                          jellyfish/offsets_key_value.hpp		\
-                          jellyfish/int128.hpp				\
-                          jellyfish/rectangular_binary_matrix.hpp	\
-                          jellyfish/mer_dna.hpp jellyfish/storage.hpp	\
-                          jellyfish/simple_circular_buffer.hpp		\
+JFI = include/jellyfish
+library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
+                          $(JFI)/backtrace.hpp $(JFI)/atomic_gcc.hpp	\
+                          $(JFI)/large_hash_array.hpp $(JFI)/err.hpp	\
+                          $(JFI)/misc.hpp $(JFI)/offsets_key_value.hpp	\
+                          $(JFI)/int128.hpp				\
+                          $(JFI)/rectangular_binary_matrix.hpp		\
+                          $(JFI)/mer_dna.hpp $(JFI)/storage.hpp		\
+                          $(JFI)/simple_circular_buffer.hpp		\
                           $(JFI)/circular_buffer.hpp			\
                           $(JFI)/atomic_field.hpp			\
                           $(JFI)/compare_and_swap.hpp			\
@@ -266,7 +260,7 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_hash_counter.cc			\
 	               unit_tests/test_mer_heap.cc
 
-bin_test_all_SOURCES += jellyfish/yaggo.cpp jellyfish/thread_exec.cc	\
+bin_test_all_SOURCES += jellyfish/thread_exec.cc	\
                         jellyfish/jsoncpp.cpp
 bin_test_all_CPPFLAGS = -Dprotected=public -Dprivate=public -DJSON_IS_AMALGAMATION=1
 bin_test_all_CXXFLAGS = -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)/unit_tests -I$(top_srcdir)/include

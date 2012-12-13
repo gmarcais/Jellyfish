@@ -20,9 +20,9 @@
 
 #include <limits>
 
-#include <jflib/compare_and_swap.hpp>
-#include <jflib/atomic_field.hpp>
-#include <jflib/divisor.hpp>
+#include <jellyfish/compare_and_swap.hpp>
+#include <jellyfish/atomic_field.hpp>
+#include <jellyfish/divisor.hpp>
 
 namespace jflib {
   template<typename T, unsigned int n, T g = ((T)1 << n) - 1>

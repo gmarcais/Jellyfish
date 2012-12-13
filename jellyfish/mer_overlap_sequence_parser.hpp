@@ -18,10 +18,10 @@
 #define __JELLYFISH_MER_OVELAP_SEQUENCE_PARSER_H_
 
 #include <stdint.h>
-#include <jflib/cooperative_pool.hpp>
 #include <jellyfish/err.hpp>
 
 namespace jellyfish {
+#include <jflib/cooperative_pool.hpp>
 
 struct sequence_ptr {
   char* start;
