@@ -74,11 +74,13 @@ public:
       unsigned int woff, boff, shift, cshift;
       word     mask1, mask2, sb_mask1, sb_mask2, lb_mask;
       bool     full_words;
-    } key;
+    };
+    struct key key;
     struct val {
       unsigned int woff, boff, shift, cshift;
       word     mask1, mask2;
-    } val;
+    };
+    struct val val;
   } offset_t;
   typedef struct {
     offset_t    normal;

@@ -521,10 +521,10 @@ public:
   mer_base_dynamic(unsigned int k, const char* s) : super(k), k_(k) {
     super::from_chars(s);
   }
-  mer_base_dynamic(const char* s) : super(strlen(s)), k_(strlen(s)) {
+  explicit mer_base_dynamic(const char* s) : super(strlen(s)), k_(strlen(s)) {
     super::from_chars(s);
   }
-  mer_base_dynamic(const std::string& s) : super(s.size()), k_(s.size()) {
+  explicit mer_base_dynamic(const std::string& s) : super(s.size()), k_(s.size()) {
     super::from_chars(s.begin());
   }
 
@@ -552,7 +552,7 @@ public:
   typedef mer_base<T, mer_base_static<T> > super;
   typedef T base_type;
 
-  explicit mer_base_static() : super(k_) { }
+  mer_base_static() : super(k_) { }
   explicit mer_base_static(unsigned int k) : super(k_) {
     if(k != k_)
       throw std::length_error(error_different_k);
@@ -562,10 +562,10 @@ public:
   mer_base_static(unsigned int k, const char* s) : super(k_) {
     super::from_chars(s);
   }
-  mer_base_static(const char* s) : super(k_) {
+  explicit mer_base_static(const char* s) : super(k_) {
     super::from_chars(s);
   }
-  mer_base_static(const std::string& s) : super(k_) {
+  explicit mer_base_static(const std::string& s) : super(k_) {
     super::from_chars(s.begin());
   }
 
@@ -581,7 +581,7 @@ unsigned int mer_base_static<T>::k_ = 22;
 
 template<typename T, typename derived>
 std::ostream& operator<<(std::ostream& os, const mer_base<T, derived>& mer) {
-  char s[static_cast<const derived>(mer).k() + 1];
+  char s[static_cast<derived>(mer).k() + 1];
   mer.to_str(s);
   return os << s;
 }

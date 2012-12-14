@@ -72,7 +72,7 @@ TEST_P(HashArray, OneElement) {
     // Add this one element to the hash
     ary.clear();
     bool   is_new = false;
-    size_t id     = -1;
+    size_t id     = (size_t)-1;
     ary.add(m, i, &is_new, &id);
     EXPECT_TRUE(is_new);
     // Only expected to agree on the length of the key. Applies only
@@ -83,7 +83,7 @@ TEST_P(HashArray, OneElement) {
     uint64_t val;
     for(ssize_t j = -bsizeof(uint64_t); j <= (ssize_t)bsizeof(uint64_t); ++j) {
       SCOPED_TRACE(::testing::Message() << "j:" << j);
-      val = -1;
+      val = (uint64_t)-1;
       size_t jd = (start_pos + j) & ary_size_mask;
       ASSERT_EQ(jd == id, ary.get_key_val_at_id(jd, get_mer, val) == large_array::FILLED);
       if(jd == id) {

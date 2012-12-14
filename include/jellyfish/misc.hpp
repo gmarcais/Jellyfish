@@ -189,7 +189,7 @@ class pointer_integer : public std::iterator<std::random_access_iterator_tag, T>
   typedef typename super::iterator_category iterator_category;
 
   pointer_integer() : x_(0) { }
-  pointer_integer(T x) : x_(x) { }
+  explicit pointer_integer(T x) : x_(x) { }
   pointer_integer(const pointer_integer& rhs) : x_(rhs.x_) { }
   pointer_integer& operator=(const pointer_integer& rhs) {
     x_ = rhs.x_;

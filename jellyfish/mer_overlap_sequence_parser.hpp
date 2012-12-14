@@ -112,6 +112,7 @@ protected:
     case DONE_TYPE:
       return true;
     }
+    return true; // Should never be reached
   }
 
   void read_fasta(sequence_ptr& buff) {

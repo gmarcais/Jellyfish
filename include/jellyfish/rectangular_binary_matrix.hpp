@@ -108,14 +108,14 @@ namespace jellyfish {
     // Left matrix vector multiplication. Type T supports the operator
     // v[i] to return the i-th 64 bit word of v.
     template<typename T>
-    uint64_t times_loop(const T &v) const __attribute__((align(16)));
+    uint64_t times_loop(const T &v) const;
 
 
 #ifdef HAVE_SSE
     // This SSE implementation only works if the number of columns is
     // even.
     template<typename T>
-    uint64_t times_sse(const T &v) const __attribute__((align(16)));
+    uint64_t times_sse(const T &v) const;
 #endif
 
 #ifdef HAVE_INT128
@@ -241,8 +241,15 @@ namespace jellyfish {
 
     uint64_t *p = _columns + _c - 8;
 
-    register xmm_t acc  = acc ^ acc;
+#ifdef __ICC
+    register xmm_t acc;
+    register xmm_t load;
+    memset(&acc, '\0', 16);
+    memset(&load, '\0', 16);
+#else
+    register xmm_t acc  = acc ^ acc; // Set acc to 0
     register xmm_t load = load ^ load;
+#endif
 
 //     // Zero out acc
 // #pragma GCC diagnostic push

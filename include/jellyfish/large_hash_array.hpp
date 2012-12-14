@@ -64,8 +64,8 @@ class array {
 public:
   typedef word                             data_word;
   typedef typename Offsets<word>::offset_t offset_t;
-  typedef typename offset_t::key           key_offsets;
-  typedef typename offset_t::val           val_offsets;
+  typedef struct offset_t::key    key_offsets;
+  typedef struct offset_t::val    val_offsets;
 
   typedef Key                          key_type;
   typedef uint64_t                     mapped_type;

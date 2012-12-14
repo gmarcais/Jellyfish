@@ -30,7 +30,7 @@ namespace allocators {
    
   public:
     mmap() : ptr(MAP_FAILED), size(0) {}
-    mmap(size_t _size) : ptr(MAP_FAILED), size(0) {
+    explicit mmap(size_t _size) : ptr(MAP_FAILED), size(0) {
       realloc(_size);
       fast_zero();
     }

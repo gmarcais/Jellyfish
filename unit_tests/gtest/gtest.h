@@ -51,6 +51,11 @@
 #ifndef GTEST_INCLUDE_GTEST_GTEST_H_
 #define GTEST_INCLUDE_GTEST_GTEST_H_
 
+#ifdef __ICC
+// Disable explicit constructor warning with ICC
+#pragma warning disable 2304
+#endif
+
 #include <limits>
 #include <vector>
 
@@ -19533,5 +19538,10 @@ bool StaticAssertTypeEq() {
   (::testing::UnitTest::GetInstance()->Run())
 
 }  // namespace testing
+
+#ifdef __ICC
+// Disable explicit constructor warning with ICC
+#pragma warning enable 2304
+#endif
 
 #endif  // GTEST_INCLUDE_GTEST_GTEST_H_
