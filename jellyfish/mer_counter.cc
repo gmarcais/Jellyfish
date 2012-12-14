@@ -79,7 +79,7 @@ protected:
   uint64_t                    distinct, total;
 
 public:
-  mer_counting(count_args &_args) :
+  explicit mer_counting(count_args &_args) :
     args(&_args), sync_barrier(args->threads_arg),
     distinct(0), total(0) {}
 

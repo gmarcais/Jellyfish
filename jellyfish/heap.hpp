@@ -29,7 +29,7 @@ namespace jellyfish {
 
     heap_item_t() : key(0), val(0), pos(0) { }
 
-    heap_item_t(iterator &iter) { 
+    explicit heap_item_t(iterator &iter) { 
       initialize(iter);
     }
 

@@ -107,8 +107,8 @@ namespace jellyfish {
       chead = atomic::gcc::cas(&head, chead, nhead);
     } while(!done);
 
-    assert(head >= 0 && head < size);
-    assert(tail >= 0 && tail < size);
+    assert(head < size);
+    assert(tail < size);
   }
 
   template<class Val>
@@ -128,8 +128,8 @@ namespace jellyfish {
         // Complicated way to do ctail == head. Is it necessary? Or is
         // the memory barrier above sufficient? Or even necessary?
         if(atomic::gcc::cas(&head, ctail, ctail) == ctail) {
-          assert(head >= 0 && head < size);
-          assert(tail >= 0 && tail < size);
+          assert(head < size);
+          assert(tail < size);
           return NULL;
         }
         //      ntail    = (ctail + 1) % size;
@@ -151,8 +151,8 @@ namespace jellyfish {
         done = atomic::gcc::cas(&queue[ctail], res, (Val*)0) == res;
     } while(!done);
 
-    assert(head >= 0 && head < size);
-    assert(tail >= 0 && tail < size);
+    assert(head < size);
+    assert(tail < size);
 
     return res;
   }

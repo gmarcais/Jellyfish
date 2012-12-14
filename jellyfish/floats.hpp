@@ -38,8 +38,8 @@ namespace jellyfish {
     union float_int {
       float_t      fv;
       bits_t     iv;
-      float_int(float_t v) : fv(v) {}
-      float_int(bits_t v) : iv(v) {}
+      explicit float_int(float_t v) : fv(v) {}
+      explicit float_int(bits_t v) : iv(v) {}
     };
     float_int v;
 

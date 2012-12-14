@@ -108,7 +108,7 @@ class HALF_EXPORT half
     //-------------
 
     half ();			// no initialization
-    half (float f);
+    explicit half (float f);
 
 
     //--------------------

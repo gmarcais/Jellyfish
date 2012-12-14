@@ -14,12 +14,12 @@ namespace {
     public jellyfish::simple_circular_buffer::pre_alloc<int, capa> {
   public:
     typedef jellyfish::simple_circular_buffer::pre_alloc<int, capa> super;
-    test_simple_circular_buffer(int* data) : super(data) { }
+    explicit test_simple_circular_buffer(int* data) : super(data) { }
 
-    int next_index(int i) const { return super::next_index(i); }
-    int prev_index(int i) const { return super::prev_index(i); }
-    int front_ptr() const { return front_; }
-    int back_ptr() const { return back_; }
+    // int next_index(int i) const { return super::next_index(i); }
+    // int prev_index(int i) const { return super::prev_index(i); }
+    // int front_ptr() const { return front_; }
+    // int back_ptr() const { return back_; }
   };
 
   TEST(SimpleCircularBufferTest, FillEmpty) {

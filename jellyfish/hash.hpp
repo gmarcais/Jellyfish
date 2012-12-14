@@ -126,15 +126,14 @@ namespace jellyfish {
     typedef std::list<thread> thread_list_t;
     class thread_ptr_t : public thread_list_t::iterator {
     public:
-      thread_ptr_t(const typename thread_list_t::iterator &thl) : thread_list_t::iterator(thl) {}
+      explicit thread_ptr_t(const typename thread_list_t::iterator &thl) : thread_list_t::iterator(thl) {}
       typedef val_t val_type;
     };
     // typedef typename thread_list_t::iterator thread_ptr_t;
 
     thread_ptr_t new_thread() { 
       user_thread_lock.lock();
-      thread_ptr_t res = 
-        user_thread_list.insert(user_thread_list.begin(), thread(ary, this));
+      thread_ptr_t res(user_thread_list.insert(user_thread_list.begin(), thread(ary, this)));
       user_thread_lock.unlock();
       return res;
     }
@@ -210,7 +209,7 @@ namespace jellyfish {
       inuse_thread_count = 0;
       
       // Block access to hash and wait for threads with INUSE state
-      for(thread_ptr_t it = user_thread_list.begin(); 
+      for(thread_ptr_t it(user_thread_list.begin());
           it != user_thread_list.end();
           it++) {
         it->ostatus = atomic::set(&it->status, BLOCKED);
@@ -228,7 +227,7 @@ namespace jellyfish {
 
     void release_event_locks() {
       event_cond.lock();
-      for(thread_ptr_t it = user_thread_list.begin(); 
+      for(thread_ptr_t it(user_thread_list.begin());
           it != user_thread_list.end();
           it++) {
         atomic::set(&it->status, FREE);

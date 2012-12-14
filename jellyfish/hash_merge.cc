@@ -41,7 +41,7 @@
 class ErrorWriting : public std::exception {
   std::string msg;
 public:
-  ErrorWriting(const std::string &_msg) : msg(_msg) {}
+  explicit ErrorWriting(const std::string &_msg) : msg(_msg) {}
   virtual ~ErrorWriting() throw() {}
   virtual const char* what() const throw() {
     return msg.c_str();

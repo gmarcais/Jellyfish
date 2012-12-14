@@ -41,6 +41,11 @@
 #ifndef GTEST_INCLUDE_GTEST_INTERNAL_GTEST_STRING_H_
 #define GTEST_INCLUDE_GTEST_INTERNAL_GTEST_STRING_H_
 
+#ifdef __ICC
+// Disable explicit warning on Intel compiler
+#pragma warning disable 2304
+#endif
+
 #ifdef __BORLANDC__
 // string.h is not guaranteed to provide strcpy on C++ Builder.
 # include <mem.h>
@@ -346,5 +351,10 @@ String StreamableToString(const T& streamable);
 
 }  // namespace internal
 }  // namespace testing
+
+#ifdef __ICC
+// Disable explicit warning on Intel compiler
+#pragma warning enable 2304
+#endif
 
 #endif  // GTEST_INCLUDE_GTEST_INTERNAL_GTEST_STRING_H_

@@ -25,7 +25,7 @@ class display_kmer {
   unsigned long count;
 public:
   typedef unsigned long val_type;
-  display_kmer(int k) : _k(k), count(0) {}
+  explicit display_kmer(int k) : _k(k), count(0) {}
 
   void add(uint64_t mer, int i, val_type *oval = 0) {
     ++count;

@@ -45,7 +45,7 @@ namespace jellyfish {
       uint64_t max_count;
 
       header() { }
-      header(char *ptr) {
+      explicit header(char *ptr) {
         if(memcmp(ptr, file_type, sizeof(type)))
           eraise(ErrorReading) << "Bad file type '" << err::substr(ptr, sizeof(type))
                               << "', expected '" << err::substr(file_type, sizeof(type)) << "'";
@@ -176,7 +176,7 @@ namespace jellyfish {
       val_t val;
 
       reader() { io = 0; buffer = 0; memset(dna_str, '\0', sizeof(dna_str)); }
-      reader(std::string filename, size_t _buff_len = 10000000UL) { 
+      explicit reader(std::string filename, size_t _buff_len = 10000000UL) { 
         initialize(filename, _buff_len);
       }
 
