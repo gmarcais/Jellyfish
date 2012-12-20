@@ -60,6 +60,7 @@ public:
 
   virtual void _dump() {
     open_next_file(file_prefix_, out_, one_file_);
+    
     ring_.reset();
     exec_join(nb_threads_);
     out_.close();

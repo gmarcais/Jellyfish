@@ -55,7 +55,7 @@ int count_main(int argc, char *argv[])
   args.parse(argc, argv);
   jellyfish::mer_dna::k(args.mer_len_arg);
 
-  mer_array ary(args.size_arg, args.mer_len_arg, args.counter_len_arg, args.threads_arg, args.reprobes_arg);
+  mer_array ary(args.size_arg, args.mer_len_arg * 2, args.counter_len_arg, args.threads_arg, args.reprobes_arg);
   dumper dump(args.threads_arg, args.output_arg, ary.ary());
   mer_counter<file_vector::iterator> counter(args.threads_arg, ary, args.file_arg.begin(), args.file_arg.end());
 
