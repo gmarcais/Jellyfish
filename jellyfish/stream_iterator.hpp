@@ -39,6 +39,7 @@ public:
   stream_iterator& operator++() {
     stream_.close();
     if(begin_ != end_) {
+      std::cerr << "Open:" << *begin_ << "\n";
       stream_.open(*begin_);
       if(stream_.fail())
         eraise(std::runtime_error) << "Failed to open file '" << *begin_ << "'";

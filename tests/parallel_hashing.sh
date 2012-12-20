@@ -16,8 +16,7 @@ a210906960cf36c09eecad62a4c04973 ${pref}.stats
 EOF
 echo "Counting 22-mers on ${nCPUs} CPU"
 
-$JF count -m 40 -t $nCPUs -o $pref \
-    -s 10M seq10m.fa
+$JF count -m 40 -t $nCPUs -o $pref -s 10M seq10m.fa
 
 # Count all k-mers
 # $JF count --matrix seq10m_matrix_22 -m 22 -t $nCPUs -o $pref \
