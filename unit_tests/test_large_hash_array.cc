@@ -138,18 +138,7 @@ TEST_P(HashArray, Collisions) {
   }
 }
 
-template<typename T>
-struct inc_on_destructor {
-  T* const x;
-  inc_on_destructor(T* nb) : x(nb) { }
-  ~inc_on_destructor() { ++*x; }
-  operator T() const { return *x; }
-};
-
 TEST_P(HashArray, Iterator) {
-  static int repeat_count_ = 0;
-  inc_on_destructor<int> repeat_count(&repeat_count_);
-
   static const int nb_elts = 1 << (ary_lsize - 1);
   SCOPED_TRACE(::testing::Message() << "key_len:" << key_len << " val_len:" << val_len << " reprobe:" << reprobe_limit);
 

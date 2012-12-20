@@ -38,13 +38,8 @@ check_PROGRAMS = bin/generate_sequence
 # Build Jellyfish the exec
 ########################################
 bin_jellyfish_SOURCES = sub_commands/jellyfish.cc			\
-                        sub_commands/count_main.cc			\
-                        jellyfish/storage.cc jellyfish/misc.cc		\
-                        jellyfish/err.cc jellyfish/thread_exec.cc	\
-                        jellyfish/rectangular_binary_matrix.cc		\
-                        jellyfish/mer_dna.cc				\
-                        jellyfish/allocators_mmap.cc			\
-                        jellyfish/int128.cc
+                        sub_commands/count_main.cc jellyfish/err.cc	\
+                        jellyfish/thread_exec.cc
 
 YAGGO_SOURCES += sub_commands/count_main_cmdline.hpp
 
@@ -192,6 +187,8 @@ bin_generate_sequence_SOURCES = jellyfish/generate_sequence.cc		\
                                 jellyfish/square_binary_matrix.cc	\
                                 jellyfish/backtrace.cc			\
                                 jellyfish/dbg.cc jellyfish/time.cc
+YAGGO_SOURCES += jellyfish/generate_sequence_cmdline.hpp
+
 # bin_test_double_fifo_input_SOURCES =						\
 #                                      jellyfish/test_double_fifo_input.cc	\
 #                                      jellyfish/parse_dna.cc			\
@@ -259,8 +256,7 @@ tests/parsers.log: tests/generate_sequence.log
 TESTS += unit_tests/unit_tests.sh
 check_PROGRAMS += bin/test_all
 
-bin_test_all_SOURCES = unit_tests/test_main.cc				\
-	               unit_tests/test_misc.cc				\
+bin_test_all_SOURCES = unit_tests/test_main.cc unit_tests/test_misc.cc	\
 	               unit_tests/test_offsets_key_value.cc		\
 	               unit_tests/test_simple_circular_buffer.cc	\
 	               unit_tests/test_rectangular_binary_matrix.cc	\
@@ -271,10 +267,12 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_mer_iterator.cc			\
 	               unit_tests/test_hash_counter.cc			\
 	               unit_tests/test_mer_heap.cc			\
-	               unit_tests/test_stream_iterator.cc
+	               unit_tests/test_stream_iterator.cc		\
+	               unit_tests/test_token_ring.cc			\
+	               unit_tests/test_text_dumper.cc
 
-bin_test_all_SOURCES += jellyfish/thread_exec.cc	\
-                        jellyfish/jsoncpp.cpp
+bin_test_all_SOURCES += jellyfish/thread_exec.cc jellyfish/jsoncpp.cpp	\
+                        jellyfish/time.cc
 bin_test_all_CPPFLAGS = -Dprotected=public -Dprivate=public -DJSON_IS_AMALGAMATION=1
 bin_test_all_CXXFLAGS = -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)/unit_tests -I$(top_srcdir)/include
 bin_test_all_LDADD = libgtest.la $(LDADD)

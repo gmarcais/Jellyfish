@@ -51,6 +51,7 @@ public:
   const key_type& key() const { return key_; }
   const mapped_type& val() const { return val_; }
   size_t id() const { return id_ - 1; }
+  size_t pos() const { return key_.get_bits(0, ary_->lsize()); }
 
   bool next() {
     key_status success = array::EMPTY;
@@ -105,6 +106,7 @@ public:
     return ary_->get_val_at_id(id_ - 1, w_, o_, true, false);
   }
   size_t id() const { return id_ - 1; }
+  size_t pos() const { return key_.get_bits(0, ary_->lsize()); }
 
   bool next() {
     reversed_key_      = false;
@@ -140,10 +142,10 @@ protected:
 
 public:
   region_iterator_base(const array *ary, size_t start, size_t end) :
-    ary_(ary), mask_(ary->size() - 1),
+    ary_(ary), mask_(ary ? ary->size() - 1 : 0),
     start_id_(ary ? std::min(start, ary->size()) : 0),
     end_id_(ary ? std::min(end, ary->size()) : 0),
-    mid_(ary ? end_id_ - start_id_ + ary->max_reprobe_offset() : 0),
+    mid_(ary ? std::min(end_id_ - start_id_ + ary->max_reprobe_offset(), ary->size()) : 0),
     oid_(end_id_), id_(0), w_(0), o_(0),
     reversed_key_(false)
   {}
@@ -176,12 +178,12 @@ public:
     while(!found_oid && id_ < mid_) {
       if(ary_->get_key_at_id((start_id_ + id_++) & mask_, key_, &w_, &o_) == array::FILLED) {
         oid_ = key_.get_bits(0, ary_->lsize());
-        found_oid = oid_ >= start_id_ && oid_ < end_id_ &&
-          oid_ <= start_id_ + id_ && start_id_ + id_ < oid_ + ary_->max_reprobe_offset();
+        found_oid = start_id_ <= oid_ && oid_ < end_id_;
       }
     }
 
     return found_oid;
+
   }
 };
 

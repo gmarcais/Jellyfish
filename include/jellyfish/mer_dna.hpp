@@ -569,6 +569,9 @@ public:
     super::from_chars(s.begin());
   }
 
+  mer_base_static& operator=(const char* s) { return super::operator=(s); }
+  mer_base_static& operator=(const std::string& s) { return super::operator=(s); }
+
   ~mer_base_static() { }
 
   static unsigned int k() { return k_; }
