@@ -45,24 +45,31 @@ inline int leading_zeroes(unsigned int x) { return __builtin_clz(x); }
 inline int leading_zeroes(unsigned long x) { return __builtin_clzl(x); }
 inline int leading_zeroes(unsigned long long x) { return __builtin_clzll(x); }
 
-
+/// The floor of the log base two of n. Undefined if n == 0
 template <typename T>
 uint16_t floorLog2(T n) {
   return sizeof(T) * 8 - 1 - leading_zeroes(n);
 }
 
+/// The ceiling of the log base two of n. Undefined if n == 0
 template<typename T>
 uint16_t ceilLog2(T n) {
   uint16_t r = floorLog2(n);
   return n > (((T)1) << r) ? r + 1 : r;
 }
 
+/// The ceiling of the quotient of the division of a by b. I.e. if b
+/// divides a, then div_ceil(a, b) == a / b. Otherwise, div_ceil(a, b)
+/// == a / b + 1
 template<typename T>
 T div_ceil(T a, T b) {
   T q = a / b;
   return a % b == 0 ? q : q + 1;
 }
 
+/// Number of bits necessary to encode number n. Undefined if n ==
+/// 0. The following should be true: 2^bitsize(n) - 1 >= n >
+/// 2^(bitsize(n) - 1)
 template<typename T>
 uint16_t bitsize(T n) {
   return floorLog2(n) + 1;
@@ -73,7 +80,7 @@ inline uint32_t reverse_bits(uint32_t v) {
   v = ((v >> 1) & 0x55555555) | ((v & 0x55555555) << 1);
   // swap consecutive pairs
   v = ((v >> 2) & 0x33333333) | ((v & 0x33333333) << 2);
-  // swap nibbles ... 
+  // swap nibbles ...
   v = ((v >> 4) & 0x0F0F0F0F) | ((v & 0x0F0F0F0F) << 4);
   // swap bytes
   v = ((v >> 8) & 0x00FF00FF) | ((v & 0x00FF00FF) << 8);

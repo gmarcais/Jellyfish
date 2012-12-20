@@ -54,14 +54,14 @@ public:
 // sizeof(uint64_t). I.e. never more than 1 word is fetched or set.
 template<typename Key, typename word = uint64_t, typename atomic_t = ::atomic::gcc, typename mem_block_t = ::allocators::mmap>
 class array {
-  define_error_class(ErrorAllocation);
-
   static const int  wsize = std::numeric_limits<word>::digits; // Word size in bits
   // Can't be done. Resort to an evil macro!
   //  static const word fmask = std::numeric_limits<word>::max(); // Mask full of ones
 #define fmask (std::numeric_limits<word>::max())
 
 public:
+  define_error_class(ErrorAllocation);
+
   typedef word                             data_word;
   typedef typename Offsets<word>::offset_t offset_t;
   typedef struct offset_t::key    key_offsets;
@@ -205,11 +205,14 @@ public:
    */
 
   /**
-   * Number of blocks that fit in a given amount of memory. Given an
-   * amount of memory mem, it returns the number of blocks that fit
-   * into mem and the actual memory these many blocks use.
+   * Number of blocks needed to fit at least a given number of
+   * records. Given a number of records, it returns the number of
+   * blocks necessary and the actual number of records these blocks
+   * contain.
    */
-  std::pair<size_t, size_t> blocks_in_memory(size_t mem) const { return offsets_.blocks_in_memory(mem); }
+  std::pair<size_t, size_t> blocks_for_records(size_t nb_records) const {
+    return offsets_.blocks_for_records(nb_records);
+  }
 
 
   /**
@@ -220,14 +223,14 @@ public:
    */
   void block_to_ptr(const size_t start, const size_t blen,
                     char **start_ptr, size_t *memlen) const {
-    *start_ptr    = (char *)(data_ + start * offsets_.get_block_word_len());
+    *start_ptr    = (char *)(data_ + start * offsets_.block_word_len());
     char *end_ptr = (char *)mem_block_.get_ptr() + mem_block_.get_size();
 
     if(*start_ptr >= end_ptr) {
       *memlen = 0;
       return;
     }
-    *memlen = blen * offsets_.get_block_word_len() * sizeof(word);
+    *memlen = blen * offsets_.block_word_len() * sizeof(word);
     if(*start_ptr + *memlen > end_ptr)
       *memlen = end_ptr - *start_ptr;
   }
@@ -340,14 +343,14 @@ protected:
 
   void prefetch_next(prefetch_buffer& buffer, size_t oid, uint_t reprobe) const {
     buffer.pop_front();
-    if(reprobe + buffer.capacity() <= reprobe_limit_.val()) {
+    //    if(reprobe + buffer.capacity() <= reprobe_limit_.val()) {
       buffer.push_back();
       prefetch_info& info = buffer.back();
       info.id             = (oid + reprobes_[reprobe + buffer.capacity() - 1]) & size_mask_;
       info.w              = offsets_.word_offset(info.id, &info.o, &info.lo, data_);
       __builtin_prefetch(info.w + info.o->key.woff, 0, 1);
       __builtin_prefetch(info.o, 0, 3);
-    }
+      //    }
   }
 
 public:
@@ -360,7 +363,7 @@ public:
     prefetch_buffer buffer(info_ary);
     warm_up_cache(buffer, oid);
 
-    for(uint_t reprobe = 0; reprobe < reprobe_limit_.val(); ++reprobe) {
+    for(uint_t reprobe = 0; reprobe <= reprobe_limit_.val(); ++reprobe) {
       prefetch_info& info = buffer.front();
       key_status st       = get_key_at_id(info.id, tmp_key, info.w, info.o);
 
@@ -409,6 +412,9 @@ public:
   // be needed, but I can't get the thing to compile without :(.
   eager_iterator eager_slice(size_t index, size_t nb_slices) const {
     return iterator_slice<eager_iterator>(index, nb_slices);
+  }
+  region_iterator region_slice(size_t index, size_t nb_slices) const {
+    return iterator_slice<region_iterator>(index, nb_slices);
   }
 
   // Claim a key with the large bit not set. I.e. first entry for a key.
