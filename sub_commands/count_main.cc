@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
@@ -46,17 +45,20 @@ public:
       ++count;
     }
     ary_.done();
-    fprintf(stderr, "id:%d count:%ld\n", thid, count);
   }
 };
 
 int count_main(int argc, char *argv[])
 {
+  jellyfish::generic_file_header header(16);
+  header.fill_standard();
+  header.set_cmdline(argc, argv);
+
   args.parse(argc, argv);
   jellyfish::mer_dna::k(args.mer_len_arg);
 
   mer_array ary(args.size_arg, args.mer_len_arg * 2, args.counter_len_arg, args.threads_arg, args.reprobes_arg);
-  dumper dump(args.threads_arg, args.output_arg, ary.ary());
+  dumper dump(args.threads_arg, args.output_arg, ary.ary(), &header);
   mer_counter<file_vector::iterator> counter(args.threads_arg, ary, args.file_arg.begin(), args.file_arg.end());
 
   counter.exec_join(args.threads_arg);

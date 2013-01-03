@@ -26,6 +26,7 @@
 #include <jellyfish/thread_exec.hpp>
 #include <jellyfish/token_ring.hpp>
 #include <jellyfish/locks_pthread.hpp>
+#include <jellyfish/file_header.hpp>
 
 namespace jellyfish {
 
@@ -44,15 +45,18 @@ class text_dumper : public dumper_t, public thread_exec {
   bool                      one_file_;
   std::ofstream             out_;
   std::pair<size_t, size_t> block_info; // { nb blocks, nb records }
+  generic_file_header*      header_;
 
 public:
-  text_dumper(int nb_threads, const char* file_prefix, storage_t* ary) :
+  text_dumper(int nb_threads, const char* file_prefix, storage_t* ary,
+              generic_file_header* header = 0) :
     nb_threads_(nb_threads),
     ring_(nb_threads),
     file_prefix_(file_prefix),
     ary_(ary),
     one_file_(false),
-    block_info(ary_->blocks_for_records(5 * ary_->max_reprobe_offset()))
+    block_info(ary_->blocks_for_records(5 * ary_->max_reprobe_offset())),
+    header_(header)
   { }
 
   bool one_file() const { return one_file_; }
@@ -60,7 +64,9 @@ public:
 
   virtual void _dump() {
     open_next_file(file_prefix_, out_, one_file_);
-    
+    if(header_)
+      header_->write(out_);
+
     ring_.reset();
     exec_join(nb_threads_);
     out_.close();

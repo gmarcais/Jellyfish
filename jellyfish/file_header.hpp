@@ -39,7 +39,7 @@
 namespace jellyfish {
 /// Generic file header. It contains by default the hostname, the
 /// current time, the current working directory and the path to the
-/// executable. It is not portable for now (Linux/GNU specific).
+/// executable.
 class generic_file_header {
   static const int MAX_HEADER_DIGITS = 9;
   Json::Value root_;
@@ -156,7 +156,7 @@ public:
 
   std::vector<std::string> cmdline() const {
     std::vector<std::string> res;
-    for(int i = 0; i < root_["cmdline"].size(); ++i)
+    for(unsigned int i = 0; i < root_["cmdline"].size(); ++i)
       res.push_back(root_["cmdline"][i].asString());
     return res;
   }
@@ -235,11 +235,11 @@ protected:
   }
 };
 
-  std::ostream& operator<<(std::ostream& os, const generic_file_header& h) {
-    Json::StyledWriter w;
-    return os << w.write(h.root());
-  }
-
+inline std::ostream& operator<<(std::ostream& os, const generic_file_header& h) {
+  Json::StyledWriter w;
+  return os << w.write(h.root());
 }
+
+} // namespace jellyfish
 
 #endif /* __JELLYFISH_FILE_HEADER_HPP__ */

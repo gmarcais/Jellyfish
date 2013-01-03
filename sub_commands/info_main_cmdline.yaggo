@@ -1,0 +1,9 @@
+purpose "Display information about a jellyfish file"
+package "jellyfish info"
+
+option("s", "skip") {
+  description "Skip header and dump remainder of file"
+  off }
+arg("file") {
+  description "Input file in jellyfish format"
+  c_string; typestr "path" }
