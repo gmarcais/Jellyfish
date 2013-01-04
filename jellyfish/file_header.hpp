@@ -81,6 +81,10 @@ public:
       root_["reprobes"].append((Json::UInt64)reprobes[i]);
   }
 
+  /// Length of counter field in binary/sorted format
+  unsigned int counter_len() const { return root_["counter_len"].asUInt(); }
+  void counter_len(unsigned int l) { root_["counter_len"] = (Json::UInt)l; }
+
   std::string format() const { return root_["format"].asString(); }
   void format(const std::string& s) { root_["format"] = s; }
 };

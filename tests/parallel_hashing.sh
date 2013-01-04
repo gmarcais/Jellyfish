@@ -4,12 +4,15 @@ cd tests
 . ./compat.sh
 
 sort > ${pref}.md5sum <<EOF 
-376761a6e273b57b3428c14e3b536edf ${pref}0_dump
+376761a6e273b57b3428c14e3b536edf ${pref}_text0_dump
 EOF
 echo "Counting 22-mers on ${nCPUs} CPU"
+pwd
 
-$JF count -m 40 -t $nCPUs -o $pref -s 2M --text seq1m_0.fa
-$JF info -s ${pref}0 | sort >  ${pref}0_dump
+$JF count -m 40 -t $nCPUs -o ${pref}_text -s 2M --text seq1m_0.fa
+$JF info -s ${pref}_text0 | sort >  ${pref}_text0_dump
+
+$JF count -m 40 -t $nCPUs -o ${pref}_bin -s 2M seq1m_0.fa
 
 # Count all k-mers
 # $JF count --matrix seq10m_matrix_22 -m 22 -t $nCPUs -o $pref \

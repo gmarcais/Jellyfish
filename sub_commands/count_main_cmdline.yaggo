@@ -16,9 +16,9 @@ option("output", "o") {
 option("counter-len", "c") {
   description "Length bits of counting field"
   uint32; default "7"; typestr "Length in bits" }
-# option("out-counter-len") {
-#   description "Length in bytes of counter field in output"
-#   uint32; default "4"; typestr "Length in bytes" }
+option("out-counter-len") {
+  description "Length in bytes of counter field in output"
+  uint32; default "4"; typestr "Length in bytes" }
 option("C", "canonical") {
   description "Count both strand, canonical representation"
   flag; off }

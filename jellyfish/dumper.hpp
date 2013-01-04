@@ -29,8 +29,10 @@
  **/
 namespace jellyfish {
   class dumper_t {
-    Time writing_time;
-    int  index;
+    Time writing_time_;
+    int  index_;
+    bool one_file_;
+
   public:
     define_error_class(ErrorWriting);
 
@@ -40,14 +42,14 @@ namespace jellyfish {
     /// one_file is true, the prefix is the file name. The first time
     /// the file is open in trunc mode, the subsequent times in append
     /// mode.
-    void open_next_file(const char *prefix, std::ofstream &out, bool one_file = false) {
+    void open_next_file(const char *prefix, std::ofstream &out) {
       std::ostringstream name;
       name << prefix;
       std::ios::openmode mode = std::ios::out;
-      if(one_file) {
-        mode |= (index++ ? std::ios::ate : std::ios::trunc);
+      if(one_file_) {
+        mode |= (index_++ ? std::ios::ate : std::ios::trunc);
       } else {
-        name << index++;
+        name << index_++;
         mode |= std::ios::trunc;
       }
 
@@ -58,17 +60,21 @@ namespace jellyfish {
     }
 
   public:
-    dumper_t() : writing_time(::Time::zero), index(0) {}
+    dumper_t() : writing_time_(::Time::zero), index_(0), one_file_(false) {}
 
     void dump() {
       Time start;
       _dump();
       Time end;
-      writing_time += end - start;
+      writing_time_ += end - start;
     }
+
+    bool one_file() const { return one_file_; }
+    void one_file(bool v) { one_file_ = v; }
+
     virtual void _dump() = 0;
-    Time get_writing_time() const { return writing_time; }
-    int nb_files() const { return index; }
+    Time get_writing_time() const { return writing_time_; }
+    int nb_files() const { return index_; }
     virtual ~dumper_t() {};
   };
 }

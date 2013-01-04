@@ -167,10 +167,13 @@ public:
   operator derived() { return *static_cast<derived*>(this); }
   operator const derived() const { return *static_cast<const derived*>(this); }
 
-  // Direct access to data. No bound or consistency check. Use with caution!
+  /// Direct access to data. No bound or consistency check. Use with
+  /// caution!
   //  base_type operator[](unsigned int i) { return _data[i]; }
   base_type word(unsigned int i) const { return _data[i]; }
   base_type operator[](unsigned int i) const { return _data[i]; }
+  /// Direct access to the data array.
+  const base_type* data() const { return _data; }
 
   bool operator==(const mer_base& rhs) const {
     unsigned int i = nb_words() - 1;

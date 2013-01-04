@@ -108,6 +108,6 @@ TEST(TextDumper, Random) {
   }
   EXPECT_EQ(adder.size(), count);
 
-  unlink(file);
+  //  unlink(file);
 }
 } // namespace {
