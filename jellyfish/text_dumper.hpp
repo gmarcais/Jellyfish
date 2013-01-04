@@ -45,11 +45,11 @@ class text_dumper : public dumper_t, public thread_exec {
   bool                      one_file_;
   std::ofstream             out_;
   std::pair<size_t, size_t> block_info; // { nb blocks, nb records }
-  generic_file_header*      header_;
+  file_header*              header_;
 
 public:
   text_dumper(int nb_threads, const char* file_prefix, storage_t* ary,
-              generic_file_header* header = 0) :
+              file_header* header = 0) :
     nb_threads_(nb_threads),
     ring_(nb_threads),
     file_prefix_(file_prefix),
@@ -64,8 +64,11 @@ public:
 
   virtual void _dump() {
     open_next_file(file_prefix_, out_, one_file_);
-    if(header_)
+    if(header_) {
+      header_->update_from_ary(*ary_);
+      header_->format("text/sorted");
       header_->write(out_);
+    }
 
     ring_.reset();
     exec_join(nb_threads_);

@@ -25,6 +25,9 @@ option("C", "canonical") {
 option("reprobes", "p") {
   description "Maximum number of reprobes"
   uint32; default "126" }
+option("text") {
+  description "Dump in text format"
+  off }
 # option("raw", "r") {
 #   description "Write raw database"
 #   flag; off }

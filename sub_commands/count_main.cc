@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <sstream>
+#include <memory>
 
 #include <jellyfish/err.hpp>
 #include <jellyfish/thread_exec.hpp>
@@ -17,7 +18,7 @@
 #include <sub_commands/count_main_cmdline.hpp>
 
 typedef jellyfish::cooperative::hash_counter<jellyfish::mer_dna> mer_array;
-typedef jellyfish::text_dumper<mer_array::array> dumper;
+typedef jellyfish::text_dumper<mer_array::array> text_dumper;
 typedef std::vector<const char*> file_vector;
 typedef jellyfish::mer_overlap_sequence_parser<jellyfish::stream_iterator<file_vector::iterator> > sequence_parser;
 typedef jellyfish::mer_iterator<sequence_parser, jellyfish::mer_dna> mer_iterator;
@@ -50,7 +51,7 @@ public:
 
 int count_main(int argc, char *argv[])
 {
-  jellyfish::generic_file_header header(16);
+  jellyfish::file_header header;
   header.fill_standard();
   header.set_cmdline(argc, argv);
 
@@ -58,12 +59,18 @@ int count_main(int argc, char *argv[])
   jellyfish::mer_dna::k(args.mer_len_arg);
 
   mer_array ary(args.size_arg, args.mer_len_arg * 2, args.counter_len_arg, args.threads_arg, args.reprobes_arg);
-  dumper dump(args.threads_arg, args.output_arg, ary.ary(), &header);
+
+  std::auto_ptr<jellyfish::dumper_t> dumper;
+  if(args.text_flag)
+    dumper.reset(new text_dumper(args.threads_arg, args.output_arg, ary.ary(), &header));
+  else
+    die << "Only text dumper implemented so far";
+
   mer_counter<file_vector::iterator> counter(args.threads_arg, ary, args.file_arg.begin(), args.file_arg.end());
 
   counter.exec_join(args.threads_arg);
 
-  dump.dump();
+  dumper->dump();
 
   return 0;
 }
