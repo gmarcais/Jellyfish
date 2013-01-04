@@ -17,8 +17,11 @@
 #ifndef __HASH_COUNTER_HPP__
 #define __HASH_COUNTER_HPP__
 
+#include <stdexcept>
+
 #include <jellyfish/large_hash_array.hpp>
 #include <jellyfish/locks_pthread.hpp>
+#include <jellyfish/dumper.hpp>
 
 /// Cooperative version of the hash_counter. In this implementation,
 /// it is expected that the given number of threads will call the
@@ -48,6 +51,8 @@ protected:
   uint16_t                nb_threads_;
   locks::pthread::barrier size_barrier_;
   volatile uint16_t       size_thid_, done_threads_;
+  bool                    do_size_doubling_;
+  dumper_t*               dumper_;
 
 public:
   hash_counter(size_t size, // Size of hash. To be rounded up to a power of 2
@@ -61,19 +66,30 @@ public:
     nb_threads_(nb_threads),
     size_barrier_(nb_threads),
     size_thid_(0),
-    done_threads_(0)
+    done_threads_(0),
+    do_size_doubling_(true),
+    dumper_(0)
   { }
 
   ~hash_counter() {
     delete ary_;
   }
 
-  const array* ary() { return ary_; }
+  array* ary() { return ary_; }
   size_t size() const { return ary_->size(); }
   uint16_t key_len() const { return ary_->key_len(); }
   uint16_t val_len() const { return ary_->val_len(); }
   uint16_t nb_threads() const { return nb_threads; }
   uint16_t reprobe_limit() const { return ary_->max_reprobe(); }
+
+
+  /// Whether we attempt to double the size of the hash when full.
+  bool do_size_doubling() const { return do_size_doubling_; }
+  /// Set whether we attempt to double the size of the hash when full.
+  void do_size_doubling(bool v) { do_size_doubling_ = v; }
+
+  /// Set dumper responsible for cleaning out the array.
+  void dumper(dumper_t *d) { dumper_ = d; }
 
   /// Add `v` to the entry `k`. This method is multi-thread safe. If
   /// the entry for `k` does not exists, it is inserted.
@@ -82,37 +98,54 @@ public:
   /// @param v Value to add
   void add(const Key& k, uint64_t v) {
     while(!ary_->add(k, v))
-      double_size();
+      handle_full_ary();
   }
 
   /// Signify that thread is done and wait for all threads to be done.
   void done() {
     atomic_t::fetch_add(&done_threads_, (uint16_t)1);
-    while(!double_size()) ;
+    while(!handle_full_ary()) ;
   }
 
 protected:
   // Double the size of the hash and return false. Unless all the
   // thread have reported they are done, in which case do nothing and
   // return true.
-  bool double_size() {
-    if(size_barrier_.wait()) {
-      // Serial thread -> allocate new array for size doubling
-      if(done_threads_ < nb_threads_) {
-        new_ary_   = new array(ary_->size() * 2, ary_->key_len(), ary_->val_len(),
-                               ary_->max_reprobe(), ary_->reprobes());
-        size_thid_ = 0;
-      } else {
-        new_ary_      = 0;
-        done_threads_ = 0;
-      }
+  bool handle_full_ary() {
+    bool serial_thread = size_barrier_.wait();
+    if(done_threads_ >= nb_threads_) // All done?
+      return true;
+
+    bool success = false;
+    if(do_size_doubling_)
+      success = success || double_size(serial_thread);
+
+    if(!success && dumper_) {
+      dumper_->dump();
+      success = true;
     }
 
-    // Return if all done
+    if(!success)
+      throw std::runtime_error("Hash full");
+
+    return false;
+  }
+
+  bool double_size(bool serial_thread) {
+    if(serial_thread) {// Allocate new array for size doubling
+      try {
+        new_ary_   = new array(ary_->size() * 2, ary_->key_len(), ary_->val_len(),
+                               ary_->max_reprobe(), ary_->reprobes());
+       } catch(typename array::ErrorAllocation e) {
+        new_ary_ = 0;
+      }
+    }
+    size_thid_ = 0;
+
     size_barrier_.wait();
     array* my_ary = *(array* volatile*)&new_ary_;
-    if(my_ary == 0)
-      return true;
+    if(!my_ary) // Allocation failed
+      return false;
 
     // Copy data from old to new
     uint16_t       id = atomic_t::fetch_add(&size_thid_, (uint16_t)1);
@@ -124,15 +157,16 @@ protected:
     while(it.next())
       my_ary->add(it.key(), it.val());
 
-    if(size_barrier_.wait()) {
-      // Serial thread -> set new ary to be current
+    size_barrier_.wait();
+
+    if(serial_thread) { // Set new ary to be current and free old
       delete ary_;
       ary_ = new_ary_;
     }
 
     // Done. Last sync point
     size_barrier_.wait();
-    return false;
+    return true;
   }
 };
 

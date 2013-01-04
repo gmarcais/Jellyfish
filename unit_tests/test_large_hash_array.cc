@@ -1,3 +1,7 @@
+#include <sys/types.h>
+#include <signal.h>
+#include <unistd.h>
+
 #include <map>
 #include <vector>
 
@@ -135,23 +139,20 @@ TEST_P(HashArray, Collisions) {
 }
 
 TEST_P(HashArray, Iterator) {
-  static const int nb_elts = 100;
+  static const int nb_elts = 1 << (ary_lsize - 1);
   SCOPED_TRACE(::testing::Message() << "key_len:" << key_len << " val_len:" << val_len << " reprobe:" << reprobe_limit);
-
-  // Don't test for this combination as the number of entries used by
-  // each key is too large (no bits from key harvested for second
-  // entry). Hence the array fills up and we get an error.
-  if((size_t)key_len < ary_lsize && val_len < 2)
-    return;
 
   mer_map            map;
   jellyfish::mer_dna mer;
+  jellyfish::mer_dna bad_mer("GCCTT");
 
   for(int i = 0; i < nb_elts; ++i) {
     SCOPED_TRACE(::testing::Message() << "i:" << i);
     mer.randomize();
-    ASSERT_TRUE(ary.add(mer, i));
-    //    std::cout << ary.top_reprobe() << std::endl;
+    // If get false, hash array filled up: skip test
+    bool res = ary.add(mer, i);
+    if(!res)
+      return;
     map[mer] += i;
   }
 
@@ -202,7 +203,7 @@ TEST_P(HashArray, Iterator) {
     uint64_t val;
     size_t   id;
     EXPECT_TRUE(ary.get_key_id(it->first, &id));
-    EXPECT_TRUE(ary.get_val_for_key(it->first, &val));
+    ASSERT_TRUE(ary.get_val_for_key(it->first, &val));
     EXPECT_EQ(it->second, val);
   }
 }

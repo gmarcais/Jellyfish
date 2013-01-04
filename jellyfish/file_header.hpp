@@ -17,229 +17,77 @@
 #ifndef __JELLYFISH_FILE_HEADER_HPP__
 #define __JELLYFISH_FILE_HEADER_HPP__
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
-#ifdef HAVE_NSGETEXECUTABLEPATH
-#include <mach-o/dyld.h>
-#endif
-
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/utsname.h>
-
-#include <string>
-#include <vector>
-#include <iostream>
-#include <sstream>
-
-#include <json/json.h>
+#include <jellyfish/generic_file_header.hpp>
+#include <jellyfish/rectangular_binary_matrix.hpp>
 
 namespace jellyfish {
-/// Generic file header. It contains by default the hostname, the
-/// current time, the current working directory and the path to the
-/// executable. It is not portable for now (Linux/GNU specific).
-class generic_file_header {
-  static const int MAX_HEADER_DIGITS = 9;
-  Json::Value root_;
-
-  struct buffer {
-    char* data;
-    buffer(size_t size) : data(new char[size]) { }
-    ~buffer() { delete [] data; }
-  };
-
-  struct restore_fmtflags {
-    std::ostream&      os_;
-    std::ios::fmtflags flags_;
-    std::streamsize    width_;
-    char               fill_;
-    restore_fmtflags(std::ostream& os) :
-      os_(os), flags_(os.flags(std::ios::fmtflags())), width_(os.width()), fill_(os.fill())
-    { }
-    ~restore_fmtflags() {
-      os_.flags(flags_);
-      os_.width(width_);
-      os_.fill(fill_);
-    }
-  };
-
-  static void chomp(std::string& s) {
-    size_t found  = s.find_last_not_of(" \t\f\v\n\r");
-    if (found != std::string::npos)
-      s.erase(found+1);
-    else
-      s.clear();
-  }
-
+/// A header with jellyfish hash specific entries: size, matrix, etc.
+class file_header : public generic_file_header {
 public:
-  explicit generic_file_header(int alignment = 0)
-  {
-    root_["alignment"] = alignment;
+  file_header() : generic_file_header(sizeof(uint64_t)) { }
+
+  template<typename storage>
+  void update_from_ary(const storage& ary) {
+    this->size(ary.size());
+    this->key_len(ary.key_len());
+    this->val_len(ary.val_len());
+    this->matrix(ary.matrix());
+    this->max_reprobe(ary.max_reprobe());
+    this->set_reprobes(ary.reprobes());
   }
 
-  bool operator==(const generic_file_header& rhs) const { return root_ == rhs.root_; }
-  bool operator!=(const generic_file_header& rhs) const { return root_ != rhs.root_; }
+  RectangularBinaryMatrix matrix() {
+    const unsigned int r = root_["matrix"]["r"].asUInt();
+    const unsigned int c = root_["matrix"]["c"].asUInt();
+    std::vector<uint64_t> raw(c, (uint64_t)0);
+    for(unsigned int i = 0; i < c; ++i)
+      raw[i] = root_["matrix"]["columns"][i].asUInt64();
+    return RectangularBinaryMatrix(raw.data(), r, c);
+  }
 
-  /// Write the header to an output stream. The format will be: the
-  /// length written in text and decimal, followed by the header in
-  /// terse JSON format, followed by some padding to align according
-  /// to the `alignment_` member.
-  void write(std::ostream& os) const {
-    restore_fmtflags flags(os);
-    Json::FastWriter writer;
-    std::string      header = writer.write(root_);
-    chomp(header);
-
-    int align   = alignment();
-    int padding = 0;
-    size_t hlen = header.size();
-    if(align > 0) {
-      padding = (MAX_HEADER_DIGITS + header.size()) % align;
-      if(padding)
-        hlen += align - padding;
-    }
-    os << std::dec << std::right << std::setw(MAX_HEADER_DIGITS) << std::setfill('0') << hlen;
-    os << std::setw(0) << header;
-
-    if(padding) {
-      char pad[align - padding];
-      memset(pad, '\0', align - padding);
-      os.write(pad, align - padding);
+  void matrix(const RectangularBinaryMatrix& m) {
+    root_["matrix"].clear();
+    root_["matrix"]["r"] = m.r();
+    root_["matrix"]["c"] = m.c();
+    for(unsigned int i = 0; i < m.c(); ++i) {
+      Json::UInt64 x = m[i];
+      root_["matrix"]["columns"].append(x);
     }
   }
 
-  /// Read an input stream to search for a header. If one is found,
-  /// true is returned. In that case, the position in the input stream points after the header and padding.
-  ///
-  /// If false is returned, the parsing failed. The
-  /// position in the input stream may have changed and the keys
-  /// present in this header may be anything.
-  bool read(std::istream& is) {
-    std::string len;
-    int i;
-    for(i = 0; i < MAX_HEADER_DIGITS && isdigit(is.peek()); ++i)
-      len += is.get();
-    if(is.peek() != '{')
-      return false;
-    unsigned long hlen = atol(len.c_str());
-    if(hlen < 2)
-      return false;
+  size_t size() const { return root_["size"].asLargestUInt(); }
+  void size(size_t s) { root_["size"] = (Json::UInt64)s; }
 
-    buffer hbuf(hlen);
-    is.read(hbuf.data, hlen);
-    if(!is.good())
-      return false;
-    const char* end = hbuf.data + hlen;
-    while(end > hbuf.data && *(end - 1) == '\0') --end;
+  unsigned int key_len() const { return root_["key_len"].asUInt(); }
+  void key_len(unsigned int k) { root_["key_len"] = (Json::UInt)k; }
 
-    Json::Reader reader;
-    if(!reader.parse(hbuf.data, end, root_, false))
-      return false;
+  unsigned int val_len() const { return root_["val_len"].asUInt(); }
+  void val_len(unsigned int k) { root_["val_len"] = (Json::UInt)k; }
 
-    return true;
+  unsigned int max_reprobe() const { return root_["max_reprobe"].asUInt(); }
+  void max_reprobe(unsigned int m) { root_["max_reprobe"] = (Json::UInt)m; }
+
+  /// reprobes must be at least max_reprobe() + 1 long
+  void get_reprobes(size_t* reprobes) const {
+    for(unsigned int i = 0; i <= max_reprobe(); ++i)
+      reprobes[i] = root_["reprobes"][i].asLargestUInt();
   }
 
-  const Json::Value root() const { return root_; }
-
-  void fill_standard() {
-    root_["hostname"] = get_hostname();
-    root_["pwd"]      = get_pwd();
-    root_["time"]     = get_localtime();
-    root_["exe_path"] = get_exe_path();
+  /// This must be call after max_reprobe has been set. reprobes must
+  /// be at least max_reprobe() + 1 long.
+  void set_reprobes(const size_t* reprobes) {
+    root_["reprobes"].clear();
+    for(unsigned int i = 0; i <= max_reprobe(); ++i)
+      root_["reprobes"].append((Json::UInt64)reprobes[i]);
   }
 
-  std::string operator[](const std::string& key) { return root_.get(key, "").asString(); }
-  std::string operator[](const char* key) { return root_.get(key, "").asString(); }
-  int alignment() const { return std::max(0, root_.get("alignment", 0).asInt()); }
+  /// Length of counter field in binary/sorted format
+  unsigned int counter_len() const { return root_["counter_len"].asUInt(); }
+  void counter_len(unsigned int l) { root_["counter_len"] = (Json::UInt)l; }
 
-  std::vector<std::string> cmdline() const {
-    std::vector<std::string> res;
-    for(int i = 0; i < root_["cmdline"].size(); ++i)
-      res.push_back(root_["cmdline"][i].asString());
-    return res;
-  }
-
-
-  void set_cmdline(int argc, char* argv[]) {
-    root_["cmdline"].clear();
-    for(int i = 0; i < argc; i++)
-      root_["cmdline"].append(argv[i]);
-  }
-
-protected:
-  std::string get_hostname() const {
-    struct utsname buf;
-    if(uname(&buf) == -1)
-      return "";
-    return buf.nodename;
-  }
-
-  std::string get_pwd() const {
-#ifdef PATH_MAX
-    size_t len = PATH_MAX;
-#else
-    size_t len = 1024;
-#endif
-    char path[len + 1];
-
-    if(!getcwd(path, len + 1))
-      path[0] = '\0';
-    return path;
-  }
-
-  std::string get_localtime() const {
-    time_t t = time(0);
-    std::string res(ctime(&t));
-    chomp(res);
-    return res;
-  }
-
-  std::string get_exe_path() const {
-#ifdef HAVE_NSGETEXECUTABLEPATH
-    return get_exe_path_macosx();
-#else
-    return get_exe_path_linux();
-#endif
-  }
-
-#ifdef HAVE_NSGETEXECUTABLEPATH
-  std::string get_exe_path_macosx() const {
-#ifdef MAXPATHLEN
-    size_t len = MAXPATHLEN;
-#else
-    size_t len = 1024;
-#endif
-
-    char path[len + 1];
-    if(_NSGetExecutablePath(path, (uint32_t*)&len) == -1)
-      return "";
-
-    return std::string(path);
-  }
-#endif // HAVE_NSGETEXECUTABLEPATH
-
-  std::string get_exe_path_linux() const {
-#ifdef PATH_MAX
-    size_t len = PATH_MAX;
-#else
-    size_t len = 1024;
-#endif
-
-    char path[len + 1];
-    ssize_t l = readlink("/proc/self/exe", path, len + 1);
-    if(l == -1)
-      return "";
-    return std::string(path, l);
-  }
+  std::string format() const { return root_["format"].asString(); }
+  void format(const std::string& s) { root_["format"] = s; }
 };
-
-  std::ostream& operator<<(std::ostream& os, const generic_file_header& h) {
-    Json::StyledWriter w;
-    return os << w.write(h.root());
-  }
-
-}
+} // namespace jellyfish
 
 #endif /* __JELLYFISH_FILE_HEADER_HPP__ */

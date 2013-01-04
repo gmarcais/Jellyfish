@@ -18,6 +18,7 @@
 #define __JELLYFISH_DUMPER_HPP__
 
 #include <iostream>
+#include <sstream>
 #include <fstream>
 #include <jellyfish/err.hpp>
 #include <jellyfish/time.hpp>
@@ -28,46 +29,52 @@
  **/
 namespace jellyfish {
   class dumper_t {
-    Time writing_time;
+    Time writing_time_;
+    int  index_;
+    bool one_file_;
+
   public:
     define_error_class(ErrorWriting);
 
   protected:
-    void open_next_file(const char *prefix, int *index, std::ofstream &out) {
-      static const long file_len = pathconf("/", _PC_PATH_MAX);
-
-      char file[file_len + 1];
-      file[file_len] = '\0';
-      int off = snprintf(file, file_len, "%s", prefix);
-      if(off < 0)
-        eraise(ErrorWriting) << "Error creating output path" << err::no;
-      if(off > 0 && off < file_len) {
-        int eindex = atomic::gcc::fetch_add(index, (int)1);
-        int _off = snprintf(file + off, file_len - off, "_%d", eindex);
-        if(_off < 0)
-          eraise(ErrorWriting) << "Error creating output path" << err::no;
-        off += _off;
+    /// Open the next file with given prefix. If one_file is false,
+    /// append _0, _1, etc. to the prefix for actual file name. If
+    /// one_file is true, the prefix is the file name. The first time
+    /// the file is open in trunc mode, the subsequent times in append
+    /// mode.
+    void open_next_file(const char *prefix, std::ofstream &out) {
+      std::ostringstream name;
+      name << prefix;
+      std::ios::openmode mode = std::ios::out;
+      if(one_file_) {
+        mode |= (index_++ ? std::ios::ate : std::ios::trunc);
+      } else {
+        name << index_++;
+        mode |= std::ios::trunc;
       }
-      if(off >= file_len)
-        eraise(ErrorWriting) << "Output path is longer than maximum path length (" 
-                            << off << " > " << file_len << ")";
-      
-      out.open(file);
+
+      out.open(name.str().c_str());
       if(out.fail())
-        eraise(ErrorWriting) << "'" << (char*)file << "': "
+        eraise(ErrorWriting) << "'" << name.str() << "': "
                              << "Can't open file for writing" << err::no;
     }
 
   public:
-    dumper_t() : writing_time(::Time::zero) {}
+    dumper_t() : writing_time_(::Time::zero), index_(0), one_file_(false) {}
+
     void dump() {
       Time start;
       _dump();
       Time end;
-      writing_time += end - start;
+      writing_time_ += end - start;
     }
+
+    bool one_file() const { return one_file_; }
+    void one_file(bool v) { one_file_ = v; }
+
     virtual void _dump() = 0;
-    Time get_writing_time() const { return writing_time; }
+    Time get_writing_time() const { return writing_time_; }
+    int nb_files() const { return index_; }
     virtual ~dumper_t() {};
   };
 }

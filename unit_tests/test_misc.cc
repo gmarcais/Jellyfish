@@ -30,6 +30,15 @@ TYPED_TEST(FloorLog2Test, FloorLog2) {
   }
 }
 
+using jellyfish::bitsize;
+TEST(BitSize, Small) {
+  for(int i = 1; i < 4098; ++i) {
+    SCOPED_TRACE(::testing::Message() << "i:" << i);
+    EXPECT_GE((1 << bitsize(i)) - 1, i);
+    EXPECT_LE(1 << (bitsize(i) - 1), i);
+  }
+}
+
 TEST(Random, Bits) {
   uint64_t m = 0;
   uint64_t m2 = 0;

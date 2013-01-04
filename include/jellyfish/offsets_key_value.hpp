@@ -130,8 +130,8 @@ public:
   /// Number of blocks that fit in a given amount of memory. Given an
   /// amount of memory mem, it returns the number of blocks that fit
   /// into mem and the actual memory this many block use.
-  std::pair<size_t, size_t> blocks_in_memory(size_t mem) const {
-    size_t blocks = mem / bld;
+  std::pair<size_t, size_t> blocks_for_records(size_t nb_records) const {
+    size_t blocks = nb_records / bld;
     return std::make_pair(blocks, blocks * block.len);
   }
 
@@ -249,10 +249,10 @@ template<typename word>
 typename Offsets<word>::block_info Offsets<word>::compute_offsets()
 {
   offset_pair_t *offset = offsets;
-  unsigned int         cword  = 0;    // current word in block
-  unsigned int         cboff  = 0;    // current offset in word
-  unsigned int         lcword;        // idem for large fields
-  unsigned int         lcboff;
+  unsigned int   cword  = 0;    // current word in block
+  unsigned int   cboff  = 0;    // current offset in word
+  unsigned int   lcword;        // idem for large fields
+  unsigned int   lcboff;
 
   memset(offsets, '\0', sizeof(offsets));
   do {

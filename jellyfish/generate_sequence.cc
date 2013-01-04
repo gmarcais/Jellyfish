@@ -21,7 +21,6 @@
 
 #include <jellyfish/err.hpp>
 #include <jellyfish/misc.hpp>
-#include <jellyfish/square_binary_matrix.hpp>
 #include <jellyfish/randomc.h>
 #include <jellyfish/generate_sequence_cmdline.hpp>
 
@@ -47,6 +46,43 @@ private:
 };
 const char rDNAg_t::letters[4] = { 'A', 'C', 'G', 'T' };
 
+// Output matrix
+  // Generate matrices
+  // uint64_t lines[64];
+  // for(unsigned int j = 0; j < args.mer_arg.size(); j++) {
+  //   if(args.mer_arg[j] <= 0 || args.mer_arg[j] > 31)
+  //     die << "Mer size (" << args.mer_arg[j] << ") must be between 1 and 31.";
+  //   int matrix_size = args.mer_arg[j] << 1;
+  //   SquareBinaryMatrix mat(matrix_size), inv(matrix_size);
+  //   while(true) {
+  //     for(int i = 0; i < matrix_size; i++)
+  //       lines[i] = (uint64_t)rng.BRandom() | ((uint64_t)rng.BRandom() << 32);
+  //     mat = SquareBinaryMatrix(lines, matrix_size);
+  //     try {
+  //       inv = mat.inverse();
+  //       break;
+  //     } catch(SquareBinaryMatrix::SingularMatrix &e) {}
+  //   }
+
+  //   char path[4096];
+  //   int len = snprintf(path, sizeof(path), "%s_matrix_%d", args.output_arg,
+  //                      args.mer_arg[j]);
+  //   if(len < 0)
+  //     die << "Error creating the matrix file '" << path << "'" << err::no;
+  //   if((unsigned int)len >= sizeof(path))
+  //     die << "Output prefix too long '" << args.output_arg << "'";
+  //   std::ofstream fd(path);
+  //   if(!fd.good())
+  //     die << "Can't open matrix file '" << path << "'" << err::no;
+  //   if(args.verbose_flag)
+  //     std::cout << "Creating matrix file '" << path << "'\n";
+  //   mat.dump(&fd);
+  //   if(!fd.good())
+  //     die << "Error while writing matrix '" << path << "'" << err::no;
+  //   fd.close();
+  // }
+
+
 void create_path(char *path, unsigned int path_size, const char *ext, bool many, int i, const char *output_arg) {
   int len;
   if(many)
@@ -59,107 +95,84 @@ void create_path(char *path, unsigned int path_size, const char *ext, bool many,
     die << "Output prefix too long '" << output_arg << "'";
 }
 
+generate_sequence_args args;
+
+void output_fastq(size_t length, const char* path, CRandomMersenne& rng) {
+  rDNAg_t rDNAg(&rng);
+  std::ofstream fd(path);
+  if(!fd.good())
+    die << "Can't open fasta file '" << path << err::no;
+  if(args.verbose_flag)
+    std::cout << "Creating fastq file '" << path << "'\n";
+
+  size_t        total_len = 0;
+  unsigned long read_id   = 0;
+  while(total_len < length) {
+    fd << "@read_" << (read_id++) << "\n";
+    int base;
+    for(base = 0; base < 70 && total_len < length; base++, total_len++)
+      fd << rDNAg.letter();
+    fd << "\n+\n";
+    for(int j = 0; j < base; j++)
+      fd << rDNAg.qual_Illumina();
+    fd << "\n";
+  }
+  if(!fd.good())
+    die << "Error while writing fasta file '" << path << err::no;
+  fd.close();
+}
+
+void output_fasta(size_t length, const char* path, CRandomMersenne& rng) {
+  rDNAg_t rDNAg(&rng);
+  std::ofstream fd(path);
+  if(!fd.good())
+    die << "Can't open fasta file '" << path << err::no;
+  if(args.verbose_flag)
+    std::cout << "Creating fasta file '" << path << "'\n";
+
+  size_t read_length = args.read_length_given ? args.read_length_arg : length;
+  size_t total_len   = 0;
+  size_t read        = 0;
+  long   rid         = 0;
+  fd << ">read" << ++rid << "\n";
+  while(total_len < length) {
+    for(int base = 0; base < 70 && total_len < length && read < read_length;
+        base++) {
+      fd << rDNAg.letter();
+      total_len++;
+      read++;
+    }
+    fd << "\n";
+    if(read >= read_length) {
+      fd << ">read" << ++rid << "\n";
+      read = 0;
+    }
+  }
+  if(!fd.good())
+    die << "Error while writing fasta file '" << path << err::no;
+  fd.close();
+}
+
 int main(int argc, char *argv[])
 {
-  generate_sequence_args args(argc, argv);
-  
+  args.parse(argc, argv);
+
   if(args.verbose_flag)
     std::cout << "Seed: " << args.seed_arg << "\n";
   CRandomMersenne rng(args.seed_arg);
-  
-  // Generate matrices
-  uint64_t lines[64];
-  for(unsigned int j = 0; j < args.mer_arg.size(); j++) {
-    if(args.mer_arg[j] <= 0 || args.mer_arg[j] > 31)
-      die << "Mer size (" << args.mer_arg[j] << ") must be between 1 and 31.";
-    int matrix_size = args.mer_arg[j] << 1;
-    SquareBinaryMatrix mat(matrix_size), inv(matrix_size);
-    while(true) {
-      for(int i = 0; i < matrix_size; i++)
-        lines[i] = (uint64_t)rng.BRandom() | ((uint64_t)rng.BRandom() << 32);
-      mat = SquareBinaryMatrix(lines, matrix_size);
-      try {
-        inv = mat.inverse();
-        break;
-      } catch(SquareBinaryMatrix::SingularMatrix &e) {}
-    }
-    char path[4096];
-    int len = snprintf(path, sizeof(path), "%s_matrix_%d", args.output_arg, 
-                       args.mer_arg[j]);
-    if(len < 0)
-      die << "Error creating the matrix file '" << path << "'" << err::no;
-    if((unsigned int)len >= sizeof(path))
-      die << "Output prefix too long '" << args.output_arg << "'";
-    std::ofstream fd(path);
-    if(!fd.good())
-      die << "Can't open matrix file '" << path << "'" << err::no;
-    if(args.verbose_flag)
-      std::cout << "Creating matrix file '" << path << "'\n";
-    mat.dump(&fd);
-    if(!fd.good())
-      die << "Error while writing matrix '" << path << "'" << err::no;
-    fd.close();
-  }
-  
+
+
   // Output sequence
-  rDNAg_t rDNAg(&rng);
   char path[4096];
   bool many = args.length_arg.size() > 1;
-  
+
   for(unsigned int i = 0; i < args.length_arg.size(); ++i) {
-    size_t length = args.length_arg[i];
-  
     if(args.fastq_flag) {
       create_path(path, sizeof(path), "fq", many, i, args.output_arg);
-      std::ofstream fd(path);
-      if(!fd.good())
-        die << "Can't open fasta file '" << path << err::no;
-      if(args.verbose_flag)
-        std::cout << "Creating fastq file '" << path << "'\n";
-      size_t total_len = 0;
-      unsigned long read_id = 0;
-      while(total_len < length) {
-        fd << "@read_" << (read_id++) << "\n";
-        int base;
-        for(base = 0; base < 70 && total_len < length; base++, total_len++)
-          fd << rDNAg.letter();
-        fd << "\n+\n";
-        for(int j = 0; j < base; j++)
-          fd << rDNAg.qual_Illumina();
-        fd << "\n";
-      }
-      if(!fd.good())
-        die << "Error while writing fasta file '" << path << err::no;
-      fd.close();
+      output_fastq(args.length_arg[i], path, rng);
     } else {
       create_path(path, sizeof(path), "fa", many, i, args.output_arg);
-      std::ofstream fd(path);
-      if(!fd.good())
-        die << "Can't open fasta file '" << path << err::no;
-      if(args.verbose_flag)
-        std::cout << "Creating fasta file '" << path << "'\n";
-
-      size_t read_length = args.read_length_given ? args.read_length_arg : length;
-      size_t total_len = 0;
-      size_t read = 0;
-      long rid = 0;
-      fd << ">read" << ++rid << "\n";
-      while(total_len < length) {
-        for(int base = 0; base < 70 && total_len < length && read < read_length; 
-            base++) {
-          fd << rDNAg.letter();
-          total_len++;
-          read++;
-        }
-        fd << "\n";
-        if(read >= read_length) {
-          fd << ">read" << ++rid << "\n";
-          read = 0;
-        }
-      }
-      if(!fd.good())
-        die << "Error while writing fasta file '" << path << err::no;
-      fd.close();
+      output_fasta(args.length_arg[i], path, rng);
     }
   }
 

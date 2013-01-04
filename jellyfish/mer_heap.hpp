@@ -17,6 +17,7 @@
 #ifndef __JELLYFISH_HEAP_HPP__
 #define __JELLYFISH_HEAP_HPP__
 
+#include <stdint.h>
 #include <algorithm>
 
 namespace jellyfish { namespace mer_heap {

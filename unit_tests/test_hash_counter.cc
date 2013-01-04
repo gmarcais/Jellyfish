@@ -54,18 +54,20 @@ TEST(HashCounterCooperative, SizeDouble) {
   static const int    nb         = 100;
   static const size_t init_size  = 128;
   mer_dna::k(mer_len);
-  hash_counter hash(init_size, mer_len * 2, 5, nb_threads);
 
-  EXPECT_EQ(mer_len * 2, hash.key_len());
-  EXPECT_EQ(5, hash.val_len());
+  {
+    hash_counter hash(init_size, mer_len * 2, 5, nb_threads);
+    EXPECT_TRUE(hash.do_size_doubling());
+    EXPECT_EQ(mer_len * 2, hash.key_len());
+    EXPECT_EQ(5, hash.val_len());
 
-  hash_adder adder(hash, nb, nb_threads);
-  adder.exec_join(nb_threads);
+    hash_adder adder(hash, nb, nb_threads);
+    adder.exec_join(nb_threads);
 
-  lazy_iterator it = hash.ary()->iterator_all<lazy_iterator>();
-  while(it.next())
-    EXPECT_EQ(adder.val(it.key()), it.val());
-  EXPECT_LT((size_t)(nb_threads * nb), hash.size());
+    lazy_iterator it = hash.ary()->iterator_all<lazy_iterator>();
+    while(it.next())
+      EXPECT_EQ(adder.val(it.key()), it.val());
+    EXPECT_LT((size_t)(nb_threads * nb), hash.size());
+  }
 }
-
 } // namespace {
