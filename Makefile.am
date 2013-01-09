@@ -39,7 +39,8 @@ check_PROGRAMS = bin/generate_sequence
 ############################
 bin_jellyfish_SOURCES = sub_commands/jellyfish.cc			\
                         sub_commands/count_main.cc			\
-                        sub_commands/info_main.cc jellyfish/err.cc	\
+                        sub_commands/info_main.cc			\
+                        sub_commands/dump_main.cc jellyfish/err.cc	\
                         jellyfish/thread_exec.cc jellyfish/time.cc	\
                         jellyfish/jsoncpp.cpp
 

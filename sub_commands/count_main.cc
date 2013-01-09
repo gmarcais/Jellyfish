@@ -9,23 +9,18 @@
 #include <jellyfish/err.hpp>
 #include <jellyfish/thread_exec.hpp>
 #include <jellyfish/hash_counter.hpp>
-#include <jellyfish/mer_dna.hpp>
-#include <jellyfish/text_dumper.hpp>
-#include <jellyfish/binary_dumper.hpp>
 #include <jellyfish/locks_pthread.hpp>
 #include <jellyfish/mer_overlap_sequence_parser.hpp>
 #include <jellyfish/mer_iterator.hpp>
 #include <jellyfish/stream_iterator.hpp>
+#include <jellyfish/jellyfish.hpp>
 #include <sub_commands/count_main_cmdline.hpp>
 
-typedef jellyfish::cooperative::hash_counter<jellyfish::mer_dna> mer_array;
-typedef jellyfish::text_dumper<mer_array::array> text_dumper;
-typedef jellyfish::binary_dumper<mer_array::array> binary_dumper;
 typedef std::vector<const char*> file_vector;
 typedef jellyfish::mer_overlap_sequence_parser<jellyfish::stream_iterator<file_vector::iterator> > sequence_parser;
 typedef jellyfish::mer_iterator<sequence_parser, jellyfish::mer_dna> mer_iterator;
 
-count_main_cmdline args; // Command line switches and arguments
+static count_main_cmdline args; // Command line switches and arguments
 
 
 template<typename PathIterator>
