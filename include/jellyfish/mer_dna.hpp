@@ -175,6 +175,13 @@ public:
   /// Direct access to the data array.
   const base_type* data() const { return _data; }
 
+  template<unsigned int alignment>
+  void read(std::istream& is) {
+    const unsigned int k = static_cast<const derived*>(this)->k();
+    const unsigned int l = k / (4 * alignment) + (k % (4 * alignment) != 0);
+    is.read((char*)_data, l);
+  }
+
   bool operator==(const mer_base& rhs) const {
     unsigned int i = nb_words() - 1;
     bool res = (_data[i] & msw()) == (rhs._data[i] & msw());
@@ -608,6 +615,11 @@ inline std::ostream& operator<<(std::ostream& os, const mer_dna& m) {
   m.to_str(s);
   return os << s;
 }
+
+// inline std::istream& operator>>(std::istream& is, mer_dna& m) {
+//   char s[m.k() + 1];
+//   is.
+// }
 
 } // namespace jellyfish
 

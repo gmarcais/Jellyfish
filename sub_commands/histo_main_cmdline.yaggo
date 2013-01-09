@@ -9,9 +9,6 @@ The last bucket in the output behaves as a catchall: it tallies all
 k-mers with a count greater or equal to the low end point of this
 bucket."
 
-output "histo_main_cmdline.hpp"
-name "histo_args"
-
 option("low", "l") {
   description "Low count value of histogram"
   uint64; default "1" }
@@ -38,4 +35,4 @@ option("verbose", "v") {
   flag; off }
 arg("db") {
   description "Jellyfish database"
-  string; typestr "path" }
+  c_string; typestr "path" }

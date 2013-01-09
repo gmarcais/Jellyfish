@@ -4,9 +4,6 @@ description "By default, dump in a fasta format where the header is the count an
 the sequence is the sequence of the k-mer. The column format is a 2
 column output: k-mer count."
 
-output "dump_main_cmdline.hpp"
-name "dump_args"
-
 option("column", "c") {
   description "Column format"
   flag; off }
@@ -15,7 +12,7 @@ option("tab", "t") {
   flag; off }
 option("lower-count", "L") {
   description "Don't output k-mer with count < lower-count"
-  uint64 }
+  uint64; }
 option("upper-count", "U") {
   description "Don't output k-mer with count > upper-count"
   uint64 }
@@ -24,4 +21,4 @@ option("output", "o") {
   c_string }
 arg("db") {
   description "Jellyfish database"
-  string; typestr "path" }
+  c_string; typestr "path" }
