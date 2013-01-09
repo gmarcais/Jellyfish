@@ -40,13 +40,16 @@ check_PROGRAMS = bin/generate_sequence
 bin_jellyfish_SOURCES = sub_commands/jellyfish.cc			\
                         sub_commands/count_main.cc			\
                         sub_commands/info_main.cc			\
-                        sub_commands/dump_main.cc jellyfish/err.cc	\
+                        sub_commands/dump_main.cc			\
+                        sub_commands/histo_main.cc jellyfish/err.cc	\
                         jellyfish/thread_exec.cc jellyfish/time.cc	\
                         jellyfish/jsoncpp.cpp
 
 
 YAGGO_SOURCES += sub_commands/count_main_cmdline.hpp	\
-                 sub_commands/info_main_cmdline.hpp
+                 sub_commands/info_main_cmdline.hpp	\
+                 sub_commands/dump_main_cmdline.hpp	\
+                 sub_commands/histo_main_cmdline.hpp
 
 ######################################
 # Build Jellyfish the shared library #
