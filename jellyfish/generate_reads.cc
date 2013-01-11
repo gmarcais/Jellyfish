@@ -24,7 +24,6 @@
 #include <jellyfish/err.hpp>
 #include <jellyfish/dbg.hpp>
 #include <jellyfish/misc.hpp>
-#include <jellyfish/square_binary_matrix.hpp>
 #include <jellyfish/randomc.h>
 #include <jellyfish/generate_reads_cmdline.hpp>
 

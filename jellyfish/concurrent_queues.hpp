@@ -28,7 +28,6 @@
 
 #include <jellyfish/atomic_gcc.hpp>
 #include <jellyfish/dbg.hpp>
-#include <jellyfish/divisor.hpp>
 
 /***
  * Circular buffer of fixed size with thread safe enqueue and dequeue
@@ -48,6 +47,8 @@
  */
 
 namespace jellyfish {
+#include <jellyfish/divisor.hpp>
+
   template<class Val>
   class concurrent_queue {
     Val               **queue;
@@ -55,7 +56,7 @@ namespace jellyfish {
     uint64_t volatile   head;
     uint64_t volatile   tail;
     bool volatile       closed;
-    divisor64           size_div;
+    jflib::divisor64    size_div;
   
   public:
     explicit concurrent_queue(uint64_t _size) : 

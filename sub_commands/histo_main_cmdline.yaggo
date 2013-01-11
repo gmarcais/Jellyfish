@@ -1,0 +1,38 @@
+purpose "Create an histogram of k-mer occurrences"
+package "jellyfish histo"
+description "Create an histogram with the number of k-mers having a given
+count. In bucket 'i' are tallied the k-mers which have a count 'c'
+satisfying 'low+i*inc <= c < low+(i+1)*inc'. Buckets in the output are
+labeled by the low end point (low+i*inc).
+
+The last bucket in the output behaves as a catchall: it tallies all
+k-mers with a count greater or equal to the low end point of this
+bucket."
+
+option("low", "l") {
+  description "Low count value of histogram"
+  uint64; default "1" }
+option("high", "h") {
+  description "High count value of histogram"
+  uint64; default "10000" }
+option("increment", "i") {
+  description "Increment value for buckets"
+  uint64; default "1" }
+option("threads", "t") {
+  description "Number of threads"
+  uint32; default "1" }
+option("full", "f") {
+  description "Full histo. Don't skip count 0."
+  flag; off }
+option("output", "o") {
+  description "Output file"
+  c_string }
+option("buffer-size", "s") {
+  description "Length in bytes of input buffer"
+  uint64; default "10000000"; suffix; hidden; typestr "Buffer length" }
+option("verbose", "v") {
+  description "Output information"
+  flag; off }
+arg("db") {
+  description "Jellyfish database"
+  c_string; typestr "path" }

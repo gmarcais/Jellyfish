@@ -3,4 +3,8 @@
 cd tests
 . ./compat.sh
 
-${DIR}/test_all
+if [ -n "$VALGRIND" ]; then
+    exec valgrind ${DIR}/test_all
+else
+    exec ${DIR}/test_all
+fi

@@ -1,1 +1,1 @@
-AM_CPPFLAGS += -Werror
+# AM_CPPFLAGS += -Werror

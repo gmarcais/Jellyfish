@@ -1,15 +1,20 @@
+#include <stdint.h>
+
+#include <algorithm>
+#include <functional>
+
 #include <gtest/gtest.h>
 #include <unit_tests/test_main.hpp>
 #include <jellyfish/misc.hpp>
-#include <stdint.h>
 
+namespace {
 using testing::Types;
 
 template <typename T>
 class FloorLog2Test : public ::testing::Test {
 public:
   T x;
-  
+
   FloorLog2Test() : x(1) {}
 };
 
@@ -25,7 +30,14 @@ TYPED_TEST(FloorLog2Test, FloorLog2) {
   }
 }
 
-
+using jellyfish::bitsize;
+TEST(BitSize, Small) {
+  for(int i = 1; i < 4098; ++i) {
+    SCOPED_TRACE(::testing::Message() << "i:" << i);
+    EXPECT_GE((1 << bitsize(i)) - 1, i);
+    EXPECT_LE(1 << (bitsize(i) - 1), i);
+  }
+}
 
 TEST(Random, Bits) {
   uint64_t m = 0;
@@ -39,4 +51,34 @@ TEST(Random, Bits) {
   EXPECT_LT((uint64_t)1 << 49, m); // Should be false with very low probability
   EXPECT_LT((uint64_t)1 << 49, m2); // Should be false with very low probability
   EXPECT_LT(512, not_zero);
+}
+
+TEST(BinarySearchFirst, Int) {
+  static int size = 1024;
+
+  for(int i = 0; i < size; ++i)
+    EXPECT_EQ(i, *binary_search_first_false(pointer_integer<int>(0), pointer_integer<int>(size),
+                                            std::bind2nd(std::less<int>(), i)));
+}
+
+TEST(Slices, NonOverlapAll) {
+  for(int iteration = 0; iteration < 100; ++iteration) {
+    unsigned int size      = random_bits(20);
+    unsigned int nb_slices = random_bits(4) + 1;
+    SCOPED_TRACE(::testing::Message() << "iteration:" << iteration
+                 << " size:" << size << " nb_slices:" << nb_slices);
+
+    unsigned int total = 0;
+    unsigned int prev  = 0;
+    for(unsigned int i = 0; i < nb_slices; ++i) {
+      SCOPED_TRACE(::testing::Message() << "i:" << i);
+      std::pair<unsigned int, unsigned int> b = jellyfish::slice(i, nb_slices, size);
+      ASSERT_EQ(prev, b.first);
+      ASSERT_GT(b.second, b.first);
+      total += b.second - b.first;
+      prev   = b.second;
+    }
+    ASSERT_EQ(size, total);
+  }
+}
 }

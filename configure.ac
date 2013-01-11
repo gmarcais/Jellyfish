@@ -1,4 +1,4 @@
-AC_INIT([jellyfish], [1.9.0beta], [gmarcais@umd.edu])
+AC_INIT([jellyfish], [2.0.0beta1], [gmarcais@umd.edu])
 AC_CANONICAL_HOST
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([subdir-objects foreign parallel-tests color-tests])
@@ -61,12 +61,29 @@ AS_IF([test "x$with_int128" != xno],
       ])
 
 
+# On MacOS X, use _NSGetExecutablePath to find path to own executable
+AC_MSG_CHECKING([for _NSGetExecutablePath])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <mach-o/dyld.h>]],
+                                   [[_NSGetExecutablePath(0, 0);]])],
+                  [AC_MSG_RESULT([yes])]
+                  [AC_DEFINE([HAVE_NSGETEXECUTABLEPATH], [1], [Used to find executable path on MacOS X])],
+                  [AC_MSG_RESULT([no])])
+
 # Check the version of strerror_r
 AC_FUNC_STRERROR_R      
 AC_CHECK_HEADERS([execinfo.h])
 AC_CHECK_MEMBER([siginfo_t.si_int],
                 [AC_DEFINE([HAVE_SI_INT], [1], [Define if siginfo_t.si_int exists])],
                 [], [[#include <signal.h>]])
+
+# --enable-all-static
+# Do not use libtool if building all static
+AC_ARG_ENABLE([all-static],
+              [AC_HELP_STRING([--enable-all-static], [create statically linked executable])])
+STATIC_FLAGS=
+AS_IF([test x$enable_all_static = xyes],
+      [AC_SUBST([STATIC_FLAGS], ["-static -static-libstdc++"])])
+AM_CONDITIONAL([ALL_STATIC], [test x$enable_all_static = xyes])
 
 AC_OUTPUT
 

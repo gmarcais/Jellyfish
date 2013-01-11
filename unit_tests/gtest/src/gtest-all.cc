@@ -38,6 +38,10 @@
 // when it's fused.
 #include "gtest/gtest.h"
 
+#ifdef __ICC
+#pragma warning disable 2304
+#pragma warning disable 177
+#endif
 // The following lines pull in the real gtest *.cc files.
 // Copyright 2005, Google Inc.
 // All rights reserved.

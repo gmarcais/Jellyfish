@@ -26,13 +26,6 @@
 namespace jellyfish {
   namespace raw_hash {
     static const char *file_type  __attribute__((used)) = "JFRHSHDN";
-    struct header {
-      char     type[8];
-      uint64_t key_len;
-      uint64_t val_len;
-      uint64_t size;
-      uint64_t max_reprobe;
-    };
     define_error_class(ErrorReading);
     template<typename storage_t>
     class dumper : public dumper_t, public thread_exec {
@@ -43,9 +36,8 @@ namespace jellyfish {
       const uint_t         threads;
       const std::string    file_prefix;
       storage_t     *const ary;
-      int                  file_index;
       token_ring_t         tr;
-    
+
       struct thread_info_t *thread_info;
       size_t                nb_records, nb_blocks;
       std::ofstream        *out;
@@ -53,7 +45,7 @@ namespace jellyfish {
     public:
       dumper(uint_t _threads, const char *_file_prefix, size_t chunk_size, storage_t *_ary) :
         threads(_threads), file_prefix(_file_prefix),
-        ary(_ary), file_index(0), tr()
+        ary(_ary), tr()
       {
         nb_records = ary->floor_block(chunk_size / ary->get_block_len(), nb_blocks);
         while(nb_records < ary->get_max_reprobe_offset()) {
@@ -64,13 +56,13 @@ namespace jellyfish {
           thread_info[i].token = tr.new_token();
         }
       }
-    
+
       ~dumper() {
         if(thread_info) {
           delete[] thread_info;
         }
       }
-    
+
       virtual void start(int i) { dump_to_file(i); }
       void dump_to_file(int i);
       void write_header();

@@ -1,3 +1,7 @@
+#include <sys/types.h>
+#include <signal.h>
+#include <unistd.h>
+
 #include <map>
 #include <vector>
 
@@ -20,6 +24,11 @@ typedef std::set<jellyfish::mer_dna> mer_set;
 
 using jellyfish::RectangularBinaryMatrix;
 using jellyfish::mer_dna;
+
+typedef large_array::iterator stl_iterator;
+typedef large_array::eager_iterator eager_iterator;
+typedef large_array::lazy_iterator lazy_iterator;
+typedef large_array::region_iterator region_iterator;
 
 // Tuple is {key_len, val_len, reprobe_len}.
 class HashArray : public ::testing::TestWithParam< ::std::tr1::tuple<int,int, int> >
@@ -67,7 +76,7 @@ TEST_P(HashArray, OneElement) {
     // Add this one element to the hash
     ary.clear();
     bool   is_new = false;
-    size_t id     = -1;
+    size_t id     = (size_t)-1;
     ary.add(m, i, &is_new, &id);
     EXPECT_TRUE(is_new);
     // Only expected to agree on the length of the key. Applies only
@@ -78,7 +87,7 @@ TEST_P(HashArray, OneElement) {
     uint64_t val;
     for(ssize_t j = -bsizeof(uint64_t); j <= (ssize_t)bsizeof(uint64_t); ++j) {
       SCOPED_TRACE(::testing::Message() << "j:" << j);
-      val = -1;
+      val = (uint64_t)-1;
       size_t jd = (start_pos + j) & ary_size_mask;
       ASSERT_EQ(jd == id, ary.get_key_val_at_id(jd, get_mer, val) == large_array::FILLED);
       if(jd == id) {
@@ -117,8 +126,8 @@ TEST_P(HashArray, Collisions) {
       ++map[mers[j]];
     }
 
-    large_array::iterator it    = ary.iterator_all();
-    size_t                count = 0;
+    lazy_iterator it    = ary.iterator_all<lazy_iterator>();
+    size_t        count = 0;
     while(it.next()) {
       SCOPED_TRACE(::testing::Message() << "it.key():" << it.key());
       ASSERT_FALSE(map.end() == map.find(it.key()));
@@ -130,35 +139,61 @@ TEST_P(HashArray, Collisions) {
 }
 
 TEST_P(HashArray, Iterator) {
-  static const int nb_elts = 100;
+  static const int nb_elts = 1 << (ary_lsize - 1);
   SCOPED_TRACE(::testing::Message() << "key_len:" << key_len << " val_len:" << val_len << " reprobe:" << reprobe_limit);
-
-  // Don't test for this combination as the number of entries used by
-  // each key is too large (no bits from key harvested for second
-  // entry). Hence the array fills up and we get an error.
-  if((size_t)key_len < ary_lsize && val_len < 2)
-    return;
 
   mer_map            map;
   jellyfish::mer_dna mer;
+  jellyfish::mer_dna bad_mer("GCCTT");
 
   for(int i = 0; i < nb_elts; ++i) {
     SCOPED_TRACE(::testing::Message() << "i:" << i);
     mer.randomize();
-    ASSERT_TRUE(ary.add(mer, i));
-    //    std::cout << ary.top_reprobe() << std::endl;
+    // If get false, hash array filled up: skip test
+    bool res = ary.add(mer, i);
+    if(!res)
+      return;
     map[mer] += i;
   }
 
-  large_array::iterator it = ary.iterator_all();
+  eager_iterator it     = ary.iterator_all<eager_iterator>();
+  lazy_iterator  lit    = ary.iterator_all<lazy_iterator>();
+  stl_iterator   stl_it = ary.iterator_all<stl_iterator>();
   int count = 0;
-  while(it.next()) {
+  for( ; it.next(); ++stl_it) {
+    ASSERT_TRUE(lit.next());
+    ASSERT_NE(ary.end(), stl_it);
     mer_map::const_iterator mit = map.find(it.key());
     ASSERT_NE(map.end(), mit);
     SCOPED_TRACE(::testing::Message() << "key:" << it.key());
     EXPECT_EQ(mit->first, it.key());
     EXPECT_EQ(mit->second, it.val());
+    EXPECT_EQ(mit->first, lit.key());
+    EXPECT_EQ(mit->second, lit.val());
+    EXPECT_EQ(mit->first, stl_it->first);
+    EXPECT_EQ(mit->second, stl_it->second);
+    EXPECT_EQ(it.id(), lit.id());
+    EXPECT_EQ(it.id(), stl_it.id());
     ++count;
+  }
+  EXPECT_FALSE(lit.next());
+  EXPECT_EQ(ary.end(), stl_it);
+  EXPECT_EQ(map.size(), (size_t)count);
+
+  count               = 0;
+  const int nb_slices = 1;
+  for(int i = 0; i < nb_slices; ++i) {
+    SCOPED_TRACE(::testing::Message() << "slice:" << i << " nb_slices:" << nb_slices);
+    region_iterator rit = ary.iterator_slice<region_iterator>(i, nb_slices);
+    while(rit.next()) {
+      ASSERT_GE(rit.oid(), rit.start());
+      ASSERT_LT(rit.oid(), rit.end());
+      mer_map::const_iterator mit = map.find(rit.key());
+      ASSERT_NE(map.end(), mit);
+      EXPECT_EQ(mit->first, rit.key());
+      EXPECT_EQ(mit->second, rit.val());
+      ++count;
+    }
   }
   EXPECT_EQ(map.size(), (size_t)count);
 
@@ -168,10 +203,15 @@ TEST_P(HashArray, Iterator) {
     uint64_t val;
     size_t   id;
     EXPECT_TRUE(ary.get_key_id(it->first, &id));
-    EXPECT_TRUE(ary.get_val_for_key(it->first, &val));
+    ASSERT_TRUE(ary.get_val_for_key(it->first, &val));
     EXPECT_EQ(it->second, val);
   }
 }
+
+INSTANTIATE_TEST_CASE_P(HashArrayTest, HashArray, ::testing::Combine(::testing::Range(8, 4 * 64, 2), // Key lengths
+                                                                     ::testing::Range(1, 10),    // Val lengths
+                                                                     ::testing::Range(6, 8)      // Reprobe lengths
+                                                                     ));
 
 TEST(HashSet, Set) {
   static const int lsize = 16;
@@ -205,9 +245,20 @@ TEST(HashSet, Set) {
   }
 }
 
-INSTANTIATE_TEST_CASE_P(HashArrayTest, HashArray, ::testing::Combine(::testing::Range(8, 4 * 64, 2), // Key lengths
-                                                                     ::testing::Range(1, 10),    // Val lengths
-                                                                     ::testing::Range(6, 8)      // Reprobe lengths
-                                                                     ));
+TEST(Hash, Info) {
+  for(int iteration = 0; iteration < 100; ++iteration) {
+    size_t                  mem     = random_bits(48);
+    uint16_t                key_len = random_bits(7) + 1;
+    uint16_t                val_len = random_bits(4) + 1;
+    large_array::usage_info info(key_len, val_len, 126);
 
+    SCOPED_TRACE(::testing::Message() << "iteration:" << iteration << " mem:" << mem
+                 << " key_len:" << key_len << " val_len:" << val_len);
+    uint16_t size_bits = info.size_bits(mem);
+    uint16_t size2_bits = info.size_bits_linear(mem);
+    ASSERT_EQ(size2_bits, size_bits);
+    ASSERT_LE(info.mem((size_t)1 << size_bits), mem);
+    ASSERT_GT(info.mem((size_t)1 << (size_bits + 1)), mem);
+  }
+}
 }
