@@ -138,7 +138,8 @@ protected:
   const word*     w_;
   const offset_t* o_;
   bool            reversed_key_;
-  key_type        key_;
+  key_type*       key_;
+  bool            own_key;
 
 public:
   region_iterator_base(const array *ary, size_t start, size_t end) :
@@ -147,15 +148,33 @@ public:
     end_id_(ary ? std::min(end, ary->size()) : 0),
     mid_(ary ? std::min(end_id_ - start_id_ + ary->max_reprobe_offset(), ary->size()) : 0),
     oid_(end_id_), id_(0), w_(0), o_(0),
-    reversed_key_(false)
+    reversed_key_(false),
+    key_(new key_type),
+    own_key(true)
   {}
+
+  region_iterator_base(const array *ary, size_t start, size_t end, key_type& key) :
+    ary_(ary), mask_(ary ? ary->size() - 1 : 0),
+    start_id_(ary ? std::min(start, ary->size()) : 0),
+    end_id_(ary ? std::min(end, ary->size()) : 0),
+    mid_(ary ? std::min(end_id_ - start_id_ + ary->max_reprobe_offset(), ary->size()) : 0),
+    oid_(end_id_), id_(0), w_(0), o_(0),
+    reversed_key_(false),
+    key_(&key),
+    own_key(false)
+  { }
+
+  ~region_iterator_base() {
+    if(own_key)
+      delete key_;
+  }
 
   const key_type& key() {
     if(!reversed_key_) {
-      key_.set_bits(0, ary_->lsize(), ary_->inverse_matrix().times(key_));
+      key_->set_bits(0, ary_->lsize(), ary_->inverse_matrix().times(*key_));
       reversed_key_ = true;
     }
-    return key_;
+    return *key_;
   }
   mapped_type val() const {
     return ary_->get_val_at_id(id(), w_, o_, true, false);
@@ -176,8 +195,8 @@ public:
     reversed_key_  = false;
     bool found_oid = false;
     while(!found_oid && id_ < mid_) {
-      if(ary_->get_key_at_id((start_id_ + id_++) & mask_, key_, &w_, &o_) == array::FILLED) {
-        oid_ = key_.get_bits(0, ary_->lsize());
+      if(ary_->get_key_at_id((start_id_ + id_++) & mask_, *key_, &w_, &o_) == array::FILLED) {
+        oid_ = key_->get_bits(0, ary_->lsize());
         found_oid = start_id_ <= oid_ && oid_ < end_id_;
       }
     }

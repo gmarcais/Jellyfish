@@ -77,15 +77,15 @@ public:
   }
 
   virtual void start(const int i) {
-    std::ostringstream buffer;
-    heap_type          heap(ary_->max_reprobe_offset());
-    token_type&        token = ring_[i];
-    size_t             count = 0;
-
+    std::ostringstream           buffer;
+    heap_type                    heap(ary_->max_reprobe_offset());
+    token_type&                  token = ring_[i];
+    size_t                       count = 0;
+    typename storage_t::key_type key;
 
     for(size_t id = i; id * block_info.second < ary_->size(); id += nb_threads_) {
       // Fill buffer
-      iterator it(ary_, id * block_info.second, (id + 1) * block_info.second);
+      iterator it(ary_, id * block_info.second, (id + 1) * block_info.second, key);
       heap.fill(it);
 
       while(heap.is_not_empty()) {
