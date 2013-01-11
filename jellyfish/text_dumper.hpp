@@ -22,20 +22,19 @@
 namespace jellyfish {
 template<typename storage_t>
 class text_dumper : public sorted_dumper<text_dumper<storage_t>, storage_t> {
-  typedef sorted_dumper<text_dumper, storage_t> super;
+  typedef sorted_dumper<text_dumper<storage_t>, storage_t> super;
 
 public:
-  text_dumper(int nb_threads, const char* file_prefix, storage_t* ary,
-              file_header* header = 0) :
-    super(nb_threads, file_prefix, ary, header)
+  text_dumper(int nb_threads, const char* file_prefix, file_header* header = 0) :
+    super(nb_threads, file_prefix, header)
   { }
 
-  virtual void _dump() {
+  virtual void _dump(storage_t* ary) {
     if(super::header_) {
-      super::header_->update_from_ary(*super::ary_);
+      super::header_->update_from_ary(*ary);
       super::header_->format("text/sorted");
     }
-    super::_dump();
+    super::_dump(ary);
   }
 
   void write_key_value_pair(std::ostream& out, typename super::heap_item item) {

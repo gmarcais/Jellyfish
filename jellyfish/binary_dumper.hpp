@@ -27,7 +27,7 @@ namespace jellyfish {
 /// k-mer and count are written in binary, byte aligned.
 template<typename storage_t>
 class binary_dumper : public sorted_dumper<binary_dumper<storage_t>, storage_t> {
-  typedef sorted_dumper<binary_dumper, storage_t> super;
+  typedef sorted_dumper<binary_dumper<storage_t>, storage_t> super;
 
   int      val_len_;
   uint64_t max_val;
@@ -37,20 +37,20 @@ public:
   static const char* format;
 
   binary_dumper(int val_len, // length of value field in bytes
-                int nb_threads, const char* file_prefix, storage_t* ary,
+                int nb_threads, const char* file_prefix,
                 file_header* header = 0) :
-    super(nb_threads, file_prefix, ary, header),
-    val_len_(val_len), max_val(((uint64_t)1 << (8 * val_len)) - 1),
-    key_len_(ary->key_len() / 8)
+    super(nb_threads, file_prefix, header),
+    val_len_(val_len), max_val(((uint64_t)1 << (8 * val_len)) - 1)
   { }
 
-  virtual void _dump() {
+  virtual void _dump(storage_t* ary) {
+    key_len_ = ary->key_len() / 8 + (ary->key_len() % 8 != 0);
     if(super::header_) {
-      super::header_->update_from_ary(*super::ary_);
+      super::header_->update_from_ary(*ary);
       super::header_->format(format);
       super::header_->counter_len(val_len_);
     }
-    super::_dump();
+    super::_dump(ary);
   }
 
   void write_key_value_pair(std::ostream& out, typename super::heap_item item) {

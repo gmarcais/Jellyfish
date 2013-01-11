@@ -3,21 +3,30 @@
 cd tests
 . ./compat.sh
 
+# 376761a6e273b57b3428c14e3b536edf ${pref}_text0_dump
+# 376761a6e273b57b3428c14e3b536edf ${pref}_bin0_dump
+# 9251799dd5dbd3f617124aa2ff72112a ${pref}.histo
+
 sort > ${pref}.md5sum <<EOF 
-376761a6e273b57b3428c14e3b536edf ${pref}_text0_dump
-376761a6e273b57b3428c14e3b536edf ${pref}_bin0_dump
-9251799dd5dbd3f617124aa2ff72112a ${pref}.histo
+864c0b0826854bdc72a85d170549b64b ${pref}_m15_s2M.histo
+864c0b0826854bdc72a85d170549b64b ${pref}_m15_s16M.histo
 EOF
 echo "Counting 22-mers on ${nCPUs} CPU"
-pwd
 
-$JF count -m 40 -t $nCPUs -o ${pref}_text -s 2M --text seq1m_0.fa
-$JF info -s ${pref}_text0 | sort >  ${pref}_text0_dump
+$JF count -t $nCPUs -o ${pref}_m15_s2M -s 2M -C -m 15 seq10m.fa
+$JF histo ${pref}_m15_s2M0 > ${pref}_m15_s2M.histo
 
-$JF count -m 40 -t $nCPUs -o ${pref}_bin -s 2M seq1m_0.fa
-$JF dump -c ${pref}_bin0 | sort > ${pref}_bin0_dump
+$JF count -t $nCPUs -o ${pref}_m15_s16M -s 16M -C -m 15 seq10m.fa
+$JF histo ${pref}_m15_s16M0 > ${pref}_m15_s16M.histo
 
-$JF histo ${pref}_bin0 > ${pref}.histo
+
+# $JF count -m 40 -t $nCPUs -o ${pref}_text -s 2M --text seq1m_0.fa
+# $JF info -s ${pref}_text0 | sort >  ${pref}_text0_dump
+
+# $JF count -m 40 -t $nCPUs -o ${pref}_bin -s 2M seq1m_0.fa
+# $JF dump -c ${pref}_bin0 | sort > ${pref}_bin0_dump
+
+# $JF histo ${pref}_bin0 > ${pref}.histo
 
 # Count all k-mers
 # $JF count --matrix seq10m_matrix_22 -m 22 -t $nCPUs -o $pref \

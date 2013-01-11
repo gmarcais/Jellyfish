@@ -23,9 +23,10 @@
 #include <jellyfish/text_dumper.hpp>
 #include <jellyfish/binary_dumper.hpp>
 
-typedef jellyfish::cooperative::hash_counter<jellyfish::mer_dna> mer_array;
-typedef jellyfish::text_dumper<mer_array::array> text_dumper;
-typedef jellyfish::binary_dumper<mer_array::array> binary_dumper;
+typedef jellyfish::cooperative::hash_counter<jellyfish::mer_dna> mer_hash;
+typedef mer_hash::array mer_array;
+typedef jellyfish::text_dumper<mer_array> text_dumper;
+typedef jellyfish::binary_dumper<mer_array> binary_dumper;
 typedef jellyfish::binary_reader<jellyfish::mer_dna, uint64_t> binary_reader;
 
 #endif /* __JELLYFISH_JELLYFISH_HPP__ */

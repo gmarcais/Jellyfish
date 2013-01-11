@@ -154,7 +154,8 @@ tests/parsers.log: tests/generate_sequence.log
 TESTS += unit_tests/unit_tests.sh
 check_PROGRAMS += bin/test_all
 
-bin_test_all_SOURCES = unit_tests/test_main.cc unit_tests/test_misc.cc	\
+bin_test_all_SOURCES = unit_tests/test_main.cc				\
+	               unit_tests/test_misc.cc				\
 	               unit_tests/test_offsets_key_value.cc		\
 	               unit_tests/test_simple_circular_buffer.cc	\
 	               unit_tests/test_rectangular_binary_matrix.cc	\
@@ -167,7 +168,8 @@ bin_test_all_SOURCES = unit_tests/test_main.cc unit_tests/test_misc.cc	\
 	               unit_tests/test_mer_heap.cc			\
 	               unit_tests/test_stream_iterator.cc		\
 	               unit_tests/test_token_ring.cc			\
-	               unit_tests/test_text_dumper.cc
+	               unit_tests/test_text_dumper.cc			\
+	               unit_tests/test_binary_dumper.cc
 
 bin_test_all_SOURCES += jellyfish/thread_exec.cc jellyfish/jsoncpp.cpp	\
                         jellyfish/time.cc

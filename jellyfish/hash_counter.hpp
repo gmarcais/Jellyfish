@@ -52,7 +52,7 @@ protected:
   locks::pthread::barrier size_barrier_;
   volatile uint16_t       size_thid_, done_threads_;
   bool                    do_size_doubling_;
-  dumper_t*               dumper_;
+  dumper_t<array>*        dumper_;
 
 public:
   hash_counter(size_t size, // Size of hash. To be rounded up to a power of 2
@@ -89,7 +89,7 @@ public:
   void do_size_doubling(bool v) { do_size_doubling_ = v; }
 
   /// Set dumper responsible for cleaning out the array.
-  void dumper(dumper_t *d) { dumper_ = d; }
+  void dumper(dumper_t<array> *d) { dumper_ = d; }
 
   /// Add `v` to the entry `k`. This method is multi-thread safe. If
   /// the entry for `k` does not exists, it is inserted.
@@ -121,7 +121,7 @@ protected:
       success = success || double_size(serial_thread);
 
     if(!success && dumper_) {
-      dumper_->dump();
+      dumper_->dump(ary_);
       success = true;
     }
 

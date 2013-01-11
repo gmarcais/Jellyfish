@@ -32,7 +32,7 @@ namespace jellyfish {
 /// Sorted dumper. Write mers according to the hash order. It
 /// implements the CRTP to effectively write the k-mer/value pair.
 template<typename D, typename storage_t>
-class sorted_dumper : public dumper_t, public thread_exec {
+class sorted_dumper : public dumper_t<storage_t>, public thread_exec {
 protected:
   typedef typename storage_t::region_iterator iterator;
   typedef typename mer_heap::heap<typename    storage_t::key_type, iterator> heap_type;
@@ -44,30 +44,36 @@ protected:
   token_ring                ring_;
   const char*               file_prefix_;
   storage_t*                ary_;
+  file_header*              header_;
+  bool                      zero_array_;
   std::ofstream             out_;
   std::pair<size_t, size_t> block_info; // { nb blocks, nb records }
-  file_header*              header_;
 
 public:
-  sorted_dumper(int nb_threads, const char* file_prefix, storage_t* ary,
-                file_header* header = 0) :
+  sorted_dumper(int nb_threads, const char* file_prefix, file_header* header = 0) :
     nb_threads_(nb_threads),
     ring_(nb_threads),
     file_prefix_(file_prefix),
-    ary_(ary),
-    block_info(ary_->blocks_for_records(5 * ary_->max_reprobe_offset())),
-    header_(header)
+    header_(header),
+    zero_array_(true)
   { }
 
-  virtual void _dump() {
-    open_next_file(file_prefix_, out_);
+  bool zero_array() const { return zero_array_; }
+  void zero_array(bool v) { zero_array_ = v; }
+
+  virtual void _dump(storage_t* ary) {
+    ary_ = ary;
+    block_info = ary_->blocks_for_records(5 * ary_->max_reprobe_offset());
+
+    this->open_next_file(file_prefix_, out_);
     if(header_)
       header_->write(out_);
 
     ring_.reset();
     exec_join(nb_threads_);
     out_.close();
-    ary_->zero_blocks(0, block_info.first); // zero out last group of blocks
+    if(zero_array_)
+      ary_->zero_blocks(0, block_info.first); // zero out last group of blocks
   }
 
   virtual void start(const int i) {
@@ -97,7 +103,7 @@ public:
       token.pass();
 
       buffer.seekp(0);
-      if(id > 0)
+      if(id > 0 && zero_array_)
         ary_->zero_blocks(id * block_info.first, block_info.first);
     }
   }

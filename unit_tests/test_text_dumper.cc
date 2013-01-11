@@ -92,9 +92,9 @@ TEST(TextDumper, Random) {
   adder.hash_check();
 
   {
-    dumper d(nb_threads, file, hash.ary());
+    dumper d(nb_threads, file);
     d.one_file(true);
-    d.dump();
+    d.dump(hash.ary());
   }
 
   std::ifstream fd(file);
