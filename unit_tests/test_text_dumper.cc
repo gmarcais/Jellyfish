@@ -1,5 +1,6 @@
 #include <map>
 #include <gtest/gtest.h>
+#include <unit_tests/test_main.hpp>
 #include <jellyfish/text_dumper.hpp>
 #include <jellyfish/hash_counter.hpp>
 #include <jellyfish/thread_exec.hpp>
@@ -83,8 +84,9 @@ TEST(TextDumper, Random) {
   static const int    nb         = 5000;
   static const size_t init_size  = 5000;
   static const char*  file       = "./text_dumper";
-  mer_dna::k(mer_len);
+  file_unlink f(file);
 
+  mer_dna::k(mer_len);
   hash_counter hash(init_size, mer_len * 2, 5, nb_threads, 15);
   hash_adder adder(hash, nb, nb_threads);
   adder.exec_join(nb_threads);

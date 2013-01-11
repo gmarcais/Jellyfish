@@ -74,7 +74,26 @@ library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
                           $(JFI)/atomic_field.hpp			\
                           $(JFI)/compare_and_swap.hpp			\
                           $(JFI)/divisor.hpp				\
-                          $(JFI)/large_hash_iterator.hpp
+                          $(JFI)/large_hash_iterator.hpp		\
+                          $(JFI)/jellyfish.hpp
+
+noinst_HEADERS += jellyfish/fstream_default.hpp				\
+                  jellyfish/thread_exec.hpp include/json/json.h		\
+                  jellyfish/file_header.hpp				\
+                  jellyfish/generic_file_header.hpp			\
+                  jellyfish/hash_counter.hpp jellyfish/time.hpp		\
+                  jellyfish/locks_pthread.hpp jellyfish/dumper.hpp	\
+                  jellyfish/text_dumper.hpp				\
+                  jellyfish/binary_dumper.hpp				\
+                  jellyfish/sorted_dumper.hpp jellyfish/mer_heap.hpp	\
+                  jellyfish/mer_overlap_sequence_parser.hpp		\
+                  jellyfish/token_ring.hpp				\
+                  include/jflib/cooperative_pool.hpp			\
+                  include/jflib/locks_pthread.hpp			\
+                  include/jflib/tmpstream.hpp				\
+                  jellyfish/mer_iterator.hpp				\
+                  jellyfish/stream_iterator.hpp jellyfish/dbg.hpp	\
+                  jellyfish/randomc.h
 
 
 ###############
@@ -82,7 +101,6 @@ library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
 ###############
 bin_generate_sequence_SOURCES = jellyfish/generate_sequence.cc		\
                                 jellyfish/mersenne.cpp			\
-                                jellyfish/square_binary_matrix.cc	\
                                 jellyfish/backtrace.cc			\
                                 jellyfish/dbg.cc jellyfish/time.cc
 YAGGO_SOURCES += jellyfish/generate_sequence_cmdline.hpp

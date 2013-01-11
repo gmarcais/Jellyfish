@@ -24,7 +24,6 @@
 
 #include <jellyfish/err.hpp>
 #include <jellyfish/misc.hpp>
-#include <jellyfish/compacted_hash.hpp>
 #include <jellyfish/fstream_default.hpp>
 #include <jellyfish/jellyfish.hpp>
 #include <sub_commands/dump_main_cmdline.hpp>

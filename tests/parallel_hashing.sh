@@ -15,10 +15,11 @@ echo "Counting 22-mers on ${nCPUs} CPU"
 
 $JF count -t $nCPUs -o ${pref}_m15_s2M -s 2M -C -m 15 seq10m.fa
 $JF histo ${pref}_m15_s2M0 > ${pref}_m15_s2M.histo
+rm ${pref}_m15_s2M0
 
 $JF count -t $nCPUs -o ${pref}_m15_s16M -s 16M -C -m 15 seq10m.fa
 $JF histo ${pref}_m15_s16M0 > ${pref}_m15_s16M.histo
-
+rm ${pref}_m15_s16M0
 
 # $JF count -m 40 -t $nCPUs -o ${pref}_text -s 2M --text seq1m_0.fa
 # $JF info -s ${pref}_text0 | sort >  ${pref}_text0_dump
