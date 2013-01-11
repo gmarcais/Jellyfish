@@ -75,11 +75,11 @@ public:
   }
 
   void fill(Iterator &it) {
-    h_ = 0;
     for(h_ = 0; h_ < capacity_; ++h_) {
       if(!it.next())
         break;
       storage_[h_] = it;
+      elts_[h_]    = &storage_[h_];
     }
     std::make_heap(elts_, elts_ + h_, comp_);
   }
