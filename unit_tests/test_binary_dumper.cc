@@ -54,7 +54,7 @@ TEST(BinaryDumper, ReadWrite) {
     EXPECT_STREQ(dumper::format, h.format().c_str());
     EXPECT_EQ(dump_counter_len, h.counter_len());
 
-    reader r(is, dump_counter_len);
+    reader r(is, &h);
 
     const uint64_t max_val = ((uint64_t)1 << (8 * dump_counter_len)) - 1;
     int count = 0;

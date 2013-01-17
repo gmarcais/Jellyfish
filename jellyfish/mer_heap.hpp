@@ -32,7 +32,7 @@ struct heap_item {
   heap_item(Iterator& iter) : key_(iter.key()), val_(iter.val()), pos_(iter.pos()), it_(&iter) { }
 
   bool operator>(const heap_item& other) const {
-    if(pos_ == other.pos_) 
+    if(pos_ == other.pos_)
       return key_ > other.key_;
     return pos_ > other.pos_;
   }

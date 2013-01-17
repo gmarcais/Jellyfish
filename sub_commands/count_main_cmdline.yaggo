@@ -28,6 +28,9 @@ option("reprobes", "p") {
 option("text") {
   description "Dump in text format"
   off }
+option("disk") {
+  description "Disk operation. Do not do size doubling"
+  off }
 # option("raw", "r") {
 #   description "Write raw database"
 #   flag; off }

@@ -11,7 +11,6 @@ sort > ${pref}.md5sum <<EOF
 864c0b0826854bdc72a85d170549b64b ${pref}_m15_s2M.histo
 864c0b0826854bdc72a85d170549b64b ${pref}_m15_s16M.histo
 EOF
-echo "Counting 22-mers on ${nCPUs} CPU"
 
 $JF count -t $nCPUs -o ${pref}_m15_s2M -s 2M -C -m 15 seq10m.fa
 $JF histo ${pref}_m15_s2M0 > ${pref}_m15_s2M.histo

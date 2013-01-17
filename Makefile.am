@@ -41,7 +41,8 @@ bin_jellyfish_SOURCES = sub_commands/jellyfish.cc			\
                         sub_commands/count_main.cc			\
                         sub_commands/info_main.cc			\
                         sub_commands/dump_main.cc			\
-                        sub_commands/histo_main.cc jellyfish/err.cc	\
+                        sub_commands/histo_main.cc			\
+                        sub_commands/merge_main.cc jellyfish/err.cc	\
                         jellyfish/thread_exec.cc jellyfish/time.cc	\
                         jellyfish/jsoncpp.cpp
 
@@ -49,7 +50,8 @@ bin_jellyfish_SOURCES = sub_commands/jellyfish.cc			\
 YAGGO_SOURCES += sub_commands/count_main_cmdline.hpp	\
                  sub_commands/info_main_cmdline.hpp	\
                  sub_commands/dump_main_cmdline.hpp	\
-                 sub_commands/histo_main_cmdline.hpp
+                 sub_commands/histo_main_cmdline.hpp	\
+                 sub_commands/merge_main_cmdline.hpp
 
 ######################################
 # Build Jellyfish the shared library #
@@ -131,8 +133,8 @@ TEST_EXTENSIONS = .sh
 SH_LOG_COMPILER = /bin/sh
 AM_SH_LOG_FLAGS =
 
-TESTS = tests/generate_sequence.sh \
-        tests/parallel_hashing.sh
+TESTS = tests/generate_sequence.sh tests/parallel_hashing.sh	\
+        tests/merge.sh
 # TESTS = tests/generate_sequence.sh tests/serial_hashing.sh		\
 #         tests/parallel_hashing.sh tests/serial_direct_indexing.sh	\
 #         tests/parallel_direct_indexing.sh tests/raw_hash.sh		\

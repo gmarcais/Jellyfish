@@ -38,11 +38,10 @@ int histo_main(int argc, char *argv[])
     die << "Failed to open input file '" << args.db_arg << "'" << err::no;
   jellyfish::file_header header;
   header.read(is);
-  binary_reader reader(is, header.counter_len());
-
   if(header.format().compare(binary_dumper::format))
     die << "Unknown format '" << header.format() << "'";
   jellyfish::mer_dna::k(header.key_len() / 2);
+  binary_reader reader(is, &header);
 
   if(args.low_arg < 1)
     args.error("Low count value must be >= 1");

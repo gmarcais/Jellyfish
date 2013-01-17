@@ -65,21 +65,27 @@ const char* jellyfish::binary_dumper<storage_t>::format = "binary/sorted";
 /// Reader of the format written by binary_dumper. Behaves like an
 /// iterator (has next() method which behaves similarly to the next()
 /// method of the hash array).
+/// The header should be of format binary/sorted, but no check is made.
 template<typename Key, typename Val>
 class binary_reader {
-  std::istream& is_;
-  int           val_len_;
-  Key           key_;
-  Val           val_;
+  std::istream&                 is_;
+  const int                     val_len_;
+  Key                           key_;
+  Val                           val_;
+  const RectangularBinaryMatrix m_;
+  const size_t                  size_mask_;
 
 public:
   binary_reader(std::istream& is, // stream containing data (past any header)
-                int val_len) :  // val length in bytes
-    is_(is), val_len_(val_len)
+                file_header* header) :  // header which contains counter_len, matrix, size and key_len
+    is_(is), val_len_(header->counter_len()), key_(header->key_len() / 2),
+    m_(header->matrix()),
+    size_mask_(header->size() - 1)
   { }
 
-  const Key& key() { return key_; }
-  const Val& val() { return val_; }
+  const Key& key() const { return key_; }
+  const Val& val() const { return val_; }
+  size_t pos() const { return m_.times(key_) & size_mask_; }
 
   bool next() {
     key_.template read<1>(is_);

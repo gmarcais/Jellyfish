@@ -72,7 +72,7 @@ int dump_main(int argc, char *argv[])
   if(!args.upper_count_given)
     args.upper_count_arg = std::numeric_limits<uint64_t>::max();
 
-  binary_reader reader(is, header.counter_len());
+  binary_reader reader(is, &header);
   dump(reader, out, args.lower_count_arg, args.upper_count_arg);
 
   out.close();
