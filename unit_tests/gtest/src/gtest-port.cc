@@ -65,6 +65,12 @@
 #include "src/gtest-internal-inl.h"
 #undef GTEST_IMPLEMENTATION_
 
+#ifdef __ICC
+// Disable explicit warning on Intel compiler
+#pragma warning disable 2304
+#endif
+
+
 namespace testing {
 namespace internal {
 

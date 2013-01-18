@@ -27,7 +27,7 @@
 
 class rDNAg_t {
 public:
-  rDNAg_t(CRandomMersenne *_rng) : rng(_rng), i(15), buff(0) {}
+  explicit rDNAg_t(CRandomMersenne *_rng) : rng(_rng), i(15), buff(0) {}
   char letter() {
     i = (i+1) % 16;
     if(i == 0)

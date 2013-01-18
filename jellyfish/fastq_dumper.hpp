@@ -41,7 +41,7 @@ namespace jellyfish {
         memcpy(&type, file_type, sizeof(type));
       }
 
-      header(const char *ptr) {
+      explicit header(const char *ptr) {
         if(memcmp(ptr, file_type, sizeof(type)))
           eraise(ErrorReading) << "Bad file type '" << err::substr(ptr, sizeof(type))
                                << "', expected '" << err::substr(file_type, sizeof(type)) << "'";

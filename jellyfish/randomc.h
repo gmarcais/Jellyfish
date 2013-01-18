@@ -165,7 +165,7 @@ class CRandomMersenne {                // Encapsulate random number generator
 #endif
 
 public:
-   CRandomMersenne(int seed) {         // Constructor
+   explicit CRandomMersenne(int seed) {         // Constructor
       RandomInit(seed); LastInterval = 0;}
    void RandomInit(int seed);          // Re-seed
    void RandomInitByArray(int const seeds[], int NumSeeds); // Seed by more than 32 bits
@@ -188,7 +188,7 @@ public:
    int IRandom(int min, int max);      // Get integer random number in desired interval
    double Random();                    // Get floating point random number
    uint32_t BRandom();                 // Output random bits
-   CRandomMother(int seed) {           // Constructor
+   explicit CRandomMother(int seed) {           // Constructor
       RandomInit(seed);}
 protected:
    uint32_t x[5];                      // History buffer

@@ -41,8 +41,8 @@ namespace yaggo {
   class string : public std::string {
   public:
     string() : std::string() {}
-    string(const std::string &s) : std::string(s) {}
-    string(const char *s) : std::string(s) {}
+    explicit string(const std::string &s) : std::string(s) {}
+    explicit string(const char *s) : std::string(s) {}
     int as_enum(const char* const strs[]);
 
     uint32_t as_uint32_suffix() const { return as_uint32(true); }

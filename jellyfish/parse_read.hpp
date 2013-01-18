@@ -17,11 +17,13 @@
 #ifndef __JELLYFISH_FASTQ_READ_PARSER_HPP__
 #define __JELLYFISH_FASTQ_READ_PARSER_HPP__
 
+#include <vector>
+#include <limits>
+
 #include <jellyfish/double_fifo_input.hpp>
 #include <jellyfish/read_parser.hpp>
 #include <jellyfish/misc.hpp>
 #include <jellyfish/dbg.hpp>
-#include <vector>
 
 namespace jellyfish {
   class parse_read : public double_fifo_input<read_parser::reads_t> {
@@ -37,7 +39,7 @@ namespace jellyfish {
     typedef read_parser::read_t read_t;
 
     static const uint_t codes[256];
-    static const uint_t CODE_RESET = -1;
+    static const uint_t CODE_RESET = (uint_t)-1;
 
     //    parse_read(int nb_files, char *argv[], unsigned int nb_buffers);
     template<typename T>

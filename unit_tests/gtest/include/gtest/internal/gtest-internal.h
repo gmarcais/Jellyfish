@@ -56,6 +56,11 @@
 #include "gtest/internal/gtest-filepath.h"
 #include "gtest/internal/gtest-type-util.h"
 
+#ifdef __ICC
+// Disable explicit warning on Intel compiler
+#pragma warning disable 2304
+#endif
+
 // Due to C++ preprocessor weirdness, we need double indirection to
 // concatenate two tokens when one of them is __LINE__.  Writing
 //
@@ -1222,5 +1227,10 @@ class GTEST_TEST_CLASS_NAME_(test_case_name, test_name) : public parent_class {\
         new ::testing::internal::TestFactoryImpl<\
             GTEST_TEST_CLASS_NAME_(test_case_name, test_name)>);\
 void GTEST_TEST_CLASS_NAME_(test_case_name, test_name)::TestBody()
+
+#ifdef __ICC
+// Disable explicit warning on Intel compiler
+#pragma warning enable 2304
+#endif
 
 #endif  // GTEST_INCLUDE_GTEST_INTERNAL_GTEST_INTERNAL_H_

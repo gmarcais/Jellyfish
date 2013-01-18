@@ -35,10 +35,7 @@ bin_jellyfish_SOURCES = jellyfish/jellyfish.cc			\
                         jellyfish/yaggo.cpp
 # bin_jellyfish_LDADD = libjellyfish-1.1.la
 
-bin_jellyfish_LDFLAGS = $(AM_LDFLAGS)
-if ALL_STATIC
-  bin_jellyfish_LDFLAGS += -all-static
-endif
+bin_jellyfish_LDFLAGS = $(AM_LDFLAGS) $(STATIC_FLAGS)
 
 EXTRA_DIST += jellyfish/cite_cmdline.hpp jellyfish/query_cmdline.hpp	\
               jellyfish/hash_merge_cmdline.hpp				\

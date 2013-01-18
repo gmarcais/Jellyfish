@@ -1,8 +1,9 @@
-AC_INIT([jellyfish], [1.1.8], [gmarcais@umd.edu])
+AC_INIT([jellyfish], [1.1.9], [gmarcais@umd.edu])
 AC_CANONICAL_HOST
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([subdir-objects foreign parallel-tests color-tests])
 AM_SILENT_RULES([yes])
+LT_INIT
 
 AC_PROG_CXX
 
@@ -57,11 +58,8 @@ AC_ARG_ENABLE([all-static],
               [AC_HELP_STRING([--enable-all-static], [create statically linked executable])])
 STATIC_FLAGS=
 AS_IF([test x$enable_all_static = xyes],
-      [AC_SUBST([STATIC_FLAGS], ["-static -static-libstdc++"])])
-AM_CONDITIONAL([ALL_STATIC], [test x$enable_all_static = xyes])
-AC_MSG_NOTICE([enable_all_static is $enable_all_static])
+      [AC_SUBST([STATIC_FLAGS], [-all-static])])
 
-LT_INIT
 AC_OUTPUT
 
 

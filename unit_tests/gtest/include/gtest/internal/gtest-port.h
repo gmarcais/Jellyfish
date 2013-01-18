@@ -36,6 +36,11 @@
 #ifndef GTEST_INCLUDE_GTEST_INTERNAL_GTEST_PORT_H_
 #define GTEST_INCLUDE_GTEST_INTERNAL_GTEST_PORT_H_
 
+#ifdef __ICC
+// Disable explicit warning on Intel compiler
+#pragma warning disable 2304
+#endif
+
 // The user can define the following macros in the build script to
 // control Google Test's behavior.  If the user doesn't define a macro
 // in this list, Google Test will define it.
@@ -1771,5 +1776,10 @@ const char* StringFromGTestEnv(const char* flag, const char* default_val);
 
 }  // namespace internal
 }  // namespace testing
+
+#ifdef __ICC
+#pragma warning enable 2304
+#endif
+
 
 #endif  // GTEST_INCLUDE_GTEST_INTERNAL_GTEST_PORT_H_
