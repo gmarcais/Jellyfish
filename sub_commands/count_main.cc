@@ -63,7 +63,7 @@ int count_main(int argc, char *argv[])
   if(args.text_flag)
     dumper.reset(new text_dumper(args.threads_arg, args.output_arg, &header));
   else
-    dumper.reset(new binary_dumper(args.out_counter_len_arg, args.threads_arg, args.output_arg, &header));
+    dumper.reset(new binary_dumper(args.out_counter_len_arg, ary.key_len(), args.threads_arg, args.output_arg, &header));
   ary.dumper(dumper.get());
 
   mer_counter<file_vector::iterator> counter(args.threads_arg, ary, args.file_arg.begin(), args.file_arg.end());

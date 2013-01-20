@@ -3,22 +3,32 @@
 cd tests
 . ./compat.sh
 
-# 376761a6e273b57b3428c14e3b536edf ${pref}_text0_dump
-# 376761a6e273b57b3428c14e3b536edf ${pref}_bin0_dump
-# 9251799dd5dbd3f617124aa2ff72112a ${pref}.histo
-
 sort > ${pref}.md5sum <<EOF 
 864c0b0826854bdc72a85d170549b64b ${pref}_m15_s2M.histo
 864c0b0826854bdc72a85d170549b64b ${pref}_m15_s16M.histo
+376761a6e273b57b3428c14e3b536edf ${pref}_binary.dump
+376761a6e273b57b3428c14e3b536edf ${pref}_text.dump
+9251799dd5dbd3f617124aa2ff72112a ${pref}_binary.histo
+9251799dd5dbd3f617124aa2ff72112a ${pref}_text.histo
 EOF
 
+# Count with in memory hash doubling
 $JF count -t $nCPUs -o ${pref}_m15_s2M -s 2M -C -m 15 seq10m.fa
 $JF histo ${pref}_m15_s2M0 > ${pref}_m15_s2M.histo
 rm ${pref}_m15_s2M0
 
+# Count without size doubling
 $JF count -t $nCPUs -o ${pref}_m15_s16M -s 16M -C -m 15 seq10m.fa
 $JF histo ${pref}_m15_s16M0 > ${pref}_m15_s16M.histo
 rm ${pref}_m15_s16M0
+
+# Count large merges in binary and text. Should agree
+$JF count -m 40 -t $nCPUs -o ${pref}_text -s 2M --text seq1m_0.fa
+$JF count -m 40 -t $nCPUs -o ${pref}_binary -s 2M seq1m_0.fa
+$JF histo ${pref}_text0 > ${pref}_text.histo
+$JF histo ${pref}_binary0 > ${pref}_binary.histo
+$JF dump -c ${pref}_text0 | sort > ${pref}_text.dump
+$JF dump -c ${pref}_binary0 | sort > ${pref}_binary.dump
 
 # $JF count -m 40 -t $nCPUs -o ${pref}_text -s 2M --text seq1m_0.fa
 # $JF info -s ${pref}_text0 | sort >  ${pref}_text0_dump

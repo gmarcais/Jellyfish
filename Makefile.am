@@ -152,19 +152,19 @@ clean-local: clean-local-check
 clean-local-check:
 	-cd tests; rm -f seq10m* seq1m* *_0 *_1 *_2 *_S *.md5sum *.histo *.stats *.timing *.query *.dump *.fa
 
-tests/serial_hashing.log: tests/generate_sequence.log
+#tests/serial_hashing.log: tests/generate_sequence.log
 tests/parallel_hashing.log: tests/generate_sequence.log
-tests/serial_direct_indexing.log: tests/generate_sequence.log
-tests/parallel_direct_indexing.log: tests/generate_sequence.log
-tests/parallel_fastq_direct_indexing.log: tests/generate_fastq_sequence.log
-tests/multi_file.log: tests/generate_sequence.log
-tests/raw_hash.log: tests/generate_sequence.log
-tests/from_stream.log: tests/generate_sequence.log
-tests/parallel_fastq_hashing.log: tests/generate_fastq_sequence.log
-tests/parallel_fastq_sequence_hashing.log: tests/generate_fastq_sequence.log
-tests/multi_file_fastq.log: tests/generate_fastq_sequence.log
-tests/from_stream_fastq.log: tests/generate_fastq_sequence.log
-tests/merge.log: tests/generate_fastq_sequence.log
+#tests/serial_direct_indexing.log: tests/generate_sequence.log
+#tests/parallel_direct_indexing.log: tests/generate_sequence.log
+#tests/parallel_fastq_direct_indexing.log: tests/generate_fastq_sequence.log
+#tests/multi_file.log: tests/generate_sequence.log
+#tests/raw_hash.log: tests/generate_sequence.log
+#tests/from_stream.log: tests/generate_sequence.log
+#tests/parallel_fastq_hashing.log: tests/generate_fastq_sequence.log
+##tests/parallel_fastq_sequence_hashing.log: tests/generate_fastq_sequence.log
+#tests/multi_file_fastq.log: tests/generate_fastq_sequence.log
+##tests/from_stream_fastq.log: tests/generate_fastq_sequence.log
+tests/merge.log: tests/generate_sequence.log
 tests/min_qual.log: tests/generate_fastq_sequence.log
 tests/parsers.log: tests/generate_sequence.log
 
@@ -189,7 +189,7 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_stream_iterator.cc		\
 	               unit_tests/test_token_ring.cc			\
 	               unit_tests/test_text_dumper.cc			\
-	               unit_tests/test_binary_dumper.cc
+	               unit_tests/test_dumpers.cc
 
 bin_test_all_SOURCES += jellyfish/thread_exec.cc jellyfish/jsoncpp.cpp	\
                         jellyfish/time.cc

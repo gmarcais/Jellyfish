@@ -63,8 +63,6 @@ int dump_main(int argc, char *argv[])
     die << "Failed to open input file '" << args.db_arg << "'" << err::no;
   jellyfish::file_header header;
   header.read(is);
-  if(header.format().compare(binary_dumper::format))
-    die << "Unknown format '" << header.format() << "'";
   jellyfish::mer_dna::k(header.key_len() / 2);
 
   if(!args.lower_count_given)
@@ -72,8 +70,15 @@ int dump_main(int argc, char *argv[])
   if(!args.upper_count_given)
     args.upper_count_arg = std::numeric_limits<uint64_t>::max();
 
-  binary_reader reader(is, &header);
-  dump(reader, out, args.lower_count_arg, args.upper_count_arg);
+  if(!header.format().compare(binary_dumper::format)) {
+    binary_reader reader(is, &header);
+    dump(reader, out, args.lower_count_arg, args.upper_count_arg);
+  } else if(!header.format().compare(text_dumper::format)) {
+    text_reader reader(is, &header);
+    dump(reader, out, args.lower_count_arg, args.upper_count_arg);
+  } else {
+    die << "Unknown format '" << header.format() << "'";
+  }
 
   out.close();
 

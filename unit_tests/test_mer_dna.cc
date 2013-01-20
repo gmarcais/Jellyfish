@@ -18,6 +18,8 @@
 
 #include <stdio.h>
 #include <map>
+#include <iostream>
+#include <sstream>
 #include <gtest/gtest.h>
 #include <jellyfish/mer_dna.hpp>
 #include <unit_tests/test_main.hpp>
@@ -212,6 +214,21 @@ TEST(MerDNASimple, Comparators) {
 
     EXPECT_NE(m1 < m2, m1 >= m2);
     EXPECT_NE(m1 < m2, m1 > m2);
+  }
+}
+
+TEST(MerDNASimple, IO) {
+  std::stringstream buffer;
+
+  for(int i = 0; i < 10000; ++i) {
+    buffer.clear();
+    SCOPED_TRACE(::testing::Message() << "i:" << i);
+    mer_dna::k(::random_bits(9) + 1);
+    mer_dna m1, m2;
+    m1.randomize();
+    buffer << m1;
+    buffer >> m2;
+    EXPECT_EQ(m1, m2);
   }
 }
 
