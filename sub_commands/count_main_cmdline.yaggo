@@ -28,6 +28,15 @@ option("reprobes", "p") {
 option("text") {
   description "Dump in text format"
   off }
+option("disk") {
+  description "Disk operation. Do not do size doubling"
+  off }
+option("no-merge") {
+  description "Do not merge files intermediary files"
+  off; hidden }
+option("no-unlink") {
+  description "Do not unlink intermediary files after automatic merging"
+  off; hidden }
 # option("raw", "r") {
 #   description "Write raw database"
 #   flag; off }

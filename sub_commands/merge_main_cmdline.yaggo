@@ -1,0 +1,9 @@
+purpose "Merge jellyfish databases"
+package "jellyfish merge"
+
+option("output", "o") {
+  description "Output file"
+  c_string; default "mer_counts_merged.jf" }
+arg("input") {
+  description "Jellyfish hash"
+  c_string; multiple; at_least 2 }

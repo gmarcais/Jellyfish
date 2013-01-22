@@ -121,8 +121,10 @@ protected:
       success = success || double_size(serial_thread);
 
     if(!success && dumper_) {
-      dumper_->dump(ary_);
+      if(serial_thread)
+        dumper_->dump(ary_);
       success = true;
+      size_barrier_.wait();
     }
 
     if(!success)
