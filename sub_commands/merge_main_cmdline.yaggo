@@ -1,21 +1,9 @@
 purpose "Merge jellyfish databases"
 package "jellyfish merge"
 
-option("buffer-size", "s") {
-  description "Length in bytes of input buffer"
-  uint64; default "10000000"; typestr "Buffer length" }
 option("output", "o") {
   description "Output file"
   c_string; default "mer_counts_merged.jf" }
-option("out-counter-len") {
-  description "Length (in bytes) of counting field in output"
-  uint32; default "4" }
-option("out-buffer-size") {
-  description "Size of output buffer per thread"
-  uint64; default "10000000" }
-option("verbose", "v") {
-  description "Be verbose"
-  flag; off }
 arg("input") {
   description "Jellyfish hash"
   c_string; multiple; at_least 2 }

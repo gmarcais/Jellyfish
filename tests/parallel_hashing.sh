@@ -14,21 +14,21 @@ EOF
 
 # Count with in memory hash doubling
 $JF count -t $nCPUs -o ${pref}_m15_s2M -s 2M -C -m 15 seq10m.fa
-$JF histo ${pref}_m15_s2M0 > ${pref}_m15_s2M.histo
-rm ${pref}_m15_s2M0
+$JF histo ${pref}_m15_s2M > ${pref}_m15_s2M.histo
+rm ${pref}_m15_s2M
 
 # Count without size doubling
 $JF count -t $nCPUs -o ${pref}_m15_s16M -s 16M -C -m 15 seq10m.fa
-$JF histo ${pref}_m15_s16M0 > ${pref}_m15_s16M.histo
-rm ${pref}_m15_s16M0
+$JF histo ${pref}_m15_s16M > ${pref}_m15_s16M.histo
+rm ${pref}_m15_s16M
 
 # Count large merges in binary and text. Should agree
 $JF count -m 40 -t $nCPUs -o ${pref}_text -s 2M --text seq1m_0.fa
 $JF count -m 40 -t $nCPUs -o ${pref}_binary -s 2M seq1m_0.fa
-$JF histo ${pref}_text0 > ${pref}_text.histo
-$JF histo ${pref}_binary0 > ${pref}_binary.histo
-$JF dump -c ${pref}_text0 | sort > ${pref}_text.dump
-$JF dump -c ${pref}_binary0 | sort > ${pref}_binary.dump
+$JF histo ${pref}_text > ${pref}_text.histo
+$JF histo ${pref}_binary > ${pref}_binary.histo
+$JF dump -c ${pref}_text | sort > ${pref}_text.dump
+$JF dump -c ${pref}_binary | sort > ${pref}_binary.dump
 
 # $JF count -m 40 -t $nCPUs -o ${pref}_text -s 2M --text seq1m_0.fa
 # $JF info -s ${pref}_text0 | sort >  ${pref}_text0_dump

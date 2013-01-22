@@ -44,7 +44,8 @@ bin_jellyfish_SOURCES = sub_commands/jellyfish.cc			\
                         sub_commands/histo_main.cc			\
                         sub_commands/merge_main.cc jellyfish/err.cc	\
                         jellyfish/thread_exec.cc jellyfish/time.cc	\
-                        jellyfish/jsoncpp.cpp
+                        jellyfish/jsoncpp.cpp				\
+                        jellyfish/merge_files.cc
 
 
 YAGGO_SOURCES += sub_commands/count_main_cmdline.hpp	\

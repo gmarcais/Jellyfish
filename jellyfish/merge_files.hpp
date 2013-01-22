@@ -14,25 +14,16 @@
     along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef __JELLYFISH_MERGE_FILES_HPP__
+#define __JELLYFISH_MERGE_FILES_HPP__
+
+#include <vector>
+#include <jellyfish/err.hpp>
 #include <jellyfish/file_header.hpp>
-#include <jellyfish/merge_files.hpp>
 
-#include <sub_commands/merge_main_cmdline.hpp>
+define_error_class(MergeError);
 
+/// Merge files. Throw a MergeError in case of error.
+void merge_files(std::vector<const char*> input_files, const char* out_file, jellyfish::file_header& h);
 
-int merge_main(int argc, char *argv[])
-{
-  jellyfish::file_header out_header;
-  out_header.fill_standard();
-  out_header.set_cmdline(argc, argv);
-
-  merge_main_cmdline args(argc, argv);
-
-  try {
-    merge_files(args.input_arg, args.output_arg, out_header);
-  } catch(MergeError e) {
-    die << e.what();
-  }
-
-  return 0;
-}
+#endif /* __JELLYFISH_MERGE_FILES_HPP__ */
