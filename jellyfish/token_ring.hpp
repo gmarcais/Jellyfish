@@ -17,20 +17,20 @@
 #ifndef __JELLYFISH_TOKEN_RING_HPP__
 #define __JELLYFISH_TOKEN_RING_HPP__
 
-template<typename cond_t>
+#include <vector>
+#include <jellyfish/locks_pthread.hpp>
+
+namespace jellyfish {
+template<class cond_t = locks::pthread::cond>
 class token_ring {
 public:
   class token {
-    token  *next;
-    bool    val;
-    cond_t  cond;
-
-    token(token *_next, bool _val) :
-      next(_next), val(_val) {}
+    bool   val;
+    cond_t cond;
+    token* next;
     friend class token_ring;
 
   public:
-    bool is_active() { return val; }
     void wait() {
       cond.lock();
       while(!val) { cond.wait(); }
@@ -46,52 +46,42 @@ public:
     }
   };
 
-private:
-  token *first, *last;
-  cond_t cond;
+protected:
+  typedef std::vector<token>            token_list;
+  typedef typename token_list::iterator token_iterator;
+  token_list tokens;
+
+  void initialize() {
+    if(tokens.size() == 0)
+      return;
+
+    tokens.front().val = true;
+    tokens.back().next = &tokens.front();
+
+    for(size_t i = 1; i < tokens.size(); ++i) {
+      tokens[i].val    = false;
+      tokens[i-1].next = &tokens[i];
+    }
+  }
 
 public:
-  token_ring() : 
-    first(0), last(0)
-  { }
+  token_ring(int nb_tokens) :
+    tokens(nb_tokens)
+  { initialize(); }
 
-  ~token_ring() {
-    if(!first)
-      return;
+  ~token_ring() { }
 
-    while(first != last) {
-      token *del = first;
-      first = first->next;
-      delete del;
-    }
-    delete last;
-  }
+  token& operator[](int i) { return tokens[i]; }
 
   void reset() {
-    if(!first)
+    if(tokens.size() == 0)
       return;
 
-    token *c = first;
-    while(c != last) {
-      c->val = false;
-      c = c->next;
-    }
-    last->val = false;
-    first->val = true;
-  }
-
-
-  token *new_token() { 
-    token *nt = new token(first, first == 0);
-    if(first) {
-      last->next = nt;
-      last = nt;
-    } else {
-      first = last = nt;
-      nt->next = nt;
-    }
-    return nt;
+    token_iterator it = tokens.begin();
+    it->val = true;
+    for(++it; it != tokens.end(); ++it)
+      it->val = false;
   }
 };
-
+} // namespace jellyfish {
 #endif

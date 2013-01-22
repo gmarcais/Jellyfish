@@ -1,7 +1,7 @@
 #ifndef __JELLYFISH_INTERSECTION_ARRAY_HPP__
 #define __JELLYFISH_INTERSECTION_ARRAY_HPP__
 
-#include <jflib/compare_and_swap.hpp>
+#include <jellyfish/compare_and_swap.hpp>
 #include <jellyfish/large_hash_array.hpp>
 #include <jellyfish/atomic_gcc.hpp>
 #include <jellyfish/locks_pthread.hpp>

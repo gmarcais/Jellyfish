@@ -250,7 +250,7 @@ TEST(PseudoProduct, Rank) {
     m.randomize(random_bits);
     RectangularBinaryMatrix s(m);
     unsigned int rank = m.pseudo_rank();
-    EXPECT_TRUE(rank >= 0 && rank <= m.c());
+    EXPECT_TRUE(rank <= m.c());
     EXPECT_TRUE(s == m);
   }
 }

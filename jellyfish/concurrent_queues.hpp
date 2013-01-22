@@ -47,7 +47,8 @@
  */
 
 namespace jellyfish {
-#include <jflib/divisor.hpp>
+#include <jellyfish/divisor.hpp>
+
   template<class Val>
   class concurrent_queue {
     Val               **queue;

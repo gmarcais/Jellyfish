@@ -20,8 +20,8 @@
 
 #include <assert.h>
 
-#include <jflib/circular_buffer.hpp>
-#include <jflib/compare_and_swap.hpp>
+#include <jellyfish/circular_buffer.hpp>
+#include <jellyfish/compare_and_swap.hpp>
 #include <jflib/locks_pthread.hpp>
 
 /// Cooperative pool. Provide a link between a producer and many

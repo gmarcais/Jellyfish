@@ -5,13 +5,16 @@ pref=$(basename $0 .sh)
 DIR=../bin
 JF=$DIR/jf-cosmosid
 GS=$DIR/generate_sequence
+[ -n "$VALGRIND" ] && JF="valgrind $JF"
 
 check () {
-    cut -d\  -f 2 $1 | xargs @MD5@ | sort | diff -w $1 -
+    cut -d\  -f 2 $1 | xargs @MD5@ | sort | diff -w $DIFFFLAGS $1 -
 }
+
 
 if [ -n "$DEBUG" ]; then
     set -x;
+    DIFFFLAGS="-y"
 fi
 
 set -e

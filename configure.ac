@@ -24,7 +24,7 @@ AC_ARG_VAR([YAGGO], [Yaggo switch parser generator])
 AS_IF([test "x$YAGGO" = "x"], [AC_PATH_PROG([YAGGO], [yaggo], [false])])
 
 dnl define([concat], $1$2$3)dnl
-define([PC_FILE], jellyfish-1.9.pc)
+define([PC_FILE], jellyfish-2.0.pc)
 AC_CONFIG_FILES([
     Makefile
     tests/compat.sh
@@ -75,5 +75,14 @@ AC_CHECK_HEADERS([execinfo.h])
 AC_CHECK_MEMBER([siginfo_t.si_int],
                 [AC_DEFINE([HAVE_SI_INT], [1], [Define if siginfo_t.si_int exists])],
                 [], [[#include <signal.h>]])
+
+# --enable-all-static
+# Do not use libtool if building all static
+AC_ARG_ENABLE([all-static],
+              [AC_HELP_STRING([--enable-all-static], [create statically linked executable])])
+STATIC_FLAGS=
+AS_IF([test x$enable_all_static = xyes],
+      [AC_SUBST([STATIC_FLAGS], ["-static -static-libstdc++"])])
+AM_CONDITIONAL([ALL_STATIC], [test x$enable_all_static = xyes])
 
 AC_OUTPUT
