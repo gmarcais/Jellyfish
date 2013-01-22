@@ -3,7 +3,7 @@ EXTRA_DIST = doc/jellyfish.pdf doc/jellyfish.man README LICENSE HalfLICENSE
 man1_MANS = doc/jellyfish.man
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = jellyfish-1.9.pc
+pkgconfig_DATA = jellyfish-2.0.pc
 
 AM_LDFLAGS = -lpthread
 AM_CPPFLAGS = -Wall -Wnon-virtual-dtor -I$(top_srcdir) -I$(top_srcdir)/include -g -O3 -std=gnu++98 -DJSON_IS_AMALGAMATION=1
@@ -41,15 +41,17 @@ bin_jellyfish_SOURCES = sub_commands/jellyfish.cc			\
                         sub_commands/count_main.cc			\
                         sub_commands/info_main.cc			\
                         sub_commands/dump_main.cc			\
-                        sub_commands/histo_main.cc jellyfish/err.cc	\
-                        jellyfish/thread_exec.cc jellyfish/time.cc	\
-                        jellyfish/jsoncpp.cpp
+                        sub_commands/histo_main.cc			\
+                        sub_commands/merge_main.cc jellyfish/time.cc	\
+                        jellyfish/jsoncpp.cpp				\
+                        jellyfish/merge_files.cc
 
 
 YAGGO_SOURCES += sub_commands/count_main_cmdline.hpp	\
                  sub_commands/info_main_cmdline.hpp	\
                  sub_commands/dump_main_cmdline.hpp	\
-                 sub_commands/histo_main_cmdline.hpp
+                 sub_commands/histo_main_cmdline.hpp	\
+                 sub_commands/merge_main_cmdline.hpp
 
 ######################################
 # Build Jellyfish the shared library #
@@ -58,7 +60,8 @@ libjellyfish_2_0_la_LDFLAGS = -version-info 2:0:0
 libjellyfish_2_0_la_SOURCES = lib/rectangular_binary_matrix.cc		\
                               lib/mer_dna.cc lib/storage.cc		\
                               lib/allocators_mmap.cc lib/misc.cc	\
-                              lib/int128.cc
+                              lib/int128.cc lib/thread_exec.cc	\
+                              jellyfish/err.cc
 
 library_includedir=$(includedir)/jellyfish-@PACKAGE_VERSION@/jellyfish
 JFI = include/jellyfish
@@ -75,10 +78,13 @@ library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
                           $(JFI)/compare_and_swap.hpp			\
                           $(JFI)/divisor.hpp				\
                           $(JFI)/large_hash_iterator.hpp		\
-                          $(JFI)/jellyfish.hpp
+                          $(JFI)/jellyfish.hpp $(JFI)/thread_exec.hpp	\
+                          $(JFI)/mer_overlap_sequence_parser.hpp
 
-noinst_HEADERS += jellyfish/fstream_default.hpp				\
-                  jellyfish/thread_exec.hpp include/json/json.h		\
+JLI = include/jflib
+library_include_HEADERS += $(JLI)/cooperative_pool.hpp
+
+noinst_HEADERS += jellyfish/fstream_default.hpp include/json/json.h	\
                   jellyfish/file_header.hpp				\
                   jellyfish/generic_file_header.hpp			\
                   jellyfish/hash_counter.hpp jellyfish/time.hpp		\
@@ -86,14 +92,13 @@ noinst_HEADERS += jellyfish/fstream_default.hpp				\
                   jellyfish/text_dumper.hpp				\
                   jellyfish/binary_dumper.hpp				\
                   jellyfish/sorted_dumper.hpp jellyfish/mer_heap.hpp	\
-                  jellyfish/mer_overlap_sequence_parser.hpp		\
                   jellyfish/token_ring.hpp				\
-                  include/jflib/cooperative_pool.hpp			\
                   include/jflib/locks_pthread.hpp			\
                   include/jflib/tmpstream.hpp				\
                   jellyfish/mer_iterator.hpp				\
                   jellyfish/stream_iterator.hpp jellyfish/dbg.hpp	\
-                  jellyfish/randomc.h
+                  jellyfish/randomc.h jellyfish/merge_files.hpp		\
+                  jellyfish/cpp_array.hpp
 
 
 ###############
@@ -131,8 +136,8 @@ TEST_EXTENSIONS = .sh
 SH_LOG_COMPILER = /bin/sh
 AM_SH_LOG_FLAGS =
 
-TESTS = tests/generate_sequence.sh \
-        tests/parallel_hashing.sh
+TESTS = tests/generate_sequence.sh tests/parallel_hashing.sh	\
+        tests/merge.sh
 # TESTS = tests/generate_sequence.sh tests/serial_hashing.sh		\
 #         tests/parallel_hashing.sh tests/serial_direct_indexing.sh	\
 #         tests/parallel_direct_indexing.sh tests/raw_hash.sh		\
@@ -148,21 +153,21 @@ EXTRA_DIST += $(TESTS)
 clean-local: clean-local-check
 .PHONY: clean-local-check
 clean-local-check:
-	-cd tests; rm -f seq10m* seq1m* *_0 *_1 *_2 *_S *.md5sum *.histo *.stats *.timing *.query *.dump *.fa
+	-cd tests; rm -f seq10m* seq1m* *.histo *.dump *.fa *.jf *.md5sum
 
-tests/serial_hashing.log: tests/generate_sequence.log
+#tests/serial_hashing.log: tests/generate_sequence.log
 tests/parallel_hashing.log: tests/generate_sequence.log
-tests/serial_direct_indexing.log: tests/generate_sequence.log
-tests/parallel_direct_indexing.log: tests/generate_sequence.log
-tests/parallel_fastq_direct_indexing.log: tests/generate_fastq_sequence.log
-tests/multi_file.log: tests/generate_sequence.log
-tests/raw_hash.log: tests/generate_sequence.log
-tests/from_stream.log: tests/generate_sequence.log
-tests/parallel_fastq_hashing.log: tests/generate_fastq_sequence.log
-tests/parallel_fastq_sequence_hashing.log: tests/generate_fastq_sequence.log
-tests/multi_file_fastq.log: tests/generate_fastq_sequence.log
-tests/from_stream_fastq.log: tests/generate_fastq_sequence.log
-tests/merge.log: tests/generate_fastq_sequence.log
+#tests/serial_direct_indexing.log: tests/generate_sequence.log
+#tests/parallel_direct_indexing.log: tests/generate_sequence.log
+#tests/parallel_fastq_direct_indexing.log: tests/generate_fastq_sequence.log
+#tests/multi_file.log: tests/generate_sequence.log
+#tests/raw_hash.log: tests/generate_sequence.log
+#tests/from_stream.log: tests/generate_sequence.log
+#tests/parallel_fastq_hashing.log: tests/generate_fastq_sequence.log
+##tests/parallel_fastq_sequence_hashing.log: tests/generate_fastq_sequence.log
+#tests/multi_file_fastq.log: tests/generate_fastq_sequence.log
+##tests/from_stream_fastq.log: tests/generate_fastq_sequence.log
+tests/merge.log: tests/generate_sequence.log
 tests/min_qual.log: tests/generate_fastq_sequence.log
 tests/parsers.log: tests/generate_sequence.log
 
@@ -187,10 +192,9 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_stream_iterator.cc		\
 	               unit_tests/test_token_ring.cc			\
 	               unit_tests/test_text_dumper.cc			\
-	               unit_tests/test_binary_dumper.cc
+	               unit_tests/test_dumpers.cc
 
-bin_test_all_SOURCES += jellyfish/thread_exec.cc jellyfish/jsoncpp.cpp	\
-                        jellyfish/time.cc
+bin_test_all_SOURCES += jellyfish/jsoncpp.cpp jellyfish/time.cc
 bin_test_all_CPPFLAGS = -Dprotected=public -Dprivate=public -DJSON_IS_AMALGAMATION=1
 bin_test_all_CXXFLAGS = -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)/unit_tests -I$(top_srcdir)/include
 bin_test_all_LDADD = libgtest.la $(LDADD)

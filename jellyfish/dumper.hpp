@@ -20,6 +20,8 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <vector>
+#include <string>
 #include <jellyfish/err.hpp>
 #include <jellyfish/time.hpp>
 
@@ -30,9 +32,10 @@
 namespace jellyfish {
 template<typename storage_t>
 class dumper_t {
-  Time writing_time_;
-  int  index_;
-  bool one_file_;
+  Time                     writing_time_;
+  int                      index_;
+  bool                     one_file_;
+  std::vector<std::string> file_names_;
 
 public:
   define_error_class(ErrorWriting);
@@ -53,6 +56,7 @@ protected:
       name << index_++;
       mode |= std::ios::trunc;
     }
+    file_names_.push_back(name.str());
 
     out.open(name.str().c_str());
     if(out.fail())
@@ -76,6 +80,13 @@ public:
   virtual void _dump(storage_t* ary) = 0;
   Time get_writing_time() const { return writing_time_; }
   int nb_files() const { return index_; }
+  std::vector<std::string> file_names() { return file_names_; }
+  std::vector<const char*> file_names_cstr() {
+    std::vector<const char*> res;
+    for(size_t i = 0; i < file_names_.size(); ++i)
+      res.push_back(file_names_[i].c_str());
+    return res;
+  }
   virtual ~dumper_t() {};
 };
 }

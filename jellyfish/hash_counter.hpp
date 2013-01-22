@@ -91,15 +91,25 @@ public:
   /// Set dumper responsible for cleaning out the array.
   void dumper(dumper_t<array> *d) { dumper_ = d; }
 
+  /// Add `v` to the entry `k`. It returns in `is_new` true if the
+  /// entry `k` did not exist in the hash. In `id` is returned the
+  /// final position of `k` in the hash array.
+  void add(const Key& k, uint64_t v, bool* is_new, size_t* id) {
+    while(!ary_->add(k, v, is_new, id))
+      handle_full_ary();
+  }
+
   /// Add `v` to the entry `k`. This method is multi-thread safe. If
   /// the entry for `k` does not exists, it is inserted.
   ///
   /// @param k Key to add to
   /// @param v Value to add
-  void add(const Key& k, uint64_t v) {
-    while(!ary_->add(k, v))
-      handle_full_ary();
+  inline void add(const Key& k, uint64_t v) {
+    bool   is_new;
+    size_t id;
+    add(k, v, &is_new, &id);
   }
+
 
   /// Signify that thread is done and wait for all threads to be done.
   void done() {
@@ -121,8 +131,10 @@ protected:
       success = success || double_size(serial_thread);
 
     if(!success && dumper_) {
-      dumper_->dump(ary_);
+      if(serial_thread)
+        dumper_->dump(ary_);
       success = true;
+      size_barrier_.wait();
     }
 
     if(!success)

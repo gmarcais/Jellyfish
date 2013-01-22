@@ -28,6 +28,8 @@
 #include <string>
 #include <stdexcept>
 #include <limits>
+#include <iterator>
+
 #include <jellyfish/misc.hpp>
 
 
@@ -166,6 +168,7 @@ public:
 
   operator derived() { return *static_cast<derived*>(this); }
   operator const derived() const { return *static_cast<const derived*>(this); }
+  unsigned int k() const { return static_cast<const derived*>(this)->k(); }
 
   /// Direct access to data. No bound or consistency check. Use with
   /// caution!
@@ -469,13 +472,6 @@ public:
   // How much to shift last base in last word of _data
   inline unsigned int lshift() const { return nb_msb() - 2; }
 
-protected:
-  static const base_type c3     = (base_type)0x3;
-  static const int       wshift = sizeof(base_type) * 8 - 2; // left shift in 1 word
-  static const int       wbases = 4 * sizeof(base_type); // bases in a word
-  static const int       wbits  = 8 * sizeof(base_type); // bits in a word
-  base_type * const      _data;
-
   template<typename InputIterator>
   bool from_chars(InputIterator it) {
     int shift = lshift();
@@ -493,6 +489,13 @@ protected:
     }
     return true;
   }
+
+protected:
+  static const base_type c3     = (base_type)0x3;
+  static const int       wshift = sizeof(base_type) * 8 - 2; // left shift in 1 word
+  static const int       wbases = 4 * sizeof(base_type); // bases in a word
+  static const int       wbits  = 8 * sizeof(base_type); // bits in a word
+  base_type * const      _data;
 
   // Shift to the right by rs bits (Note bits, not bases)
   void large_shift_right(unsigned int rs) {
@@ -592,11 +595,33 @@ private:
 template<typename T>
 unsigned int mer_base_static<T>::k_ = 22;
 
+typedef std::ostream_iterator<char> ostream_char_iterator;
 template<typename T, typename derived>
 std::ostream& operator<<(std::ostream& os, const mer_base<T, derived>& mer) {
   char s[static_cast<derived>(mer).k() + 1];
   mer.to_str(s);
   return os << s;
+}
+
+typedef std::istream_iterator<char> istream_char_iterator;
+template<typename T, typename derived>
+std::istream& operator>>(std::istream& is, mer_base<T, derived>& mer) {
+  if(is.flags() & std::ios::skipws) {
+    while(isspace(is.peek())) { is.ignore(1); }
+  }
+
+  char buffer[mer.k() + 1];
+  is.read(buffer, mer.k());
+  if(is.gcount() != mer.k())
+    goto error;
+  buffer[mer.k()] = '\0';
+  if(!mer.from_chars(buffer))
+    goto error;
+  return is;
+
+ error:
+  is.setstate(std::ios::failbit);
+  return is;
 }
 
 } // namespace mer_dna_ns
@@ -609,17 +634,6 @@ typedef mer_dna_ns::mer_base_static<unsigned __int128> mer_dna128;
 #endif
 
 typedef mer_dna64 mer_dna;
-
-inline std::ostream& operator<<(std::ostream& os, const mer_dna& m) {
-  char s[m.k() + 1];
-  m.to_str(s);
-  return os << s;
-}
-
-// inline std::istream& operator>>(std::istream& is, mer_dna& m) {
-//   char s[m.k() + 1];
-//   is.
-// }
 
 } // namespace jellyfish
 

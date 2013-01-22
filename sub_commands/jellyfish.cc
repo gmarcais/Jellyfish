@@ -25,7 +25,7 @@ typedef int (main_func_t)(int argc, char *argv[]);
 main_func_t count_main;
 main_func_t info_main;
 // main_func_t stats_main;
-// main_func_t merge_main;
+main_func_t merge_main;
 main_func_t histo_main;
 // main_func_t query_main;
 main_func_t dump_main;
@@ -48,7 +48,7 @@ cmd_func cmd_list[] = {
   // {"stats",             &stats_main},
   {"histo",             &histo_main},
   {"dump",              &dump_main},
-  // {"merge",             &merge_main},
+  {"merge",             &merge_main},
   // {"query",             &query_main},
   // {"cite",              &cite_main},
   // {"qhisto",            &histo_fastq_main},

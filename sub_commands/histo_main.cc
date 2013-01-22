@@ -28,6 +28,19 @@
 #include <jellyfish/jellyfish.hpp>
 #include <sub_commands/histo_main_cmdline.hpp>
 
+template<typename reader_type>
+void compute_histo(reader_type& reader, const uint64_t base, const uint64_t ceil, uint64_t* histo,
+                   const uint64_t nb_buckets, const uint64_t inc) {
+  while(reader.next()) {
+    if(reader.val() < base)
+      ++histo[0];
+    else if(reader.val() > ceil)
+      ++histo[nb_buckets - 1];
+    else
+      ++histo[(reader.val() - base) / inc];
+  }
+}
+
 
 int histo_main(int argc, char *argv[])
 {
@@ -38,10 +51,6 @@ int histo_main(int argc, char *argv[])
     die << "Failed to open input file '" << args.db_arg << "'" << err::no;
   jellyfish::file_header header;
   header.read(is);
-  binary_reader reader(is, header.counter_len());
-
-  if(header.format().compare(binary_dumper::format))
-    die << "Unknown format '" << header.format() << "'";
   jellyfish::mer_dna::k(header.key_len() / 2);
 
   if(args.low_arg < 1)
@@ -61,13 +70,14 @@ int histo_main(int argc, char *argv[])
   uint64_t* histo      = new uint64_t[nb_buckets];
   memset(histo, '\0', sizeof(uint64_t) * nb_buckets);
 
-  while(reader.next()) {
-    if(reader.val() < base)
-      ++histo[0];
-    else if(reader.val() > ceil)
-      ++histo[nb_buckets - 1];
-    else
-      ++histo[(reader.val() - base) / inc];
+  if(!header.format().compare(binary_dumper::format)) {
+    binary_reader reader(is, &header);
+    compute_histo(reader, base, ceil, histo, nb_buckets, inc);
+  } else if(!header.format().compare(text_dumper::format)) {
+    text_reader reader(is, &header);
+    compute_histo(reader, base, ceil, histo, nb_buckets, inc);
+  } else {
+    die << "Unknown format '" << header.format() << "'";
   }
 
   for(uint64_t i = 0, col = base; i < nb_buckets; ++i, col += inc)

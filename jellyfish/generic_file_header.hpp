@@ -27,11 +27,13 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 #include <sys/utsname.h>
 
 #include <string>
 #include <vector>
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 
 #include <json/json.h>

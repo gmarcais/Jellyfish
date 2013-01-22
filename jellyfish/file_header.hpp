@@ -25,6 +25,9 @@ namespace jellyfish {
 class file_header : public generic_file_header {
 public:
   file_header() : generic_file_header(sizeof(uint64_t)) { }
+  file_header(std::istream& is) : generic_file_header(sizeof(uint64_t)) {
+    this->read(is);
+  }
 
   template<typename storage>
   void update_from_ary(const storage& ary) {
@@ -66,6 +69,8 @@ public:
 
   unsigned int max_reprobe() const { return root_["max_reprobe"].asUInt(); }
   void max_reprobe(unsigned int m) { root_["max_reprobe"] = (Json::UInt)m; }
+
+  size_t max_reprobe_offset() const { return root_["reprobes"][max_reprobe()].asLargestUInt(); }
 
   /// reprobes must be at least max_reprobe() + 1 long
   void get_reprobes(size_t* reprobes) const {

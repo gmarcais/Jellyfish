@@ -34,6 +34,7 @@ namespace jellyfish {
 template<typename D, typename storage_t>
 class sorted_dumper : public dumper_t<storage_t>, public thread_exec {
 protected:
+  typedef typename storage_t::key_type key_type;
   typedef typename storage_t::region_iterator iterator;
   typedef typename mer_heap::heap<typename    storage_t::key_type, iterator> heap_type;
   typedef typename heap_type::const_item_t    heap_item;

@@ -1,4 +1,4 @@
-AC_INIT([jellyfish], [2.0.0beta1], [gmarcais@umd.edu])
+AC_INIT([jellyfish], [2.0.0beta2], [gmarcais@umd.edu])
 AC_CANONICAL_HOST
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([subdir-objects foreign parallel-tests color-tests])
@@ -24,7 +24,7 @@ AC_ARG_VAR([YAGGO], [Yaggo switch parser generator])
 AS_IF([test "x$YAGGO" = "x"], [AC_PATH_PROG([YAGGO], [yaggo], [false])])
 
 dnl define([concat], $1$2$3)dnl
-define([PC_FILE], jellyfish-1.9.pc)
+define([PC_FILE], jellyfish-2.0.pc)
 AC_CONFIG_FILES([
     Makefile
     tests/compat.sh

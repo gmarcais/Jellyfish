@@ -14,7 +14,7 @@
     along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "thread_exec.hpp"
+#include <jellyfish/thread_exec.hpp>
 
 void thread_exec::exec(int nb_threads) {
   struct thread_info empty = {0, 0, 0};

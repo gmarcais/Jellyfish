@@ -22,41 +22,61 @@
 #include <jellyfish/sorted_dumper.hpp>
 
 namespace jellyfish {
+template<typename Key, typename Val>
+class binary_writer {
+  int val_len_;
+  Val max_val_;
+  int key_len_;                 // length of output key field in bytes
+
+public:
+  binary_writer(int val_len,   // length of value field in bytes
+                int key_len) : // length of key field in bits
+    val_len_(val_len),
+    max_val_(((Val)1 << (8 * val_len)) - 1),
+    key_len_(key_len / 8 + (key_len % 8 != 0))
+  { }
+
+  int val_len() const { return val_len_; }
+  Val max_val() const { return max_val_; }
+  int key_len() const { return key_len_; }
+
+  void write(std::ostream& out, const Key& key, const Val val) {
+    out.write((const char*)key.data(), key_len_);
+    Val v = std::min(max_val_, val);
+    out.write((const char*)&v, val_len_);
+  }
+};
+
 /// Dump a hash array in sorted binary format. The key/value pairs are
 /// written in a sorted list according to the hash function order. The
 /// k-mer and count are written in binary, byte aligned.
 template<typename storage_t>
 class binary_dumper : public sorted_dumper<binary_dumper<storage_t>, storage_t> {
   typedef sorted_dumper<binary_dumper<storage_t>, storage_t> super;
-
-  int      val_len_;
-  uint64_t max_val;
-  int      key_len_;
+  binary_writer<typename super::key_type, uint64_t> writer;
 
 public:
   static const char* format;
 
   binary_dumper(int val_len, // length of value field in bytes
+                int key_len, // length of key field in bits
                 int nb_threads, const char* file_prefix,
                 file_header* header = 0) :
     super(nb_threads, file_prefix, header),
-    val_len_(val_len), max_val(((uint64_t)1 << (8 * val_len)) - 1)
+    writer(val_len, key_len)
   { }
 
   virtual void _dump(storage_t* ary) {
-    key_len_ = ary->key_len() / 8 + (ary->key_len() % 8 != 0);
     if(super::header_) {
       super::header_->update_from_ary(*ary);
       super::header_->format(format);
-      super::header_->counter_len(val_len_);
+      super::header_->counter_len(writer.val_len());
     }
     super::_dump(ary);
   }
 
   void write_key_value_pair(std::ostream& out, typename super::heap_item item) {
-    out.write((const char*)item->key_.data(), key_len_);
-    uint64_t v = std::min(max_val, item->val_);
-    out.write((const char*)&v, val_len_);
+    writer.write(out, item->key_, item->val_);
   }
 };
 template<typename storage_t>
@@ -65,21 +85,27 @@ const char* jellyfish::binary_dumper<storage_t>::format = "binary/sorted";
 /// Reader of the format written by binary_dumper. Behaves like an
 /// iterator (has next() method which behaves similarly to the next()
 /// method of the hash array).
+/// The header should be of format binary/sorted, but no check is made.
 template<typename Key, typename Val>
 class binary_reader {
-  std::istream& is_;
-  int           val_len_;
-  Key           key_;
-  Val           val_;
+  std::istream&                 is_;
+  const int                     val_len_;
+  Key                           key_;
+  Val                           val_;
+  const RectangularBinaryMatrix m_;
+  const size_t                  size_mask_;
 
 public:
   binary_reader(std::istream& is, // stream containing data (past any header)
-                int val_len) :  // val length in bytes
-    is_(is), val_len_(val_len)
+                file_header* header) :  // header which contains counter_len, matrix, size and key_len
+    is_(is), val_len_(header->counter_len()), key_(header->key_len() / 2),
+    m_(header->matrix()),
+    size_mask_(header->size() - 1)
   { }
 
-  const Key& key() { return key_; }
-  const Val& val() { return val_; }
+  const Key& key() const { return key_; }
+  const Val& val() const { return val_; }
+  size_t pos() const { return m_.times(key_) & size_mask_; }
 
   bool next() {
     key_.template read<1>(is_);

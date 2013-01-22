@@ -1,6 +1,8 @@
 #include <cstdlib>
+#include <unistd.h>
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <vector>
 #include <map>
 #include <sstream>
@@ -14,6 +16,7 @@
 #include <jellyfish/mer_iterator.hpp>
 #include <jellyfish/stream_iterator.hpp>
 #include <jellyfish/jellyfish.hpp>
+#include <jellyfish/merge_files.hpp>
 #include <sub_commands/count_main_cmdline.hpp>
 
 typedef std::vector<const char*> file_vector;
@@ -56,18 +59,38 @@ int count_main(int argc, char *argv[])
   jellyfish::mer_dna::k(args.mer_len_arg);
 
   mer_hash ary(args.size_arg, args.mer_len_arg * 2, args.counter_len_arg, args.threads_arg, args.reprobes_arg);
+  if(args.disk_flag)
+    ary.do_size_doubling(false);
 
   std::auto_ptr<jellyfish::dumper_t<mer_array> > dumper;
   if(args.text_flag)
     dumper.reset(new text_dumper(args.threads_arg, args.output_arg, &header));
   else
-    dumper.reset(new binary_dumper(args.out_counter_len_arg, args.threads_arg, args.output_arg, &header));
+    dumper.reset(new binary_dumper(args.out_counter_len_arg, ary.key_len(), args.threads_arg, args.output_arg, &header));
+  ary.dumper(dumper.get());
 
   mer_counter<file_vector::iterator> counter(args.threads_arg, ary, args.file_arg.begin(), args.file_arg.end());
-
   counter.exec_join(args.threads_arg);
 
-  dumper->dump(ary.ary());
+  // If no intermediate files, dump directly into output file. If not, will do a round of merging
+  if(dumper->nb_files() == 0) {
+    dumper->one_file(true);
+    dumper->dump(ary.ary());
+  } else {
+    dumper->dump(ary.ary());
+    if(!args.no_merge_flag) {
+      std::vector<const char*> files = dumper->file_names_cstr();
+      try {
+        merge_files(files, args.output_arg, header);
+      } catch(MergeError e) {
+        die << e.what();
+      }
+      if(!args.no_unlink_flag) {
+        for(int i =0; i < dumper->nb_files(); ++i)
+          unlink(files[i]);
+      }
+    } // if(!args.no_merge_flag
+  } // else {
 
   return 0;
 }
