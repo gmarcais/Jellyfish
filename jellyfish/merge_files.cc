@@ -85,13 +85,6 @@ void merge_files(std::vector<const char*> input_files, const char* out_file, fil
   std::string  format;
   matrix_ptr   matrix;
 
-  std::cout << "merge:";
-  for(size_t i = 0; i < input_files.size(); ++i)
-    std::cout << " " << input_files[i];
-  std::cout << "\n";
-  std::cout << "to: " << out_file << "\n";
-  std::cout << "header: " << out_header;
-
   cpp_array<file_info> files(input_files.size());
 
   // create an iterator for each hash file
