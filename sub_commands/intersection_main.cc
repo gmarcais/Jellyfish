@@ -6,14 +6,14 @@
 #include <map>
 #include <sstream>
 
+#include <jellyfish/mer_overlap_sequence_parser.hpp>
 #include <jellyfish/thread_exec.hpp>
 #include <jellyfish/intersection_array.hpp>
 #include <jellyfish/mer_dna.hpp>
 #include <jellyfish/locks_pthread.hpp>
-#include <jellyfish/mer_overlap_sequence_parser.hpp>
 #include <jellyfish/mer_iterator.hpp>
 #include <jflib/multiplexed_io.hpp>
-#include <sub_commands/intersection_cmdline.hpp>
+#include <sub_commands/intersection_main_cmdline.hpp>
 
 typedef jellyfish::intersection_array<jellyfish::mer_dna> inter_array;
 typedef std::vector<const char*> file_vector;
@@ -21,7 +21,7 @@ typedef jellyfish::mer_overlap_sequence_parser<std::ifstream*> sequence_parser;
 typedef jellyfish::mer_iterator<sequence_parser, jellyfish::mer_dna> mer_iterator;
 typedef std::map<std::string, int> name_map;
 
-intersection_cmdline args;
+intersection_main_cmdline args;
 
 
 class compute_intersection : public thread_exec {
@@ -106,7 +106,7 @@ public:
 
   void output_intersection_mers(int thid) {
     jflib::omstream out(*multiplexer_);
-    inter_array::array::lazy_iterator it = ary_.ary()->lazy_iterator_slice(thid, nb_threads_);
+    inter_array::array::lazy_iterator it = ary_.ary()->lazy_slice(thid, nb_threads_);
     while(out && it.next()) {
       inter_array::mer_info info = ary_.info_at(it.id());
       if(!info.info.nall) {

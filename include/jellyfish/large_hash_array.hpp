@@ -410,6 +410,9 @@ public:
 
   // See hash_counter.hpp for why we added this method. It should not
   // be needed, but I can't get the thing to compile without :(.
+  lazy_iterator lazy_slice(size_t index, size_t nb_slices) const {
+    return iterator_slice<lazy_iterator>(index, nb_slices);
+  }
   eager_iterator eager_slice(size_t index, size_t nb_slices) const {
     return iterator_slice<eager_iterator>(index, nb_slices);
   }

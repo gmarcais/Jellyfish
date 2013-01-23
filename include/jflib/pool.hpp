@@ -18,7 +18,7 @@
 #ifndef _JFLIB_POOL_H_
 #define _JFLIB_POOL_H_
 
-#include <jflib/circular_buffer.hpp>
+#include <jellyfish/circular_buffer.hpp>
 #include <jflib/locks_pthread.hpp>
 #include <vector>
 #include <stdexcept>

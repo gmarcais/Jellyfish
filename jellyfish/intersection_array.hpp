@@ -200,8 +200,8 @@ protected:
       return true;
 
     // Copy data from old to new
-    uint16_t                 id = atomic::gcc::fetch_add(&size_thid_, (uint16_t)1);
-    typename array::iterator it = ary_->iterator_slice(id, nb_threads_);
+    uint16_t                       id = atomic::gcc::fetch_add(&size_thid_, (uint16_t)1);
+    typename array::eager_iterator it = ary_->eager_slice(id, nb_threads_);
     while(it.next()) {
       assert(it.id() >= 0 && it.id() < ary_->size());
       add_new(it.key(), info_at(it.id()));

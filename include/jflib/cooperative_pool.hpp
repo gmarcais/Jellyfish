@@ -19,6 +19,7 @@
 #define __JFLIB_COOPERATIVE_POOL_HPP__
 
 #include <assert.h>
+#include <unistd.h>
 
 #include <jellyfish/circular_buffer.hpp>
 #include <jellyfish/compare_and_swap.hpp>

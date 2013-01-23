@@ -24,7 +24,6 @@
 #include <jellyfish/randomc.h>
 #include <jellyfish/generate_sequence_cmdline.hpp>
 
-using jellyfish::SquareBinaryMatrix;
 
 class rDNAg_t {
 public:

@@ -48,11 +48,12 @@ bin_jellyfish_SOURCES = sub_commands/jellyfish.cc		\
                         jellyfish/merge_files.cc
 
 
-YAGGO_SOURCES += sub_commands/count_main_cmdline.hpp	\
-                 sub_commands/info_main_cmdline.hpp	\
-                 sub_commands/dump_main_cmdline.hpp	\
-                 sub_commands/histo_main_cmdline.hpp	\
-                 sub_commands/merge_main_cmdline.hpp
+YAGGO_SOURCES += sub_commands/count_main_cmdline.hpp		\
+                 sub_commands/info_main_cmdline.hpp		\
+                 sub_commands/dump_main_cmdline.hpp		\
+                 sub_commands/histo_main_cmdline.hpp		\
+                 sub_commands/merge_main_cmdline.hpp		\
+                 sub_commands/intersection_main_cmdline.hpp
 
 ######################################
 # Build Jellyfish the shared library #
