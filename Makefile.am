@@ -194,4 +194,4 @@ include gtest.mk
 # info #
 ########
 print-%:
-	@echo $($*)
+	@echo -n $($*)
