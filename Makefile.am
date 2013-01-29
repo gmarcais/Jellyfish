@@ -45,6 +45,7 @@ bin_jellyfish_SOURCES = sub_commands/jellyfish.cc			\
                         sub_commands/merge_main.cc jellyfish/time.cc	\
                         jellyfish/jsoncpp.cpp				\
                         jellyfish/merge_files.cc
+bin_jellyfish_LDFLAGS = $(AM_LDFLAGS) $(STATIC_FLAGS)
 
 
 YAGGO_SOURCES += sub_commands/count_main_cmdline.hpp	\
