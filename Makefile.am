@@ -203,3 +203,9 @@ noinst_HEADERS += unit_tests/test_main.hpp
 
 include gtest.mk
 -include $(top_srcdir)/development.mk
+
+########
+# info #
+########
+print-%:
+	@echo $($*)
