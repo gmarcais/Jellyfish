@@ -186,3 +186,9 @@ bin_test_all_LDADD = libgtest_main.a libgtest.a $(LDADD)
 
 include gtest.mk
 -include $(top_srcdir)/development.mk
+
+########
+# info #
+########
+print-%:
+	@echo -n $($*)
