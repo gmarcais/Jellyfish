@@ -27,9 +27,11 @@ int merge_main(int argc, char *argv[])
   out_header.set_cmdline(argc, argv);
 
   merge_main_cmdline args(argc, argv);
+  uint64_t min = args.lower_count_given ? args.lower_count_arg : 0;
+  uint64_t max = args.upper_count_given ? args.upper_count_arg : std::numeric_limits<uint64_t>::max();
 
   try {
-    merge_files(args.input_arg, args.output_arg, out_header);
+    merge_files(args.input_arg, args.output_arg, out_header, min, max);
   } catch(MergeError e) {
     die << e.what();
   }

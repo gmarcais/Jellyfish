@@ -49,12 +49,12 @@ option("no-unlink") {
 # option("min-quality") {
 #   description "Minimum quality. A base with lesser quality becomes an N"
 #   uint32; default "0" }
-# option("lower-count", "L") {
-#   description "Don't output k-mer with count < lower-count"
-#   uint64 }
-# option("upper-count", "U") {
-#   description "Don't output k-mer with count > upper-count"
-#   uint64 }
+option("lower-count", "L") {
+  description "Don't output k-mer with count < lower-count"
+  uint64 }
+option("upper-count", "U") {
+  description "Don't output k-mer with count > upper-count"
+  uint64 }
 # option("invalid-char") {
 #   description "How to treat invalid characters. The char is changed to a N."
 #   enum "warn", "ignore", "error" }

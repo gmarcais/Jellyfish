@@ -37,6 +37,10 @@ class dumper_t {
   bool                     one_file_;
   std::vector<std::string> file_names_;
 
+protected:
+  uint64_t                 min_;
+  uint64_t                 max_;
+
 public:
   define_error_class(ErrorWriting);
 
@@ -65,7 +69,9 @@ protected:
   }
 
 public:
-  dumper_t() : writing_time_(::Time::zero), index_(0), one_file_(false) {}
+  dumper_t() : writing_time_(::Time::zero), index_(0), one_file_(false),
+               min_(0), max_(std::numeric_limits<uint64_t>::max())
+  {}
 
   void dump(storage_t* ary) {
     Time start;
@@ -78,6 +84,10 @@ public:
   void one_file(bool v) { one_file_ = v; }
 
   virtual void _dump(storage_t* ary) = 0;
+  uint64_t min() const { return min_; }
+  void min(uint64_t m) { min_ = m; }
+  uint64_t max() const { return max_; }
+  void max(uint64_t m) { max_ = m; }
   Time get_writing_time() const { return writing_time_; }
   int nb_files() const { return index_; }
   std::vector<std::string> file_names() { return file_names_; }

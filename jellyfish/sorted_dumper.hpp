@@ -91,7 +91,8 @@ public:
 
       while(heap.is_not_empty()) {
         heap_item item = heap.head();
-        static_cast<D*>(this)->write_key_value_pair(buffer, item);
+        if(item->val_ >= this->min() && item->val_ <= this->max())
+          static_cast<D*>(this)->write_key_value_pair(buffer, item);
         ++count;
         heap.pop();
         if(it.next())
