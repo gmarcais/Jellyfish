@@ -27,7 +27,7 @@ static count_main_cmdline args; // Command line switches and arguments
 
 
 template<typename PathIterator>
-class mer_counter : public thread_exec {
+class mer_counter : public jellyfish::thread_exec {
   int                     nb_threads_;
   mer_hash&               ary_;
   sequence_parser         parser_;

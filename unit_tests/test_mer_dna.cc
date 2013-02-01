@@ -95,18 +95,18 @@ TEST(MerDNASimple, InitSize128) {
 #endif
 
 TEST(MerDNASimple, Codes) {
-  EXPECT_EQ(mer_dna_ns::CODE_A, mer_dna::code('A'));
-  EXPECT_EQ(mer_dna_ns::CODE_A, mer_dna::code('a'));
-  EXPECT_EQ(mer_dna_ns::CODE_C, mer_dna::code('C'));
-  EXPECT_EQ(mer_dna_ns::CODE_C, mer_dna::code('c'));
-  EXPECT_EQ(mer_dna_ns::CODE_G, mer_dna::code('G'));
-  EXPECT_EQ(mer_dna_ns::CODE_G, mer_dna::code('g'));
-  EXPECT_EQ(mer_dna_ns::CODE_T, mer_dna::code('T'));
-  EXPECT_EQ(mer_dna_ns::CODE_T, mer_dna::code('t'));
-  EXPECT_FALSE(mer_dna::not_dna(mer_dna_ns::CODE_A));
-  EXPECT_FALSE(mer_dna::not_dna(mer_dna_ns::CODE_C));
-  EXPECT_FALSE(mer_dna::not_dna(mer_dna_ns::CODE_G));
-  EXPECT_FALSE(mer_dna::not_dna(mer_dna_ns::CODE_T));
+  EXPECT_EQ(mer_dna::CODE_A, mer_dna::code('A'));
+  EXPECT_EQ(mer_dna::CODE_A, mer_dna::code('a'));
+  EXPECT_EQ(mer_dna::CODE_C, mer_dna::code('C'));
+  EXPECT_EQ(mer_dna::CODE_C, mer_dna::code('c'));
+  EXPECT_EQ(mer_dna::CODE_G, mer_dna::code('G'));
+  EXPECT_EQ(mer_dna::CODE_G, mer_dna::code('g'));
+  EXPECT_EQ(mer_dna::CODE_T, mer_dna::code('T'));
+  EXPECT_EQ(mer_dna::CODE_T, mer_dna::code('t'));
+  EXPECT_FALSE(mer_dna::not_dna(mer_dna::CODE_A));
+  EXPECT_FALSE(mer_dna::not_dna(mer_dna::CODE_C));
+  EXPECT_FALSE(mer_dna::not_dna(mer_dna::CODE_G));
+  EXPECT_FALSE(mer_dna::not_dna(mer_dna::CODE_T));
 
   for(int c = 0; c < 256; ++c) {
     switch((char)c) {

@@ -5,7 +5,7 @@
 #include <jellyfish/thread_exec.hpp>
 
 namespace {
-
+using jellyfish::thread_exec;
 struct write_number : public thread_exec {
   typedef jellyfish::token_ring<locks::pthread::cond> token_ring;
 
