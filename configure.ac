@@ -1,4 +1,4 @@
-AC_INIT([jf-cosmosid], [0.0.2], [guillaume@marcais.net])
+AC_INIT([jf-cosmosid], [0.0.3], [guillaume@marcais.net])
 AC_CANONICAL_HOST
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([subdir-objects foreign parallel-tests color-tests])

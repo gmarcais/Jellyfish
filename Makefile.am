@@ -27,17 +27,17 @@ V_YAGGO_0 = @echo "  YAGGO " $@;
 YAGGO_SOURCES = # Append all file to be built by yaggo
 
 # What to build
-bin_PROGRAMS += bin/jellyfish
-lib_LTLIBRARIES = libjellyfish-2.0.la
+bin_PROGRAMS += bin/jf-cosmosid
+noinst_LTLIBRARIES = libjellyfish-2.0.la
 LDADD = libjellyfish-2.0.la
 # check_PROGRAMS =  bin/test_double_fifo_input	\
 #                  bin/test_read_parser
 check_PROGRAMS = bin/generate_sequence
 
 ############################
-# Build Jellyfish the exec #
+# Build Jf-Cosmosid the exec #
 ############################
-bin_jellyfish_SOURCES = sub_commands/jellyfish.cc		\
+bin_jf_cosmosid_SOURCES = sub_commands/jellyfish.cc		\
                         sub_commands/count_main.cc		\
                         sub_commands/info_main.cc		\
                         sub_commands/dump_main.cc		\
@@ -58,7 +58,7 @@ YAGGO_SOURCES += sub_commands/count_main_cmdline.hpp		\
 ######################################
 # Build Jellyfish the shared library #
 ######################################
-libjellyfish_2_0_la_LDFLAGS = -version-info 2:0:0
+#libjellyfish_2_0_la_LDFLAGS = -version-info 2:0:0
 libjellyfish_2_0_la_SOURCES = lib/rectangular_binary_matrix.cc		\
                               lib/mer_dna.cc lib/storage.cc		\
                               lib/allocators_mmap.cc lib/misc.cc	\
@@ -101,7 +101,9 @@ noinst_HEADERS += jellyfish/fstream_default.hpp include/json/json.h	\
                   jellyfish/stream_iterator.hpp jellyfish/dbg.hpp	\
                   jellyfish/randomc.h jellyfish/merge_files.hpp		\
                   jellyfish/cpp_array.hpp				\
-                  jellyfish/intersection_array.hpp
+                  jellyfish/intersection_array.hpp			\
+                  include/jflib/multiplexed_io.hpp			\
+                  include/jflib/pool.hpp
 
 
 ###############
