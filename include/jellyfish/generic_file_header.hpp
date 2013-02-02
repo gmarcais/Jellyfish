@@ -36,7 +36,7 @@
 #include <iomanip>
 #include <sstream>
 
-#include <json/json.h>
+#include <jellyfish/json.h>
 
 namespace jellyfish {
 /// Generic file header. It contains by default the hostname, the

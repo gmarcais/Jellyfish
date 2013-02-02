@@ -6,8 +6,8 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = jellyfish-2.0.pc
 
 AM_LDFLAGS = -lpthread
-AM_CPPFLAGS = -Wall -Wnon-virtual-dtor -I$(top_srcdir) -I$(top_srcdir)/include -g -O3 -std=gnu++98 -DJSON_IS_AMALGAMATION=1
-AM_CXXFLAGS = -g -O3 -std=gnu++98
+AM_CPPFLAGS = -Wall -Wnon-virtual-dtor -I$(top_srcdir) -I$(top_srcdir)/include -g -O3 -std=gnu++98
+AM_CXXFLAGS = -g -O3 -std=c++0x
 
 noinst_HEADERS = $(YAGGO_SOURCES)
 bin_PROGRAMS =
@@ -38,14 +38,14 @@ check_PROGRAMS = bin/generate_sequence
 # Build Jf-Cosmosid the exec #
 ############################
 bin_jf_cosmosid_SOURCES = sub_commands/jellyfish.cc		\
-                        sub_commands/count_main.cc		\
-                        sub_commands/info_main.cc		\
-                        sub_commands/dump_main.cc		\
-                        sub_commands/histo_main.cc		\
-                        sub_commands/merge_main.cc		\
-                        sub_commands/intersection_main.cc	\
-                        jellyfish/time.cc jellyfish/jsoncpp.cpp	\
-                        jellyfish/merge_files.cc
+                          sub_commands/count_main.cc		\
+                          sub_commands/info_main.cc		\
+                          sub_commands/dump_main.cc		\
+                          sub_commands/histo_main.cc		\
+                          sub_commands/merge_main.cc		\
+                          sub_commands/intersection_main.cc	\
+                          jellyfish/merge_files.cc
+bin_jellyfish_LDFLAGS = $(AM_LDFLAGS) $(STATIC_FLAGS)
 
 
 YAGGO_SOURCES += sub_commands/count_main_cmdline.hpp		\
@@ -62,15 +62,17 @@ YAGGO_SOURCES += sub_commands/count_main_cmdline.hpp		\
 libjellyfish_2_0_la_SOURCES = lib/rectangular_binary_matrix.cc		\
                               lib/mer_dna.cc lib/storage.cc		\
                               lib/allocators_mmap.cc lib/misc.cc	\
-                              lib/int128.cc lib/thread_exec.cc	\
-                              jellyfish/err.cc
+                              lib/int128.cc lib/thread_exec.cc		\
+                              jellyfish/err.cc lib/jsoncpp.cpp		\
+                              lib/time.cc
 
 library_includedir=$(includedir)/jellyfish-@PACKAGE_VERSION@/jellyfish
 JFI = include/jellyfish
 library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
                           $(JFI)/backtrace.hpp $(JFI)/atomic_gcc.hpp	\
                           $(JFI)/large_hash_array.hpp $(JFI)/err.hpp	\
-                          $(JFI)/misc.hpp $(JFI)/offsets_key_value.hpp	\
+                          $(JFI)/misc.hpp				\
+                          $(JFI)/offsets_key_value.hpp			\
                           $(JFI)/int128.hpp				\
                           $(JFI)/rectangular_binary_matrix.hpp		\
                           $(JFI)/mer_dna.hpp $(JFI)/storage.hpp		\
@@ -81,20 +83,22 @@ library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
                           $(JFI)/divisor.hpp				\
                           $(JFI)/large_hash_iterator.hpp		\
                           $(JFI)/jellyfish.hpp $(JFI)/thread_exec.hpp	\
-                          $(JFI)/mer_overlap_sequence_parser.hpp
+                          $(JFI)/mer_overlap_sequence_parser.hpp	\
+                          $(JFI)/binary_dumper.hpp			\
+                          $(JFI)/sorted_dumper.hpp			\
+                          $(JFI)/text_dumper.hpp $(JFI)/dumper.hpp	\
+                          $(JFI)/time.hpp $(JFI)/mer_heap.hpp		\
+                          $(JFI)/token_ring.hpp				\
+                          $(JFI)/locks_pthread.hpp			\
+                          $(JFI)/file_header.hpp			\
+                          $(JFI)/generic_file_header.hpp		\
+                          $(JFI)/json.h $(JFI)/hash_counter.hpp		\
+                          $(JFI)/mapped_file.hpp
 
 JLI = include/jflib
 library_include_HEADERS += $(JLI)/cooperative_pool.hpp
 
-noinst_HEADERS += jellyfish/fstream_default.hpp include/json/json.h	\
-                  jellyfish/file_header.hpp				\
-                  jellyfish/generic_file_header.hpp			\
-                  jellyfish/hash_counter.hpp jellyfish/time.hpp		\
-                  jellyfish/locks_pthread.hpp jellyfish/dumper.hpp	\
-                  jellyfish/text_dumper.hpp				\
-                  jellyfish/binary_dumper.hpp				\
-                  jellyfish/sorted_dumper.hpp jellyfish/mer_heap.hpp	\
-                  jellyfish/token_ring.hpp				\
+noinst_HEADERS += jellyfish/fstream_default.hpp				\
                   include/jflib/locks_pthread.hpp			\
                   include/jflib/tmpstream.hpp				\
                   jellyfish/mer_iterator.hpp				\
@@ -112,7 +116,7 @@ noinst_HEADERS += jellyfish/fstream_default.hpp include/json/json.h	\
 bin_generate_sequence_SOURCES = jellyfish/generate_sequence.cc		\
                                 jellyfish/mersenne.cpp			\
                                 jellyfish/backtrace.cc			\
-                                jellyfish/dbg.cc jellyfish/time.cc
+                                jellyfish/dbg.cc
 YAGGO_SOURCES += jellyfish/generate_sequence_cmdline.hpp
 
 # bin_test_double_fifo_input_SOURCES =						\
@@ -198,14 +202,20 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_stream_iterator.cc		\
 	               unit_tests/test_token_ring.cc			\
 	               unit_tests/test_text_dumper.cc			\
-	               unit_tests/test_dumpers.cc
+	               unit_tests/test_dumpers.cc			\
+	               unit_tests/test_mapped_file.cc
 
-bin_test_all_SOURCES += jellyfish/jsoncpp.cpp jellyfish/time.cc
 bin_test_all_CPPFLAGS = -Dprotected=public -Dprivate=public -DJSON_IS_AMALGAMATION=1
-bin_test_all_CXXFLAGS = -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)/unit_tests -I$(top_srcdir)/include
+bin_test_all_CXXFLAGS = -std=c++0x -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)/unit_tests -I$(top_srcdir)/include
 bin_test_all_LDADD = libgtest.la $(LDADD)
 YAGGO_SOURCES += unit_tests/test_main_cmdline.hpp
 noinst_HEADERS += unit_tests/test_main.hpp
 
 include gtest.mk
 -include $(top_srcdir)/development.mk
+
+########
+# info #
+########
+print-%:
+	@echo -n $($*)

@@ -6,6 +6,7 @@
 #include <vector>
 
 namespace {
+using jellyfish::thread_exec;
 using jellyfish::mer_dna;
 typedef jellyfish::cooperative::hash_counter<mer_dna> hash_counter;
 typedef hash_counter::array::lazy_iterator lazy_iterator;

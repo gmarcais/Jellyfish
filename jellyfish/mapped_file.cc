@@ -17,9 +17,4 @@
 #include <jellyfish/mapped_file.hpp>
 
 char mapped_file::load() const {
-  long sz     = sysconf(_SC_PAGESIZE);
-  char unused = 0;
-  for(char *w = _base; w < _base + _length; w += sz)
-    unused ^= *w;
-  return unused;
 }

@@ -302,6 +302,12 @@ public:
     return true;
   }
 
+  // Return true if the key is present in the hash
+  inline bool has_key(const key_type& key) const {
+    size_t id;
+    return get_key_id(key, &id);
+  }
+
   // Get the id of the key in the hash. Returns true if the key is
   // found in the hash, false otherwise.
   inline bool get_key_id(const key_type& key, size_t* id) const {

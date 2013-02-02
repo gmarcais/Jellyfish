@@ -1,5 +1,5 @@
 /// Json-cpp amalgated header (http://jsoncpp.sourceforge.net/).
-/// It is intented to be used with #include <json/json.h>
+/// It is intented to be used with #include <jellyfish/json.h>
 
 // //////////////////////////////////////////////////////////////////////
 // Beginning of content of file: LICENSE
@@ -110,12 +110,12 @@ license you like.
 
 /// If defined, indicates that Json use exception to report invalid type manipulation
 /// instead of C assert macro.
-# define JSON_USE_EXCEPTION 1
+/// # define JSON_USE_EXCEPTION 1
 
 /// If defined, indicates that the source file is amalgated
 /// to prevent private header inclusion.
 /// Remarks: it is automatically defined in the generated amalgated header.
-// #define JSON_IS_AMALGAMATION
+#define JSON_IS_AMALGAMATION 1
 
 
 # ifdef JSON_IN_CPPTL

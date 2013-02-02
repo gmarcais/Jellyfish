@@ -4,6 +4,12 @@ package "jellyfish merge"
 option("output", "o") {
   description "Output file"
   c_string; default "mer_counts_merged.jf" }
+option("lower-count", "L") {
+  description "Don't output k-mer with count < lower-count"
+  uint64 }
+option("upper-count", "U") {
+  description "Don't output k-mer with count > upper-count"
+  uint64 }
 arg("input") {
   description "Jellyfish hash"
   c_string; multiple; at_least 2 }

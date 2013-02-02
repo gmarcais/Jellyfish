@@ -82,7 +82,6 @@ AC_ARG_ENABLE([all-static],
               [AC_HELP_STRING([--enable-all-static], [create statically linked executable])])
 STATIC_FLAGS=
 AS_IF([test x$enable_all_static = xyes],
-      [AC_SUBST([STATIC_FLAGS], ["-static -static-libstdc++"])])
-AM_CONDITIONAL([ALL_STATIC], [test x$enable_all_static = xyes])
+      [AC_SUBST([STATIC_FLAGS], [-all-static])])
 
 AC_OUTPUT

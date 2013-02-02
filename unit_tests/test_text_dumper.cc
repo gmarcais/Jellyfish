@@ -14,7 +14,7 @@ typedef hash_counter::array::eager_iterator eager_iterator;
 typedef hash_counter::array::region_iterator region_iterator;
 typedef jellyfish::text_dumper<hash_counter::array> dumper;
 
-class hash_adder : public thread_exec {
+class hash_adder : public jellyfish::thread_exec {
   typedef std::map<mer_dna, uint64_t> map;
   typedef std::vector<map>            maps;
 
