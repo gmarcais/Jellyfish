@@ -48,7 +48,8 @@ struct file_info {
 typedef std::auto_ptr<RectangularBinaryMatrix> matrix_ptr;
 
 template<typename reader_type, typename writer_type>
-void do_merge(cpp_array<file_info>& files, std::ostream& out, writer_type& writer) {
+void do_merge(cpp_array<file_info>& files, std::ostream& out, writer_type& writer,
+              uint64_t min, uint64_t max) {
   cpp_array<reader_type> readers(files.size());
   typedef jellyfish::mer_heap::heap<mer_dna, reader_type> heap_type;
   typedef typename heap_type::const_item_t heap_item;
@@ -72,12 +73,16 @@ void do_merge(cpp_array<file_info>& files, std::ostream& out, writer_type& write
         heap.push(*head->it_);
       head = heap.head();
     } while(head->key_ == key && heap.is_not_empty());
-    writer.write(out, key, sum);
+    if(sum >= min && sum <= max)
+      writer.write(out, key, sum);
   }
 }
 
 // Merge files. Throws an error if unsuccessful.
-void merge_files(std::vector<const char*> input_files, const char* out_file, file_header& out_header) {
+void merge_files(std::vector<const char*> input_files,
+                 const char* out_file,
+                 file_header& out_header,
+                 uint64_t min, uint64_t max) {
   unsigned int key_len            = 0;
   size_t       max_reprobe_offset = 0;
   size_t       size               = 0;
@@ -132,11 +137,11 @@ void merge_files(std::vector<const char*> input_files, const char* out_file, fil
     out_header.counter_len(out_counter_len);
     out_header.write(out);
     binary_writer writer(out_counter_len, key_len);
-    do_merge<binary_reader, binary_writer>(files, out, writer);
+    do_merge<binary_reader, binary_writer>(files, out, writer, min, max);
   } else if(!format.compare(text_dumper::format)) {
     out_header.write(out);
     text_writer writer;
-    do_merge<text_reader, text_writer>(files, out, writer);
+    do_merge<text_reader, text_writer>(files, out, writer, min, max);
   } else {
     eraise(MergeError) << "Unknown format '" << format << "'";
   }

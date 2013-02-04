@@ -26,6 +26,7 @@
 #include <jellyfish/err.hpp>
 #include <jellyfish/misc.hpp>
 
+namespace jellyfish {
 class thread_exec {
   struct thread_info {
     int          id;
@@ -47,5 +48,6 @@ public:
     join();
   }
 };
+} // namespace jellyfish {
 
 #endif // __THREAD_EXEC_HPP__

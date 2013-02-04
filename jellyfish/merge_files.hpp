@@ -24,6 +24,7 @@
 define_error_class(MergeError);
 
 /// Merge files. Throw a MergeError in case of error.
-void merge_files(std::vector<const char*> input_files, const char* out_file, jellyfish::file_header& h);
+void merge_files(std::vector<const char*> input_files, const char* out_file,
+                 jellyfish::file_header& h, uint64_t min, uint64_t max);
 
 #endif /* __JELLYFISH_MERGE_FILES_HPP__ */

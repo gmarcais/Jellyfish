@@ -302,6 +302,12 @@ public:
     return true;
   }
 
+  // Return true if the key is present in the hash
+  inline bool has_key(const key_type& key) const {
+    size_t id;
+    return get_key_id(key, &id);
+  }
+
   // Get the id of the key in the hash. Returns true if the key is
   // found in the hash, false otherwise.
   inline bool get_key_id(const key_type& key, size_t* id) const {
@@ -373,7 +379,7 @@ public:
       case FILLED:
         if(oid != tmp_key.get_bits(0, lsize_))
           break;
-        tmp_key.set_bits(0, lsize_, key.get_bits(0, lsize_));
+        tmp_key.template set_bits<false>(0, lsize_, key.get_bits(0, lsize_));
         if(tmp_key != key)
           break;
         *id = info.id;
@@ -754,7 +760,10 @@ public:
     if(kreprobe > 1)
       oid -= reprobes_[kreprobe - 1];
     oid &= size_mask_;
-    key.set_bits(0, lsize_, oid);
+    // Can use more bits than mer size. That's OK, will fix it later
+    // when computing the actual mers by computing the product with
+    // the inverse matrix.
+    key.template set_bits<0>(0, lsize_, oid);
 
     return FILLED;
   }

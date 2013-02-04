@@ -10,6 +10,8 @@ sort > ${pref}.md5sum <<EOF
 376761a6e273b57b3428c14e3b536edf ${pref}_text.dump
 9251799dd5dbd3f617124aa2ff72112a ${pref}_binary.histo
 9251799dd5dbd3f617124aa2ff72112a ${pref}_text.histo
+94625cd2d59e278f08421a673eb0926a ${pref}_m15_s2M_L2_U3.histo
+94625cd2d59e278f08421a673eb0926a ${pref}_m15_s2M_L2_U3_automerge.histo
 EOF
 
 # Count with in memory hash doubling
@@ -27,6 +29,15 @@ $JF histo ${pref}_text.jf > ${pref}_text.histo
 $JF histo ${pref}_binary.jf > ${pref}_binary.histo
 $JF dump -c ${pref}_text.jf | sort > ${pref}_text.dump
 $JF dump -c ${pref}_binary.jf | sort > ${pref}_binary.dump
+
+# Check the lower and upper count without merging
+$JF count -t $nCPUs -o ${pref}_m15_s2M_L2_U3.jf -s 2M -C -m 15 -L2 -U3 seq10m.fa
+$JF histo ${pref}_m15_s2M_L2_U3.jf > ${pref}_m15_s2M_L2_U3.histo
+
+# Check the lower and upper count limits with merging
+$JF count -t $nCPUs -o ${pref}_m15_s2M_L2_U3_automerge.jf -s 2M -C -m 15 -L2 -U3 --disk seq10m.fa
+$JF histo ${pref}_m15_s2M_L2_U3_automerge.jf > ${pref}_m15_s2M_L2_U3_automerge.histo
+
 
 # $JF count -m 40 -t $nCPUs -o ${pref}_text -s 2M --text seq1m_0.fa
 # $JF info -s ${pref}_text0 | sort >  ${pref}_text0_dump

@@ -19,9 +19,9 @@
 
 #include <stdint.h>
 #include <jellyfish/err.hpp>
+#include <jflib/cooperative_pool.hpp>
 
 namespace jellyfish {
-#include <jflib/cooperative_pool.hpp>
 
 struct sequence_ptr {
   char* start;

@@ -39,7 +39,7 @@ TEST(FileHeader, WriteRead) {
   const size_t random_size = random_bits(35);
   const unsigned int val_len = random_bits(4);
   const unsigned int max_reprobe = random_bits(7);
-  RectangularBinaryMatrix m(random_bits(6), random_bits(8));
+  RectangularBinaryMatrix m(random_bits(6) + 1, random_bits(8) + 1);
   m.randomize(random_bits);
 
   EXPECT_EQ(8, hw.alignment());

@@ -142,13 +142,15 @@ private:
   unsigned int     i_;
 };
 
-enum { CODE_A, CODE_C, CODE_G, CODE_T,
-       CODE_RESET = -1, CODE_IGNORE = -2, CODE_COMMENT = -3 };
+// enum { CODE_A, CODE_C, CODE_G, CODE_T,
+//        CODE_RESET = -1, CODE_IGNORE = -2, CODE_COMMENT = -3 };
 
 template<typename T, typename derived>
 class mer_base {
 public:
   typedef T base_type;
+  enum { CODE_A, CODE_C, CODE_G, CODE_T,
+         CODE_RESET = -1, CODE_IGNORE = -2, CODE_COMMENT = -3 };
 
   explicit mer_base(unsigned int k) :
   _data(new base_type[derived::nb_words(k)])
@@ -425,7 +427,7 @@ public:
     return it;
   }
 
-  // Get bits [start, start+len). start must be < 2k, len <
+  // Get bits [start, start+len). start must be < 2k, len <=
   // sizeof(base_type) and start+len < 2k. No checks
   // performed. start and len are in bits, not bases.
   base_type get_bits(unsigned int start, unsigned int len) const {
@@ -435,10 +437,14 @@ public:
     base_type res = _data[q] >> r;
     if(len > wbits - r)
       res |= _data[q + 1] << (wbits - r);
-    return res & (((base_type)1 << len) - 1);
+    return len < (unsigned int)wbits ? res & (((base_type)1 << len) - 1) : res;
   }
 
-  // Set bits [start, start+len). Same restriction as get_bits.
+  // Set bits [start, start+len). Same restriction as get_bits. In
+  // some rare cases, the value written can be larger than the bits
+  // occupied by the mer itself. The mer is then not valid if some MSB
+  // are set to 1.
+  template<bool zero_msw = true>
   void set_bits(unsigned int start, unsigned int len, base_type v) {
     unsigned int q    = start / wbits;
     unsigned int r    = start % wbits;
@@ -450,10 +456,13 @@ public:
       mask = ((base_type)1 << (len - left)) - 1;
       _data[q + 1] = (_data[q + 1] & ~mask) | (v >> (left));
     } else {
-      mask = (((base_type)1 << len) - 1) << r;
+      mask = (len < (unsigned int)wbits ? (((base_type)1 << len) - 1) : (base_type)-1) << r;
       _data[q] = (_data[q] & ~mask) | (v << r);
     }
+    if(zero_msw)
+      _data[nb_words() - 1] &= msw();
   }
+
 
 
   // Internal stuff
@@ -495,7 +504,7 @@ protected:
   static const int       wshift = sizeof(base_type) * 8 - 2; // left shift in 1 word
   static const int       wbases = 4 * sizeof(base_type); // bases in a word
   static const int       wbits  = 8 * sizeof(base_type); // bits in a word
-  base_type * const      _data;
+  base_type *            _data;
 
   // Shift to the right by rs bits (Note bits, not bases)
   void large_shift_right(unsigned int rs) {

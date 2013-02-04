@@ -16,7 +16,7 @@
 
 #include <jellyfish/thread_exec.hpp>
 
-void thread_exec::exec(int nb_threads) {
+void jellyfish::thread_exec::exec(int nb_threads) {
   struct thread_info empty = {0, 0, 0};
   infos.resize(nb_threads, empty);
 
@@ -29,7 +29,7 @@ void thread_exec::exec(int nb_threads) {
   }
 }
 
-void thread_exec::join() {
+void jellyfish::thread_exec::join() {
   for(unsigned int i = 0; i < infos.size(); i++) {
     int err = pthread_join(infos[i].thid, NULL);
     if(err)
@@ -37,7 +37,7 @@ void thread_exec::join() {
   }
 }
 
-void *thread_exec::start_routine(void *_info) {
+void *jellyfish::thread_exec::start_routine(void *_info) {
   struct thread_info *info = (struct thread_info *)_info;
   info->self->start(info->id);
   return 0;
