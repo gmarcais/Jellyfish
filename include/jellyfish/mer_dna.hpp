@@ -440,7 +440,11 @@ public:
     return len < (unsigned int)wbits ? res & (((base_type)1 << len) - 1) : res;
   }
 
-  // Set bits [start, start+len). Same restriction as get_bits.
+  // Set bits [start, start+len). Same restriction as get_bits. In
+  // some rare cases, the value written can be larger than the bits
+  // occupied by the mer itself. The mer is then not valid if some MSB
+  // are set to 1.
+  template<bool zero_msw = true>
   void set_bits(unsigned int start, unsigned int len, base_type v) {
     unsigned int q    = start / wbits;
     unsigned int r    = start % wbits;
@@ -455,7 +459,8 @@ public:
       mask = (len < (unsigned int)wbits ? (((base_type)1 << len) - 1) : (base_type)-1) << r;
       _data[q] = (_data[q] & ~mask) | (v << r);
     }
-    _data[nb_words() - 1] &= msw();
+    if(zero_msw)
+      _data[nb_words() - 1] &= msw();
   }
 
 

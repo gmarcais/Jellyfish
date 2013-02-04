@@ -198,6 +198,7 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_text_dumper.cc			\
 	               unit_tests/test_dumpers.cc			\
 	               unit_tests/test_mapped_file.cc
+bin_test_all_SOURCES += jellyfish/backtrace.cc
 
 bin_test_all_CPPFLAGS = -Dprotected=public -Dprivate=public -DJSON_IS_AMALGAMATION=1
 bin_test_all_CXXFLAGS = -std=c++0x -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)/unit_tests -I$(top_srcdir)/include

@@ -20,6 +20,7 @@
 #include <gtest/gtest.h>
 #include <unit_tests/test_main_cmdline.hpp>
 #include <unit_tests/test_main.hpp>
+#include <jellyfish/backtrace.hpp>
 
 template<long int n>
 struct floorLog2 {
@@ -54,9 +55,13 @@ int main(int argc, char *argv[]) {
       return 1;
     }
   }
+  if(args.backtrace_flag) {
+    show_backtrace();
+    setenv("GTEST_CATCH_EXCEPTIONS", "0", 1);
+  }
 
   std::cout << "Using random seed " << seed << std::endl;
   srandom(seed);
-  
+
   return RUN_ALL_TESTS();
 }
