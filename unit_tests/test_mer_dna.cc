@@ -146,7 +146,10 @@ TEST(MerDNASimple, SetBits) {
     // Odd
     mer.polyA();
     mer.set_bits(2 * i + 1, pattern_len, pattern);
-    EXPECT_EQ(pattern, mer.get_bits(2 * i + 1, pattern_len));
+    if(i < (int)(mer_dna::k() - pattern_len / 2))
+      EXPECT_EQ(pattern, mer.get_bits(2 * i + 1, pattern_len));
+    else // On the largest value of i, one bit may have fallen off the end of the mer
+      EXPECT_EQ(pattern & (((uint64_t)1 << (pattern_len - 1)) - 1), mer.get_bits(2 * i + 1, pattern_len));
     EXPECT_EQ(odd_pattern, mer);
     EXPECT_EQ(odd_pattern.to_str(), mer.to_str());
   }
@@ -441,6 +444,7 @@ TYPED_TEST(MerDNA, Canonical) {
   typename TypeParam::Type canonical = m.get_canonical();
 
   EXPECT_FALSE(m < canonical);
+  EXPECT_TRUE(canonical <= m);
   EXPECT_TRUE(canonical == m || canonical == m.get_reverse_complement());
   m.canonicalize();
   EXPECT_EQ(canonical, m.get_canonical());

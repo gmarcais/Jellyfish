@@ -427,7 +427,7 @@ public:
     return it;
   }
 
-  // Get bits [start, start+len). start must be < 2k, len <
+  // Get bits [start, start+len). start must be < 2k, len <=
   // sizeof(base_type) and start+len < 2k. No checks
   // performed. start and len are in bits, not bases.
   base_type get_bits(unsigned int start, unsigned int len) const {
@@ -455,7 +455,9 @@ public:
       mask = (len < (unsigned int)wbits ? (((base_type)1 << len) - 1) : (base_type)-1) << r;
       _data[q] = (_data[q] & ~mask) | (v << r);
     }
+    _data[nb_words() - 1] &= msw();
   }
+
 
 
   // Internal stuff
