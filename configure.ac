@@ -6,10 +6,11 @@ AM_SILENT_RULES([yes])
 AC_CONFIG_SRCDIR([jellyfish])
 AC_CONFIG_HEADERS([config.h])
 AC_PROG_LIBTOOL
-AC_LANG(C++)
 
-# Change default flags
-: ${CXXFLAGS="-std=c++0x -g -O2"}
+# Change default compilation flags
+AC_SUBST([ALL_CXXFLAGS], [-std=c++0x])
+CXXFLAGS="-std=c++0x $CXXFLAGS"
+AC_LANG(C++)
 AC_PROG_CXX
 
 # Major version of the library
