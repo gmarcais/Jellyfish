@@ -6,8 +6,8 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = jellyfish-2.0.pc
 
 AM_LDFLAGS = -lpthread
-AM_CPPFLAGS = -Wall -Wnon-virtual-dtor -I$(top_srcdir) -I$(top_srcdir)/include -g -O3 -std=gnu++98
-AM_CXXFLAGS = -g -O3 -std=c++0x
+AM_CPPFLAGS = -Wall -Wnon-virtual-dtor -I$(top_srcdir) -I$(top_srcdir)/include -g -O3
+AM_CXXFLAGS = -g -O3
 
 noinst_HEADERS = $(YAGGO_SOURCES)
 bin_PROGRAMS =
