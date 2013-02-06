@@ -6,8 +6,8 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = jellyfish-2.0.pc
 
 AM_LDFLAGS = -lpthread
-AM_CPPFLAGS = -Wall -Wnon-virtual-dtor -I$(top_srcdir) -I$(top_srcdir)/include -g -O3 -std=gnu++98
-AM_CXXFLAGS = -g -O3 -std=c++0x
+AM_CPPFLAGS = -Wall -Wnon-virtual-dtor -I$(top_srcdir) -I$(top_srcdir)/include -g -O3
+AM_CXXFLAGS = $(ALL_CXXFLAGS) -g -O3
 
 noinst_HEADERS = $(YAGGO_SOURCES)
 bin_PROGRAMS =
@@ -197,11 +197,12 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_token_ring.cc			\
 	               unit_tests/test_text_dumper.cc			\
 	               unit_tests/test_dumpers.cc			\
-	               unit_tests/test_mapped_file.cc
+	               unit_tests/test_mapped_file.cc			\
+	               unit_tests/test_int128.cc
 bin_test_all_SOURCES += jellyfish/backtrace.cc
 
 bin_test_all_CPPFLAGS = -Dprotected=public -Dprivate=public -DJSON_IS_AMALGAMATION=1
-bin_test_all_CXXFLAGS = -std=c++0x -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)/unit_tests -I$(top_srcdir)/include
+bin_test_all_CXXFLAGS = $(AM_CXXFLAGS) -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)/unit_tests -I$(top_srcdir)/include
 bin_test_all_LDADD = libgtest.la $(LDADD)
 YAGGO_SOURCES += unit_tests/test_main_cmdline.hpp
 noinst_HEADERS += unit_tests/test_main.hpp

@@ -6,8 +6,11 @@ AM_SILENT_RULES([yes])
 AC_CONFIG_SRCDIR([jellyfish])
 AC_CONFIG_HEADERS([config.h])
 AC_PROG_LIBTOOL
-AC_LANG(C++)
 
+# Change default compilation flags
+AC_SUBST([ALL_CXXFLAGS], [-std=c++0x])
+CXXFLAGS="-std=c++0x $CXXFLAGS"
+AC_LANG(C++)
 AC_PROG_CXX
 
 # Major version of the library
@@ -55,11 +58,13 @@ AC_ARG_WITH([int128],
 AS_IF([test "x$with_int128" != xno],
       [AC_CHECK_TYPE([__int128],
                      [AC_DEFINE([HAVE_INT128], [1], [Define if type __int128 is supported])])
-       AC_CHECK_DECL([std::numeric_limits<__int128>::is_specialized], 
-                     [AC_DEFINE([HAVE_NUMERIC_LIMITS128], [1], [Define if numeric limits specialization exists for __int128])],
-                     [], [#include <limits>])
-      ])
-
+       AC_MSG_CHECKING([for std::numeric_limits<__int128>])
+       AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <limits>
+                                            template<bool> struct StaticAssert; template<> struct StaticAssert<true> { static void assert() { } };]],
+                                          [[StaticAssert<std::numeric_limits<__int128>::is_specialized>::assert();]])],
+                         [AC_MSG_RESULT([yes])]
+                         [AC_DEFINE([HAVE_NUMERIC_LIMITS128], [1], [Define if numeric limits specialization exists for __int128])],
+                         [AC_MSG_RESULT([no])])])
 
 # On MacOS X, use _NSGetExecutablePath to find path to own executable
 AC_MSG_CHECKING([for _NSGetExecutablePath])
