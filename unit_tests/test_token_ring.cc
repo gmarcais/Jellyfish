@@ -7,7 +7,7 @@
 namespace {
 using jellyfish::thread_exec;
 struct write_number : public thread_exec {
-  typedef jellyfish::token_ring<locks::pthread::cond> token_ring;
+  typedef jellyfish::token_ring<jellyfish::locks::pthread::cond> token_ring;
 
   std::ostream *os_;
   int           nb_threads_;

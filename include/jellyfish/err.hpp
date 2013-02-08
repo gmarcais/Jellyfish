@@ -14,8 +14,8 @@
     along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __ERR_HPP__
-#define __ERR_HPP__
+#ifndef __JELLYFISH_ERR_HPP__
+#define __JELLYFISH_ERR_HPP__
 
 #include <iostream>
 #include <iomanip>
@@ -26,6 +26,7 @@
 #include <string.h>
 #include <errno.h>
 
+namespace jellyfish {
 namespace err {
   class code {
     int _code;
@@ -107,14 +108,14 @@ namespace err {
       return *this;
     }
   };
-}
+} } // namespace jellyfish { namespace err {
 
 
-#define die if(1) err::die_t()
-#define eraise(e) if(1) err::raise_t<e>()
+#define die if(1) jellyfish::err::die_t()
+#define eraise(e) if(1) jellyfish::err::raise_t<e>()
 #define define_error_class(name)                                        \
   class name : public std::runtime_error {                              \
   public: explicit name(const std::string &txt) : std::runtime_error(txt) {} \
   }
 
-#endif
+#endif // __JELLYFISH_ERR_HPP__

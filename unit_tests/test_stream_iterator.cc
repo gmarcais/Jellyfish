@@ -27,7 +27,7 @@ protected:
   static void SetUpTestCase() {
     tmpdir = strdup("/tmp/stream_iterator_XXXXXX");
     if(!mkdtemp(tmpdir))
-      eraise(std::runtime_error) << "Failed to create tmp directory" << err::no;
+      eraise(std::runtime_error) << "Failed to create tmp directory" << jellyfish::err::no;
 
     int nb_files = jellyfish::random_bits(5);
     for(int i = 0; i < nb_files; ++i) {
@@ -47,11 +47,11 @@ protected:
   static void TearDownTestCase() {
     for(path_iterator it = paths.begin(); it != paths.end(); ++it) {
       if(unlink(*it) == -1)
-        eraise(std::runtime_error) << "Failed to unlink file '" << *it << err::no;
+        eraise(std::runtime_error) << "Failed to unlink file '" << *it << jellyfish::err::no;
       free((void*)*it);
     }
     if(rmdir(tmpdir) == -1)
-      eraise(std::runtime_error) << "Failed to rmdir '" << tmpdir << err::no;
+      eraise(std::runtime_error) << "Failed to rmdir '" << tmpdir << jellyfish::err::no;
     free(tmpdir);
   }
 };

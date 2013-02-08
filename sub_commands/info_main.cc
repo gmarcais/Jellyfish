@@ -12,7 +12,7 @@ int info_main(int argc, char *argv[]) {
 
   std::ifstream file(args.file_arg);
   if(!file.good())
-    die << "Can't open '" << args.file_arg << "'" << err::no;
+    die << "Can't open '" << args.file_arg << "'" << jellyfish::err::no;
 
   jellyfish::generic_file_header header;
   header.read(file);

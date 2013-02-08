@@ -60,7 +60,7 @@ int dump_main(int argc, char *argv[])
 
   std::ifstream is(args.db_arg);
   if(!is.good())
-    die << "Failed to open input file '" << args.db_arg << "'" << err::no;
+    die << "Failed to open input file '" << args.db_arg << "'" << jellyfish::err::no;
   jellyfish::file_header header;
   header.read(is);
   jellyfish::mer_dna::k(header.key_len() / 2);

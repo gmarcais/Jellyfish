@@ -48,7 +48,7 @@ int histo_main(int argc, char *argv[])
 
   std::ifstream is(args.db_arg);
   if(!is.good())
-    die << "Failed to open input file '" << args.db_arg << "'" << err::no;
+    die << "Failed to open input file '" << args.db_arg << "'" << jellyfish::err::no;
   jellyfish::file_header header;
   header.read(is);
   jellyfish::mer_dna::k(header.key_len() / 2);
@@ -59,7 +59,7 @@ int histo_main(int argc, char *argv[])
     args.error("High count value must be >= to low count value");
   ofstream_default out(args.output_given ? args.output_arg : 0, std::cout);
   if(!out.good())
-    die << "Error opening output file '" << args.output_arg << "'" << err::no;
+    die << "Error opening output file '" << args.output_arg << "'" << jellyfish::err::no;
 
   const uint64_t base =
     args.low_arg > 1 ? (args.increment_arg >= args.low_arg ? 1 : args.low_arg - args.increment_arg) : 1;

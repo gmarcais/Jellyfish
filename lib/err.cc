@@ -16,14 +16,16 @@
 
 #include <jellyfish/err.hpp>
 
+namespace jellyfish {
 namespace err {
-  std::ostream &operator<<(std::ostream &os, const err::substr &ss) {
+  std::ostream &operator<<(std::ostream &os, const substr &ss) {
     os.write(ss._s, ss._l);
     return os;
   }
 
-  std::ostream &operator<<(std::ostream &os, const err::no_t &x) {
+  std::ostream &operator<<(std::ostream &os, const no_t &x) {
     x.write(os, errno);
     return os;
   }
+}
 }

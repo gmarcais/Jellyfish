@@ -90,7 +90,7 @@ void create_path(char *path, unsigned int path_size, const char *ext, bool many,
   else
     len = snprintf(path, path_size, "%s.%s", output_arg, ext);
   if(len < 0)
-    die << "Error creating the fasta file '" << path << "'" << err::no;
+    die << "Error creating the fasta file '" << path << "'" << jellyfish::err::no;
   if((unsigned int)len >= path_size)
     die << "Output prefix too long '" << output_arg << "'";
 }
@@ -101,7 +101,7 @@ void output_fastq(size_t length, const char* path, CRandomMersenne& rng) {
   rDNAg_t rDNAg(&rng);
   std::ofstream fd(path);
   if(!fd.good())
-    die << "Can't open fasta file '" << path << err::no;
+    die << "Can't open fasta file '" << path << jellyfish::err::no;
   if(args.verbose_flag)
     std::cout << "Creating fastq file '" << path << "'\n";
 
@@ -118,7 +118,7 @@ void output_fastq(size_t length, const char* path, CRandomMersenne& rng) {
     fd << "\n";
   }
   if(!fd.good())
-    die << "Error while writing fasta file '" << path << err::no;
+    die << "Error while writing fasta file '" << path << jellyfish::err::no;
   fd.close();
 }
 
@@ -126,7 +126,7 @@ void output_fasta(size_t length, const char* path, CRandomMersenne& rng) {
   rDNAg_t rDNAg(&rng);
   std::ofstream fd(path);
   if(!fd.good())
-    die << "Can't open fasta file '" << path << err::no;
+    die << "Can't open fasta file '" << path << jellyfish::err::no;
   if(args.verbose_flag)
     std::cout << "Creating fasta file '" << path << "'\n";
 
@@ -149,7 +149,7 @@ void output_fasta(size_t length, const char* path, CRandomMersenne& rng) {
     }
   }
   if(!fd.good())
-    die << "Error while writing fasta file '" << path << err::no;
+    die << "Error while writing fasta file '" << path << jellyfish::err::no;
   fd.close();
 }
 

@@ -61,7 +61,7 @@ libjellyfish_2_0_la_SOURCES = lib/rectangular_binary_matrix.cc		\
                               lib/mer_dna.cc lib/storage.cc		\
                               lib/allocators_mmap.cc lib/misc.cc	\
                               lib/int128.cc lib/thread_exec.cc		\
-                              jellyfish/err.cc lib/jsoncpp.cpp		\
+                              lib/err.cc lib/jsoncpp.cpp		\
                               lib/time.cc
 
 library_includedir=$(includedir)/jellyfish-@PACKAGE_VERSION@/jellyfish
@@ -97,7 +97,6 @@ JLI = include/jflib
 library_include_HEADERS += $(JLI)/cooperative_pool.hpp
 
 noinst_HEADERS += jellyfish/fstream_default.hpp				\
-                  include/jflib/locks_pthread.hpp			\
                   include/jflib/tmpstream.hpp				\
                   jellyfish/mer_iterator.hpp				\
                   jellyfish/stream_iterator.hpp jellyfish/dbg.hpp	\

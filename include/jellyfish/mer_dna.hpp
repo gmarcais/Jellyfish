@@ -191,7 +191,6 @@ public:
 
   bool operator==(const mer_base& rhs) const {
     unsigned int i = nb_words() - 1;
-    base_type msw_ = msw();
     bool res = (_data[i] & msw()) == (rhs._data[i] & msw());
     while(res && i > 7) {
       i -= 8;
