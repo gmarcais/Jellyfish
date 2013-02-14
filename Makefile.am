@@ -43,6 +43,7 @@ bin_jellyfish_SOURCES = sub_commands/jellyfish.cc	\
                         sub_commands/dump_main.cc	\
                         sub_commands/histo_main.cc	\
                         sub_commands/merge_main.cc	\
+                        sub_commands/bf_main.cc		\
                         jellyfish/merge_files.cc
 bin_jellyfish_LDFLAGS = $(AM_LDFLAGS) $(STATIC_FLAGS)
 
@@ -51,7 +52,8 @@ YAGGO_SOURCES += sub_commands/count_main_cmdline.hpp	\
                  sub_commands/info_main_cmdline.hpp	\
                  sub_commands/dump_main_cmdline.hpp	\
                  sub_commands/histo_main_cmdline.hpp	\
-                 sub_commands/merge_main_cmdline.hpp
+                 sub_commands/merge_main_cmdline.hpp	\
+                 sub_commands/bf_main_cmdline.hpp
 
 ######################################
 # Build Jellyfish the shared library #

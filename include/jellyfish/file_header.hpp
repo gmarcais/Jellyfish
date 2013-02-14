@@ -17,6 +17,7 @@
 #ifndef __JELLYFISH_FILE_HEADER_HPP__
 #define __JELLYFISH_FILE_HEADER_HPP__
 
+#include <string>
 #include <jellyfish/generic_file_header.hpp>
 #include <jellyfish/rectangular_binary_matrix.hpp>
 
@@ -39,22 +40,26 @@ public:
     this->set_reprobes(ary.reprobes());
   }
 
-  RectangularBinaryMatrix matrix() {
-    const unsigned int r = root_["matrix"]["r"].asUInt();
-    const unsigned int c = root_["matrix"]["c"].asUInt();
+  RectangularBinaryMatrix matrix(int i = 1) {
+    std::string name("matrix");
+    name += std::to_string(i);
+    const unsigned int r = root_[name]["r"].asUInt();
+    const unsigned int c = root_[name]["c"].asUInt();
     std::vector<uint64_t> raw(c, (uint64_t)0);
     for(unsigned int i = 0; i < c; ++i)
-      raw[i] = root_["matrix"]["columns"][i].asUInt64();
+      raw[i] = root_[name]["columns"][i].asUInt64();
     return RectangularBinaryMatrix(raw.data(), r, c);
   }
 
-  void matrix(const RectangularBinaryMatrix& m) {
-    root_["matrix"].clear();
-    root_["matrix"]["r"] = m.r();
-    root_["matrix"]["c"] = m.c();
+  void matrix(const RectangularBinaryMatrix& m, int i = 1) {
+    std::string name("matrix");
+    name += std::to_string(i);
+    root_[name].clear();
+    root_[name]["r"] = m.r();
+    root_[name]["c"] = m.c();
     for(unsigned int i = 0; i < m.c(); ++i) {
       Json::UInt64 x = m[i];
-      root_["matrix"]["columns"].append(x);
+      root_[name]["columns"].append(x);
     }
   }
 
@@ -71,6 +76,9 @@ public:
   void max_reprobe(unsigned int m) { root_["max_reprobe"] = (Json::UInt)m; }
 
   size_t max_reprobe_offset() const { return root_["reprobes"][max_reprobe()].asLargestUInt(); }
+
+  double fpr() const { return root_["fpr"].asDouble(); }
+  void fpr(double f) { root_["fpr"] = f; }
 
   /// reprobes must be at least max_reprobe() + 1 long
   void get_reprobes(size_t* reprobes) const {
