@@ -9,7 +9,7 @@ subcommand to avoid counting most k-mers which occur only once."
 
 option("s", "size") {
   description "Expected number of k-mers in input"
-  uint64; required }
+  uint64; suffix; required }
 option("m", "mer-len") {
   description "Length of mer"
   uint32; required }

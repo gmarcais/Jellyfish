@@ -32,6 +32,8 @@ struct hash_pair<mer_dna> {
     m2.randomize(random_bits);
   }
 
+  hash_pair(RectangularBinaryMatrix&& m1_, RectangularBinaryMatrix&& m2_) : m1(m1_), m2(m2_) { }
+
   void operator()(const mer_dna& k, uint64_t* hashes) const {
     hashes[0] = m1.times(k);
     hashes[1] = m2.times(k);

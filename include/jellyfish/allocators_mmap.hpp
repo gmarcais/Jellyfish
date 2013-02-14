@@ -23,6 +23,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include <algorithm>
+
 namespace allocators {
   class mmap {
     void   *ptr;
@@ -34,9 +36,19 @@ namespace allocators {
       realloc(_size);
       fast_zero();
     }
+    mmap(mmap&& rhs) : ptr(rhs.ptr), size(rhs.size) {
+      rhs.ptr  = MAP_FAILED;
+      rhs.size = 0;
+    }
     ~mmap() {
       if(ptr != MAP_FAILED)
         ::munmap(ptr, size);
+    }
+
+    mmap& operator=(mmap&& rhs) {
+      std::swap(ptr, rhs.ptr);
+      std::swap(size, rhs.size);
+      return *this;
     }
 
     void *get_ptr() const { return ptr != MAP_FAILED ? ptr : NULL; }

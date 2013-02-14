@@ -60,23 +60,26 @@ int bf_main(int argc, char *argv[])
   jellyfish::file_header header;
   header.fill_standard();
   header.set_cmdline(argc, argv);
-  header.format("bloomcounter");
-  header.size(args.size_arg);
-  header.key_len(args.mer_len_arg * 2);
 
   args.parse(argc, argv);
   mer_dna::k(args.mer_len_arg);
 
+  std::ofstream output(args.output_arg);
+  if(!output.good())
+    die << "Can't open output file '" << args.output_arg << "'";
+
+
+  header.format("bloomcounter");
+  header.key_len(args.mer_len_arg * 2);
   jellyfish::hash_pair<mer_dna> hash_fns;
   header.matrix(hash_fns.m1, 1);
   header.matrix(hash_fns.m2, 2);
 
-  std::ofstream output(args.output_arg);
-  if(!output.good())
-    die << "Can't open output file '" << args.output_arg << "'";
+  mer_dna_bloom_counter filter(args.fpr_arg, args.size_arg, hash_fns);
+  header.size(filter.m());
+  header.nb_hashes(filter.k());
   header.write(output);
 
-  mer_dna_bloom_counter filter(args.fpr_arg, args.size_arg, hash_fns);
   mer_bloom_counter<file_vector::iterator> counter(args.threads_arg, filter, args.file_arg.begin(), args.file_arg.end());
   counter.exec_join(args.threads_arg);
 

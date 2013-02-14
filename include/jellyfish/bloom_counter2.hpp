@@ -18,6 +18,7 @@
 #ifndef __BLOOM_COUNTER2_HPP__
 #define __BLOOM_COUNTER2_HPP__
 
+#include <assert.h>
 #include <math.h>
 #include <limits.h>
 #include <jellyfish/allocators_mmap.hpp>
@@ -66,7 +67,8 @@ public:
     k_(lrint(-log(fp) / LOG2)),
     mem_block_(nb_bytes(d_.d())),
     data_((unsigned char*)mem_block_.get_ptr()),
-    hash_fns_(fns) { }
+    hash_fns_(fns)
+  { }
 
   bloom_counter2(size_t m, unsigned long k, const HashPair& fns = HashPair()) :
     d_(m), k_(k),
@@ -74,12 +76,25 @@ public:
     data_((unsigned char*)mem_block_.get_ptr()),
     hash_fns_(fns) { }
 
-  bloom_counter2(size_t m, unsigned long k, unsigned char* ptr) :
-    d_(m), k_(k), data_(ptr), hash_fns_() { }
+  bloom_counter2(size_t m, unsigned long k, unsigned char* ptr, const HashPair& fns = HashPair()) :
+    d_(m), k_(k), data_(ptr), hash_fns_(fns) { }
+
+  bloom_counter2(size_t m, unsigned long k, std::istream& is, const HashPair& fns = HashPair()) :
+    d_(m), k_(k), mem_block_(nb_bytes(d_.d())), data_((unsigned char*)mem_block_.get_ptr()),
+    hash_fns_(fns)
+  {
+    is.read((char*)data_, nb_bytes(d_.d()));
+  }
+  bloom_counter2(const bloom_counter2& rhs) = delete;
+  bloom_counter2(bloom_counter2&& rhs) :
+    d_(rhs.d_), k_(rhs.k_), mem_block_(std::move(rhs.mem_block_)), data_((unsigned char*)rhs.mem_block_.get_ptr()),
+    hash_fns_(std::move(rhs.hash_fns_))
+  {
+  }
 
 
   void write_bits(std::ostream& out) {
-    out.write((char*)data_, m() / 5 + (m() % 5 != 0));
+    out.write((char*)data_, mem_block_.get_size());
   }
 
   // Number of hash functions
@@ -186,6 +201,29 @@ public:
     }
     return res;
   }
+
+//   uint64_t dumb_sum() const {
+//     uint64_t res = 0;
+//     uint64_t *ptr = (uint64_t*)data_;
+
+//     for(size_t i = 0; i < nb_bytes(m()) / 8; ++i)
+//       res ^= ptr[i];
+
+//     return res;
+//   }
+
+// #define massert(expr) { if(!(expr)) { throw std::runtime_error("error at " + std::to_string(i)); } } while(false);
+
+//   void all_2s() const {
+//     for(size_t i = 0; i < nb_bytes(m()); ++i) {
+//       unsigned char w = data_[i];
+//       massert( w       % 3 != 1);
+//       massert((w / 3)  % 3 != 1);
+//       massert((w / 9)  % 3 != 1);
+//       massert((w / 27) % 3 != 1);
+//       massert((w / 81) % 3 != 1);
+//     }
+//   }
 
   // Limited std::map interface compatibility
   class element_proxy {
