@@ -24,9 +24,9 @@
 void *allocators::mmap::realloc(size_t new_size) {
   void *new_ptr = MAP_FAILED;
   if(ptr == MAP_FAILED) {
-    new_ptr     = ::mmap(NULL, new_size, PROT_WRITE|PROT_READ, 
+    new_ptr     = ::mmap(NULL, new_size, PROT_WRITE|PROT_READ,
 			 MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-  } 
+  }
   // mremap is Linux specific
   // TODO: We must do something if it is not supported
 #ifdef MREMAP_MAYMOVE
@@ -54,7 +54,7 @@ void allocators::mmap::fast_zero() {
   for(int i = 0; i < nb_threads; i++) {
     info[i].start = (char *)ptr + pgsize * ((i * nb_pages) / nb_threads);
     info[i].end   = (char *)ptr + pgsize * (((i + 1) * nb_pages) / nb_threads);
-        
+
     info[i].pgsize = pgsize;
     pthread_create(&info[i].thid, NULL, _fast_zero, &info[i]);
   }
@@ -64,7 +64,7 @@ void allocators::mmap::fast_zero() {
 
 void * allocators::mmap::_fast_zero(void *_info) {
   tinfo *info = (tinfo *)_info;
-      
+
   for(char *cptr = info->start; cptr < info->end; cptr += info->pgsize)
     *cptr = 0;
 
