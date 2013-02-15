@@ -31,7 +31,9 @@
 #include <iterator>
 
 #include <jellyfish/misc.hpp>
-
+#ifdef HAVE_INT128
+#include <jellyfish/int128.hpp>
+#endif
 
 namespace jellyfish { namespace mer_dna_ns {
 #define R -1
@@ -251,14 +253,14 @@ public:
   base_proxy<base_type> base(unsigned int i) { return base_proxy<base_type>(_data + i / wbases, 2 * (i % wbases)); }
 
   // Make current k-mer all As.
-  void polyA() { memset(_data, 0x00, sizeof(base_type) * nb_words()); _data[nb_words() - 1] &= msw(); }
-  void polyC() { memset(_data, 0x55, sizeof(base_type) * nb_words()); _data[nb_words() - 1] &= msw(); }
-  void polyG() { memset(_data, 0xaa, sizeof(base_type) * nb_words()); _data[nb_words() - 1] &= msw(); }
-  void polyT() { memset(_data, 0xff, sizeof(base_type) * nb_words()); _data[nb_words() - 1] &= msw(); }
+  void polyA() { memset(_data, 0x00, sizeof(base_type) * nb_words()); clean_msw(); }
+  void polyC() { memset(_data, 0x55, sizeof(base_type) * nb_words()); clean_msw(); }
+  void polyG() { memset(_data, 0xaa, sizeof(base_type) * nb_words()); clean_msw(); }
+  void polyT() { memset(_data, 0xff, sizeof(base_type) * nb_words()); clean_msw(); }
   void randomize() {
     for(unsigned int i = 0; i < nb_words(); ++i)
       _data[i] = random_bits(wbits);
-    _data[nb_words() - 1] &= msw();
+    clean_msw();
   }
 
   derived& operator=(const mer_base& rhs) {
@@ -305,7 +307,7 @@ public:
     case 2: c1 = _data[i] >> wshift;   _data[i] = (_data[i] << 2) | c2;   ++i;
     case 1:                            _data[i] = (_data[i] << 2) | c1;
     }
-    _data[nb_words() - 1] &= msw();
+    clean_msw();
 
     return r;
   }
@@ -460,7 +462,7 @@ public:
       _data[q] = (_data[q] & ~mask) | (v << r);
     }
     if(zero_msw)
-      _data[nb_words() - 1] &= msw();
+      clean_msw();
   }
 
 
@@ -472,7 +474,11 @@ public:
   inline unsigned int nb_words() const { return nb_words(static_cast<const derived*>(this)->k()); }
 
   // Mask of highest word
-  inline base_type msw() const { return std::numeric_limits<base_type>::max() >> (wbits - nb_msb()); }
+  inline base_type msw() const {
+    const base_type m = std::numeric_limits<base_type>::max();
+    return m >> (wbits - nb_msb());
+  }
+
   // Nb of bits used in highest word
   inline  unsigned int nb_msb() const {
     base_type nb = (static_cast<const derived*>(this)->k() % wbases) * 2;
@@ -481,9 +487,13 @@ public:
   // How much to shift last base in last word of _data
   inline unsigned int lshift() const { return nb_msb() - 2; }
 
+  // Make sure the highest bits are all zero
+  inline void clean_msw() { _data[nb_words() - 1] &= msw(); }
+
   template<typename InputIterator>
   bool from_chars(InputIterator it) {
     int shift = lshift();
+    clean_msw();
 
     for(int j = nb_words() - 1; j >= 0; --j) {
       base_type& w = _data[j];
@@ -526,7 +536,7 @@ protected:
       }
     }
     _data[nb_words() - 1] >>= rs;
-    _data[nb_words() - 1]  &= msw();
+    clean_msw();
   }
 };
 

@@ -22,6 +22,9 @@ option("out-counter-len") {
 option("C", "canonical") {
   description "Count both strand, canonical representation"
   flag; off }
+option("bf") {
+  description "Bloom filter to filter out singleton mers"
+  c_string; typestr "path" }
 option("reprobes", "p") {
   description "Maximum number of reprobes"
   uint32; default "126" }

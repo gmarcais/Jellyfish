@@ -23,7 +23,7 @@
 
 #include <jellyfish/circular_buffer.hpp>
 #include <jellyfish/compare_and_swap.hpp>
-#include <jflib/locks_pthread.hpp>
+#include <jellyfish/locks_pthread.hpp>
 
 /// Cooperative pool. Provide a link between a producer and many
 /// consumers. It is cooperative in the sense that there is no

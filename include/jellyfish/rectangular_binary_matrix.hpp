@@ -52,6 +52,10 @@ namespace jellyfish {
     : _columns(alloc(rhs._r, rhs._c)), _r(rhs._r), _c(rhs._c) {
       memcpy(_columns, rhs._columns, sizeof(uint64_t) * _c);
     }
+    RectangularBinaryMatrix(RectangularBinaryMatrix&& rhs) :
+    _columns(rhs._columns), _r(rhs._r), _c(rhs._c) {
+      rhs._columns = 0;
+    }
     // Initialize from raw data. raw must contain at least c words.
     template<typename T>
     RectangularBinaryMatrix(const T &raw, unsigned int r, unsigned c)
@@ -67,6 +71,12 @@ namespace jellyfish {
       if(_r != rhs._r || _c != rhs._c)
         throw std::invalid_argument("RHS matrix dimensions do not match");
       memcpy(_columns, rhs._columns, sizeof(uint64_t) * _c);
+      return *this;
+    }
+    RectangularBinaryMatrix& operator=(RectangularBinaryMatrix&& rhs) {
+      if(_r != rhs._r || _c != rhs._c)
+        throw std::invalid_argument("RHS matrix dimensions do not match");
+      std::swap(_columns, rhs._columns);
       return *this;
     }
 
@@ -174,7 +184,7 @@ namespace jellyfish {
     // Store column by column. A column may use one word.  By
     // convention, the "unused" bits (most significant bits) of each
     // column are set to 0.
-    uint64_t * const   _columns;
+    uint64_t *         _columns;
     const unsigned int _r, _c;
 
     static uint64_t *alloc(unsigned int r, unsigned int c) __attribute__((malloc));

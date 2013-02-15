@@ -1,0 +1,17 @@
+purpose "Query a Jellyfish database"
+
+option("C", "canonical") {
+  description "Count both strand, canonical representation"
+  flag; off }
+option("s", "sequence") {
+  description "Output counts for all mers in sequence"
+  c_string; typestr "path"; multiple }
+option("o", "output") {
+  description "Output file (stdout)"
+  c_string; typestr "path" }
+arg("file") {
+  description "Jellyfish database"
+  c_string; typestr "path" }
+arg("mers") {
+  description "mers to query"
+  c_string; multiple }

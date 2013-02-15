@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <locks_pthread.hpp>
+#include <jellyfish/locks_pthread.hpp>
 
 using testing::Types;
 

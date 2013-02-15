@@ -1,5 +1,22 @@
+/*  This file is part of Jellyfish.
+
+    Jellyfish is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Jellyfish is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include <cstdlib>
 #include <unistd.h>
+#include <assert.h>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -17,37 +34,75 @@
 #include <jellyfish/stream_iterator.hpp>
 #include <jellyfish/jellyfish.hpp>
 #include <jellyfish/merge_files.hpp>
+#include <jellyfish/mer_dna_bloom_counter.hpp>
 #include <sub_commands/count_main_cmdline.hpp>
 
+using jellyfish::mer_dna;
+using jellyfish::mer_dna_bloom_counter;
 typedef std::vector<const char*> file_vector;
 typedef jellyfish::mer_overlap_sequence_parser<jellyfish::stream_iterator<file_vector::iterator> > sequence_parser;
-typedef jellyfish::mer_iterator<sequence_parser, jellyfish::mer_dna> mer_iterator;
+typedef jellyfish::mer_iterator<sequence_parser, mer_dna> mer_iterator;
 
 static count_main_cmdline args; // Command line switches and arguments
 
+// k-mer filters
+struct filter_true {
+  template<typename T>
+  bool operator()(const T& x) const { return true; }
+};
 
-template<typename PathIterator>
+struct filter_bf {
+  const mer_dna_bloom_counter& counter_;
+  filter_bf(const mer_dna_bloom_counter& counter) : counter_(counter) { }
+  bool operator()(const mer_dna& m) const {
+    unsigned int c = counter_.check(m);
+    return c > 1;
+  }
+};
+
+template<typename PathIterator, typename FilterType>
 class mer_counter : public jellyfish::thread_exec {
   int                     nb_threads_;
   mer_hash&               ary_;
   sequence_parser         parser_;
+  FilterType              filter_;
 
 public:
-  mer_counter(int nb_threads, mer_hash& ary, PathIterator file_begin, PathIterator file_end) :
+  mer_counter(int nb_threads, mer_hash& ary, PathIterator file_begin, PathIterator file_end,
+              FilterType filter = FilterType()) :
     ary_(ary),
-    parser_(jellyfish::mer_dna::k(), 3 * nb_threads, 4096, jellyfish::stream_iterator<PathIterator>(file_begin, file_end),
-            jellyfish::stream_iterator<PathIterator>())
+    parser_(mer_dna::k(), 3 * nb_threads, 4096, jellyfish::stream_iterator<PathIterator>(file_begin, file_end),
+            jellyfish::stream_iterator<PathIterator>()),
+    filter_(filter)
   { }
 
   virtual void start(int thid) {
     size_t count = 0;
     for(mer_iterator mers(parser_, args.canonical_flag) ; mers; ++mers) {
-      ary_.add(*mers, 1);
+      if(filter_(*mers))
+        ary_.add(*mers, 1);
       ++count;
     }
     ary_.done();
   }
 };
+
+mer_dna_bloom_counter load_bloom_filter(const char* path) {
+  std::ifstream in(path, std::ios::in|std::ios::binary);
+  jellyfish::file_header header(in);
+  if(!in.good())
+    die << "Failed to parse bloom filter file '" << path << "'";
+  if(header.format() != "bloomcounter")
+    die << "Invalid format '" << header.format() << "'. Expected 'bloomcounter'";
+  if(header.key_len() != mer_dna::k() * 2)
+    die << "Invalid mer length in bloom filter";
+  jellyfish::hash_pair<mer_dna> fns(header.matrix(1), header.matrix(2));
+  mer_dna_bloom_counter res(header.size(), header.nb_hashes(), in, fns);
+  if(!in.good())
+    die << "Bloom filter file is truncated";
+  in.close();
+  return res;
+}
 
 int count_main(int argc, char *argv[])
 {
@@ -56,7 +111,7 @@ int count_main(int argc, char *argv[])
   header.set_cmdline(argc, argv);
 
   args.parse(argc, argv);
-  jellyfish::mer_dna::k(args.mer_len_arg);
+  mer_dna::k(args.mer_len_arg);
 
   mer_hash ary(args.size_arg, args.mer_len_arg * 2, args.counter_len_arg, args.threads_arg, args.reprobes_arg);
   if(args.disk_flag)
@@ -69,8 +124,15 @@ int count_main(int argc, char *argv[])
     dumper.reset(new binary_dumper(args.out_counter_len_arg, ary.key_len(), args.threads_arg, args.output_arg, &header));
   ary.dumper(dumper.get());
 
-  mer_counter<file_vector::iterator> counter(args.threads_arg, ary, args.file_arg.begin(), args.file_arg.end());
-  counter.exec_join(args.threads_arg);
+  if(args.bf_given) {
+    mer_dna_bloom_counter bc = load_bloom_filter(args.bf_arg);
+    mer_counter<file_vector::iterator, filter_bf>  counter(args.threads_arg, ary, args.file_arg.begin(), args.file_arg.end(),
+                                                           filter_bf(bc));
+    counter.exec_join(args.threads_arg);
+  } else {
+    mer_counter<file_vector::iterator, filter_true> counter(args.threads_arg, ary, args.file_arg.begin(), args.file_arg.end());
+    counter.exec_join(args.threads_arg);
+  }
 
   // If no intermediate files, dump directly into output file. If not, will do a round of merging
   if(dumper->nb_files() == 0) {

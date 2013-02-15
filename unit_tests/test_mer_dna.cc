@@ -319,7 +319,6 @@ TYPED_TEST(MerDNA, Equality) {
   typename TypeParam::Type m1(this->GetParam());
   typename TypeParam::Type m2(this->GetParam().size());
 
-
   char str[this->GetParam().size() + 1];
   str[this->GetParam().size()] = '\0';
   memset(str, 'A', this->GetParam().size());
