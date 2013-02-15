@@ -73,8 +73,7 @@ JFI = include/jellyfish
 library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
                           $(JFI)/backtrace.hpp $(JFI)/atomic_gcc.hpp	\
                           $(JFI)/large_hash_array.hpp $(JFI)/err.hpp	\
-                          $(JFI)/misc.hpp				\
-                          $(JFI)/offsets_key_value.hpp			\
+                          $(JFI)/misc.hpp $(JFI)/offsets_key_value.hpp	\
                           $(JFI)/int128.hpp				\
                           $(JFI)/rectangular_binary_matrix.hpp		\
                           $(JFI)/mer_dna.hpp $(JFI)/storage.hpp		\
@@ -93,9 +92,11 @@ library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
                           $(JFI)/token_ring.hpp				\
                           $(JFI)/locks_pthread.hpp			\
                           $(JFI)/file_header.hpp			\
-                          $(JFI)/generic_file_header.hpp		\
-                          $(JFI)/json.h $(JFI)/hash_counter.hpp		\
-                          $(JFI)/mapped_file.hpp
+                          $(JFI)/generic_file_header.hpp $(JFI)/json.h	\
+                          $(JFI)/hash_counter.hpp			\
+                          $(JFI)/mapped_file.hpp			\
+                          $(JFI)/mer_dna_bloom_counter.hpp		\
+                          $(JFI)/bloom_counter2.hpp
 
 JLI = include/jflib
 library_include_HEADERS += $(JLI)/cooperative_pool.hpp
@@ -144,7 +145,7 @@ SH_LOG_COMPILER = /bin/sh
 AM_SH_LOG_FLAGS =
 
 TESTS = tests/generate_sequence.sh tests/parallel_hashing.sh	\
-        tests/merge.sh
+        tests/merge.sh tests/bloom_filter.sh
 # TESTS = tests/generate_sequence.sh tests/serial_hashing.sh		\
 #         tests/parallel_hashing.sh tests/serial_direct_indexing.sh	\
 #         tests/parallel_direct_indexing.sh tests/raw_hash.sh		\
@@ -164,6 +165,7 @@ clean-local-check:
 
 #tests/serial_hashing.log: tests/generate_sequence.log
 tests/parallel_hashing.log: tests/generate_sequence.log
+tests/bloom_filter.log: tests/generate_sequence.log
 #tests/serial_direct_indexing.log: tests/generate_sequence.log
 #tests/parallel_direct_indexing.log: tests/generate_sequence.log
 #tests/parallel_fastq_direct_indexing.log: tests/generate_fastq_sequence.log

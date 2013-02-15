@@ -23,6 +23,7 @@
 #include <jellyfish/mer_iterator.hpp>
 #include <jellyfish/stream_iterator.hpp>
 #include <jellyfish/mer_dna_bloom_counter.hpp>
+#include <jellyfish/fstream_default.hpp>
 #include <sub_commands/query_main_cmdline.hpp>
 
 using jellyfish::mer_dna;
@@ -50,26 +51,31 @@ mer_dna_bloom_counter query_load_bloom_filter(const char* path) {
 }
 
 template<typename PathIterator>
-void query_from_sequence(PathIterator file_begin, PathIterator file_end, const mer_dna_bloom_counter& filter) {
+void query_from_sequence(PathIterator file_begin, PathIterator file_end, const mer_dna_bloom_counter& filter,
+                         std::ostream& out) {
   sequence_parser parser(mer_dna::k(), 3, 4096, jellyfish::stream_iterator<PathIterator>(file_begin, file_end),
                          jellyfish::stream_iterator<PathIterator>());
   for(mer_iterator mers(parser, args.canonical_flag) ; mers; ++mers)
-    std::cout << *mers << " " << filter.check(*mers) << "\n";
+    out << *mers << " " << filter.check(*mers) << "\n";
 }
 
 int query_main(int argc, char *argv[])
 {
   args.parse(argc, argv);
 
+  ofstream_default out(args.output_given ? args.output_arg : 0, std::cout);
+  if(!out.good())
+    die << "Error opening output file '" << args.output_arg << "'";
+
   mer_dna_bloom_counter filter = query_load_bloom_filter(args.file_arg);
 
-  query_from_sequence(args.sequence_arg.begin(), args.sequence_arg.end(), filter);
+  query_from_sequence(args.sequence_arg.begin(), args.sequence_arg.end(), filter, out);
 
   mer_dna m;
   for(auto it = args.mers_arg.cbegin(); it != args.mers_arg.cend(); ++it) {
     try {
       m = *it;
-      std::cout << m << " " << filter.check(m);
+      out << m << " " << filter.check(m);
     } catch(std::length_error e) {
       std::cerr << "Invalid mer " << m << "\n";
     }

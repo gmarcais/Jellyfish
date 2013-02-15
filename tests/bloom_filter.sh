@@ -24,6 +24,20 @@ $JF histo ${pref}_filtered.jf > ${pref}_filtered.histo
 TOTAL=$(cut -d\  -f2 ${pref}.histo)
 COLLISION=$(cut -d\  -f2 ${pref}_none.histo)
 # FPR is 1 in 1000. Should not get more than 1/500 collisions.
-[ $((TOTAL / 500 > COLLISION)) = 1 ]
+[ $((TOTAL / 500 > COLLISION)) = 1 ] || {
+    echo >&2 "Too many collisions"
+    false
+}
+
+QUERY_TOT=$($JF query -C -s seq1m_0.fa ${pref}.bf | grep -c ' 2$')
+[ $QUERY_TOT = $TOTAL ] || {
+    echo >&2 "Queried count 2 mers should be all mers"
+    false
+}
+QUERY_COL=$($JF query -C -s seq1m_0.fa ${pref}_none.bf | grep -c ' 2$')
+[ $QUERY_COL = $COLLISION ] || {
+    echo >&2 "Queried count 2 mers should equal collisions"
+    false
+}
 
 check ${pref}.md5sum
