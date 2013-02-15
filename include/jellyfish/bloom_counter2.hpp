@@ -38,8 +38,8 @@ struct hash_pair { };
  */
 template<typename Key, typename HashPair = hash_pair<Key>, typename atomic_t = ::atomic::gcc, typename mem_block_t = ::allocators::mmap>
 class bloom_counter2 {
-  static constexpr double LOG2 = 0.6931471805599453;
-  static constexpr double LOG2_SQ = 0.4804530139182014;
+  static const double LOG2;
+  static const double LOG2_SQ;
 
   // The number of bits in the structure, previously known as m_, is
   // know stored as d_.d()
@@ -257,6 +257,11 @@ public:
   element_proxy operator[](const Key& k) { return element_proxy(*this, k); }
   const_element_proxy operator[](const Key& k) const { return const_element_proxy(*this, k); }
 };
+
+template<typename Key, typename HashPair, typename atomic_t, typename mem_block_t>
+const double bloom_counter2<Key, HashPair, atomic_t, mem_block_t>::LOG2 = 0.6931471805599453;
+template<typename Key, typename HashPair, typename atomic_t, typename mem_block_t>
+const double bloom_counter2<Key, HashPair, atomic_t, mem_block_t>::LOG2_SQ = 0.4804530139182014;
 } // namespace jellyfish {
 
 #endif // __BLOOM_COUNTER2_HPP__

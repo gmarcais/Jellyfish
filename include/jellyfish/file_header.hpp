@@ -42,7 +42,7 @@ public:
 
   RectangularBinaryMatrix matrix(int i = 1) {
     std::string name("matrix");
-    name += std::to_string(i);
+    name += std::to_string((long long int)i); // Cast to make gcc4.4 happy!
     const unsigned int r = root_[name]["r"].asUInt();
     const unsigned int c = root_[name]["c"].asUInt();
     std::vector<uint64_t> raw(c, (uint64_t)0);
@@ -53,7 +53,7 @@ public:
 
   void matrix(const RectangularBinaryMatrix& m, int i = 1) {
     std::string name("matrix");
-    name += std::to_string(i);
+    name += std::to_string((long long int)i);
     root_[name].clear();
     root_[name]["r"] = m.r();
     root_[name]["c"] = m.c();
