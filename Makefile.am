@@ -43,6 +43,8 @@ bin_jellyfish_SOURCES = sub_commands/jellyfish.cc	\
                         sub_commands/dump_main.cc	\
                         sub_commands/histo_main.cc	\
                         sub_commands/merge_main.cc	\
+                        sub_commands/bf_main.cc		\
+                        sub_commands/query_main.cc	\
                         jellyfish/merge_files.cc
 bin_jellyfish_LDFLAGS = $(AM_LDFLAGS) $(STATIC_FLAGS)
 
@@ -51,7 +53,9 @@ YAGGO_SOURCES += sub_commands/count_main_cmdline.hpp	\
                  sub_commands/info_main_cmdline.hpp	\
                  sub_commands/dump_main_cmdline.hpp	\
                  sub_commands/histo_main_cmdline.hpp	\
-                 sub_commands/merge_main_cmdline.hpp
+                 sub_commands/merge_main_cmdline.hpp	\
+                 sub_commands/bf_main_cmdline.hpp	\
+                 sub_commands/query_main_cmdline.hpp
 
 ######################################
 # Build Jellyfish the shared library #
@@ -197,7 +201,8 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_text_dumper.cc			\
 	               unit_tests/test_dumpers.cc			\
 	               unit_tests/test_mapped_file.cc			\
-	               unit_tests/test_int128.cc
+	               unit_tests/test_int128.cc			\
+	               unit_tests/test_mer_dna_bloom_counter.cc
 bin_test_all_SOURCES += jellyfish/backtrace.cc
 
 bin_test_all_CPPFLAGS = -Dprotected=public -Dprivate=public -DJSON_IS_AMALGAMATION=1

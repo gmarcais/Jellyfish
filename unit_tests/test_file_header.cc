@@ -39,6 +39,7 @@ TEST(FileHeader, WriteRead) {
   const size_t random_size = random_bits(35);
   const unsigned int val_len = random_bits(4);
   const unsigned int max_reprobe = random_bits(7);
+  const double fpr = (double)random_bits(10) / 1024.0;
   RectangularBinaryMatrix m(random_bits(6) + 1, random_bits(8) + 1);
   m.randomize(random_bits);
 
@@ -50,6 +51,7 @@ TEST(FileHeader, WriteRead) {
   hw.val_len(val_len);
   hw.max_reprobe(max_reprobe);
   hw.set_reprobes(jellyfish::quadratic_reprobes);
+  hw.fpr(fpr);
   hw.write(os);
   EXPECT_EQ(0, os.tellp() % 8);
   EXPECT_EQ('A', os.fill());
@@ -70,6 +72,7 @@ TEST(FileHeader, WriteRead) {
   EXPECT_EQ(m, hr.matrix());
   EXPECT_EQ(m.r(), hr.key_len());
   EXPECT_EQ(val_len, hr.val_len());
+  EXPECT_EQ(fpr, hr.fpr());
 
   size_t reprobes[max_reprobe + 1];
   hr.get_reprobes(reprobes);

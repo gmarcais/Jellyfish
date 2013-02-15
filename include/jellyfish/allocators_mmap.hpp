@@ -23,20 +23,32 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include <algorithm>
+
 namespace allocators {
   class mmap {
     void   *ptr;
     size_t  size;
-   
+
   public:
     mmap() : ptr(MAP_FAILED), size(0) {}
     explicit mmap(size_t _size) : ptr(MAP_FAILED), size(0) {
       realloc(_size);
       fast_zero();
     }
+    mmap(mmap&& rhs) : ptr(rhs.ptr), size(rhs.size) {
+      rhs.ptr  = MAP_FAILED;
+      rhs.size = 0;
+    }
     ~mmap() {
       if(ptr != MAP_FAILED)
         ::munmap(ptr, size);
+    }
+
+    mmap& operator=(mmap&& rhs) {
+      std::swap(ptr, rhs.ptr);
+      std::swap(size, rhs.size);
+      return *this;
     }
 
     void *get_ptr() const { return ptr != MAP_FAILED ? ptr : NULL; }
@@ -44,7 +56,7 @@ namespace allocators {
     void *realloc(size_t new_size);
     int lock() { return mlock(ptr, size); }
     int unlock() { return munlock(ptr, size); }
-    
+
     // Return a a number of bytes which is a number of whole pages at
     // least as large as size.
     static size_t round_to_page(size_t _size);

@@ -1,0 +1,30 @@
+purpose "Create a bloom filter from the input k-mers"
+
+description "Here, a bloom filter is a data structure than can tell if
+a k-mer has been since 0 times, once, or at least twice. The data
+structure is very memory efficient but has some probability of error.
+
+After creating the bloom filter, it can be passed to the count
+subcommand to avoid counting most k-mers which occur only once."
+
+option("s", "size") {
+  description "Expected number of k-mers in input"
+  uint64; suffix; required }
+option("m", "mer-len") {
+  description "Length of mer"
+  uint32; required }
+option("f", "fpr") {
+  description "False positive rate"
+  double; default 0.001 }
+option("C", "canonical") {
+  description "Count both strand, canonical representation"
+  flag; off }
+option("t", "threads") {
+  description "Number of threads"
+  uint32; default 1 }
+option("output", "o") {
+  description "Output file"
+  c_string; default "mer_bloom_filter" }
+arg("file") {
+  description "Sequence file(s) in fasta or fastq format"
+  c_string; multiple; typestr "path" }
