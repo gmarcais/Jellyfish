@@ -193,6 +193,9 @@ public:
     hash_inverse_matrix_(std::move(ary.hash_inverse_matrix_))
   { }
 
+  array& operator=(const array& rhs) = delete;
+  array& operator=(array&& rhs) = delete;
+
   size_t size() const { return size_; }
   size_t lsize() const { return lsize_; }
   size_t size_mask() const { return size_mask_; }
