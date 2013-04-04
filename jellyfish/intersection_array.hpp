@@ -1,6 +1,9 @@
 #ifndef __JELLYFISH_INTERSECTION_ARRAY_HPP__
 #define __JELLYFISH_INTERSECTION_ARRAY_HPP__
 
+#include <emmintrin.h>
+
+#include <jellyfish/allocators_mmap.hpp>
 #include <jellyfish/compare_and_swap.hpp>
 #include <jellyfish/large_hash_array.hpp>
 #include <jellyfish/atomic_gcc.hpp>
@@ -20,17 +23,19 @@ protected:
   static const size_t status_pw = (8 * sizeof(status_w)) / status_size; // Nb of status per word
 
   // sbits<b>::v has the b-th bits (starting at 0) set in every 4 bit group
-  template<unsigned int b, int l = sizeof(status_w) - 1>
+  template<unsigned int b, typename T = status_w, int l = sizeof(T) - 1>
   struct sbits {
-    static const status_w v = sbits<b, 0>::v | (sbits<b, l - 1>::v << 8);
+    static const T v = sbits<b, T, 0>::v | (sbits<b, T, l - 1>::v << 8);
   };
-  template<unsigned int b>
-  struct sbits<b, 0> {
-    static const status_w v = (status_w)0x11 << b;
+  template<unsigned int b, typename T>
+  struct sbits<b, T, 0> {
+    static const T v = (T)0x11 << b;
   };
 
   array*                  ary_;
   array*                  new_ary_;
+  allocators::mmap*       status_block_;
+  allocators::mmap*       new_status_block_;
   status_w*               mer_status_;
   status_w*               new_mer_status_;
   uint16_t                nb_threads_;
@@ -79,18 +84,22 @@ public:
                      uint16_t nb_threads) : // Number of threads accessing hash (cooperative)
     ary_(new array(size, key_len, 0, 126, jellyfish::quadratic_reprobes)),
     new_ary_(0),
-    mer_status_(new status_w[ary_->size() / status_pw]), // TODO: change this to a mmap allocated area?
+    status_block_(new allocators::mmap(8 * sizeof(status_w) * ary_->size() / status_pw)),
+    new_status_block_(0),
+    mer_status_((status_w*)status_block_->get_ptr()),
+    //    mer_status_(new status_w[ary_->size() / status_pw]), // TODO: change this to a mmap allocated area?
     new_mer_status_(0),
     nb_threads_(nb_threads),
     size_barrier_(nb_threads),
     size_thid_(0),
     done_threads_(0)
   {
-    memset(mer_status_, '\0', sizeof(status_w) * ary_->size() / status_pw);
+    //    memset(mer_status_, '\0', sizeof(status_w) * ary_->size() / status_pw);
   }
 
   ~intersection_array() {
-    delete [] mer_status_;
+    //    delete [] mer_status_;
+    delete status_block_;
     delete ary_;
   }
 
@@ -125,19 +134,54 @@ public:
   }
 
   /// Post-process mer status after a file.
+  // void postprocess(uint16_t thid) {
+  //   const std::pair<size_t,size_t> part = slice((size_t)thid, (size_t)nb_threads_,
+  //                                               size() / status_pw);
+  //   for(size_t i = part.first; i < part.second; ++i) {
+  //     status_w info = mer_status_[i];
+  //     // Update nall: nall (3rd bit) is 1 if the set bit (0th bit) is 0.
+  //     info |= (~info & sbits<0>::v) << 3;
+  //     // Update mult: mult (2nd bit) is 1 if the set bit (0th bit) and the uniq bit (1th bit) are 1
+  //     info |= ((info & sbits<0>::v) << 2) & ((info & sbits<1>::v) << 1);
+  //     // Update uniq: uniq (1st bit) is 1 if the set bit (0th bit) is 1
+  //     info |= (info & sbits<0>::v) << 1;
+
+  //     // Store result and zero set bits (0th bit)
+  //     mer_status_[i] = info & ~sbits<0>::v;
+  //   }
+  // }
+
+  // Same but using the SSE extension.
   void postprocess(uint16_t thid) {
-    const std::pair<size_t,size_t> part = slice((size_t)thid, (size_t)nb_threads_, size() / status_pw);
+    static const __m128i sbits0 = _mm_set1_epi64x(sbits<0, int64_t>::v);
+    static const __m128i sbits1 = _mm_set1_epi64x(sbits<1, int64_t>::v);
+
+    const std::pair<size_t,size_t> part = slice((size_t)thid, (size_t)nb_threads_,
+                                                size() / (8 * sizeof(__m128i) / status_size));
+
     for(size_t i = part.first; i < part.second; ++i) {
-      status_w info = mer_status_[i];
+      __m128i* ptr = (__m128i*)mer_status_ + i;
+      __m128i info = _mm_load_si128(ptr);
+
       // Update nall: nall (3rd bit) is 1 if the set bit (0th bit) is 0.
-      info |= (~info & sbits<0>::v) << 3;
+      //info |= (~info & sbits<0>::v) << 3;
+      info = _mm_or_si128(info,
+                          _mm_slli_epi64(_mm_andnot_si128(info, sbits0), 3));
+
       // Update mult: mult (2nd bit) is 1 if the set bit (0th bit) and the uniq bit (1th bit) are 1
-      info |= ((info & sbits<0>::v) << 2) & ((info & sbits<1>::v) << 1);
+      //info |= ((info & sbits<0>::v) << 2) & ((info & sbits<1>::v) << 1);
+      info = _mm_or_si128(info,
+                          _mm_and_si128(_mm_slli_epi64(_mm_and_si128(info, sbits0), 2),
+                                        _mm_slli_epi64(_mm_and_si128(info, sbits1), 1)));
+
       // Update uniq: uniq (1st bit) is 1 if the set bit (0th bit) is 1
-      info |= (info & sbits<0>::v) << 1;
+      //info |= (info & sbits<0>::v) << 1;
+      info = _mm_or_si128(info,
+                          _mm_slli_epi64(_mm_and_si128(info, sbits0), 1));
 
       // Store result and zero set bits (0th bit)
-      mer_status_[i] = info & ~sbits<0>::v;
+      //mer_status_[i] = info & ~sbits<0>::v;
+      _mm_store_si128(ptr, _mm_andnot_si128(sbits0, info));
     }
   }
 
@@ -183,8 +227,10 @@ protected:
       // Serial thread -> allocate new array for size doubling
       if(done_threads_ < nb_threads_) {
         new_ary_        = new array(ary_->size() * 2, ary_->key_len(), 0, 126, jellyfish::quadratic_reprobes);
-        new_mer_status_ = new status_w[new_ary_->size() / status_pw];
-        memset(new_mer_status_, '\0', sizeof(status_w) * new_ary_->size() / status_pw);
+        new_status_block_ = new allocators::mmap(8 * sizeof(status_w) * new_ary_->size() / status_pw);
+        //        new_mer_status_ = new status_w[new_ary_->size() / status_pw];
+        //        memset(new_mer_status_, '\0', sizeof(status_w) * new_ary_->size() / status_pw);
+        new_mer_status_ = (status_w*)new_status_block_->get_ptr();
         size_thid_      = 0;
       } else {
         new_ary_        = 0;
@@ -210,9 +256,15 @@ protected:
     if(size_barrier_.wait()) {
       // Serial thread -> set new ary to be current
       delete ary_;
-      delete [] mer_status_;
-      ary_        = new_ary_;
-      mer_status_ = new_mer_status_;
+      delete status_block_;
+      //      delete [] mer_status_;
+      ary_          = new_ary_;
+      status_block_ = new_status_block_;
+      mer_status_   = new_mer_status_;
+
+      new_ary_          = 0;
+      new_mer_status_   = 0;
+      new_status_block_ = 0;
     }
 
     // Done. Last sync point

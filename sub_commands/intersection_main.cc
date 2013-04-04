@@ -24,7 +24,7 @@ typedef std::map<std::string, int> name_map;
 intersection_main_cmdline args;
 
 
-class compute_intersection : public thread_exec {
+class compute_intersection : public jellyfish::thread_exec {
   int                     nb_threads_;
   locks::pthread::barrier barrier_;
   inter_array&            ary_;
