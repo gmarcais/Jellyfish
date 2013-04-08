@@ -135,30 +135,31 @@ int count_main(int argc, char *argv[])
   }
 
   // If no intermediate files, dump directly into output file. If not, will do a round of merging
-  if(dumper->nb_files() == 0) {
-    dumper->one_file(true);
-    if(args.lower_count_given)
-      dumper->min(args.lower_count_arg);
-    if(args.upper_count_given)
-      dumper->max(args.upper_count_arg);
-    dumper->dump(ary.ary());
-  } else {
-    dumper->dump(ary.ary());
-    if(!args.no_merge_flag) {
-      std::vector<const char*> files = dumper->file_names_cstr();
-      uint64_t min = args.lower_count_given ? args.lower_count_arg : 0;
-      uint64_t max = args.upper_count_given ? args.upper_count_arg : std::numeric_limits<uint64_t>::max();
-      try {
-        merge_files(files, args.output_arg, header, min, max);
-      } catch(MergeError e) {
-        die << e.what();
-      }
-      if(!args.no_unlink_flag) {
-        for(int i =0; i < dumper->nb_files(); ++i)
-          unlink(files[i]);
-      }
+  if(!args.no_write_flag) {
+    if(dumper->nb_files() == 0) {
+      dumper->one_file(true);
+      if(args.lower_count_given)
+        dumper->min(args.lower_count_arg);
+      if(args.upper_count_given)
+        dumper->max(args.upper_count_arg);
+      dumper->dump(ary.ary());
+    } else {
+      dumper->dump(ary.ary());
+      if(!args.no_merge_flag) {
+        std::vector<const char*> files = dumper->file_names_cstr();
+        uint64_t min = args.lower_count_given ? args.lower_count_arg : 0;
+        uint64_t max = args.upper_count_given ? args.upper_count_arg : std::numeric_limits<uint64_t>::max();
+        try {
+          merge_files(files, args.output_arg, header, min, max);
+        } catch(MergeError e) {
+          die << e.what();
+        }
+        if(!args.no_unlink_flag) {
+          for(int i =0; i < dumper->nb_files(); ++i)
+            unlink(files[i]);
+        }
+      } // if(!args.no_merge_flag
     } // if(!args.no_merge_flag
-  } // else {
-
+  }
   return 0;
 }
