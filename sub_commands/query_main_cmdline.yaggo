@@ -1,4 +1,5 @@
 purpose "Query a Jellyfish database"
+package "jellyfish query"
 
 option("C", "canonical") {
   description "Count both strand, canonical representation"

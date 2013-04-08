@@ -25,6 +25,26 @@ jellyfish. MANPATH is used by the man command. PKG_CONFIG_PATH and
 LD_LIBRARY_PATH are used to compile software against the jellyfish
 shared library.
 
+GCC requirement
+===============
+
+GCC version 4.4 or higher is required to compile Jellyfish. Most
+current Linux distribution provides a version of gcc current
+enough. On RedHat 5.x, install the packages gcc44 and gcc44-c++.
+
+To install on Mac OS X: Jellyfish 2.0 does not compile with Apple's
+Xcode GCC 4.2. Instead, the easiest thing to do is to install GCC 4.8
+using MacPorts (http://www.macports.org) using the following commands:
+
+        sudo port install gcc48
+        sudo port install gcc_select
+        sudo port select -set gcc mp-gcc48
+
+The first command installs GCC version 4.8. The third command makes
+that version of GCC the default, and the second installs a package that
+makes the third command work. After the above, you should be able to
+run './configure ; make' as normal.
+
 Tests
 =====
 
