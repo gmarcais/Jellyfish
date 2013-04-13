@@ -23,6 +23,7 @@
 typedef int (main_func_t)(int argc, char *argv[]);
 
 main_func_t intersection_main;
+main_func_t unique_main;
 main_func_t count_main;
 main_func_t info_main;
 // main_func_t stats_main;
@@ -44,6 +45,7 @@ struct cmd_func {
   main_func_t *func;
 };
 cmd_func cmd_list[] = {
+  {"unique",            &unique_main},
   {"intersection",      &intersection_main},
   {"count",             &count_main},
   {"info",              &info_main},

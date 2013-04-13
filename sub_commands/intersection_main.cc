@@ -21,10 +21,10 @@ typedef jellyfish::mer_overlap_sequence_parser<std::ifstream*> sequence_parser;
 typedef jellyfish::mer_iterator<sequence_parser, jellyfish::mer_dna> mer_iterator;
 typedef std::map<std::string, int> name_map;
 
-intersection_main_cmdline args;
+static intersection_main_cmdline args;
 
 
-class compute_intersection : public thread_exec {
+class compute_intersection : public jellyfish::thread_exec {
   int                     nb_threads_;
   locks::pthread::barrier barrier_;
   inter_array&            ary_;
@@ -41,6 +41,8 @@ public:
     ary_(ary),
     files_(files)
   { }
+
+  virtual ~compute_intersection() { }
 
   virtual void start(int thid) {
     load_in_files(thid);

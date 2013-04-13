@@ -1,0 +1,31 @@
+purpose "Compute the k-mers unique to each genome"
+package "jf-cosmosid unique"
+
+description(<<EOS)
+Given <n> input files, each representing a genome, this command will
+output <n> files. For each input file '<file.fa>', the output file
+'uniq_<file.fa>' will contain a list of k-mers to that genome.
+
+The algorithm is probabilistic and there is a false negative rate,
+i.e. a chance that a k-mer that is unique is not reported.
+EOS
+
+option("s", "size") {
+  description "Size of Bloom filter"
+  uint64; suffix; required }
+option("m", "mer") {
+  description "Mer length"
+  uint32; required }
+option("C", "canonical") {
+  description "Consider canonical mers"
+  off }
+option("t", "thread") {
+  description "Number of threads"
+  uint32; default 1 }
+option("p", "prefix") {
+  description "Prefix for each unique file"
+  c_string; default "uniq_" }
+arg("genome") {
+  description "Input genome sequence, in FASTA or FASTQ format"
+  c_string; typestr "path"
+  multiple }

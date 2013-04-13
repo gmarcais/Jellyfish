@@ -323,7 +323,7 @@ private:
 struct endrT { };
 static const endrT endr = { };
 
-jflib::omstream &operator<<(jflib::omstream &os, const jflib::endrT &rhs) {
+inline jflib::omstream &operator<<(jflib::omstream &os, const jflib::endrT &rhs) {
   os.end_record();
   return os;
 }
