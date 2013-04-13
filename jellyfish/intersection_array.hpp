@@ -133,26 +133,28 @@ public:
     } while(oinfo != ninfo);
   }
 
-  /// Post-process mer status after a file.
-  // void postprocess(uint16_t thid) {
-  //   const std::pair<size_t,size_t> part = slice((size_t)thid, (size_t)nb_threads_,
-  //                                               size() / status_pw);
-  //   for(size_t i = part.first; i < part.second; ++i) {
-  //     status_w info = mer_status_[i];
-  //     // Update nall: nall (3rd bit) is 1 if the set bit (0th bit) is 0.
-  //     info |= (~info & sbits<0>::v) << 3;
-  //     // Update mult: mult (2nd bit) is 1 if the set bit (0th bit) and the uniq bit (1th bit) are 1
-  //     info |= ((info & sbits<0>::v) << 2) & ((info & sbits<1>::v) << 1);
-  //     // Update uniq: uniq (1st bit) is 1 if the set bit (0th bit) is 1
-  //     info |= (info & sbits<0>::v) << 1;
+  inline void postprocess(uint16_t thid) { postprocess128(thid); }
 
-  //     // Store result and zero set bits (0th bit)
-  //     mer_status_[i] = info & ~sbits<0>::v;
-  //   }
-  // }
+  /// Post-process mer status after a file.
+  void postprocess64(uint16_t thid) {
+    const std::pair<size_t,size_t> part = slice((size_t)thid, (size_t)nb_threads_,
+                                                size() / status_pw);
+    for(size_t i = part.first; i < part.second; ++i) {
+      status_w info = mer_status_[i];
+      // Update nall: nall (3rd bit) is 1 if the set bit (0th bit) is 0.
+      info |= (~info & sbits<0>::v) << 3;
+      // Update mult: mult (2nd bit) is 1 if the set bit (0th bit) and the uniq bit (1th bit) are 1
+      info |= ((info & sbits<0>::v) << 2) & ((info & sbits<1>::v) << 1);
+      // Update uniq: uniq (1st bit) is 1 if the set bit (0th bit) is 1
+      info |= (info & sbits<0>::v) << 1;
+
+      // Store result and zero set bits (0th bit)
+      mer_status_[i] = info & ~sbits<0>::v;
+    }
+  }
 
   // Same but using the SSE extension.
-  void postprocess(uint16_t thid) {
+  void postprocess128(uint16_t thid) {
     static const __m128i sbits0 = _mm_set1_epi64x(sbits<0, int64_t>::v);
     static const __m128i sbits1 = _mm_set1_epi64x(sbits<1, int64_t>::v);
 
