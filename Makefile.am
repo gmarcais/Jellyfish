@@ -161,7 +161,7 @@ EXTRA_DIST += $(TESTS)
 clean-local: clean-local-check
 .PHONY: clean-local-check
 clean-local-check:
-	-cd tests; rm -f seq10m* seq1m* *.histo *.dump *.fa *.jf *.md5sum
+	-cd tests; rm -f seq10m* seq1m* *.histo *.dump *.fa *.jf *.md5sum *.bf
 
 #tests/serial_hashing.log: tests/generate_sequence.log
 tests/parallel_hashing.log: tests/generate_sequence.log
