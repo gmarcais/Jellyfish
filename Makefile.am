@@ -204,7 +204,8 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_dumpers.cc			\
 	               unit_tests/test_mapped_file.cc			\
 	               unit_tests/test_int128.cc			\
-	               unit_tests/test_mer_dna_bloom_counter.cc
+	               unit_tests/test_mer_dna_bloom_counter.cc		\
+	               unit_tests/test_whole_sequence_parser.cc
 bin_test_all_SOURCES += jellyfish/backtrace.cc
 
 bin_test_all_CPPFLAGS = -Dprotected=public -Dprivate=public -DJSON_IS_AMALGAMATION=1
