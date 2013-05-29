@@ -18,7 +18,7 @@ TEST(SequenceParser, Fasta) {
            << seq1;
   sequence.seekg(0);
 
-  parser_type parser(10, 10, &sequence, &sequence + 1);
+  parser_type parser(10, &sequence, &sequence + 1);
 
   {
     parser_type::job j(parser);
@@ -58,7 +58,7 @@ TEST(SequenceParser, Fastq) {
            << seq2 << "\n";
   sequence.seekg(0);
 
-  parser_type parser(10, 10, &sequence, &sequence + 1);
+  parser_type parser(10, &sequence, &sequence + 1);
 
   {
     parser_type::job j(parser);

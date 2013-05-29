@@ -4,7 +4,7 @@
 #include <string>
 
 #include <jellyfish/err.hpp>
-#include <jflib/cooperative_pool.hpp>
+#include <jellyfish/cooperative_pool.hpp>
 
 namespace jellyfish {
 struct sequence_strings {
@@ -14,11 +14,10 @@ struct sequence_strings {
 };
 
 template<typename StreamIterator>
-class whole_sequence_parser : public jflib::cooperative_pool<whole_sequence_parser<StreamIterator>, sequence_strings> {
-  typedef jflib::cooperative_pool<whole_sequence_parser<StreamIterator>, sequence_strings> super;
+class whole_sequence_parser : public jellyfish::cooperative_pool<whole_sequence_parser<StreamIterator>, sequence_strings> {
+  typedef jellyfish::cooperative_pool<whole_sequence_parser<StreamIterator>, sequence_strings> super;
   enum file_type { DONE_TYPE, FASTA_TYPE, FASTQ_TYPE };
 
-  uint16_t       mer_len_;
   file_type      type;
   StreamIterator current_file;
   StreamIterator stream_end;
@@ -29,10 +28,9 @@ public:
   /// Size is the number of buffers to keep around. It should be
   /// larger than the number of thread expected to read from this
   /// class. 'begin' and 'end' are iterators to a range of istream.
-  whole_sequence_parser(uint16_t mer_len, uint32_t size,
+  whole_sequence_parser(uint32_t size,
                   StreamIterator begin, StreamIterator end) :
     super(size),
-    mer_len_(mer_len),
     type(DONE_TYPE),
     current_file(begin),
     stream_end(end)

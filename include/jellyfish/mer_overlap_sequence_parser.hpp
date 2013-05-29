@@ -19,7 +19,7 @@
 
 #include <stdint.h>
 #include <jellyfish/err.hpp>
-#include <jflib/cooperative_pool.hpp>
+#include <jellyfish/cooperative_pool.hpp>
 
 namespace jellyfish {
 
@@ -29,8 +29,8 @@ struct sequence_ptr {
 };
 
 template<typename StreamIterator>
-class mer_overlap_sequence_parser : public jflib::cooperative_pool<mer_overlap_sequence_parser<StreamIterator>, sequence_ptr> {
-  typedef jflib::cooperative_pool<mer_overlap_sequence_parser<StreamIterator>, sequence_ptr> super;
+class mer_overlap_sequence_parser : public jellyfish::cooperative_pool<mer_overlap_sequence_parser<StreamIterator>, sequence_ptr> {
+  typedef jellyfish::cooperative_pool<mer_overlap_sequence_parser<StreamIterator>, sequence_ptr> super;
   enum file_type { DONE_TYPE, FASTA_TYPE, FASTQ_TYPE };
 
   uint16_t                       mer_len_;
