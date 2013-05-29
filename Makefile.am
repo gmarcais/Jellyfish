@@ -73,7 +73,8 @@ JFI = include/jellyfish
 library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
                           $(JFI)/backtrace.hpp $(JFI)/atomic_gcc.hpp	\
                           $(JFI)/large_hash_array.hpp $(JFI)/err.hpp	\
-                          $(JFI)/misc.hpp $(JFI)/offsets_key_value.hpp	\
+                          $(JFI)/misc.hpp				\
+                          $(JFI)/offsets_key_value.hpp			\
                           $(JFI)/int128.hpp				\
                           $(JFI)/rectangular_binary_matrix.hpp		\
                           $(JFI)/mer_dna.hpp $(JFI)/storage.hpp		\
@@ -84,7 +85,9 @@ library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
                           $(JFI)/divisor.hpp				\
                           $(JFI)/large_hash_iterator.hpp		\
                           $(JFI)/jellyfish.hpp $(JFI)/thread_exec.hpp	\
+                          $(JFI)/stream_iterator.hpp			\
                           $(JFI)/mer_overlap_sequence_parser.hpp	\
+                          $(JFI)/whole_sequence_parser.hpp		\
                           $(JFI)/binary_dumper.hpp			\
                           $(JFI)/sorted_dumper.hpp			\
                           $(JFI)/text_dumper.hpp $(JFI)/dumper.hpp	\
@@ -92,20 +95,17 @@ library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
                           $(JFI)/token_ring.hpp				\
                           $(JFI)/locks_pthread.hpp			\
                           $(JFI)/file_header.hpp			\
-                          $(JFI)/generic_file_header.hpp $(JFI)/json.h	\
-                          $(JFI)/hash_counter.hpp			\
+                          $(JFI)/generic_file_header.hpp		\
+                          $(JFI)/json.h $(JFI)/hash_counter.hpp		\
                           $(JFI)/mapped_file.hpp			\
                           $(JFI)/mer_dna_bloom_counter.hpp		\
-                          $(JFI)/bloom_counter2.hpp
+                          $(JFI)/bloom_counter2.hpp			\
+                          $(JFI)/cooperative_pool.hpp
 
-JLI = include/jflib
-library_include_HEADERS += $(JLI)/cooperative_pool.hpp
-
-noinst_HEADERS += jellyfish/fstream_default.hpp				\
-                  include/jflib/tmpstream.hpp				\
-                  jellyfish/mer_iterator.hpp				\
-                  jellyfish/stream_iterator.hpp jellyfish/dbg.hpp	\
-                  jellyfish/randomc.h jellyfish/merge_files.hpp		\
+noinst_HEADERS += jellyfish/fstream_default.hpp			\
+                  include/jflib/tmpstream.hpp			\
+                  jellyfish/mer_iterator.hpp jellyfish/dbg.hpp	\
+                  jellyfish/randomc.h jellyfish/merge_files.hpp	\
                   jellyfish/cpp_array.hpp
 
 
@@ -161,7 +161,7 @@ EXTRA_DIST += $(TESTS)
 clean-local: clean-local-check
 .PHONY: clean-local-check
 clean-local-check:
-	-cd tests; rm -f seq10m* seq1m* *.histo *.dump *.fa *.jf *.md5sum
+	-cd tests; rm -f seq10m* seq1m* *.histo *.dump *.fa *.jf *.md5sum *.bf
 
 #tests/serial_hashing.log: tests/generate_sequence.log
 tests/parallel_hashing.log: tests/generate_sequence.log
@@ -204,7 +204,8 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_dumpers.cc			\
 	               unit_tests/test_mapped_file.cc			\
 	               unit_tests/test_int128.cc			\
-	               unit_tests/test_mer_dna_bloom_counter.cc
+	               unit_tests/test_mer_dna_bloom_counter.cc		\
+	               unit_tests/test_whole_sequence_parser.cc
 bin_test_all_SOURCES += jellyfish/backtrace.cc
 
 bin_test_all_CPPFLAGS = -Dprotected=public -Dprivate=public -DJSON_IS_AMALGAMATION=1

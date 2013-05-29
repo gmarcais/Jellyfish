@@ -179,6 +179,23 @@ public:
                               << " bytes of memory";
   }
 
+  array(array&& ary) :
+    lsize_(ary.lsize_),
+    size_(ary.size_),
+    reprobe_limit_(ary.reprobe_limit_),
+    key_len_(ary.key_len_),
+    raw_key_len_(ary.raw_key_len_),
+    offsets_(std::move(ary.offsets_)),
+    mem_block_(std::move(ary.mem_block_)),
+    data_((word*)mem_block_.get_ptr()),
+    reprobes_(ary.reprobes_),
+    hash_matrix_(std::move(ary.hash_matrix_)),
+    hash_inverse_matrix_(std::move(ary.hash_inverse_matrix_))
+  { }
+
+  array& operator=(const array& rhs) = delete;
+  array& operator=(array&& rhs) = delete;
+
   size_t size() const { return size_; }
   size_t lsize() const { return lsize_; }
   size_t size_mask() const { return size_mask_; }

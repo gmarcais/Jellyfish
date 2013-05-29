@@ -1,22 +1,22 @@
-/*  This file is part of Jflib.
+/*  This file is part of Jellyfish.
 
-    Jflib is free software: you can redistribute it and/or modify
+    Jellyfish is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    Jflib is distributed in the hope that it will be useful,
+    Jellyfish is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Jflib.  If not, see <http://www.gnu.org/licenses/>.
+    along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 
-#ifndef __JFLIB_COOPERATIVE_POOL_HPP__
-#define __JFLIB_COOPERATIVE_POOL_HPP__
+#ifndef __JELLYFISH_COOPERATIVE_POOL_HPP__
+#define __JELLYFISH_COOPERATIVE_POOL_HPP__
 
 #include <assert.h>
 #include <unistd.h>
@@ -73,7 +73,7 @@
 /// }
 /// ~~~
 
-namespace jflib {
+namespace jellyfish {
 template<typename D, typename T>
 class cooperative_pool {
 public:
@@ -92,7 +92,7 @@ private:
     int* const token_;
     const bool has_token_;
   public:
-    take_token(int* token) : token_(token), has_token_(cas(token_, 0, 1)) { }
+    take_token(int* token) : token_(token), has_token_(jflib::cas(token_, 0, 1)) { }
     ~take_token() {
       if(has_token_)
         //        cas(token_, 1, 0); // Guaranteed to succeed. Memory barrier
@@ -254,5 +254,5 @@ private:
   }
 };
 
-} // namespace jflib {
-#endif /* __JFLIB_COOPERATIVE_POOL_HPP__ */
+} // namespace jellyfish {
+#endif /* __JELLYFISH_COOPERATIVE_POOL_HPP__ */

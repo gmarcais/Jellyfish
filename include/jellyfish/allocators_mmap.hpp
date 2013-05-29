@@ -26,51 +26,56 @@
 #include <algorithm>
 
 namespace allocators {
-  class mmap {
-    void   *ptr;
-    size_t  size;
+class mmap {
+  void   *ptr;
+  size_t  size;
 
-  public:
-    mmap() : ptr(MAP_FAILED), size(0) {}
-    explicit mmap(size_t _size) : ptr(MAP_FAILED), size(0) {
-      realloc(_size);
-      fast_zero();
-    }
-    mmap(mmap&& rhs) : ptr(rhs.ptr), size(rhs.size) {
-      rhs.ptr  = MAP_FAILED;
-      rhs.size = 0;
-    }
-    ~mmap() {
-      if(ptr != MAP_FAILED)
-        ::munmap(ptr, size);
-    }
+public:
+  mmap() : ptr(MAP_FAILED), size(0) {}
+  explicit mmap(size_t _size) : ptr(MAP_FAILED), size(0) {
+    realloc(_size);
+    fast_zero();
+  }
+  mmap(mmap&& rhs) : ptr(rhs.ptr), size(rhs.size) {
+    rhs.ptr  = MAP_FAILED;
+    rhs.size = 0;
+  }
+  ~mmap() {
+    if(ptr != MAP_FAILED)
+      ::munmap(ptr, size);
+  }
 
-    mmap& operator=(mmap&& rhs) {
-      std::swap(ptr, rhs.ptr);
-      std::swap(size, rhs.size);
-      return *this;
-    }
+  mmap& operator=(mmap&& rhs) {
+    swap(rhs);
+    return *this;
+  }
 
-    void *get_ptr() const { return ptr != MAP_FAILED ? ptr : NULL; }
-    size_t get_size() const { return size; }
-    void *realloc(size_t new_size);
-    int lock() { return mlock(ptr, size); }
-    int unlock() { return munlock(ptr, size); }
+  void swap(mmap& rhs) {
+    std::swap(ptr, rhs.ptr);
+    std::swap(size, rhs.size);
+  }
 
-    // Return a a number of bytes which is a number of whole pages at
-    // least as large as size.
-    static size_t round_to_page(size_t _size);
+  void *get_ptr() const { return ptr != MAP_FAILED ? ptr : NULL; }
+  size_t get_size() const { return size; }
+  void *realloc(size_t new_size);
+  int lock() { return mlock(ptr, size); }
+  int unlock() { return munlock(ptr, size); }
 
-  private:
-    static const int nb_threads = 4;
-    struct tinfo {
-      pthread_t  thid;
-      char      *start, *end;
-      size_t     pgsize;
-    };
-    void fast_zero();
-    static void * _fast_zero(void *_info);
+  // Return a a number of bytes which is a number of whole pages at
+  // least as large as size.
+  static size_t round_to_page(size_t _size);
+
+private:
+  static const int nb_threads = 4;
+  struct tinfo {
+    pthread_t  thid;
+    char      *start, *end;
+    size_t     pgsize;
   };
+  void fast_zero();
+  static void * _fast_zero(void *_info);
+};
+inline void swap(mmap& a, mmap& b) { a.swap(b); }
 }
 
 #endif

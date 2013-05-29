@@ -606,25 +606,28 @@ public:
 
   ~mer_base_static() { }
 
-  static unsigned int k() { return k_; }
+  static unsigned int k(); // { return k_; }
   static unsigned int k(unsigned int k) { std::swap(k, k_); return k; }
 private:
   static unsigned int k_;
 };
 template<typename T>
 unsigned int mer_base_static<T>::k_ = 22;
+template<typename T>
+unsigned int mer_base_static<T>::k() { return k_; }
 
 typedef std::ostream_iterator<char> ostream_char_iterator;
 template<typename T, typename derived>
-std::ostream& operator<<(std::ostream& os, const mer_base<T, derived>& mer) {
-  char s[static_cast<derived>(mer).k() + 1];
+inline std::ostream& operator<<(std::ostream& os, const mer_base<T, derived>& mer) {
+  //  char s[static_cast<const derived>(mer).k() + 1];
+  char s[mer.k() + 1];
   mer.to_str(s);
   return os << s;
 }
 
 typedef std::istream_iterator<char> istream_char_iterator;
 template<typename T, typename derived>
-std::istream& operator>>(std::istream& is, mer_base<T, derived>& mer) {
+inline std::istream& operator>>(std::istream& is, mer_base<T, derived>& mer) {
   if(is.flags() & std::ios::skipws) {
     while(isspace(is.peek())) { is.ignore(1); }
   }

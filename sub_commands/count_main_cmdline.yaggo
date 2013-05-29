@@ -70,9 +70,9 @@ option("upper-count", "U") {
 # option("stats") {
 #   description "Print stats"
 #   c_string; typestr "Stats file" }
-# option("no-write", "w") {
-#   description "Don't write database"
-#   flag; off; hidden }
+option("no-write") {
+  description "Don't write database"
+  flag; off; hidden }
 # option("measure", "u") {
 #   description "Write usage statistics"
 #   flag; off; hidden }
