@@ -5,8 +5,8 @@ man1_MANS = doc/jellyfish.man
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = jellyfish-2.0.pc
 
-AM_LDFLAGS = -lpthread
-AM_CPPFLAGS = -Wall -Wnon-virtual-dtor -I$(top_srcdir) -I$(top_srcdir)/include -g -O3
+AM_LDFLAGS = -lpthread # $(VALGRIND_LIBS)
+AM_CPPFLAGS = -Wall -Wnon-virtual-dtor -I$(top_srcdir) -I$(top_srcdir)/include -g -O3 $(VALGRIND_CFLAGS)
 AM_CXXFLAGS = $(ALL_CXXFLAGS) -g -O3
 
 noinst_HEADERS = $(YAGGO_SOURCES)
@@ -29,7 +29,7 @@ YAGGO_SOURCES = # Append all file to be built by yaggo
 # What to build
 bin_PROGRAMS += bin/jellyfish
 lib_LTLIBRARIES = libjellyfish-2.0.la
-LDADD = libjellyfish-2.0.la
+LDADD = libjellyfish-2.0.la # $(VALGRIND_LIBS)
 # check_PROGRAMS =  bin/test_double_fifo_input	\
 #                  bin/test_read_parser
 check_PROGRAMS = bin/generate_sequence
@@ -205,7 +205,8 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_mapped_file.cc			\
 	               unit_tests/test_int128.cc			\
 	               unit_tests/test_mer_dna_bloom_counter.cc		\
-	               unit_tests/test_whole_sequence_parser.cc
+	               unit_tests/test_whole_sequence_parser.cc		\
+	               unit_tests/test_allocators_mmap.cc
 bin_test_all_SOURCES += jellyfish/backtrace.cc
 
 bin_test_all_CPPFLAGS = -Dprotected=public -Dprivate=public -DJSON_IS_AMALGAMATION=1

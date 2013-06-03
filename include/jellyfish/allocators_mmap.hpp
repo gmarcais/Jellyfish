@@ -40,10 +40,7 @@ public:
     rhs.ptr  = MAP_FAILED;
     rhs.size = 0;
   }
-  ~mmap() {
-    if(ptr != MAP_FAILED)
-      ::munmap(ptr, size);
-  }
+  ~mmap() { free(); }
 
   mmap& operator=(mmap&& rhs) {
     swap(rhs);
@@ -57,6 +54,7 @@ public:
 
   void *get_ptr() const { return ptr != MAP_FAILED ? ptr : NULL; }
   size_t get_size() const { return size; }
+  void free();
   void *realloc(size_t new_size);
   int lock() { return mlock(ptr, size); }
   int unlock() { return munlock(ptr, size); }

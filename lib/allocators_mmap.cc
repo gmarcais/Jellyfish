@@ -15,16 +15,30 @@
 */
 
 #include <config.h>
+#include <assert.h>
 #include <jellyfish/allocators_mmap.hpp>
 
 #ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS MAP_ANON
 #endif
 
+#ifdef HAVE_VALGRIND
+#include <valgrind.h>
+// TODO: this should really come from the valgrind switch
+// --redzone-size. Don't know how to get access to that yet!
+static size_t redzone_size = 128;
+#endif
+
 void *allocators::mmap::realloc(size_t new_size) {
   void *new_ptr = MAP_FAILED;
+  const size_t asize = new_size
+#ifdef HAVE_VALGRIND
+    + 2 * redzone_size
+#endif
+    ;
+
   if(ptr == MAP_FAILED) {
-    new_ptr     = ::mmap(NULL, new_size, PROT_WRITE|PROT_READ,
+    new_ptr     = ::mmap(NULL, asize, PROT_WRITE|PROT_READ,
 			 MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   }
   // mremap is Linux specific
@@ -36,6 +50,15 @@ void *allocators::mmap::realloc(size_t new_size) {
 #endif
   if(new_ptr == MAP_FAILED)
     return NULL;
+
+#ifdef HAVE_VALGRIND
+  new_ptr = (char*)new_ptr + redzone_size;
+  if(ptr == MAP_FAILED)
+    VALGRIND_MALLOCLIKE_BLOCK(new_ptr, new_size, redzone_size, 1);
+  // TODO: resize not yet supported
+#endif
+
+
   size = new_size;
   ptr  = new_ptr;
   return ptr;
@@ -69,4 +92,17 @@ void * allocators::mmap::_fast_zero(void *_info) {
     *cptr = 0;
 
   return NULL;
+}
+
+void allocators::mmap::free() {
+  if(ptr == MAP_FAILED)
+    return;
+#ifdef HAVE_VALGRIND
+  VALGRIND_FREELIKE_BLOCK(ptr, redzone_size);
+  ptr   = (char*)ptr - redzone_size;
+  size += 2 * redzone_size;
+#endif
+  assert(::munmap(ptr, size) == 0);
+  ptr  = MAP_FAILED;
+  size = 0;
 }
