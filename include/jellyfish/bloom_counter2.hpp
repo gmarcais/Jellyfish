@@ -21,6 +21,7 @@
 #include <assert.h>
 #include <math.h>
 #include <limits.h>
+#include <jellyfish/mapped_file.hpp>
 #include <jellyfish/allocators_mmap.hpp>
 #include <jellyfish/divisor.hpp>
 #include <jellyfish/atomic_gcc.hpp>
@@ -36,16 +37,12 @@ struct hash_pair { };
 
 /* Bloom counter with 3 values: 0, 1 or 2. It is thread safe and lock free.
  */
-template<typename Key, typename HashPair = hash_pair<Key>, typename atomic_t = ::atomic::gcc, typename mem_block_t = ::allocators::mmap>
-class bloom_counter2 {
-  static const double LOG2;
-  static const double LOG2_SQ;
-
+template<typename Key, typename HashPair = hash_pair<Key>, typename atomic_t = ::atomic::gcc>
+class bloom_counter2_base {
   // The number of bits in the structure, previously known as m_, is
   // know stored as d_.d()
   const jflib::divisor64 d_;
   const unsigned long    k_;
-  mem_block_t            mem_block_;
   unsigned char * const  data_;
   HashPair               hash_fns_;
   atomic_t               atomic_;
@@ -55,6 +52,7 @@ class bloom_counter2 {
     unsigned char* pos;
   };
 
+protected:
   static size_t nb_bytes(size_t l) {
     return l / 5 + (l % 5 != 0);
   }
@@ -62,45 +60,23 @@ class bloom_counter2 {
 public:
   typedef Key key_type;
 
-  bloom_counter2(double fp, size_t n, const HashPair& fns = HashPair()) :
-    d_(n * (size_t)lrint(-log(fp) / LOG2_SQ)),
-    k_(lrint(-log(fp) / LOG2)),
-    mem_block_(nb_bytes(d_.d())),
-    data_((unsigned char*)mem_block_.get_ptr()),
-    hash_fns_(fns)
-  { }
-
-  bloom_counter2(size_t m, unsigned long k, const HashPair& fns = HashPair()) :
-    d_(m), k_(k),
-    mem_block_(nb_bytes(d_.d())),
-    data_((unsigned char*)mem_block_.get_ptr()),
-    hash_fns_(fns) { }
-
-  bloom_counter2(size_t m, unsigned long k, unsigned char* ptr, const HashPair& fns = HashPair()) :
+  bloom_counter2_base(size_t m, unsigned long k, unsigned char* ptr, const HashPair& fns = HashPair()) :
     d_(m), k_(k), data_(ptr), hash_fns_(fns) { }
 
-  bloom_counter2(size_t m, unsigned long k, std::istream& is, const HashPair& fns = HashPair()) :
-    d_(m), k_(k), mem_block_(nb_bytes(d_.d())), data_((unsigned char*)mem_block_.get_ptr()),
-    hash_fns_(fns)
-  {
-    is.read((char*)data_, nb_bytes(d_.d()));
-  }
-  bloom_counter2(const bloom_counter2& rhs) = delete;
-  bloom_counter2(bloom_counter2&& rhs) :
-    d_(rhs.d_), k_(rhs.k_), mem_block_(std::move(rhs.mem_block_)), data_((unsigned char*)rhs.mem_block_.get_ptr()),
-    hash_fns_(std::move(rhs.hash_fns_))
-  {
-  }
+  bloom_counter2_base(const bloom_counter2_base& rhs) = delete;
+  bloom_counter2_base(bloom_counter2_base&& rhs) :
+    d_(rhs.d_), k_(rhs.k_), data_(data_), hash_fns_(std::move(rhs.hash_fns_)) { }
 
 
   void write_bits(std::ostream& out) {
-    out.write((char*)data_, mem_block_.get_size());
+    out.write((char*)data_, nb_bytes(d_.d()));
   }
 
   // Number of hash functions
   unsigned long k() const { return k_; }
   // Size of bit vector
-  size_t m() const { return d_.d() ; }
+  size_t m() const { return d_.d(); }
+  const HashPair& hash_functions() const { return hash_fns_; }
 
   // Insert key k. Returns previous value of k
   unsigned int insert(const Key &k) {
@@ -229,11 +205,11 @@ public:
 
   // Limited std::map interface compatibility
   class element_proxy {
-    bloom_counter2& bc_;
+    bloom_counter2_base& bc_;
     const Key&      k_;
 
   public:
-    element_proxy(bloom_counter2& bc, const Key& k) : bc_(bc), k_(k) { }
+    element_proxy(bloom_counter2_base& bc, const Key& k) : bc_(bc), k_(k) { }
 
     unsigned int operator++() {
       unsigned int res = bc_.insert(k_);
@@ -246,11 +222,11 @@ public:
   };
 
   class const_element_proxy {
-    const bloom_counter2& bc_;
+    const bloom_counter2_base& bc_;
     const Key&            k_;
 
   public:
-    const_element_proxy(const bloom_counter2& bc, const Key& k) : bc_(bc), k_(k) { }
+    const_element_proxy(const bloom_counter2_base& bc, const Key& k) : bc_(bc), k_(k) { }
 
     unsigned int operator*() const { return bc_.check(k_); }
     operator unsigned int() const { return bc_.check(k_); }
@@ -260,10 +236,76 @@ public:
   const_element_proxy operator[](const Key& k) const { return const_element_proxy(*this, k); }
 };
 
+template<typename Key, typename HashPair = hash_pair<Key>, typename atomic_t = ::atomic::gcc,
+         typename mem_block_t = allocators::mmap>
+class bloom_counter2:
+    protected mem_block_t,
+    public bloom_counter2_base<Key, HashPair, atomic_t>
+{
+  typedef bloom_counter2_base<Key, HashPair, atomic_t> super;
+  static const double LOG2;
+  static const double LOG2_SQ;
+
+  static size_t opt_m(const double fp, const size_t n) {
+    return n * (size_t)lrint(-log(fp) / LOG2_SQ);
+  }
+  static unsigned long opt_k(const double fp) {
+    return lrint(-log(fp) / LOG2);
+  }
+
+public:
+  typedef typename super::key_type key_type;
+
+  bloom_counter2(const double fp, const size_t n, const HashPair& fns = HashPair()) :
+    mem_block_t(super::nb_bytes(opt_m(fp, n))),
+    super(opt_m(fp, n), opt_k(fp), (unsigned char*)mem_block_t::get_ptr(), fns)
+  { }
+
+  bloom_counter2(size_t m, unsigned long k, const HashPair& fns = HashPair()) :
+    mem_block_t(super::nb_bytes(m)),
+    super(m, k, (unsigned char*)mem_block_t::get_ptr(), fns)
+  { }
+
+  bloom_counter2(size_t m, unsigned long k, std::istream& is, const HashPair& fns = HashPair()) :
+    mem_block_t(super::nb_bytes(m)),
+    super(m, k, (unsigned char*)mem_block_t::get_ptr(), fns)
+  {
+    is.read((char*)mem_block_t::get_ptr(), mem_block_t::get_size());
+  }
+
+  bloom_counter2(const bloom_counter2& rhs) = delete;
+  bloom_counter2(bloom_counter2&& rhs) :
+    mem_block_t(std::move(rhs)),
+    super(std::move(rhs))
+  { }
+};
+
 template<typename Key, typename HashPair, typename atomic_t, typename mem_block_t>
 const double bloom_counter2<Key, HashPair, atomic_t, mem_block_t>::LOG2 = 0.6931471805599453;
 template<typename Key, typename HashPair, typename atomic_t, typename mem_block_t>
 const double bloom_counter2<Key, HashPair, atomic_t, mem_block_t>::LOG2_SQ = 0.4804530139182014;
+
+template<typename Key, typename HashPair = hash_pair<Key>, typename atomic_t = ::atomic::gcc>
+class bloom_counter2_file :
+    protected mapped_file,
+    public bloom_counter2_base<Key, HashPair, atomic_t>
+{
+  typedef bloom_counter2_base<Key, HashPair, atomic_t> super;
+public:
+  typedef typename super::key_type key_type;
+
+  bloom_counter2_file(size_t m, unsigned long k, const char* path, const HashPair& fns = HashPair(), off_t offset = 0) :
+    mapped_file(path),
+    super(m, k, (unsigned char*)mapped_file::base() + offset, fns)
+  { }
+
+  bloom_counter2_file(const bloom_counter2_file& rhs) = delete;
+  bloom_counter2_file(bloom_counter2_file&& rhs) :
+    mapped_file(std::move(rhs)),
+    super(std::move(rhs))
+  { }
+};
+
 } // namespace jellyfish {
 
 #endif // __BLOOM_COUNTER2_HPP__

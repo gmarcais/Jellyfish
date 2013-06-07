@@ -35,22 +35,26 @@ protected:
   char        *_base, *_end;
   size_t       _length;
 
-  void map(const char *filename) {
-    int fd = open(filename, O_RDONLY);
+  void map_(int fd) {
     struct stat stat;
-
-    if(fd < 0)
-      eraise(ErrorMMap) << "Can't open file '" << filename << "'" << err::no;
-
     if(fstat(fd, &stat) < 0)
-      eraise(ErrorMMap) << "Can't stat file '" << filename << "'" << err::no;
+      eraise(ErrorMMap) << "Can't stat file '" << _path << "'" << err::no;
 
     _length = stat.st_size;
     _base = (char *)mmap(NULL, _length, PROT_READ, MAP_PRIVATE, fd, 0);
-    if(_base == MAP_FAILED)
-      eraise(ErrorMMap) << "Can't mmap file '" << filename << "'" << err::no;
-    close(fd);
+    if(_base == MAP_FAILED) {
+      _base = 0;
+      eraise(ErrorMMap) << "Can't mmap file '" << _path << "'" << err::no;
+    }
     _end = _base + _length;
+  }
+
+  void map_(const char *filename) {
+    int fd = open(filename, O_RDONLY);
+    if(fd < 0)
+      eraise(ErrorMMap) << "Can't open file '" << filename << "'" << err::no;
+    map_(fd);
+    close(fd);
   }
 
 
@@ -60,7 +64,12 @@ public:
   explicit mapped_file(const char *filename)
   : _path(filename), _base(0), _end(0), _length(0)
   {
-    map(filename);
+    map_(filename);
+  }
+  explicit mapped_file(int fd)
+  : _path(), _base(0), _end(0), _length()
+  {
+    map_(fd);
   }
   mapped_file(mapped_file&& rhs)
   : _path(std::move(rhs._path)), _base(rhs._base), _end(rhs._end),
@@ -73,11 +82,22 @@ public:
     unmap();
   }
 
+  void map(const char* filename) {
+    unmap();
+    map_(filename);
+  }
+
+  void map(int fd) {
+    unmap();
+    map_(fd);
+  }
+
   void unmap() {
     if(!_base)
       return;
     munmap(_base, _length);
-    _base = 0;
+    _path.clear();
+    _base   = 0;
     _length = 0;
   }
 
@@ -131,7 +151,7 @@ public:
     return unused;
   }
 };
-void swap(mapped_file& a, mapped_file& b) { a.swap(b); }
+inline void swap(mapped_file& a, mapped_file& b) { a.swap(b); }
 
 // class mapped_files_t : public std::vector<mapped_file> {
 // public:

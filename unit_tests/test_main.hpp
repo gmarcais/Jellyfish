@@ -12,10 +12,14 @@ inline uint64_t random_bits() { return random_bits(64); }
 
 struct file_unlink {
   std::string path;
-  file_unlink(const char* s) : path(s) { }
-  file_unlink(const std::string& s) : path(s) { }
+  bool do_unlink;
+  explicit file_unlink(const char* s, bool d = true) : path(s), do_unlink(d) { }
+  explicit file_unlink(const std::string& s, bool d = true) : path(s), do_unlink(d) { }
 
-  ~file_unlink() { unlink(path.c_str()); }
+  ~file_unlink() {
+    if(do_unlink)
+      unlink(path.c_str());
+  }
 };
 
 #endif /* __TEST_MAIN_HPP__ */
