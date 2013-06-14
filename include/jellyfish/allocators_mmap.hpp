@@ -27,18 +27,17 @@
 
 namespace allocators {
 class mmap {
-  void   *ptr;
-  size_t  size;
+  void   *ptr_;
+  size_t  size_;
 
 public:
-  mmap() : ptr(MAP_FAILED), size(0) {}
-  explicit mmap(size_t _size) : ptr(MAP_FAILED), size(0) {
+  mmap() : ptr_(MAP_FAILED), size_(0) {}
+  explicit mmap(size_t _size) : ptr_(MAP_FAILED), size_(0) {
     realloc(_size);
-    fast_zero();
   }
-  mmap(mmap&& rhs) : ptr(rhs.ptr), size(rhs.size) {
-    rhs.ptr  = MAP_FAILED;
-    rhs.size = 0;
+  mmap(mmap&& rhs) : ptr_(rhs.ptr_), size_(rhs.size_) {
+    rhs.ptr_  = MAP_FAILED;
+    rhs.size_ = 0;
   }
   ~mmap() { free(); }
 
@@ -48,16 +47,16 @@ public:
   }
 
   void swap(mmap& rhs) {
-    std::swap(ptr, rhs.ptr);
-    std::swap(size, rhs.size);
+    std::swap(ptr_, rhs.ptr_);
+    std::swap(size_, rhs.size_);
   }
 
-  void *get_ptr() const { return ptr != MAP_FAILED ? ptr : NULL; }
-  size_t get_size() const { return size; }
+  void *get_ptr() const { return ptr_ != MAP_FAILED ? ptr_ : NULL; }
+  size_t get_size() const { return size_; }
   void free();
   void *realloc(size_t new_size);
-  int lock() { return mlock(ptr, size); }
-  int unlock() { return munlock(ptr, size); }
+  int lock() { return mlock(ptr_, size_); }
+  int unlock() { return munlock(ptr_, size_); }
 
   // Return a a number of bytes which is a number of whole pages at
   // least as large as size.

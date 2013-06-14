@@ -259,17 +259,26 @@ public:
   bloom_counter2(const double fp, const size_t n, const HashPair& fns = HashPair()) :
     mem_block_t(super::nb_bytes(opt_m(fp, n))),
     super(opt_m(fp, n), opt_k(fp), (unsigned char*)mem_block_t::get_ptr(), fns)
-  { }
+  {
+    if(!mem_block_t::get_ptr())
+      throw std::runtime_error("Failed to allocate " + std::to_string(super::nb_bytes(opt_m(fp, n))) + " bytes of memory for bloom_counter");
+  }
 
   bloom_counter2(size_t m, unsigned long k, const HashPair& fns = HashPair()) :
     mem_block_t(super::nb_bytes(m)),
     super(m, k, (unsigned char*)mem_block_t::get_ptr(), fns)
-  { }
+  {
+    if(!mem_block_t::get_ptr())
+      throw std::runtime_error("Failed to allocate " + std::to_string(super::nb_bytes(m)) + " bytes of memory for bloom_counter");
+  }
 
   bloom_counter2(size_t m, unsigned long k, std::istream& is, const HashPair& fns = HashPair()) :
     mem_block_t(super::nb_bytes(m)),
     super(m, k, (unsigned char*)mem_block_t::get_ptr(), fns)
   {
+    if(!mem_block_t::get_ptr())
+      throw std::runtime_error("Failed to allocate " + std::to_string(super::nb_bytes(m)) + " bytes of memory for bloom_counter");
+
     is.read((char*)mem_block_t::get_ptr(), mem_block_t::get_size());
   }
 

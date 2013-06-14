@@ -37,7 +37,7 @@ void *allocators::mmap::realloc(size_t new_size) {
 #endif
     ;
 
-  if(ptr == MAP_FAILED) {
+  if(ptr_ == MAP_FAILED) {
     new_ptr     = ::mmap(NULL, asize, PROT_WRITE|PROT_READ,
 			 MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   }
@@ -45,7 +45,7 @@ void *allocators::mmap::realloc(size_t new_size) {
   // TODO: We must do something if it is not supported
 #ifdef MREMAP_MAYMOVE
   else {
-    new_ptr = ::mremap(ptr, size, new_size, MREMAP_MAYMOVE);
+    new_ptr = ::mremap(ptr_, size_, new_size, MREMAP_MAYMOVE);
   }
 #endif
   if(new_ptr == MAP_FAILED)
@@ -53,15 +53,18 @@ void *allocators::mmap::realloc(size_t new_size) {
 
 #ifdef HAVE_VALGRIND
   new_ptr = (char*)new_ptr + redzone_size;
-  if(ptr == MAP_FAILED)
+  if(ptr_ == MAP_FAILED)
     VALGRIND_MALLOCLIKE_BLOCK(new_ptr, new_size, redzone_size, 1);
   // TODO: resize not yet supported
 #endif
 
 
-  size = new_size;
-  ptr  = new_ptr;
-  return ptr;
+  size_ = new_size;
+  ptr_  = new_ptr;
+
+  fast_zero();
+
+  return ptr_;
 }
 
 size_t allocators::mmap::round_to_page(size_t _size) {
@@ -72,11 +75,11 @@ size_t allocators::mmap::round_to_page(size_t _size) {
 void allocators::mmap::fast_zero() {
   tinfo  info[nb_threads];
   size_t pgsize   = round_to_page(1);
-  size_t nb_pages = size / pgsize + (size % pgsize != 0);
+  size_t nb_pages = size_ / pgsize + (size_ % pgsize != 0);
 
   for(int i = 0; i < nb_threads; i++) {
-    info[i].start = (char *)ptr + pgsize * ((i * nb_pages) / nb_threads);
-    info[i].end   = (char *)ptr + pgsize * (((i + 1) * nb_pages) / nb_threads);
+    info[i].start = (char *)ptr_ + pgsize * ((i * nb_pages) / nb_threads);
+    info[i].end   = (char *)ptr_ + pgsize * (((i + 1) * nb_pages) / nb_threads);
 
     info[i].pgsize = pgsize;
     pthread_create(&info[i].thid, NULL, _fast_zero, &info[i]);
@@ -95,14 +98,14 @@ void * allocators::mmap::_fast_zero(void *_info) {
 }
 
 void allocators::mmap::free() {
-  if(ptr == MAP_FAILED)
+  if(ptr_ == MAP_FAILED)
     return;
 #ifdef HAVE_VALGRIND
-  VALGRIND_FREELIKE_BLOCK(ptr, redzone_size);
-  ptr   = (char*)ptr - redzone_size;
-  size += 2 * redzone_size;
+  VALGRIND_FREELIKE_BLOCK(ptr_, redzone_size);
+  ptr_   = (char*)ptr_ - redzone_size;
+  size_ += 2 * redzone_size;
 #endif
-  assert(::munmap(ptr, size) == 0);
-  ptr  = MAP_FAILED;
-  size = 0;
+  assert(::munmap(ptr_, size_) == 0);
+  ptr_  = MAP_FAILED;
+  size_ = 0;
 }
