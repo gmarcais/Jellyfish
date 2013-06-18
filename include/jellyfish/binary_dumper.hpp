@@ -114,6 +114,98 @@ public:
     return is_.good();
   }
 };
+
+template<typename Key, typename Val>
+class binary_query_base {
+  const char* const             data_;
+  const unsigned int            val_len_; // In bytes
+  const unsigned int            key_len_; // In bytes
+  const RectangularBinaryMatrix m_;
+  const size_t                  mask_;
+  const size_t                  record_len_;
+  const size_t                  last_id_;
+  Key                           first_key_, last_key_;
+  mutable Key                   mid_key_;
+  uint64_t                      first_pos_, last_pos_;
+
+public:
+  // key_len passed in bits
+  binary_query_base(const char* data, unsigned int key_len, unsigned int val_len, const RectangularBinaryMatrix& m, size_t mask,
+                    size_t size) :
+    data_(data),
+    val_len_(val_len),
+    key_len_(key_len / 8 + (key_len % 8 != 0)),
+    m_(m),
+    mask_(mask),
+    record_len_(val_len + key_len_),
+    last_id_(size / record_len_),
+    first_key_(key_len / 2),
+    last_key_(key_len / 2),
+    mid_key_(key_len / 2)
+  {
+    if(size % record_len_ != 0)
+      eraise(std::length_error) << "Size of database (" << size << ") must be a multiple of the length of a record ("
+                                << record_len_ << ")";
+    key_at(0, first_key_);
+    first_pos_ = key_pos(first_key_);
+    key_at(last_id_ - 1, last_key_);
+    last_pos_  = key_pos(last_key_);
+  }
+
+  bool val_id(const Key& key,  Val* res, uint64_t* id) const {
+    if(key == first_key_) {
+      val_at(0, res);
+      *id = 0;
+      return true;
+    }
+    if(key == last_key_) {
+      val_at(last_id_ - 1, res);
+      *id = last_id_ - 1;
+      return true;
+    }
+    const uint64_t pos = key_pos(key);
+    if(pos < first_pos_ || pos > last_pos_)
+      return false;
+    uint64_t first = 0, last = last_id_;
+    while(first < last - 1) {
+      *id = (first + last) / 2;
+      key_at(*id, mid_key_);
+      if(key == mid_key_) {
+        val_at(*id, res);
+        return true;
+      }
+      uint64_t mid_pos = key_pos(mid_key_);
+      if(mid_pos > pos || (mid_pos == pos && mid_key_ > key))
+        last = *id;
+      else
+        first = *id;
+    }
+    return false;
+  }
+
+  Val operator[](const Key& key) const {
+    Val res;
+    uint64_t id;
+    if(!val_id(key, &res, &id))
+      return 0;
+    return res;
+  }
+
+  inline Val check(const Key& key) const { return (*this)[key]; }
+
+protected:
+  void key_at(size_t id, Key& key) const {
+    memcpy(key.data__(), data_ + id * record_len_, key_len_);
+    key.clean_msw();
+  }
+  void val_at(size_t id, Val* val) const {
+    *val = 0;
+    memcpy(val, data_ + id * record_len_ + key_len_, val_len_);
+  }
+  uint64_t key_pos(const Key& key) const {
+    return m_.times(key) & mask_;
+  }
+};
 }
 
 #endif /* __JELLYFISH_BINARY_DUMPER_HPP__ */
