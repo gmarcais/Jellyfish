@@ -26,6 +26,7 @@
 #include <jellyfish/divisor.hpp>
 #include <jellyfish/atomic_gcc.hpp>
 #include <jellyfish/atomic_field.hpp>
+#include <jellyfish/err.hpp>
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -261,7 +262,7 @@ public:
     super(opt_m(fp, n), opt_k(fp), (unsigned char*)mem_block_t::get_ptr(), fns)
   {
     if(!mem_block_t::get_ptr())
-      throw std::runtime_error("Failed to allocate " + std::to_string(super::nb_bytes(opt_m(fp, n))) + " bytes of memory for bloom_counter");
+      eraise(std::runtime_error) << "Failed to allocate " << super::nb_bytes(opt_m(fp, n)) << " bytes of memory for bloom_counter";
   }
 
   bloom_counter2(size_t m, unsigned long k, const HashPair& fns = HashPair()) :
@@ -269,7 +270,7 @@ public:
     super(m, k, (unsigned char*)mem_block_t::get_ptr(), fns)
   {
     if(!mem_block_t::get_ptr())
-      throw std::runtime_error("Failed to allocate " + std::to_string(super::nb_bytes(m)) + " bytes of memory for bloom_counter");
+      eraise(std::runtime_error) << "Failed to allocate " << super::nb_bytes(m) << " bytes of memory for bloom_counter";
   }
 
   bloom_counter2(size_t m, unsigned long k, std::istream& is, const HashPair& fns = HashPair()) :
@@ -277,7 +278,7 @@ public:
     super(m, k, (unsigned char*)mem_block_t::get_ptr(), fns)
   {
     if(!mem_block_t::get_ptr())
-      throw std::runtime_error("Failed to allocate " + std::to_string(super::nb_bytes(m)) + " bytes of memory for bloom_counter");
+      eraise(std::runtime_error) << "Failed to allocate " << super::nb_bytes(m) << " bytes of memory for bloom_counter";
 
     is.read((char*)mem_block_t::get_ptr(), mem_block_t::get_size());
   }

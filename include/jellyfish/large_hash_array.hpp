@@ -868,7 +868,7 @@ class array :
     public array_base<Key, word, atomic_t, array<Key, word, atomic_t, mem_block_t> >
 {
   typedef array_base<Key, word, atomic_t, array<Key, word, atomic_t, mem_block_t> > super;
-  friend super;
+  friend class array_base<Key, word, atomic_t, array<Key, word, atomic_t, mem_block_t> >;
 
 public:
   array(size_t size, // Size of hash. To be rounded up to a power of 2
