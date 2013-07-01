@@ -74,25 +74,28 @@ size_t allocators::mmap::round_to_page(size_t _size) {
 
 void allocators::mmap::fast_zero() {
   tinfo  info[nb_threads];
-  size_t pgsize   = round_to_page(1);
-  size_t nb_pages = size_ / pgsize + (size_ % pgsize != 0);
+  size_t pgsize        = round_to_page(1);
+  size_t nb_pages      = size_ / pgsize + (size_ % pgsize != 0);
+  int    total_threads = 0;
 
-  for(int i = 0; i < nb_threads; i++) {
+  for(size_t i = 0; i < (size_t)nb_threads; ++i, ++total_threads) {
     info[i].start = (char *)ptr_ + pgsize * ((i * nb_pages) / nb_threads);
-    info[i].end   = (char *)ptr_ + pgsize * (((i + 1) * nb_pages) / nb_threads);
-
+    info[i].end   = (char *)ptr_ + std::min(pgsize * (((i + 1) * nb_pages) / nb_threads), size_);
     info[i].pgsize = pgsize;
-    pthread_create(&info[i].thid, NULL, _fast_zero, &info[i]);
+    if(pthread_create(&info[i].thid, NULL, _fast_zero, &info[i]))
+      break;
   }
-  for(int i = 0; i < nb_threads; i++)
+
+  for(int i = 0; i < total_threads; i++)
     pthread_join(info[i].thid, NULL);
 }
 
 void * allocators::mmap::_fast_zero(void *_info) {
   tinfo *info = (tinfo *)_info;
 
-  for(char *cptr = info->start; cptr < info->end; cptr += info->pgsize)
+  for(char *cptr = info->start; cptr < info->end; cptr += info->pgsize) {
     *cptr = 0;
+  }
 
   return NULL;
 }
