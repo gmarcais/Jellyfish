@@ -20,7 +20,7 @@ echo "Count k-mers on big data set" && \
     ([ -f seq30g.fa ] || ${DIR}/generate_sequence -v -o seq30g -r 1000 -s 1602176487 30000000000) &&
     $JF count -m 16 -s 4000000000 -o ${pref}_16.jf -c 4 -p 253 -C --out-counter-len 2 \
     -t $nCPUs $JFPARAM seq30g.fa && \
-    $JF histo ${pref}_16v.jf > ${pref}_16.histo && \
+    $JF histo ${pref}_16.jf > ${pref}_16.histo && \
     check ${pref}.md5sum
 RET=$?
 
