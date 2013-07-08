@@ -56,7 +56,7 @@ void query_from_cmdline(std::vector<const char*> mers, const Database& db, std::
       m = *it;
       if(args.canonical_flag)
         m.canonicalize();
-      out << m << " " << db.check(m);
+      out << m << " " << db.check(m) << "\n";
     } catch(std::length_error e) {
       std::cerr << "Invalid mer '" << *it << "'\n";
     }
