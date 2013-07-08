@@ -144,8 +144,9 @@ TEST_EXTENSIONS = .sh
 SH_LOG_COMPILER = /bin/sh
 AM_SH_LOG_FLAGS =
 
-TESTS = tests/generate_sequence.sh tests/parallel_hashing.sh	\
-        tests/merge.sh tests/bloom_filter.sh
+TESTS = tests/generate_sequence.sh tests/parallel_hashing.sh		\
+        tests/merge.sh tests/bloom_filter.sh tests/generate_big.sh	\
+        tests/big.sh
 # TESTS = tests/generate_sequence.sh tests/serial_hashing.sh		\
 #         tests/parallel_hashing.sh tests/serial_direct_indexing.sh	\
 #         tests/parallel_direct_indexing.sh tests/raw_hash.sh		\
@@ -178,7 +179,6 @@ tests/bloom_filter.log: tests/generate_sequence.log
 ##tests/from_stream_fastq.log: tests/generate_fastq_sequence.log
 tests/merge.log: tests/generate_sequence.log
 tests/min_qual.log: tests/generate_fastq_sequence.log
-tests/parsers.log: tests/generate_sequence.log
 
 ##############
 # Unit tests #
