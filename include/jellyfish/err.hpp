@@ -28,86 +28,99 @@
 
 namespace jellyfish {
 namespace err {
-  class code {
-    int _code;
-  public:
-    explicit code(int c) : _code(c) {}
-    int get_code() const { return _code; }
-  };
+class code {
+  int _code;
+public:
+  explicit code(int c) : _code(c) {}
+  int get_code() const { return _code; }
+};
 
-  class no_t {
-  public:
-    no_t() {}
-    static void write(std::ostream &os, int e) {
-      char err_str[4096];
-      strerror_r(e, err_str, sizeof(err_str));
-      os << ": " << err_str;
-    }
-  };
-  static const no_t no;
-  std::ostream &operator<<(std::ostream &os, const err::no_t &x);
+class no_t {
+public:
+  no_t() {}
+  static void write(std::ostream &os, int e) {
+    char  err_str[1024];
+    char* str;
 
-  class substr {
-    const char  *_s;
-    const size_t _l;
-  public:
-    substr(const char *s, size_t len) : _s(s), _l(len) {}
-    friend std::ostream &operator<<(std::ostream &os, const substr &ss);
-  };
+#if (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && ! _GNU_SOURCE
+    int err = strerror_r(e, err_str, sizeof(err_str));
+    if(err)
+      strcpy(err_str, "error");
+    str = err_str;
+#else
+    str = strerror_r(e, err_str, sizeof(err_str));
+    if(!str) { // Should never happen
+      strcpy(err_str, "error");
+      str = err_str;
+    }
+#endif
+    os << ": " << str;
+  }
+};
+static const no_t no;
+std::ostream &operator<<(std::ostream &os, const err::no_t &x);
 
-  class die_t {
-    int _code;
-    int _errno;
-  public:
-    die_t() : _code(1), _errno(errno) {}
-    explicit die_t(int c) : _code(c), _errno(errno) {}
-    ~die_t() {
-      std::cerr << std::endl;
-      exit(_code);
-    }
+class substr {
+  const char  *_s;
+  const size_t _l;
+public:
+  substr(const char *s, size_t len) : _s(s), _l(len) {}
+  friend std::ostream &operator<<(std::ostream &os, const substr &ss);
+};
 
-    die_t & operator<<(const code &x) {
-      _code = x.get_code();
-      return *this;
-    }
-    die_t & operator<<(const no_t &x) {
-      x.write(std::cerr, _errno);
-      return *this;
-    }
-    die_t & operator<<(const char *a[]) {
-      for(int i = 0; a[i]; i++)
-        std::cerr << (i ? "\n" : "") << a[i];
-      return *this;
-    }
-    die_t & operator<<(const std::exception &e) {
-      std::cerr << e.what();
-      return *this;
-    }
-    template<typename T>
-    die_t & operator<<(const T &x) {
-      std::cerr << x;
-      return *this;
-    }
-  };
+class die_t {
+  int _code;
+  int _errno;
+public:
+  die_t() : _code(1), _errno(errno) {}
+  explicit die_t(int c) : _code(c), _errno(errno) {}
+  ~die_t() {
+    std::cerr << std::endl;
+    exit(_code);
+  }
 
-  template<typename err_t>
-  class raise_t {
-    int                _errno;
-    std::ostringstream oss;
-  public:
-    raise_t() : _errno(errno) {}
-    ~raise_t() { throw err_t(oss.str()); }
+  die_t & operator<<(const code &x) {
+    _code = x.get_code();
+    return *this;
+  }
+  die_t & operator<<(const no_t &x) {
+    x.write(std::cerr, _errno);
+    return *this;
+  }
+  die_t & operator<<(const char *a[]) {
+    for(int i = 0; a[i]; i++)
+      std::cerr << (i ? "\n" : "") << a[i];
+    return *this;
+  }
+  die_t & operator<<(const std::exception &e) {
+    std::cerr << e.what();
+    return *this;
+  }
+  template<typename T>
+  die_t & operator<<(const T &x) {
+    std::cerr << x;
+    return *this;
+  }
+};
 
-    raise_t & operator<<(const no_t &x) {
-      x.write(oss, _errno);
-      return *this;
-    }
-    template<typename T>
-    raise_t & operator<<(const T &x) {
-      oss << x;
-      return *this;
-    }
-  };
+template<typename err_t>
+class raise_t {
+  int                _errno;
+  std::ostringstream oss;
+public:
+  raise_t() : _errno(errno) {}
+  ~raise_t() { throw err_t(oss.str()); }
+
+  raise_t & operator<<(const no_t &x) {
+    x.write(oss, _errno);
+    return *this;
+  }
+  template<typename T>
+  raise_t & operator<<(const T &x) {
+    oss << x;
+    return *this;
+  }
+};
 } } // namespace jellyfish { namespace err {
 
 

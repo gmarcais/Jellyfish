@@ -1,4 +1,4 @@
-AC_INIT([jellyfish], [2.0.0beta5], [gmarcais@umd.edu])
+AC_INIT([jellyfish], [2.0.0beta6], [gmarcais@umd.edu])
 AC_CANONICAL_HOST
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([subdir-objects foreign parallel-tests color-tests])
@@ -49,6 +49,13 @@ AC_ARG_WITH([half],
 AS_IF([test "x$with_half" = "xyes"],
       [AC_DEFINE([HALF_FLOATS], [1], [Define if you use half floats for qmer counting])],
       [])
+
+# Use valgrind to check memory allocation with mmap
+AC_ARG_ENABLE([valgrind],
+              [AS_HELP_STRING([--enable-valgrind], [Instrument mmap memory allocation with valgrind])])
+AS_IF([test "x$enable_valgrind" = xyes],
+      [AC_DEFINE([HAVE_VALGRIND], [1], [Define is using Valgrind])]
+      [PKG_CHECK_MODULES([VALGRIND], [valgrind >= 1.8.0])])
 
 # Check that type __int128 is supported and if the
 # std::numeric_limits<__int128> specialization exists

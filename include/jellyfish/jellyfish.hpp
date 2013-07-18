@@ -29,6 +29,7 @@ typedef jellyfish::text_dumper<mer_array> text_dumper;
 typedef jellyfish::text_reader<jellyfish::mer_dna, uint64_t> text_reader;
 typedef jellyfish::binary_dumper<mer_array> binary_dumper;
 typedef jellyfish::binary_reader<jellyfish::mer_dna, uint64_t> binary_reader;
+typedef jellyfish::binary_query_base<jellyfish::mer_dna, uint64_t> binary_query;
 typedef jellyfish::binary_writer<jellyfish::mer_dna, uint64_t> binary_writer;
 typedef jellyfish::text_writer<jellyfish::mer_dna, uint64_t> text_writer;
 

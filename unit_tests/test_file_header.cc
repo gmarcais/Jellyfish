@@ -66,6 +66,7 @@ TEST(FileHeader, WriteRead) {
 
   file_header hr;
   EXPECT_TRUE(hr.read(is));
+  EXPECT_EQ(is.tellg(), hr.offset());
   EXPECT_EQ(0, is.tellg() % 8);
   EXPECT_EQ(8, hr.alignment());
   EXPECT_EQ(random_size, hr.size());

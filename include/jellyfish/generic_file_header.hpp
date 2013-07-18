@@ -45,7 +45,8 @@ namespace jellyfish {
 class generic_file_header {
 protected:
   static const int MAX_HEADER_DIGITS = 9;
-  Json::Value root_;
+  Json::Value      root_;
+  size_t           offset_;     // Nb of bytes past header
 
   struct buffer {
     char* data;
@@ -133,6 +134,7 @@ public:
     if(hlen < 2)
       return false;
 
+    offset_ = MAX_HEADER_DIGITS + hlen;
     buffer hbuf(hlen);
     is.read(hbuf.data, hlen);
     if(!is.good())
@@ -159,6 +161,7 @@ public:
   std::string operator[](const std::string& key) { return root_.get(key, "").asString(); }
   std::string operator[](const char* key) { return root_.get(key, "").asString(); }
   int alignment() const { return std::max(0, root_.get("alignment", 0).asInt()); }
+  size_t offset() const { return offset_; }
 
   std::vector<std::string> cmdline() const {
     std::vector<std::string> res;

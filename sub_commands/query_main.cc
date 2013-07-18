@@ -24,6 +24,7 @@
 #include <jellyfish/stream_iterator.hpp>
 #include <jellyfish/mer_dna_bloom_counter.hpp>
 #include <jellyfish/fstream_default.hpp>
+#include <jellyfish/jellyfish.hpp>
 #include <sub_commands/query_main_cmdline.hpp>
 
 using jellyfish::mer_dna;
@@ -34,29 +35,32 @@ typedef jellyfish::mer_iterator<sequence_parser, mer_dna> mer_iterator;
 
 static query_main_cmdline args;
 
-mer_dna_bloom_counter query_load_bloom_filter(const char* path) {
-  std::ifstream in(path, std::ios::in|std::ios::binary);
-  jellyfish::file_header header(in);
-  if(!in.good())
-    die << "Failed to parse bloom filter file '" << path << "'";
-  if(header.format() != "bloomcounter")
-    die << "Invalid format '" << header.format() << "'. Expected 'bloomcounter'";
-  mer_dna::k(header.key_len() / 2);
-  jellyfish::hash_pair<mer_dna> fns(header.matrix(1), header.matrix(2));
-  mer_dna_bloom_counter res(header.size(), header.nb_hashes(), in, fns);
-  if(!in.good())
-    die << "Bloom filter file is truncated";
-  in.close();
-  return res;
-}
+// mer_dna_bloom_counter query_load_bloom_filter(const char* path) {
+//   return res;
+// }
 
-template<typename PathIterator>
-void query_from_sequence(PathIterator file_begin, PathIterator file_end, const mer_dna_bloom_counter& filter,
+template<typename PathIterator, typename Database>
+void query_from_sequence(PathIterator file_begin, PathIterator file_end, const Database& db,
                          std::ostream& out) {
   sequence_parser parser(mer_dna::k(), 3, 4096, jellyfish::stream_iterator<PathIterator>(file_begin, file_end),
                          jellyfish::stream_iterator<PathIterator>());
-  for(mer_iterator mers(parser, args.canonical_flag) ; mers; ++mers)
-    out << *mers << " " << filter.check(*mers) << "\n";
+  for(mer_iterator mers(parser, args.canonical_flag); mers; ++mers)
+    out << *mers << " " << db.check(*mers) << "\n";
+}
+
+template<typename Database>
+void query_from_cmdline(std::vector<const char*> mers, const Database& db, std::ostream& out) {
+  mer_dna m;
+  for(auto it = mers.cbegin(); it != mers.cend(); ++it) {
+    try {
+      m = *it;
+      if(args.canonical_flag)
+        m.canonicalize();
+      out << m << " " << db.check(m) << "\n";
+    } catch(std::length_error e) {
+      std::cerr << "Invalid mer '" << *it << "'\n";
+    }
+  }
 }
 
 int query_main(int argc, char *argv[])
@@ -67,18 +71,27 @@ int query_main(int argc, char *argv[])
   if(!out.good())
     die << "Error opening output file '" << args.output_arg << "'";
 
-  mer_dna_bloom_counter filter = query_load_bloom_filter(args.file_arg);
-
-  query_from_sequence(args.sequence_arg.begin(), args.sequence_arg.end(), filter, out);
-
-  mer_dna m;
-  for(auto it = args.mers_arg.cbegin(); it != args.mers_arg.cend(); ++it) {
-    try {
-      m = *it;
-      out << m << " " << filter.check(m);
-    } catch(std::length_error e) {
-      std::cerr << "Invalid mer " << m << "\n";
-    }
+  std::ifstream in(args.file_arg, std::ios::in|std::ios::binary);
+  jellyfish::file_header header(in);
+  if(!in.good())
+    die << "Failed to parse header of file '" << args.file_arg << "'";
+  mer_dna::k(header.key_len() / 2);
+  if(header.format() == "bloomcounter") {
+    jellyfish::hash_pair<mer_dna> fns(header.matrix(1), header.matrix(2));
+    mer_dna_bloom_counter filter(header.size(), header.nb_hashes(), in, fns);
+    if(!in.good())
+      die << "Bloom filter file is truncated";
+    in.close();
+    query_from_sequence(args.sequence_arg.begin(), args.sequence_arg.end(), filter, out);
+    query_from_cmdline(args.mers_arg, filter, out);
+  } else if(header.format() == binary_dumper::format) {
+    jellyfish::mapped_file binary_map(args.file_arg);
+    binary_query bq(binary_map.base() + header.offset(), header.key_len(), header.counter_len(), header.matrix(),
+                               header.size() - 1, binary_map.length() - header.offset());
+    query_from_sequence(args.sequence_arg.begin(), args.sequence_arg.end(), bq, out);
+    query_from_cmdline(args.mers_arg, bq, out);
+  } else {
+    die << "Unsupported format '" << header.format() << "'. Must be a bloom counter or binary list.";
   }
 
   return 0;

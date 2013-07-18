@@ -5,8 +5,8 @@ man1_MANS = doc/jellyfish.man
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = jellyfish-2.0.pc
 
-AM_LDFLAGS = -lpthread
-AM_CPPFLAGS = -Wall -Wnon-virtual-dtor -I$(top_srcdir) -I$(top_srcdir)/include -g -O3
+AM_LDFLAGS = -lpthread # $(VALGRIND_LIBS)
+AM_CPPFLAGS = -Wall -Wnon-virtual-dtor -I$(top_srcdir) -I$(top_srcdir)/include -g -O3 $(VALGRIND_CFLAGS)
 AM_CXXFLAGS = $(ALL_CXXFLAGS) -g -O3
 
 noinst_HEADERS = $(YAGGO_SOURCES)
@@ -29,7 +29,7 @@ YAGGO_SOURCES = # Append all file to be built by yaggo
 # What to build
 bin_PROGRAMS += bin/jellyfish
 lib_LTLIBRARIES = libjellyfish-2.0.la
-LDADD = libjellyfish-2.0.la
+LDADD = libjellyfish-2.0.la # $(VALGRIND_LIBS)
 # check_PROGRAMS =  bin/test_double_fifo_input	\
 #                  bin/test_read_parser
 check_PROGRAMS = bin/generate_sequence
@@ -144,8 +144,9 @@ TEST_EXTENSIONS = .sh
 SH_LOG_COMPILER = /bin/sh
 AM_SH_LOG_FLAGS =
 
-TESTS = tests/generate_sequence.sh tests/parallel_hashing.sh	\
-        tests/merge.sh tests/bloom_filter.sh
+TESTS = tests/generate_sequence.sh tests/parallel_hashing.sh		\
+        tests/merge.sh tests/bloom_filter.sh tests/generate_big.sh	\
+        tests/big.sh
 # TESTS = tests/generate_sequence.sh tests/serial_hashing.sh		\
 #         tests/parallel_hashing.sh tests/serial_direct_indexing.sh	\
 #         tests/parallel_direct_indexing.sh tests/raw_hash.sh		\
@@ -161,7 +162,7 @@ EXTRA_DIST += $(TESTS)
 clean-local: clean-local-check
 .PHONY: clean-local-check
 clean-local-check:
-	-cd tests; rm -f seq10m* seq1m* *.histo *.dump *.fa *.jf *.md5sum *.bf
+	-cd tests; rm -f *
 
 #tests/serial_hashing.log: tests/generate_sequence.log
 tests/parallel_hashing.log: tests/generate_sequence.log
@@ -178,7 +179,6 @@ tests/bloom_filter.log: tests/generate_sequence.log
 ##tests/from_stream_fastq.log: tests/generate_fastq_sequence.log
 tests/merge.log: tests/generate_sequence.log
 tests/min_qual.log: tests/generate_fastq_sequence.log
-tests/parsers.log: tests/generate_sequence.log
 
 ##############
 # Unit tests #
@@ -205,7 +205,8 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_mapped_file.cc			\
 	               unit_tests/test_int128.cc			\
 	               unit_tests/test_mer_dna_bloom_counter.cc		\
-	               unit_tests/test_whole_sequence_parser.cc
+	               unit_tests/test_whole_sequence_parser.cc		\
+	               unit_tests/test_allocators_mmap.cc
 bin_test_all_SOURCES += jellyfish/backtrace.cc
 
 bin_test_all_CPPFLAGS = -Dprotected=public -Dprivate=public -DJSON_IS_AMALGAMATION=1

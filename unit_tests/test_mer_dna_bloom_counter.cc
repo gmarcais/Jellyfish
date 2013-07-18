@@ -20,17 +20,20 @@
 #include <utility>
 #include <set>
 #include <string>
+#include <fstream>
 #include <gtest/gtest.h>
+#include <unit_tests/test_main.hpp>
 #include <jellyfish/mer_dna_bloom_counter.hpp>
 
 namespace {
 using jellyfish::mer_dna;
 using jellyfish::mer_dna_bloom_counter;
 
+static const size_t nb_inserts = 10000;
+static const double error_rate = 0.001;
+
 TEST(MerDnaBloomCounter, FalsePositive) {
   mer_dna::k(50);
-  static const size_t nb_inserts = 10000;
-  static const double error_rate = 0.001;
   std::set<mer_dna> mer_set;
   mer_dna_bloom_counter bc(error_rate, nb_inserts);
 
@@ -63,17 +66,39 @@ TEST(MerDnaBloomCounter, FalsePositive) {
     EXPECT_GT(2 * error_rate * nb_inserts, nb_collisions);
   }
 
+  // Write to file and reload two different ways
+  file_unlink f("bloom_counter_file");
+  size_t file_size = bc.m() / 5 + (bc.m() % 5 != 0);
+  {
+    std::ofstream out(f.path.c_str());
+    bc.write_bits(out);
+    EXPECT_TRUE(out.good());
+    EXPECT_EQ(file_size, out.tellp());
+  }
+  std::ifstream in(f.path.c_str());
+  mer_dna_bloom_counter bc_read(bc.m(), bc.k(), in, bc.hash_functions());
+  EXPECT_EQ(file_size, in.tellg());
+  in.close();
+  jellyfish::bloom_counter2_file<mer_dna> bc_map(bc.m(), bc.k(), f.path.c_str(), bc.hash_functions());
+  EXPECT_EQ(bc.m(), bc_read.m());
+  EXPECT_EQ(bc.k(), bc_read.k());
+  EXPECT_EQ(bc.m(), bc_map.m());
+  EXPECT_EQ(bc.k(), bc_map.k());
+
   // Check known mers
   {
     size_t nb_collisions = 0;
     size_t nb_errors     = 0;
     auto it = mer_set.cbegin();
     for(size_t i = 0; i < nb_inserts; ++i, ++it) {
+      unsigned int check = bc.check(*it);
+      EXPECT_EQ(check, bc_read.check(*it));
+      EXPECT_EQ(check, bc_map.check(*it));
       if(i < nb_inserts / 2) {
-        nb_errors += bc.check(*it) < 2;
+        nb_errors += check < 2;
       } else {
-        nb_errors += bc.check(*it) < 1;
-        nb_collisions += bc.check(*it) > 1;
+        nb_errors += check < 1;
+        nb_collisions += check > 1;
       }
     }
     EXPECT_EQ((size_t)0, nb_errors);
@@ -86,44 +111,22 @@ TEST(MerDnaBloomCounter, FalsePositive) {
     mer_dna m;
     for(size_t i = 0; i < nb_inserts; ++i) {
       m.randomize();
-      nb_collisions += bc.check(m) > 1;
+      unsigned int check = bc.check(m);
+      EXPECT_EQ(check, bc_read.check(m));
+      EXPECT_EQ(check, bc_map.check(m));
+      nb_collisions += check > 1;
     }
-    std::cout << nb_collisions << "\n";
     EXPECT_GT(2 * error_rate * nb_inserts, nb_collisions);
   }
+}
 
-  // // Check known strings
-  // for(size_t i = 0; i < nb_strings; ++i) {
-  //   std::vector<elt>::reference ref = counts[i];
-  //   unsigned int expected = std::min(ref.second, (unsigned int)2);
-  //   unsigned int actual = bc1.check(ref.first.c_str());
-  //   EXPECT_LE(expected, actual);
-  //   if(expected != actual)
-  //     ++nb_errors;
-  //   if(expected != *bc2[ref.first.c_str()])
-  //     ++collisions2;
-
-  //   if(expected != *bc3[ref.first.c_str()])
-  //     ++collisions3;
-  // }
-  // EXPECT_GT(error_rate * nb_strings, nb_errors);
-  // EXPECT_GT(error_rate * nb_strings, collisions2);
-  // EXPECT_GT(error_rate * nb_strings, collisions3);
-
-  // nb_errors = collisions2 = collisions3 = 0;
-  // // Check unknown strings
-  // for(size_t i = 0; i < nb_inserts; ++i) {
-  //   for(size_t j = 0; j < str_len; ++j)
-  //     str[j] = '0' + (random() % 10);
-  //   if(bc1.check(str) > 0)      
-  //     ++nb_errors;
-  //   if(bc2[str] > 0)
-  //     ++collisions2;
-  //   if(bc3[str] > 0)
-  //     ++collisions3;
-  // }
-  // EXPECT_GT(2 * error_rate * nb_inserts, nb_errors);
-  // EXPECT_GT(2 * error_rate * nb_inserts, collisions2);
-  // EXPECT_GT(2 * error_rate * nb_inserts, collisions3);
+TEST(MerDnaBloomCounter, Move) {
+  mer_dna::k(100);
+  mer_dna_bloom_counter bc(error_rate, nb_inserts);
+  const unsigned long   k = bc.k();
+  const size_t          m = bc.m();
+  mer_dna_bloom_counter bc2(std::move(bc));
+  EXPECT_EQ(k, bc2.k());
+  EXPECT_EQ(m, bc.m());
 }
 }

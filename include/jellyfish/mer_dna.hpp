@@ -182,6 +182,11 @@ public:
   /// Direct access to the data array.
   const base_type* data() const { return _data; }
 
+  /// Same as above, but can modify directly content. Use at your own
+  /// risk!
+  base_type& word__(unsigned int i) { return _data[i]; }
+  base_type* data__() { return _data; }
+
   template<unsigned int alignment>
   void read(std::istream& is) {
     const unsigned int k = static_cast<const derived*>(this)->k();

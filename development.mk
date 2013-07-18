@@ -1,4 +1,4 @@
-# AM_CPPFLAGS += -Werror
+AM_CXXFLAGS += -Werror
 
 # Count lines of code
 .PHONY: cloc

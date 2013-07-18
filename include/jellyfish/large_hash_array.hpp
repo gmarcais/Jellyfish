@@ -1,6 +1,6 @@
 /*  This file is part of Jellyfish.
 
-    Jellyfish is free software: you can redistribute it and/or modify
+n    Jellyfish is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
@@ -52,8 +52,8 @@ public:
 // bits [start, start + len). Start and len may not be aligned to word
 // boundaries. On the other hand, len is guaranteed to be <
 // sizeof(uint64_t). I.e. never more than 1 word is fetched or set.
-template<typename Key, typename word = uint64_t, typename atomic_t = ::atomic::gcc, typename mem_block_t = ::allocators::mmap>
-class array {
+template<typename Key, typename word, typename atomic_t, typename Derived>
+class array_base {
   static const int  wsize = std::numeric_limits<word>::digits; // Word size in bits
   // Can't be done. Resort to an evil macro!
   //  static const word fmask = std::numeric_limits<word>::max(); // Mask full of ones
@@ -64,22 +64,22 @@ public:
 
   typedef word                             data_word;
   typedef typename Offsets<word>::offset_t offset_t;
-  typedef struct offset_t::key    key_offsets;
-  typedef struct offset_t::val    val_offsets;
+  typedef struct offset_t::key             key_offsets;
+  typedef struct offset_t::val             val_offsets;
 
-  typedef Key                          key_type;
-  typedef uint64_t                     mapped_type;
-  typedef std::pair<Key&, mapped_type> value_type;
-  typedef stl_iterator_base<array>     iterator;
-  typedef stl_iterator_base<array>     const_iterator;
-  typedef value_type&                  reference;
-  typedef const value_type&            const_reference;
-  typedef value_type*                  pointer;
-  typedef const value_type*            const_pointer;
+  typedef Key key_type;
+  typedef uint64_t                      mapped_type;
+  typedef std::pair<Key&, mapped_type>  value_type;
+  typedef stl_iterator_base<array_base> iterator;
+  typedef stl_iterator_base<array_base> const_iterator;
+  typedef value_type&                   reference;
+  typedef const value_type&             const_reference;
+  typedef value_type*                   pointer;
+  typedef const value_type*             const_pointer;
 
-  typedef eager_iterator_base<array>  eager_iterator;
-  typedef lazy_iterator_base<array>   lazy_iterator;
-  typedef region_iterator_base<array> region_iterator;
+  typedef eager_iterator_base<array_base>  eager_iterator;
+  typedef lazy_iterator_base<array_base>   lazy_iterator;
+  typedef region_iterator_base<array_base> region_iterator;
 
   /// Status of a (key,value) pair. LBSET means that the large bit is
   /// set. Hence, it contains a pointer back to the original key and a
@@ -93,8 +93,8 @@ protected:
   uint16_t                 key_len_; // Length of key in bits
   uint16_t                 raw_key_len_; // Length of key stored raw (i.e. complement of implied length)
   Offsets<word>            offsets_; // key len reduced by size of hash array
-  mem_block_t              mem_block_;
-  word                    *data_;
+  size_t                   size_bytes_;
+  word * const             data_;
   atomic_t                 atomic_;
   const size_t            *reprobes_;
   RectangularBinaryMatrix  hash_matrix_;
@@ -119,7 +119,7 @@ public:
       Offsets<word> offsets(raw_key_len + bitsize(areprobe_limit.val() + 1), val_len_,
                             areprobe_limit.val() + 1);
       return div_ceil(asize,
-                      (size_t)offsets.block_len()) * offsets.block_word_len() * sizeof(word) + sizeof(array) + sizeof(Offsets<word>);
+                      (size_t)offsets.block_len()) * offsets.block_word_len() * sizeof(word) + sizeof(array_base) + sizeof(Offsets<word>);
     }
 
     /// Actual size for a given size.
@@ -155,11 +155,11 @@ public:
   };
 
 
-  array(size_t size, // Size of hash. To be rounded up to a power of 2
-        uint16_t key_len, // Size of key in bits
-        uint16_t val_len, // Size of val in bits
-        uint16_t reprobe_limit, // Maximum reprobe
-        const size_t* reprobes = quadratic_reprobes) : // Reprobing policy
+  array_base(size_t size, // Size of hash. To be rounded up to a power of 2
+             uint16_t key_len, // Size of key in bits
+             uint16_t val_len, // Size of val in bits
+             uint16_t reprobe_limit, // Maximum reprobe
+             const size_t* reprobes = quadratic_reprobes) : // Reprobing policy
     lsize_(ceilLog2(size)),
     size_((size_t)1 << lsize_),
     size_mask_(size_ - 1),
@@ -167,8 +167,8 @@ public:
     key_len_(key_len),
     raw_key_len_(key_len_ > lsize_ ? key_len_ - lsize_ : 0),
     offsets_(raw_key_len_ + bitsize(reprobe_limit_.val() + 1), val_len, reprobe_limit_.val() + 1),
-    mem_block_(div_ceil(size_, (size_t)offsets_.block_len()) * offsets_.block_word_len() * sizeof(word)),
-    data_((word *)mem_block_.get_ptr()),
+    size_bytes_(div_ceil(size_, (size_t)offsets_.block_len()) * offsets_.block_word_len() * sizeof(word)),
+    data_(static_cast<Derived*>(this)->alloc_data(size_bytes_)),
     reprobes_(reprobes),
     hash_matrix_(lsize_, key_len_),
     hash_inverse_matrix_(hash_matrix_.randomize_pseudo_inverse(random_bits))
@@ -179,22 +179,21 @@ public:
                               << " bytes of memory";
   }
 
-  array(array&& ary) :
+  array_base(array_base&& ary) :
     lsize_(ary.lsize_),
     size_(ary.size_),
     reprobe_limit_(ary.reprobe_limit_),
     key_len_(ary.key_len_),
     raw_key_len_(ary.raw_key_len_),
     offsets_(std::move(ary.offsets_)),
-    mem_block_(std::move(ary.mem_block_)),
-    data_((word*)mem_block_.get_ptr()),
+    data_(ary.data_),
     reprobes_(ary.reprobes_),
     hash_matrix_(std::move(ary.hash_matrix_)),
     hash_inverse_matrix_(std::move(ary.hash_inverse_matrix_))
   { }
 
-  array& operator=(const array& rhs) = delete;
-  array& operator=(array&& rhs) = delete;
+  array_base& operator=(const array_base& rhs) = delete;
+  array_base& operator=(array_base&& rhs) = delete;
 
   size_t size() const { return size_; }
   size_t lsize() const { return lsize_; }
@@ -213,7 +212,7 @@ public:
    * Clear hash table. Not thread safe.
    */
   void clear() {
-    memset(data_, '\0', mem_block_.get_size());
+    memset(data_, '\0', size_bytes_);
   }
 
   /* The storage of the hash is organized in "blocks". A (key,value)
@@ -241,7 +240,7 @@ public:
   void block_to_ptr(const size_t start, const size_t blen,
                     char **start_ptr, size_t *memlen) const {
     *start_ptr    = (char *)(data_ + start * offsets_.block_word_len());
-    char *end_ptr = (char *)mem_block_.get_ptr() + mem_block_.get_size();
+    char *end_ptr = (char *)data_ + size_bytes_;
 
     if(*start_ptr >= end_ptr) {
       *memlen = 0;
@@ -861,6 +860,31 @@ public:
     return val;
   }
 
+};
+
+template<typename Key, typename word = uint64_t, typename atomic_t = ::atomic::gcc, typename mem_block_t = ::allocators::mmap>
+class array :
+    protected mem_block_t,
+    public array_base<Key, word, atomic_t, array<Key, word, atomic_t, mem_block_t> >
+{
+  typedef array_base<Key, word, atomic_t, array<Key, word, atomic_t, mem_block_t> > super;
+  friend class array_base<Key, word, atomic_t, array<Key, word, atomic_t, mem_block_t> >;
+
+public:
+  array(size_t size, // Size of hash. To be rounded up to a power of 2
+        uint16_t key_len, // Size of key in bits
+        uint16_t val_len, // Size of val in bits
+        uint16_t reprobe_limit, // Maximum reprobe
+        const size_t* reprobes = quadratic_reprobes) : // Reprobing policy
+    mem_block_t(),
+    super(size, key_len, val_len, reprobe_limit, reprobes)
+  { }
+
+protected:
+  word* alloc_data(size_t s) {
+    mem_block_t::realloc(s);
+    return (word*)mem_block_t::get_ptr();
+  }
 };
 
 } } // namespace jellyfish { namespace large_hash_array

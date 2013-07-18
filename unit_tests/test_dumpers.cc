@@ -5,6 +5,7 @@
 #include <jellyfish/file_header.hpp>
 #include <jellyfish/binary_dumper.hpp>
 #include <jellyfish/text_dumper.hpp>
+#include <jellyfish/mapped_file.hpp>
 
 namespace {
 using jellyfish::mer_dna;
@@ -15,6 +16,7 @@ typedef hash_counter::array::eager_iterator iterator;
 struct binary {
   typedef jellyfish::binary_dumper<hash_counter::array> dumper;
   typedef jellyfish::binary_reader<mer_dna, uint64_t> reader;
+  typedef jellyfish::binary_query_base<mer_dna, uint64_t> query;
 };
 struct text {
   typedef jellyfish::text_dumper<hash_counter::array> dumper;
@@ -75,6 +77,10 @@ TEST(Dumper, IO) {
     EXPECT_EQ(dump_counter_len, bh.counter_len());
     binary::reader br(bis, &bh);
 
+    jellyfish::mapped_file binary_map(file_binary);
+    binary::query bq(binary_map.base() + bh.offset(), bh.key_len(), bh.counter_len(), bh.matrix(),
+                     bh.size() - 1, binary_map.length() - bh.offset());
+
     file_header th;
     std::ifstream tis(file_text);
     th.read(tis);
@@ -82,10 +88,12 @@ TEST(Dumper, IO) {
     text::reader tr(tis, &th);
 
     const uint64_t max_val = ((uint64_t)1 << (8 * dump_counter_len)) - 1;
-    int bcount = 0, tcount = 0;
+    int bcount = 0, tcount = 0, qcount = 0;
+    mer_dna tmp_key;
     while(br.next()) {
       uint64_t val = 0;
-      bool present = hash.ary()->get_val_for_key(br.key(), &val);
+      size_t   id  = 0;
+      bool present = hash.ary()->get_val_for_key(br.key(), &val, tmp_key, &id);
       EXPECT_TRUE(present);
       if(present) {
         EXPECT_EQ(std::min(max_val, val), br.val());
@@ -99,9 +107,20 @@ TEST(Dumper, IO) {
         EXPECT_EQ(val, tr.val());
         ++tcount;
       }
+
+      uint64_t query_val;
+      size_t query_id;
+      present = bq.val_id(br.key(), &query_val, &query_id);
+      EXPECT_TRUE(present);
+      if(present) {
+        EXPECT_EQ(std::min(max_val, val), query_val);
+        // EXPECT_EQ(id, query_id);
+        ++qcount;
+      }
     }
     EXPECT_EQ(nb, bcount);
     EXPECT_EQ(nb, tcount);
+    EXPECT_EQ(nb, qcount);
   }
 
   // Dump with zeroing and check hash is empty
