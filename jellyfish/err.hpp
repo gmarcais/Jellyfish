@@ -38,9 +38,22 @@ namespace err {
   public:
     no_t() {}
     static void write(std::ostream &os, int e) {
-      char err_str[4096];
-      strerror_r(e, err_str, sizeof(err_str));
-      os << ": " << err_str;
+    char  err_str[1024];
+    char* str;
+
+#if (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && ! _GNU_SOURCE
+    int err = strerror_r(e, err_str, sizeof(err_str));
+    if(err)
+      strcpy(err_str, "error");
+    str = err_str;
+#else
+    str = strerror_r(e, err_str, sizeof(err_str));
+    if(!str) { // Should never happen
+      strcpy(err_str, "error");
+      str = err_str;
+    }
+#endif
+    os << ": " << str;
     }
   };
   static const no_t no;
