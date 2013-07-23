@@ -18,7 +18,6 @@
 #define __JELLYFISH_CONCURRENT_QUEUES_HPP__
 
 #include <sys/time.h>
-#include <sys/syscall.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>

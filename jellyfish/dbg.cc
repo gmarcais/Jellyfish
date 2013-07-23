@@ -16,7 +16,14 @@
 
 #include <jellyfish/dbg.hpp>
 #include <jellyfish/time.hpp>
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#ifdef HAVE_SYS_SYSCALL_H
 #include <sys/syscall.h>
+#endif
 
 namespace dbg {
   pthread_mutex_t print_t::_lock      = PTHREAD_MUTEX_INITIALIZER;
