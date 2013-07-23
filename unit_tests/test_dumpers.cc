@@ -109,7 +109,7 @@ TEST(Dumper, IO) {
       }
 
       uint64_t query_val;
-      size_t query_id;
+      uint64_t query_id;
       present = bq.val_id(br.key(), &query_val, &query_id);
       EXPECT_TRUE(present);
       if(present) {
