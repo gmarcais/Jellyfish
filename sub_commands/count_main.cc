@@ -60,31 +60,56 @@ struct filter_bf {
   }
 };
 
+enum OPERATION { COUNT, PRIME, UPDATE };
 template<typename PathIterator, typename FilterType>
 class mer_counter : public jellyfish::thread_exec {
-  int                     nb_threads_;
-  mer_hash&               ary_;
-  sequence_parser         parser_;
-  FilterType              filter_;
-
 public:
-  mer_counter(int nb_threads, mer_hash& ary, PathIterator file_begin, PathIterator file_end,
+  mer_counter(int nb_threads, mer_hash& ary, PathIterator file_begin, PathIterator file_end, OPERATION op,
               FilterType filter = FilterType()) :
     ary_(ary),
     parser_(mer_dna::k(), 3 * nb_threads, 4096, jellyfish::stream_iterator<PathIterator>(file_begin, file_end),
             jellyfish::stream_iterator<PathIterator>()),
-    filter_(filter)
+    filter_(filter),
+    op_(op)
   { }
 
   virtual void start(int thid) {
     size_t count = 0;
-    for(mer_iterator mers(parser_, args.canonical_flag) ; mers; ++mers) {
-      if(filter_(*mers))
-        ary_.add(*mers, 1);
-      ++count;
+
+    switch(op_) {
+    case COUNT:
+      for(mer_iterator mers(parser_, args.canonical_flag) ; mers; ++mers) {
+        if(filter_(*mers))
+          ary_.add(*mers, 1);
+        ++count;
+      }
+      break;
+
+    case PRIME:
+      for(mer_iterator mers(parser_, args.canonical_flag) ; mers; ++mers) {
+        ary_.set(*mers);
+        ++count;
+      }
+      break;
+
+    case UPDATE:
+      mer_dna tmp;
+      for(mer_iterator mers(parser_, args.canonical_flag) ; mers; ++mers) {
+        ary_.update_add(*mers, 1, tmp);
+        ++count;
+      }
+      break;
     }
+
     ary_.done();
   }
+
+private:
+  int                     nb_threads_;
+  mer_hash&               ary_;
+  sequence_parser         parser_;
+  FilterType              filter_;
+  OPERATION               op_;
 };
 
 mer_dna_bloom_counter load_bloom_filter(const char* path) {
@@ -124,13 +149,22 @@ int count_main(int argc, char *argv[])
     dumper.reset(new binary_dumper(args.out_counter_len_arg, ary.key_len(), args.threads_arg, args.output_arg, &header));
   ary.dumper(dumper.get());
 
+  OPERATION do_op = COUNT;
+  if(args.if_given) {
+    mer_counter<file_vector::iterator, filter_true> counter(args.threads_arg, ary, args.if_arg.begin(), args.if_arg.end(),
+                                                            PRIME);
+    counter.exec_join(args.threads_arg);
+    do_op = UPDATE;
+  }
+
   if(args.bf_given) {
     mer_dna_bloom_counter bc = load_bloom_filter(args.bf_arg);
     mer_counter<file_vector::iterator, filter_bf>  counter(args.threads_arg, ary, args.file_arg.begin(), args.file_arg.end(),
-                                                           filter_bf(bc));
+                                                           do_op, filter_bf(bc));
     counter.exec_join(args.threads_arg);
   } else {
-    mer_counter<file_vector::iterator, filter_true> counter(args.threads_arg, ary, args.file_arg.begin(), args.file_arg.end());
+    mer_counter<file_vector::iterator, filter_true> counter(args.threads_arg, ary, args.file_arg.begin(), args.file_arg.end(),
+                                                            do_op);
     counter.exec_join(args.threads_arg);
   }
 

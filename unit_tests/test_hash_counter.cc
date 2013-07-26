@@ -11,6 +11,8 @@ using jellyfish::mer_dna;
 typedef jellyfish::cooperative::hash_counter<mer_dna> hash_counter;
 typedef hash_counter::array::lazy_iterator lazy_iterator;
 
+enum OPERATION { ADD, SET };
+
 class hash_adder : public thread_exec {
   typedef std::map<mer_dna, uint64_t> map;
   typedef std::vector<map>            maps;
@@ -18,12 +20,14 @@ class hash_adder : public thread_exec {
   hash_counter& hash_;
   int           nb_;
   maps          check_;
+  OPERATION     op_;
 
 public:
-  hash_adder(hash_counter& hash, int nb, int nb_threads) :
+  hash_adder(hash_counter& hash, int nb, int nb_threads, OPERATION op) :
     hash_(hash),
     nb_(nb),
-    check_(nb_threads)
+    check_(nb_threads),
+    op_(op)
   { }
   void start(int id) {
     mer_dna m;
@@ -31,7 +35,15 @@ public:
 
     for(int i = 0; i < nb_; ++i) {
       m.randomize();
-      hash_.add(m, 1);
+      switch(op_) {
+      case ADD:
+        hash_.add(m, 1);
+        break;
+      case SET:
+        hash_.set(m);
+        break;
+      }
+
       ++my_map[m];
     }
 
@@ -62,12 +74,27 @@ TEST(HashCounterCooperative, SizeDouble) {
     EXPECT_EQ(mer_len * 2, hash.key_len());
     EXPECT_EQ(5, hash.val_len());
 
-    hash_adder adder(hash, nb, nb_threads);
+    hash_adder adder(hash, nb, nb_threads, ADD);
     adder.exec_join(nb_threads);
 
     lazy_iterator it = hash.ary()->iterator_all<lazy_iterator>();
     while(it.next())
       EXPECT_EQ(adder.val(it.key()), it.val());
+    EXPECT_LT((size_t)(nb_threads * nb), hash.size());
+  }
+
+  {
+    hash_counter hash(init_size, mer_len * 2, 0, nb_threads);
+    EXPECT_TRUE(hash.do_size_doubling());
+    EXPECT_EQ(mer_len * 2, hash.key_len());
+    EXPECT_EQ(0, hash.val_len());
+
+    hash_adder adder(hash, nb, nb_threads, SET);
+    adder.exec_join(nb_threads);
+
+    lazy_iterator it = hash.ary()->iterator_all<lazy_iterator>();
+    while(it.next())
+      EXPECT_EQ(adder.val(it.key()), it.val() + 1);
     EXPECT_LT((size_t)(nb_threads * nb), hash.size());
   }
 }

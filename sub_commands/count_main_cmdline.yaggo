@@ -25,6 +25,10 @@ option("C", "canonical") {
 option("bf") {
   description "Bloom filter to filter out singleton mers"
   c_string; typestr "path" }
+option("if") {
+  description "Count only k-mers in this files"
+  c_string; typestr "path"; multiple
+}
 option("reprobes", "p") {
   description "Maximum number of reprobes"
   uint32; default "126" }

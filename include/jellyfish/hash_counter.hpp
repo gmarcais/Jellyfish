@@ -110,6 +110,31 @@ public:
     add(k, v, &is_new, &id);
   }
 
+  /// Insert the key `k` in the hash. The value is not changed or set
+  /// to 0 if not already in the hash.
+  ///
+  /// @param k Key to insert
+  inline void set(const Key& k) {
+    bool   is_new;
+    size_t id;
+    set(k, &is_new, &id);
+  }
+
+  /// Insert the key `k` in the hash. The value is not changed or set
+  /// to 0 if not already in the hash. Set `is_new` to true if `k` did
+  /// not already exist in the hash. In `id` is returned the final
+  /// position of `k` in the hash.
+  void set(const Key& k, bool* is_new, size_t* id) {
+    while(!ary_->set(k, is_new, id))
+      handle_full_ary();
+  }
+
+  /// Update the value of key `k` by adding `v`, if `k` is already
+  /// present in the hash, otherwise this nothing happens. Returns
+  /// true if `k` is already in the hash, false otherwise.
+  bool update_add(const Key& k, uint64_t v) { return ary_->update_add(k, v); }
+
+  bool update_add(const Key& k, uint64_t v, Key& tmp_key) { return ary_->update_add(k, v, tmp_key); }
 
   /// Signify that thread is done and wait for all threads to be done.
   void done() {

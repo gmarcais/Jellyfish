@@ -1,6 +1,6 @@
 /*  This file is part of Jellyfish.
 
-n    Jellyfish is free software: you can redistribute it and/or modify
+    Jellyfish is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
@@ -293,6 +293,30 @@ public:
     return claim_key(key, is_new, id, &o, &w);
   }
 
+  /**
+   * Use hash values as counters, if already exists
+   *
+   * Add val to the value associated with key if key is already in the
+   * hash. Returns true if the update was done, false otherwise.
+   */
+  inline bool update_add(const key_type& key, mapped_type val) {
+    key_type        tmp_key;
+    return update_add(key, val, tmp_key);
+  }
+
+
+  // Optimization. Use tmp_key as buffer. Avoids allocation if update_add is called repeatedly.
+  bool update_add(const key_type& key, mapped_type val, key_type& tmp_key) {
+    size_t           id;
+    word*            w;
+    const offset_t*  o;
+
+    bool present = get_key_id(key, &id, tmp_key, (const word**)&w, &o);
+    if(present)
+      add_rec_at(id, key, val, o, w);
+    return present;
+  }
+
   // Get the value, stored in *val, associated with key. If the key is
   // not found, false is returned, otherwise true is returned and *val
   // is updated. If carry_bit is true, then the first bit of the key
@@ -379,7 +403,7 @@ public:
   // Optimization version again. Also return the word and the offset
   // information where the key was found. These can be used later one
   // to fetch the value associated with the key.
-  bool get_key_id(const key_type& key, size_t* id, key_type& tmp_key, const word** w, const offset_t** o) const {
+  bool get_key_id(const key_type& key, size_t* id, key_type& tmp_key, const word**  w, const offset_t** o) const {
     const size_t oid = hash_matrix_.times(key) & size_mask_;
     prefetch_info info_ary[prefetch_buffer::capacity()];
     prefetch_buffer buffer(info_ary);
@@ -599,7 +623,10 @@ public:
     if(!claimed)
       return false;
     *eid = id;
+    return add_rec_at(id, key, val, ao, w);
+  }
 
+  bool add_rec_at(size_t id, const key_type& key, word val, const offset_t* ao, word* w) {
     // Increment value
     word *vw = w + ao->val.woff;
     word cary = add_val(vw, val, ao->val.boff, ao->val.mask1);

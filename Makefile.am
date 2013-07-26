@@ -145,7 +145,8 @@ SH_LOG_COMPILER = /bin/sh
 AM_SH_LOG_FLAGS =
 
 TESTS = tests/generate_sequence.sh tests/parallel_hashing.sh	\
-        tests/merge.sh tests/bloom_filter.sh tests/big.sh
+        tests/merge.sh tests/bloom_filter.sh tests/big.sh	\
+        tests/subset_hashing.sh
 # TESTS = tests/generate_sequence.sh tests/serial_hashing.sh		\
 #         tests/parallel_hashing.sh tests/serial_direct_indexing.sh	\
 #         tests/parallel_direct_indexing.sh tests/raw_hash.sh		\
@@ -165,6 +166,7 @@ clean-local-check:
 
 #tests/serial_hashing.log: tests/generate_sequence.log
 tests/parallel_hashing.log: tests/generate_sequence.log
+tests/subset_hashing.log: tests/generate_sequence.log
 tests/bloom_filter.log: tests/generate_sequence.log
 #tests/serial_direct_indexing.log: tests/generate_sequence.log
 #tests/parallel_direct_indexing.log: tests/generate_sequence.log
