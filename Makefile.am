@@ -100,7 +100,8 @@ library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
                           $(JFI)/mapped_file.hpp			\
                           $(JFI)/mer_dna_bloom_counter.hpp		\
                           $(JFI)/bloom_counter2.hpp			\
-                          $(JFI)/cooperative_pool.hpp
+                          $(JFI)/cooperative_pool.hpp			\
+                          $(JFI)/cooperative_pool2.hpp
 
 noinst_HEADERS += jellyfish/fstream_default.hpp			\
                   include/jflib/tmpstream.hpp			\
@@ -207,7 +208,8 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_int128.cc			\
 	               unit_tests/test_mer_dna_bloom_counter.cc		\
 	               unit_tests/test_whole_sequence_parser.cc		\
-	               unit_tests/test_allocators_mmap.cc
+	               unit_tests/test_allocators_mmap.cc		\
+	               unit_tests/test_cooperative_pool2.cc
 bin_test_all_SOURCES += jellyfish/backtrace.cc
 
 bin_test_all_CPPFLAGS = -Dprotected=public -Dprivate=public -DJSON_IS_AMALGAMATION=1
