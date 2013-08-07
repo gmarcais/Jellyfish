@@ -30,6 +30,14 @@
 #include <config.h>
 #endif
 
+#if HAVE_DECL_STRERROR_R == 0
+#ifdef STRERROR_R_CHAR_P
+extern char* strerror_r(int, char*, size_t);
+#else
+extern int strerror_r(int, char*, size_t);
+#endif
+#endif
+
 namespace err {
   class code {
     int _code;

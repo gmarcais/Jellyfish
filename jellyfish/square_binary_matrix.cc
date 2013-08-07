@@ -15,9 +15,18 @@
 */
 
 #include <config.h>
-#include <jellyfish/square_binary_matrix.hpp>
 #include <iostream>
 #include <sstream>
+#include <jellyfish/misc.hpp>
+#include <jellyfish/square_binary_matrix.hpp>
+
+#ifndef random
+// Implement random from the old rand() function. Don't trust low bit
+// to be as random, so call rand twice and reverse one of the result.
+long random() {
+  return rand() ^ reverse_bits((uint32_t)rand());
+}
+#endif
 
 void SquareBinaryMatrix::init_random() {
   uint64_t _mask = mask();

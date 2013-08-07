@@ -10,7 +10,7 @@ AC_PROG_LIBTOOL
 
 # Change default compilation flags
 #AC_SUBST([ALL_CXXFLAGS], [-std=c++0x])
-CXXFLAGS="-std=c++0x $CXXFLAGS"
+#CXXFLAGS="-std=c++0x $CXXFLAGS"
 AC_LANG(C++)
 AC_PROG_CXX
 
