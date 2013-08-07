@@ -40,10 +40,11 @@ const char *bibtex =
 #include <iostream>
 #include <fstream>
 #include <stdlib.h>
-#include <jellyfish/cite_cmdline.hpp>
 #include <jellyfish/err.hpp>
 #include <jellyfish/misc.hpp>
 #include <jellyfish/fstream_default.hpp>
+
+#include <jellyfish/cite_cmdline.hpp>
 
 int cite_main(int argc, char *argv[])
 {

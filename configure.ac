@@ -1,14 +1,19 @@
-AC_INIT([jellyfish], [1.1.10], [gmarcais@umd.edu])
+AC_INIT([jellyfish], [1.1.11], [gmarcais@umd.edu])
 AC_CANONICAL_HOST
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([subdir-objects foreign parallel-tests color-tests])
 AM_SILENT_RULES([yes])
-LT_INIT
+AC_CONFIG_SRCDIR([jellyfish])
+AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_MACRO_DIR([m4])
+AC_PROG_LIBTOOL
 
+# Change default compilation flags
+#AC_SUBST([ALL_CXXFLAGS], [-std=c++0x])
+#CXXFLAGS="-std=c++0x $CXXFLAGS"
+AC_LANG(C++)
 AC_PROG_CXX
 
-AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_HEADERS([config.h])
 
 dnl define([concat], $1$2$3)dnl
 dnl define([PC_FILE], concat([jellyfish-],AC_PACKAGE_VERSION,[.pc]))
@@ -46,7 +51,7 @@ AC_CHECK_TYPE([__int128],
 # Check the version of strerror_r
 AC_FUNC_STRERROR_R      
 
-AC_CHECK_HEADERS([execinfo.h])
+AC_CHECK_HEADERS([execinfo.h sys/syscall.h])
 
 AC_CHECK_MEMBER([siginfo_t.si_int],
                 [AC_DEFINE([HAVE_SI_INT], [1], [Define if siginfo_t.si_int exists])],

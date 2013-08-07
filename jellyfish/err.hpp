@@ -26,6 +26,18 @@
 #include <string.h>
 #include <errno.h>
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#if HAVE_DECL_STRERROR_R == 0
+#ifdef STRERROR_R_CHAR_P
+extern char* strerror_r(int, char*, size_t);
+#else
+extern int strerror_r(int, char*, size_t);
+#endif
+#endif
+
 namespace err {
   class code {
     int _code;
@@ -38,9 +50,22 @@ namespace err {
   public:
     no_t() {}
     static void write(std::ostream &os, int e) {
-      char err_str[4096];
-      strerror_r(e, err_str, sizeof(err_str));
-      os << ": " << err_str;
+    char  err_str[1024];
+    char* str;
+
+#ifdef STRERROR_R_CHAR_P
+    str = strerror_r(e, err_str, sizeof(err_str));
+    if(!str) { // Should never happen
+      strcpy(err_str, "error");
+    str = err_str;
+    }
+#else
+    int err = strerror_r(e, err_str, sizeof(err_str));
+    if(err)
+      strcpy(err_str, "error");
+      str = err_str;
+#endif
+    os << ": " << str;
     }
   };
   static const no_t no;

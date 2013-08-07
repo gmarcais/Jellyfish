@@ -34,7 +34,7 @@ int jellyfish::file_parser::file_peek(const char *path, char *peek) {
                             << path << "'" << err::no;
       
   if(read(fd, peek, 1) <= 0)
-    eraise(FileParserError) << "Empty input file '" << path << "'";
+    eraise(FileParserError) << "Empty input file '" << path << "'" << err::no;
   
   return fd;
 }

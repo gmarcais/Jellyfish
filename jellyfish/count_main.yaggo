@@ -87,4 +87,5 @@ option("stream") {
   flag; off; hidden }
 arg("file") {
   description "Sequence file(s) in fasta or fastq format"
-  c_string; multiple; typestr "path" }
+  c_string; multiple; typestr "path"
+  at_least 1 }
