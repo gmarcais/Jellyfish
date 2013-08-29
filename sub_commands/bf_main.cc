@@ -21,7 +21,7 @@
 #include <jellyfish/err.hpp>
 #include <jellyfish/mer_overlap_sequence_parser.hpp>
 #include <jellyfish/mer_iterator.hpp>
-#include <jellyfish/stream_iterator.hpp>
+#include <jellyfish/stream_manager.hpp>
 #include <jellyfish/mer_dna_bloom_counter.hpp>
 #include <jellyfish/thread_exec.hpp>
 #include <jellyfish/file_header.hpp>
@@ -31,20 +31,21 @@ static bf_main_cmdline args; // Command line switches and arguments
 typedef std::vector<const char*> file_vector;
 using jellyfish::mer_dna;
 using jellyfish::mer_dna_bloom_counter;
-typedef jellyfish::mer_overlap_sequence_parser<jellyfish::stream_iterator<file_vector::iterator> > sequence_parser;
+typedef jellyfish::mer_overlap_sequence_parser<jellyfish::stream_manager<file_vector::iterator> > sequence_parser;
 typedef jellyfish::mer_iterator<sequence_parser, jellyfish::mer_dna> mer_iterator;
 
 template<typename PathIterator>
 class mer_bloom_counter : public jellyfish::thread_exec {
-  int                    nb_threads_;
-  mer_dna_bloom_counter& filter_;
-  sequence_parser        parser_;
+  int                                     nb_threads_;
+  mer_dna_bloom_counter&                  filter_;
+  jellyfish::stream_manager<PathIterator> streams_;
+  sequence_parser                         parser_;
 
 public:
   mer_bloom_counter(int nb_threads, mer_dna_bloom_counter& filter, PathIterator file_begin, PathIterator file_end) :
     filter_(filter),
-    parser_(jellyfish::mer_dna::k(), 3 * nb_threads, 4096, jellyfish::stream_iterator<PathIterator>(file_begin, file_end),
-            jellyfish::stream_iterator<PathIterator>())
+    streams_(file_begin, file_end),
+    parser_(jellyfish::mer_dna::k(), 1, 3 * nb_threads, 4096, streams_)
   { }
 
   virtual void start(int thid) {

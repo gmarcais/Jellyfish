@@ -18,8 +18,11 @@
 #define __JELLYFISH_MER_OVELAP_SEQUENCE_PARSER_H_
 
 #include <stdint.h>
+
+#include <memory>
+
 #include <jellyfish/err.hpp>
-#include <jellyfish/cooperative_pool.hpp>
+#include <jellyfish/cooperative_pool2.hpp>
 
 namespace jellyfish {
 
@@ -29,42 +32,52 @@ struct sequence_ptr {
 };
 
 template<typename StreamIterator>
-class mer_overlap_sequence_parser : public jellyfish::cooperative_pool<mer_overlap_sequence_parser<StreamIterator>, sequence_ptr> {
-  typedef jellyfish::cooperative_pool<mer_overlap_sequence_parser<StreamIterator>, sequence_ptr> super;
+class mer_overlap_sequence_parser : public jellyfish::cooperative_pool2<mer_overlap_sequence_parser<StreamIterator>, sequence_ptr> {
+  typedef jellyfish::cooperative_pool2<mer_overlap_sequence_parser<StreamIterator>, sequence_ptr> super;
   enum file_type { DONE_TYPE, FASTA_TYPE, FASTQ_TYPE };
+  typedef std::unique_ptr<std::istream> stream_type;
+
+  struct stream_status {
+    char*       seam;
+    size_t      seq_len;
+    bool        have_seam;
+    file_type   type;
+    stream_type stream;
+
+    stream_status() : seam(0), seq_len(0), have_seam(false), type(DONE_TYPE) { }
+  };
 
   uint16_t                       mer_len_;
   size_t                         buf_size_;
   char*                          buffer;
   char*                          seam_buffer;
-  bool                           have_seam;
-  file_type                      type;
-  StreamIterator                 current_file;
-  StreamIterator                 stream_end;
-  size_t                         current_seq_len;
+  locks::pthread::mutex          streams_mutex;
+  char*                          data;
+  std::vector<stream_status>     streams_;
+  StreamIterator&                streams_iterator_;
 
 public:
   /// Size is the number of buffer to keep around. It should be larger
   /// than the number of thread expected to read from this
-  /// class. buf_size is the size of each buffer. 'begin' and 'end'
-  /// are iterators to a range of istream.
-  mer_overlap_sequence_parser(uint16_t mer_len, uint32_t size, size_t buf_size,
-                              StreamIterator begin, StreamIterator end) :
-    super(size),
+  /// class. buf_size is the size of each buffer. A StreamIterator is
+  /// expected to have a next() method, which is thread safe, and
+  /// which returns (move) a std::unique<std::istream> object.
+  mer_overlap_sequence_parser(uint16_t mer_len, uint32_t max_producers, uint32_t size, size_t buf_size,
+                              StreamIterator& streams) :
+    super(max_producers, size),
     mer_len_(mer_len),
     buf_size_(buf_size),
     buffer(new char[size * buf_size]),
-    seam_buffer(new char[mer_len - 1]),
-    have_seam(false),
-    type(DONE_TYPE),
-    current_file(begin),
-    stream_end(end),
-    current_seq_len(0)
+    seam_buffer(new char[max_producers * (mer_len - 1)]),
+    streams_(max_producers),
+    streams_iterator_(streams)
   {
     for(sequence_ptr* it = super::element_begin(); it != super::element_end(); ++it)
       it->start = it->end = buffer + (it - super::element_begin()) * buf_size;
-    if(current_file != stream_end)
-      update_type();
+    for(uint32_t i = 0; i < max_producers; ++i) {
+      streams_[i].seam = seam_buffer + i * (mer_len - 1);
+      open_next_file(streams_[i]);
+    }
   }
 
   ~mer_overlap_sequence_parser() {
@@ -72,152 +85,152 @@ public:
     delete [] seam_buffer;
   }
 
-  file_type get_type() const { return type; }
+  //  file_type get_type() const { return type; }
 
-  inline bool produce(sequence_ptr& buff) {
-    switch(type) {
+  inline bool produce(uint32_t i, sequence_ptr& buff) {
+    stream_status& st = streams_[i];
+
+    switch(st.type) {
     case FASTA_TYPE:
-      read_fasta(buff);
-      return false;
+      read_fasta(st, buff);
+      break;
     case FASTQ_TYPE:
-      read_fastq(buff);
-      return false;
+      read_fastq(st, buff);
+      break;
     case DONE_TYPE:
       return true;
     }
-    return true;
+
+    if(*st.stream)
+      return false;
+
+    // Reach the end of file, close current and try to open the next one
+    st.have_seam = false;
+    open_next_file(st);
+    return false;
   }
 
 protected:
-  void open_next_file() {
-    if(++current_file == stream_end) {
-      type = DONE_TYPE;
-      return;
+  bool open_next_file(stream_status& st) {
+    // The stream must be released, with .reset(), before calling
+    // .next() on the streams_iterator_, to ensure that the
+    // streams_iterator_ noticed that we closed that stream before
+    // requesting a new one.
+    st.stream.reset();
+    st.stream = streams_iterator_.next();
+    if(!st.stream) {
+      st.type = DONE_TYPE;
+      return false;
     }
-    update_type();
-  }
 
-  /// Update the type of the current file and move past first header
-  /// to beginning of sequence.
-  void update_type() {
-    switch(current_file->peek()) {
-    case EOF: return open_next_file();
+    switch(st.stream->peek()) {
+    case EOF: return open_next_file(st);
     case '>':
-      type = FASTA_TYPE;
-      ignore_line(); // Pass header
+      st.type = FASTA_TYPE;
+      ignore_line(*st.stream); // Pass header
       break;
     case '@':
-      type = FASTQ_TYPE;
-      ignore_line(); // Pass header
+      st.type = FASTQ_TYPE;
+      ignore_line(*st.stream); // Pass header
       break;
     default:
       eraise(std::runtime_error) << "Unsupported format"; // Better error management
     }
+    return true;
   }
 
-  void read_fasta(sequence_ptr& buff) {
+  void read_fasta(stream_status& st, sequence_ptr& buff) {
     size_t read = 0;
-    if(have_seam) {
-      memcpy(buff.start, seam_buffer, mer_len_ - 1);
+    if(st.have_seam) {
+      memcpy(buff.start, st.seam, mer_len_ - 1);
       read = mer_len_ - 1;
     }
 
-    // Here, the current_file is assumed to always point to some
+    // Here, the current stream is assumed to always point to some
     // sequence (or EOF). Never at header.
-    while(current_file->good() && read < buf_size_ - mer_len_ - 1) {
-      read += read_sequence(read, buff.start, '>');
-      if(current_file->peek() == '>') {
+    while(st.stream->good() && read < buf_size_ - mer_len_ - 1) {
+      read += read_sequence(*st.stream, read, buff.start, '>');
+      if(st.stream->peek() == '>') {
         *(buff.start + read++) = 'N'; // Add N between reads
-        ignore_line(); // Skip to next sequence (skip headers, quals, ...)
+        ignore_line(*st.stream); // Skip to next sequence (skip headers, quals, ...)
       }
     }
     buff.end = buff.start + read;
 
-    if(!*current_file) {
-      have_seam = false;
-      open_next_file();
-      return;
-    }
-    have_seam = read >= (size_t)(mer_len_ - 1);
-    if(have_seam)
-      memcpy(seam_buffer, buff.end - mer_len_ + 1, mer_len_ - 1);
+    st.have_seam = read >= (size_t)(mer_len_ - 1);
+    if(st.have_seam)
+      memcpy(st.seam, buff.end - mer_len_ + 1, mer_len_ - 1);
   }
 
-  void read_fastq(sequence_ptr& buff) {
+  void read_fastq(stream_status& st, sequence_ptr& buff) {
     size_t read = 0;
-    if(have_seam) {
-      memcpy(buff.start, seam_buffer, mer_len_ - 1);
+    if(st.have_seam) {
+      memcpy(buff.start, st.seam, mer_len_ - 1);
       read = mer_len_ - 1;
     }
 
-    // Here, the current_file is assumed to always point to some
+    // Here, the st.stream is assumed to always point to some
     // sequence (or EOF). Never at header.
-    while(*current_file && read < buf_size_ - mer_len_ - 1) {
-      size_t nread     = read_sequence(read, buff.start, '+');
-      read            += nread;
-      current_seq_len += nread;
-      if(current_file->peek() == '+') {
-        skip_quals(current_seq_len);
-        if(*current_file) {
+    while(*st.stream && read < buf_size_ - mer_len_ - 1) {
+      size_t nread  = read_sequence(*st.stream, read, buff.start, '+');
+      read         += nread;
+      st.seq_len   += nread;
+      if(st.stream->peek() == '+') {
+        skip_quals(*st.stream, st.seq_len);
+        if(*st.stream) {
           *(buff.start + read++) = 'N'; // Add N between reads
-          ignore_line(); // Skip sequence header
+          ignore_line(*st.stream); // Skip sequence header
         }
-        current_seq_len = 0;
+        st.seq_len = 0;
       }
     }
     buff.end = buff.start + read;
 
-    if(!*current_file) {
-      have_seam       = false;
-      current_seq_len = 0;
-      open_next_file();
-      return;
-    }
-    have_seam = read >= (size_t)(mer_len_ - 1);
-    if(have_seam)
-      memcpy(seam_buffer, buff.end - mer_len_ + 1, mer_len_ - 1);
+    st.have_seam = read >= (size_t)(mer_len_ - 1);
+    if(st.have_seam)
+      memcpy(st.seam, buff.end - mer_len_ + 1, mer_len_ - 1);
   }
 
-  size_t read_sequence(const size_t read, char* const start, const char stop) {
+  size_t read_sequence(std::istream& is, const size_t read, char* const start, const char stop) {
     size_t nread = read;
-    while(*current_file && nread < buf_size_ - 1 && current_file->peek() != stop) {
+    while(is && nread < buf_size_ - 1 && is.peek() != stop) {
       // Skip new lines -> get below does like them
-      skip_newlines();
-      current_file->get(start + nread, buf_size_ - nread);
-      nread += current_file->gcount();
-      skip_newlines();
+      skip_newlines(is);
+      is.get(start + nread, buf_size_ - nread);
+      nread += is.gcount();
+      skip_newlines(is);
     }
     return nread - read;
   }
 
-  inline void ignore_line() {
-    current_file->ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+  inline void ignore_line(std::istream& is) {
+    is.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
   }
 
-  inline void skip_newlines() {
-    while(current_file->peek() == '\n')
-      current_file->get();
+  inline void skip_newlines(std::istream& is) {
+    while(is.peek() == '\n')
+      is.get();
   }
 
   // Skip quals header and qual values (read_len) of them.
-  void skip_quals(size_t read_len) {
-    ignore_line();
+  void skip_quals(std::istream& is, size_t read_len) {
+    ignore_line(is);
     size_t quals = 0;
-    while(current_file->good() && quals < read_len) {
-      skip_newlines();
-      current_file->ignore(read_len - quals + 1, '\n');
-      quals += current_file->gcount();
-      if(*current_file)
+    while(is.good() && quals < read_len) {
+      skip_newlines(is);
+      is.ignore(read_len - quals + 1, '\n');
+      quals += is.gcount();
+      if(is)
         ++read_len;
     }
-    skip_newlines();
-    if(quals == read_len && (peek() == '@' || peek() == EOF))
+    skip_newlines(is);
+    if(quals == read_len && (is.peek() == '@' || is.peek() == EOF))
       return;
 
     eraise(std::runtime_error) << "Invalid fastq sequence";
   }
 
-  char peek() { return current_file->peek(); }
+  char peek(std::istream& is) { return is.peek(); }
 };
 }
 

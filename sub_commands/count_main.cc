@@ -29,9 +29,9 @@
 #include <jellyfish/thread_exec.hpp>
 #include <jellyfish/hash_counter.hpp>
 #include <jellyfish/locks_pthread.hpp>
+#include <jellyfish/stream_manager.hpp>
 #include <jellyfish/mer_overlap_sequence_parser.hpp>
 #include <jellyfish/mer_iterator.hpp>
-#include <jellyfish/stream_iterator.hpp>
 #include <jellyfish/jellyfish.hpp>
 #include <jellyfish/merge_files.hpp>
 #include <jellyfish/mer_dna_bloom_counter.hpp>
@@ -40,7 +40,7 @@
 using jellyfish::mer_dna;
 using jellyfish::mer_dna_bloom_counter;
 typedef std::vector<const char*> file_vector;
-typedef jellyfish::mer_overlap_sequence_parser<jellyfish::stream_iterator<file_vector::iterator> > sequence_parser;
+typedef jellyfish::mer_overlap_sequence_parser<jellyfish::stream_manager<file_vector::iterator> > sequence_parser;
 typedef jellyfish::mer_iterator<sequence_parser, mer_dna> mer_iterator;
 
 static count_main_cmdline args; // Command line switches and arguments
@@ -63,12 +63,19 @@ struct filter_bf {
 enum OPERATION { COUNT, PRIME, UPDATE };
 template<typename PathIterator, typename FilterType>
 class mer_counter : public jellyfish::thread_exec {
+  int                                     nb_threads_;
+  mer_hash&                               ary_;
+  jellyfish::stream_manager<PathIterator> streams_;
+  sequence_parser                         parser_;
+  FilterType                              filter_;
+  OPERATION                               op_;
+
 public:
   mer_counter(int nb_threads, mer_hash& ary, PathIterator file_begin, PathIterator file_end, OPERATION op,
               FilterType filter = FilterType()) :
     ary_(ary),
-    parser_(mer_dna::k(), 3 * nb_threads, 4096, jellyfish::stream_iterator<PathIterator>(file_begin, file_end),
-            jellyfish::stream_iterator<PathIterator>()),
+    streams_(file_begin, file_end),
+    parser_(mer_dna::k(), 1, 3 * nb_threads, 4096, streams_),
     filter_(filter),
     op_(op)
   { }
@@ -105,11 +112,12 @@ public:
   }
 
 private:
-  int                     nb_threads_;
-  mer_hash&               ary_;
-  sequence_parser         parser_;
-  FilterType              filter_;
-  OPERATION               op_;
+  // int                          nb_threads_;
+  // mer_hash&                    ary_;
+  // stream_manager<PathIterator> streams_;
+  // sequence_parser              parser_;
+  // FilterType                   filter_;
+  // OPERATION                    op_;
 };
 
 mer_dna_bloom_counter load_bloom_filter(const char* path) {

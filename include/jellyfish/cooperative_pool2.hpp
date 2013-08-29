@@ -122,8 +122,8 @@ public:
     elts_(new element_type[size_]),
     cons_prod_(size_ + 100),
     prod_cons_(size_ + 100),
-    max_producers_(max_producers),
     tokens_(max_producers + 1),
+    max_producers_(max_producers),
     done_(0)
   {
     // Every element is empty and ready to be filled by the producer
