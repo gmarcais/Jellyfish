@@ -57,11 +57,13 @@ class mer_overlap_sequence_parser : public jellyfish::cooperative_pool2<mer_over
   StreamIterator&                streams_iterator_;
 
 public:
-  /// Size is the number of buffer to keep around. It should be larger
-  /// than the number of thread expected to read from this
-  /// class. buf_size is the size of each buffer. A StreamIterator is
-  /// expected to have a next() method, which is thread safe, and
-  /// which returns (move) a std::unique<std::istream> object.
+  /// Max_producers is the maximum number of concurrent threads than
+  /// can produce data simultaneously. Size is the number of buffer to
+  /// keep around. It should be larger than the number of thread
+  /// expected to read from this class. buf_size is the size of each
+  /// buffer. A StreamIterator is expected to have a next() method,
+  /// which is thread safe, and which returns (move) a
+  /// std::unique<std::istream> object.
   mer_overlap_sequence_parser(uint16_t mer_len, uint32_t max_producers, uint32_t size, size_t buf_size,
                               StreamIterator& streams) :
     super(max_producers, size),

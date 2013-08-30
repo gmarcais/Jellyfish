@@ -2,9 +2,10 @@
 #define __JELLYFISH_WHOLE_SEQUENCE_PARSER_HPP__
 
 #include <string>
+#include <memory>
 
 #include <jellyfish/err.hpp>
-#include <jellyfish/cooperative_pool.hpp>
+#include <jellyfish/cooperative_pool2.hpp>
 
 namespace jellyfish {
 struct sequence_strings {
@@ -14,108 +15,109 @@ struct sequence_strings {
 };
 
 template<typename StreamIterator>
-class whole_sequence_parser : public jellyfish::cooperative_pool<whole_sequence_parser<StreamIterator>, sequence_strings> {
-  typedef jellyfish::cooperative_pool<whole_sequence_parser<StreamIterator>, sequence_strings> super;
+class whole_sequence_parser : public jellyfish::cooperative_pool2<whole_sequence_parser<StreamIterator>, sequence_strings> {
+  typedef jellyfish::cooperative_pool2<whole_sequence_parser<StreamIterator>, sequence_strings> super;
+  typedef std::unique_ptr<std::istream> stream_type;
   enum file_type { DONE_TYPE, FASTA_TYPE, FASTQ_TYPE };
 
-  file_type      type;
-  StreamIterator current_file;
-  StreamIterator stream_end;
-  std::string    buffer_;
-
+  struct stream_status {
+    file_type   type;
+    std::string buffer;
+    stream_type stream;
+    stream_status() : type(DONE_TYPE) { }
+  };
+  std::vector<stream_status> streams_;
+  StreamIterator&            streams_iterator_;
 
 public:
   /// Size is the number of buffers to keep around. It should be
   /// larger than the number of thread expected to read from this
   /// class. 'begin' and 'end' are iterators to a range of istream.
-  whole_sequence_parser(uint32_t size,
-                  StreamIterator begin, StreamIterator end) :
-    super(size),
-    type(DONE_TYPE),
-    current_file(begin),
-    stream_end(end)
+  whole_sequence_parser(uint32_t size, uint32_t max_producers, StreamIterator& streams) :
+    super(max_producers, size),
+    streams_(max_producers),
+    streams_iterator_(streams)
   {
-    if(current_file != stream_end)
-      update_type();
+    for(uint32_t i = 0; i < max_producers; ++i)
+      open_next_file(streams_[i]);
   }
 
-  file_type get_type() const { return type; }
+  inline bool produce(uint32_t i, sequence_strings& buff) {
+    stream_status& st = streams_[i];
 
-  inline bool produce(sequence_strings& buff) {
-    switch(type) {
+    switch(st.type) {
     case FASTA_TYPE:
-      read_fasta(buff);
-      return false;
+      read_fasta(st, buff);
+      break;
     case FASTQ_TYPE:
-      read_fastq(buff);
-      return false;
+      read_fastq(st, buff);
+      break;
     case DONE_TYPE:
       return true;
     }
-    return true;
+
+    if(*st.stream)
+      return false;
+
+    // Reach the end of file, close current and try to open the next one
+    open_next_file(st);
+    return false;
   }
 
 protected:
-  void open_next_file() {
-    if(++current_file == stream_end) {
-      type = DONE_TYPE;
+  void open_next_file(stream_status& st) {
+    st.stream.reset();
+    st.stream = streams_iterator_.next();
+    if(!st.stream) {
+      st.type = DONE_TYPE;
       return;
     }
-    update_type();
-  }
 
-  /// Update the type of the current file and move past first header
-  /// to beginning of sequence.
-  void update_type() {
-    switch(current_file->peek()) {
-    case EOF: return open_next_file();
+    // Update the type of the current file and move past first header
+    // to beginning of sequence.
+    switch(st.stream->peek()) {
+    case EOF: return open_next_file(st);
     case '>':
-      type = FASTA_TYPE;
+      st.type = FASTA_TYPE;
       break;
     case '@':
-      type = FASTQ_TYPE;
+      st.type = FASTQ_TYPE;
       break;
     default:
       eraise(std::runtime_error) << "Unsupported format"; // Better error management
     }
   }
 
-  void read_fasta(sequence_strings& buff) {
-    current_file->get(); // Skip '>'
-    std::getline(*current_file, buff.header);
+  void read_fasta(stream_status& st, sequence_strings& buff) {
+    st.stream->get(); // Skip '>'
+    std::getline(*st.stream, buff.header);
     buff.seq.clear();
-    while(current_file->peek() != '>' && current_file->peek() != EOF) {
-      std::getline(*current_file, buffer_); // Wish there was an easy way to combine the
-      buff.seq.append(buffer_);             // two lines avoiding copying
+    while(st.stream->peek() != '>' && st.stream->peek() != EOF) {
+      std::getline(*st.stream, st.buffer); // Wish there was an easy way to combine the
+      buff.seq.append(st.buffer);             // two lines avoiding copying
     }
-
-    if(!*current_file)
-      open_next_file();
   }
 
-  void read_fastq(sequence_strings& buff) {
-    current_file->get(); // Skip '@'
-    std::getline(*current_file, buff.header);
+  void read_fastq(stream_status& st, sequence_strings& buff) {
+    st.stream->get(); // Skip '@'
+    std::getline(*st.stream, buff.header);
     buff.seq.clear();
-    while(current_file->peek() != '+' && current_file->peek() != EOF) {
-      std::getline(*current_file, buffer_); // Wish there was an easy way to combine the
-      buff.seq.append(buffer_);             // two lines avoiding copying
+    while(st.stream->peek() != '+' && st.stream->peek() != EOF) {
+      std::getline(*st.stream, st.buffer); // Wish there was an easy way to combine the
+      buff.seq.append(st.buffer);             // two lines avoiding copying
     }
-    if(!*current_file)
+    if(!*st.stream)
       eraise(std::runtime_error) << "Truncated fastq file";
-    current_file->ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    st.stream->ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     buff.qual.clear();
-    while(buff.qual.size() < buff.seq.size() && current_file->good()) {
-      std::getline(*current_file, buffer_);
-      buff.qual.append(buffer_);
+    while(buff.qual.size() < buff.seq.size() && st.stream->good()) {
+      std::getline(*st.stream, st.buffer);
+      buff.qual.append(st.buffer);
     }
     if(buff.qual.size() != buff.seq.size())
       eraise(std::runtime_error) << "Invalid fastq file: wrong number of quals";
-    if(!*current_file || current_file->peek() == EOF) {
-      open_next_file();
-    } else if(current_file->peek() != '@') {
+    if(st.stream->peek() != EOF && st.stream->peek() != '@')
       eraise(std::runtime_error) << "Invalid fastq file: header missing";
-    }
   }
 };
 } // namespace jellyfish
