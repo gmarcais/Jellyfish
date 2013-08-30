@@ -10,6 +10,9 @@ option("size", "s") {
 option("threads", "t") {
   description "Number of threads"
   uint32; default "1" }
+option("readers", "R") {
+  description "Number of reading threads"
+  uint32; default "1" }
 option("output", "o") {
   description "Output file"
   c_string; default "mer_counts" }
@@ -27,8 +30,7 @@ option("bf") {
   c_string; typestr "path" }
 option("if") {
   description "Count only k-mers in this files"
-  c_string; typestr "path"; multiple
-}
+  c_string; typestr "path"; multiple }
 option("reprobes", "p") {
   description "Maximum number of reprobes"
   uint32; default "126" }

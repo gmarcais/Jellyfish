@@ -71,11 +71,11 @@ class mer_counter : public jellyfish::thread_exec {
   OPERATION                               op_;
 
 public:
-  mer_counter(int nb_threads, mer_hash& ary, PathIterator file_begin, PathIterator file_end, OPERATION op,
+  mer_counter(int nb_threads, uint32_t nb_readers, mer_hash& ary, PathIterator file_begin, PathIterator file_end, OPERATION op,
               FilterType filter = FilterType()) :
     ary_(ary),
     streams_(file_begin, file_end),
-    parser_(mer_dna::k(), 1, 3 * nb_threads, 4096, streams_),
+    parser_(mer_dna::k(), nb_readers, 3 * nb_threads, 4096, streams_),
     filter_(filter),
     op_(op)
   { }
@@ -159,7 +159,8 @@ int count_main(int argc, char *argv[])
 
   OPERATION do_op = COUNT;
   if(args.if_given) {
-    mer_counter<file_vector::iterator, filter_true> counter(args.threads_arg, ary, args.if_arg.begin(), args.if_arg.end(),
+    mer_counter<file_vector::iterator, filter_true> counter(args.threads_arg, args.readers_arg,
+                                                            ary, args.if_arg.begin(), args.if_arg.end(),
                                                             PRIME);
     counter.exec_join(args.threads_arg);
     do_op = UPDATE;
@@ -167,11 +168,13 @@ int count_main(int argc, char *argv[])
 
   if(args.bf_given) {
     mer_dna_bloom_counter bc = load_bloom_filter(args.bf_arg);
-    mer_counter<file_vector::iterator, filter_bf>  counter(args.threads_arg, ary, args.file_arg.begin(), args.file_arg.end(),
+    mer_counter<file_vector::iterator, filter_bf>  counter(args.threads_arg, args.readers_arg, ary,
+                                                           args.file_arg.begin(), args.file_arg.end(),
                                                            do_op, filter_bf(bc));
     counter.exec_join(args.threads_arg);
   } else {
-    mer_counter<file_vector::iterator, filter_true> counter(args.threads_arg, ary, args.file_arg.begin(), args.file_arg.end(),
+    mer_counter<file_vector::iterator, filter_true> counter(args.threads_arg, args.readers_arg,
+                                                            ary, args.file_arg.begin(), args.file_arg.end(),
                                                             do_op);
     counter.exec_join(args.threads_arg);
   }

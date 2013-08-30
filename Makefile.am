@@ -147,7 +147,7 @@ AM_SH_LOG_FLAGS =
 
 TESTS = tests/generate_sequence.sh tests/parallel_hashing.sh	\
         tests/merge.sh tests/bloom_filter.sh tests/big.sh	\
-        tests/subset_hashing.sh
+        tests/subset_hashing.sh tests/multifile.sh
 # TESTS = tests/generate_sequence.sh tests/serial_hashing.sh		\
 #         tests/parallel_hashing.sh tests/serial_direct_indexing.sh	\
 #         tests/parallel_direct_indexing.sh tests/raw_hash.sh		\
@@ -172,7 +172,7 @@ tests/bloom_filter.log: tests/generate_sequence.log
 #tests/serial_direct_indexing.log: tests/generate_sequence.log
 #tests/parallel_direct_indexing.log: tests/generate_sequence.log
 #tests/parallel_fastq_direct_indexing.log: tests/generate_fastq_sequence.log
-#tests/multi_file.log: tests/generate_sequence.log
+tests/multi_file.log: tests/generate_sequence.log
 #tests/raw_hash.log: tests/generate_sequence.log
 #tests/from_stream.log: tests/generate_sequence.log
 #tests/parallel_fastq_hashing.log: tests/generate_fastq_sequence.log

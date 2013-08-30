@@ -4,15 +4,11 @@ cd tests
 . ./compat.sh
 
 sort > ${pref}.md5sum <<EOF
-0e2705617b44144daedc5f9e35ba7b93 ${pref}.stats
+d93b7678037814c256d1d9120a0e6422 ${pref}_m15_s2M.histo
 EOF
-echo "Counting 22-mers on ${nCPUs} CPU" &&      \
-    $JF count --matrix seq10m_matrix_22 -m 22 -t $nCPUs \
-    -o $pref -s 5000000 --timing ${pref}.timing seq1m_*.fa && \
-    $JF stats ${pref}_0 > ${pref}.stats && \
-    check ${pref}.md5sum
-RET=$?
 
-# [ -z "$NODEL" ] && \
-#     rm -f ${pref}_* ${pref}.md5sum ${pref}.timing ${pref}.stats
-exit $RET
+# Count multiple files with many readers
+$JF count -t $nCPUs -R 4 -o ${pref}_m15_s2M.jf -s 2M -C -m 15 seq1m_0.fa seq1m_1.fa seq1m_2.fa seq10m.fa seq1m_3.fa seq1m_4.fa
+$JF histo ${pref}_m15_s2M.jf > ${pref}_m15_s2M.histo
+
+check ${pref}.md5sum
