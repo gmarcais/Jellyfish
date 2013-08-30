@@ -70,9 +70,9 @@ option("upper-count", "U") {
 # option("matrix") {
 #   description "Hash function binary matrix"
 #   string; typestr "Matrix file" }
-# option("timing") {
-#   description "Print timing information"
-#   c_string; typestr "Timing file" }
+option("timing") {
+  description "Print timing information"
+  c_string; typestr "Timing file" }
 # option("stats") {
 #   description "Print stats"
 #   c_string; typestr "Stats file" }

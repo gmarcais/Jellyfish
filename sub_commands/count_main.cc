@@ -24,6 +24,7 @@
 #include <map>
 #include <sstream>
 #include <memory>
+#include <chrono>
 
 #include <jellyfish/err.hpp>
 #include <jellyfish/thread_exec.hpp>
@@ -36,6 +37,13 @@
 #include <jellyfish/merge_files.hpp>
 #include <jellyfish/mer_dna_bloom_counter.hpp>
 #include <sub_commands/count_main_cmdline.hpp>
+
+using std::chrono::steady_clock;
+using std::chrono::duration;
+using std::chrono::duration_cast;
+
+template<typename DtnType>
+inline double as_seconds(DtnType dtn) { return duration_cast<duration<double>>(dtn).count(); }
 
 using jellyfish::mer_dna;
 using jellyfish::mer_dna_bloom_counter;
@@ -139,6 +147,8 @@ mer_dna_bloom_counter load_bloom_filter(const char* path) {
 
 int count_main(int argc, char *argv[])
 {
+  auto start_time = steady_clock::now();
+
   jellyfish::file_header header;
   header.fill_standard();
   header.set_cmdline(argc, argv);
@@ -156,6 +166,8 @@ int count_main(int argc, char *argv[])
   else
     dumper.reset(new binary_dumper(args.out_counter_len_arg, ary.key_len(), args.threads_arg, args.output_arg, &header));
   ary.dumper(dumper.get());
+
+  auto after_init_time = steady_clock::now();
 
   OPERATION do_op = COUNT;
   if(args.if_given) {
@@ -178,6 +190,8 @@ int count_main(int argc, char *argv[])
                                                             do_op);
     counter.exec_join(args.threads_arg);
   }
+
+  auto after_count_time = steady_clock::now();
 
   // If no intermediate files, dump directly into output file. If not, will do a round of merging
   if(!args.no_write_flag) {
@@ -206,5 +220,15 @@ int count_main(int argc, char *argv[])
       } // if(!args.no_merge_flag
     } // if(!args.no_merge_flag
   }
+
+  auto after_dump_time = steady_clock::now();
+
+  if(args.timing_given) {
+    std::ofstream timing_file(args.timing_arg);
+    timing_file << "Init     " << as_seconds(after_init_time - start_time) << "\n"
+                << "Counting " << as_seconds(after_count_time - after_init_time) << "\n"
+                << "Writing  " << as_seconds(after_dump_time - after_count_time) << "\n";
+  }
+
   return 0;
 }
