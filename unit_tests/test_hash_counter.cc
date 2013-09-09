@@ -4,6 +4,7 @@
 #include <jellyfish/mer_dna.hpp>
 #include <map>
 #include <vector>
+#include <limits>
 
 namespace {
 using jellyfish::thread_exec;
@@ -37,14 +38,14 @@ public:
       m.randomize();
       switch(op_) {
       case ADD:
-        hash_.add(m, 1);
+        hash_.add(m, std::numeric_limits<uint64_t>::max());
         break;
       case SET:
         hash_.set(m);
         break;
       }
 
-      ++my_map[m];
+      my_map[m] = std::numeric_limits<uint64_t>::max();
     }
 
     hash_.done();
@@ -64,7 +65,7 @@ public:
 TEST(HashCounterCooperative, SizeDouble) {
   static const int    mer_len    = 35;
   static const int    nb_threads = 5;
-  static const int    nb         = 100;
+  static const int    nb         = 200;
   static const size_t init_size  = 128;
   mer_dna::k(mer_len);
 
@@ -93,8 +94,10 @@ TEST(HashCounterCooperative, SizeDouble) {
     adder.exec_join(nb_threads);
 
     lazy_iterator it = hash.ary()->iterator_all<lazy_iterator>();
-    while(it.next())
-      EXPECT_EQ(adder.val(it.key()), it.val() + 1);
+    while(it.next()) {
+      SCOPED_TRACE(::testing::Message() << "mer:" << it.key());
+      EXPECT_EQ(0, it.val());
+    }
     EXPECT_LT((size_t)(nb_threads * nb), hash.size());
   }
 }

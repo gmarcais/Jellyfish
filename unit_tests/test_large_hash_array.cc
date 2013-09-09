@@ -4,6 +4,7 @@
 
 #include <map>
 #include <vector>
+#include <limits>
 
 #include <gtest/gtest.h>
 #include <unit_tests/test_main.hpp>
@@ -24,6 +25,7 @@ typedef std::set<jellyfish::mer_dna> mer_set;
 
 using jellyfish::RectangularBinaryMatrix;
 using jellyfish::mer_dna;
+using std::numeric_limits;
 
 typedef large_array::iterator stl_iterator;
 typedef large_array::eager_iterator eager_iterator;
@@ -34,7 +36,7 @@ typedef large_array::region_iterator region_iterator;
 class HashArray : public ::testing::TestWithParam< ::std::tr1::tuple<int,int, int> >
 {
 public:
-  static const size_t ary_lsize = 9;
+  static const size_t ary_lsize = 10;
   static const size_t ary_size = (size_t)1 << ary_lsize;
   static const size_t ary_size_mask = ary_size - 1;
   const int           key_len, val_len, reprobe_len, reprobe_limit;
@@ -56,7 +58,7 @@ public:
 };
 
 TEST_P(HashArray, OneElement) {
-  jellyfish::mer_dna m, m2, get_mer;
+  mer_dna m, m2, get_mer;
 
   SCOPED_TRACE(::testing::Message() << "key_len:" << key_len << " val_len:" << val_len << " reprobe:" << reprobe_limit);
 
@@ -75,9 +77,10 @@ TEST_P(HashArray, OneElement) {
 
     // Add this one element to the hash
     ary.clear();
-    bool   is_new = false;
-    size_t id     = (size_t)-1;
-    ary.add(m, i, &is_new, &id);
+    bool         is_new      = false;
+    size_t       id          = (size_t)-1;
+    unsigned int carry_shift = 0;
+    EXPECT_TRUE(ary.add(m, i, &carry_shift, &is_new, &id));
     EXPECT_TRUE(is_new);
     // Only expected to agree on the length of the key. Applies only
     // if key_len < lsize. The bits above key_len are pseudo-random
@@ -138,23 +141,35 @@ TEST_P(HashArray, Collisions) {
   }
 }
 
+std::pair<large_array, mer_map> fill_array(size_t nb_elts, size_t size, int key_len, int val_len, int reprobe_limit) {
+  large_array ary(size, key_len, val_len, reprobe_limit);
+  mer_map     map;
+
+  mer_dna mer;
+  for(int i = 0; i < nb_elts; ++i) {
+    SCOPED_TRACE(::testing::Message() << "i:" << i);
+    mer.randomize();
+    map[mer] += i;
+    // If get false, hash array filled up: double size
+    bool res = ary.add(mer, i);
+    if(!res) {
+      // std::cerr << "Double size (" << size << " -> " << (2 * size) << ") nb_elts:" << nb_elts
+      //           << " key_len:" << key_len << " val_len:" << val_len
+      //           << " mer:" << mer << std::endl;
+      // return std::make_pair(std::move(ary), std::move(map));
+      return fill_array(nb_elts, 2 * size, key_len, val_len, reprobe_limit);
+    }
+  }
+  return std::make_pair(std::move(ary), std::move(map));
+}
+
 TEST_P(HashArray, Iterator) {
   static const int nb_elts = 1 << (ary_lsize - 1);
   SCOPED_TRACE(::testing::Message() << "key_len:" << key_len << " val_len:" << val_len << " reprobe:" << reprobe_limit);
 
-  mer_map            map;
-  jellyfish::mer_dna mer;
-  jellyfish::mer_dna bad_mer("GCCTT");
-
-  for(int i = 0; i < nb_elts; ++i) {
-    SCOPED_TRACE(::testing::Message() << "i:" << i);
-    mer.randomize();
-    // If get false, hash array filled up: skip test
-    bool res = ary.add(mer, i);
-    if(!res)
-      return;
-    map[mer] += i;
-  }
+  std::pair<large_array, mer_map> res = fill_array(nb_elts, ary_size, key_len, val_len, reprobe_limit);
+  large_array&                    ary = res.first;
+  mer_map &                       map = res.second;
 
   eager_iterator it     = ary.iterator_all<eager_iterator>();
   lazy_iterator  lit    = ary.iterator_all<lazy_iterator>();
@@ -164,8 +179,8 @@ TEST_P(HashArray, Iterator) {
     ASSERT_TRUE(lit.next());
     ASSERT_NE(ary.end(), stl_it);
     mer_map::const_iterator mit = map.find(it.key());
-    ASSERT_NE(map.end(), mit);
     SCOPED_TRACE(::testing::Message() << "key:" << it.key());
+    ASSERT_NE(map.end(), mit);
     EXPECT_EQ(mit->first, it.key());
     EXPECT_EQ(mit->second, it.val());
     EXPECT_EQ(mit->first, lit.key());
@@ -206,6 +221,16 @@ TEST_P(HashArray, Iterator) {
     ASSERT_TRUE(ary.get_val_for_key(it->first, &val));
     EXPECT_EQ(it->second, val);
   }
+}
+
+TEST_P(HashArray, LargeValue) {
+  mer_dna mer;
+  mer.randomize();
+  ary.add(mer, numeric_limits<uint64_t>::max());
+
+  uint64_t val = 0;
+  ASSERT_TRUE(ary.get_val_for_key(mer, &val));
+  ASSERT_EQ(numeric_limits<uint64_t>::max(), val);
 }
 
 INSTANTIATE_TEST_CASE_P(HashArrayTest, HashArray, ::testing::Combine(::testing::Range(8, 4 * 64, 2), // Key lengths
