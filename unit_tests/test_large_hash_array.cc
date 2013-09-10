@@ -141,9 +141,19 @@ TEST_P(HashArray, Collisions) {
   }
 }
 
-std::pair<large_array, mer_map> fill_array(size_t nb_elts, size_t size, int key_len, int val_len, int reprobe_limit) {
-  large_array ary(size, key_len, val_len, reprobe_limit);
+struct arrays_type {
+  large_array array;
   mer_map     map;
+  arrays_type(size_t size, uint16_t key_len, uint16_t val_len, uint16_t reprobe_limit) :
+    array(size, key_len, val_len, reprobe_limit), map()
+  { }
+};
+
+typedef std::unique_ptr<arrays_type> arrays_ptr;
+arrays_ptr fill_array(size_t nb_elts, size_t size, int key_len, int val_len, int reprobe_limit) {
+  arrays_ptr arrays(new arrays_type(size, key_len, val_len, reprobe_limit));
+  large_array& ary = arrays->array;
+  mer_map&     map = arrays->map;
 
   mer_dna mer;
   for(int i = 0; i < nb_elts; ++i) {
@@ -160,16 +170,16 @@ std::pair<large_array, mer_map> fill_array(size_t nb_elts, size_t size, int key_
       return fill_array(nb_elts, 2 * size, key_len, val_len, reprobe_limit);
     }
   }
-  return std::make_pair(std::move(ary), std::move(map));
+  return arrays;
 }
 
 TEST_P(HashArray, Iterator) {
   static const int nb_elts = 1 << (ary_lsize - 1);
   SCOPED_TRACE(::testing::Message() << "key_len:" << key_len << " val_len:" << val_len << " reprobe:" << reprobe_limit);
 
-  std::pair<large_array, mer_map> res = fill_array(nb_elts, ary_size, key_len, val_len, reprobe_limit);
-  large_array&                    ary = res.first;
-  mer_map &                       map = res.second;
+  arrays_ptr   res = fill_array(nb_elts, ary_size, key_len, val_len, reprobe_limit);
+  large_array& ary = res->array;
+  mer_map &    map = res->map;
 
   eager_iterator it     = ary.iterator_all<eager_iterator>();
   lazy_iterator  lit    = ary.iterator_all<lazy_iterator>();
