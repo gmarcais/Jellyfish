@@ -4,6 +4,7 @@
 
 #include <map>
 #include <vector>
+#include <limits>
 
 #include <gtest/gtest.h>
 #include <unit_tests/test_main.hpp>
@@ -24,6 +25,7 @@ typedef std::set<jellyfish::mer_dna> mer_set;
 
 using jellyfish::RectangularBinaryMatrix;
 using jellyfish::mer_dna;
+using std::numeric_limits;
 
 typedef large_array::iterator stl_iterator;
 typedef large_array::eager_iterator eager_iterator;
@@ -34,7 +36,7 @@ typedef large_array::region_iterator region_iterator;
 class HashArray : public ::testing::TestWithParam< ::std::tr1::tuple<int,int, int> >
 {
 public:
-  static const size_t ary_lsize = 9;
+  static const size_t ary_lsize = 10;
   static const size_t ary_size = (size_t)1 << ary_lsize;
   static const size_t ary_size_mask = ary_size - 1;
   const int           key_len, val_len, reprobe_len, reprobe_limit;
@@ -56,7 +58,7 @@ public:
 };
 
 TEST_P(HashArray, OneElement) {
-  jellyfish::mer_dna m, m2, get_mer;
+  mer_dna m, m2, get_mer;
 
   SCOPED_TRACE(::testing::Message() << "key_len:" << key_len << " val_len:" << val_len << " reprobe:" << reprobe_limit);
 
@@ -75,9 +77,10 @@ TEST_P(HashArray, OneElement) {
 
     // Add this one element to the hash
     ary.clear();
-    bool   is_new = false;
-    size_t id     = (size_t)-1;
-    ary.add(m, i, &is_new, &id);
+    bool         is_new      = false;
+    size_t       id          = (size_t)-1;
+    unsigned int carry_shift = 0;
+    EXPECT_TRUE(ary.add(m, i, &carry_shift, &is_new, &id));
     EXPECT_TRUE(is_new);
     // Only expected to agree on the length of the key. Applies only
     // if key_len < lsize. The bits above key_len are pseudo-random
@@ -122,8 +125,8 @@ TEST_P(HashArray, Collisions) {
     for(int j = 0; j < nb_collisions; ++j) {
       mers2[j].set_bits(0, ary.matrix().r(), (uint64_t)i);
       mers[j].set_bits(0, ary.matrix().r(), ary.inverse_matrix().times(mers2[j]));
-      ary.add(mers[j], 1);
-      ++map[mers[j]];
+      ary.add(mers[j], j);
+      map[mers[j]] += j;
     }
 
     lazy_iterator it    = ary.iterator_all<lazy_iterator>();
@@ -138,23 +141,45 @@ TEST_P(HashArray, Collisions) {
   }
 }
 
+struct arrays_type {
+  large_array array;
+  mer_map     map;
+  arrays_type(size_t size, uint16_t key_len, uint16_t val_len, uint16_t reprobe_limit) :
+    array(size, key_len, val_len, reprobe_limit), map()
+  { }
+};
+
+typedef std::unique_ptr<arrays_type> arrays_ptr;
+arrays_ptr fill_array(size_t nb_elts, size_t size, int key_len, int val_len, int reprobe_limit) {
+  arrays_ptr arrays(new arrays_type(size, key_len, val_len, reprobe_limit));
+  large_array& ary = arrays->array;
+  mer_map&     map = arrays->map;
+
+  mer_dna mer;
+  for(int i = 0; i < nb_elts; ++i) {
+    SCOPED_TRACE(::testing::Message() << "i:" << i);
+    mer.randomize();
+    map[mer] += i;
+    // If get false, hash array filled up: double size
+    bool res = ary.add(mer, i);
+    if(!res) {
+      // std::cerr << "Double size (" << size << " -> " << (2 * size) << ") nb_elts:" << nb_elts
+      //           << " key_len:" << key_len << " val_len:" << val_len
+      //           << " mer:" << mer << std::endl;
+      // return std::make_pair(std::move(ary), std::move(map));
+      return fill_array(nb_elts, 2 * size, key_len, val_len, reprobe_limit);
+    }
+  }
+  return arrays;
+}
+
 TEST_P(HashArray, Iterator) {
   static const int nb_elts = 1 << (ary_lsize - 1);
   SCOPED_TRACE(::testing::Message() << "key_len:" << key_len << " val_len:" << val_len << " reprobe:" << reprobe_limit);
 
-  mer_map            map;
-  jellyfish::mer_dna mer;
-  jellyfish::mer_dna bad_mer("GCCTT");
-
-  for(int i = 0; i < nb_elts; ++i) {
-    SCOPED_TRACE(::testing::Message() << "i:" << i);
-    mer.randomize();
-    // If get false, hash array filled up: skip test
-    bool res = ary.add(mer, i);
-    if(!res)
-      return;
-    map[mer] += i;
-  }
+  arrays_ptr   res = fill_array(nb_elts, ary_size, key_len, val_len, reprobe_limit);
+  large_array& ary = res->array;
+  mer_map &    map = res->map;
 
   eager_iterator it     = ary.iterator_all<eager_iterator>();
   lazy_iterator  lit    = ary.iterator_all<lazy_iterator>();
@@ -164,8 +189,8 @@ TEST_P(HashArray, Iterator) {
     ASSERT_TRUE(lit.next());
     ASSERT_NE(ary.end(), stl_it);
     mer_map::const_iterator mit = map.find(it.key());
-    ASSERT_NE(map.end(), mit);
     SCOPED_TRACE(::testing::Message() << "key:" << it.key());
+    ASSERT_NE(map.end(), mit);
     EXPECT_EQ(mit->first, it.key());
     EXPECT_EQ(mit->second, it.val());
     EXPECT_EQ(mit->first, lit.key());
@@ -208,12 +233,22 @@ TEST_P(HashArray, Iterator) {
   }
 }
 
+TEST_P(HashArray, LargeValue) {
+  mer_dna mer;
+  mer.randomize();
+  ary.add(mer, numeric_limits<uint64_t>::max());
+
+  uint64_t val = 0;
+  ASSERT_TRUE(ary.get_val_for_key(mer, &val));
+  ASSERT_EQ(numeric_limits<uint64_t>::max(), val);
+}
+
 INSTANTIATE_TEST_CASE_P(HashArrayTest, HashArray, ::testing::Combine(::testing::Range(8, 4 * 64, 2), // Key lengths
                                                                      ::testing::Range(1, 10),    // Val lengths
                                                                      ::testing::Range(6, 8)      // Reprobe lengths
                                                                      ));
 
-TEST(HashSet, Set) {
+TEST(Hash, Set) {
   static const int lsize = 16;
   static const int size = 1 << lsize;
   static const int nb_elts = 2 * size / 3;
@@ -243,6 +278,53 @@ TEST(HashSet, Set) {
     size_t id;
     EXPECT_EQ(set.find(mer) != set.end(), ary.get_key_id(mer, &id));
   }
+}
+
+TEST(Hash, Update) {
+  static const int lsize = 16;
+  static const int size = 1 << lsize;
+  static const int nb_elts = 2 * size / 3;
+
+  large_array ary(size, 100, 4, 126);
+  mer_map     in_ary;
+  mer_dna::k(50);
+  mer_dna     mer;
+
+  for(int i = 0; i < nb_elts; ++i) {
+    mer.randomize();
+    bool is_new;
+    size_t id;
+    ASSERT_TRUE(ary.set(mer, &is_new, &id));
+    auto res = in_ary.insert(std::make_pair(mer, (uint64_t)0));
+    ASSERT_EQ(res.second, is_new);
+  }
+
+  for(auto it = in_ary.begin(); it != in_ary.end(); ++it) {
+    uint64_t val = random_bits(4);
+    EXPECT_TRUE(ary.update_add(it->first, val));
+    it->second = val;
+  }
+
+  for(int i = 0; i < nb_elts; ++i) {
+    mer.randomize();
+    uint64_t val = random_bits(4);
+    auto it = in_ary.find(mer);
+    if(it == in_ary.end()) {
+      EXPECT_FALSE(ary.update_add(mer, val));
+    } else {
+      it->second += val;
+      EXPECT_TRUE(ary.update_add(mer, val));
+    }
+  }
+
+  lazy_iterator it = ary.iterator_all<lazy_iterator>();
+  size_t count = 0;
+  while(it.next()) {
+    ASSERT_NE(in_ary.end(), in_ary.find(it.key()));
+    EXPECT_EQ(in_ary[it.key()], it.val());
+    ++count;
+  }
+  EXPECT_EQ(in_ary.size(), count);
 }
 
 TEST(Hash, Info) {

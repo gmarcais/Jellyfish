@@ -29,8 +29,8 @@
 #include <sub_commands/histo_main_cmdline.hpp>
 
 template<typename reader_type>
-void compute_histo(reader_type& reader, const uint64_t base, const uint64_t ceil, uint64_t* histo,
-                   const uint64_t nb_buckets, const uint64_t inc) {
+void compute_histo(reader_type& reader, const uint64_t base, const uint64_t ceil,
+                   uint64_t* histo, const uint64_t nb_buckets, const uint64_t inc) {
   while(reader.next()) {
     if(reader.val() < base)
       ++histo[0];
@@ -53,21 +53,18 @@ int histo_main(int argc, char *argv[])
   header.read(is);
   jellyfish::mer_dna::k(header.key_len() / 2);
 
-  if(args.low_arg < 1)
-    args.error("Low count value must be >= 1");
   if(args.high_arg < args.low_arg)
     args.error("High count value must be >= to low count value");
   ofstream_default out(args.output_given ? args.output_arg : 0, std::cout);
   if(!out.good())
     die << "Error opening output file '" << args.output_arg << "'" << jellyfish::err::no;
 
-  const uint64_t base =
-    args.low_arg > 1 ? (args.increment_arg >= args.low_arg ? 1 : args.low_arg - args.increment_arg) : 1;
+  const uint64_t base = args.increment_arg >= args.low_arg ? 0 : args.low_arg - args.increment_arg;
   const uint64_t ceil = args.high_arg + args.increment_arg;
-  const uint64_t inc = args.increment_arg;
+  const uint64_t inc  = args.increment_arg;
 
-  const uint64_t  nb_buckets = (ceil + inc - base) / inc;
-  uint64_t* histo      = new uint64_t[nb_buckets];
+  const uint64_t nb_buckets  = (ceil + inc - base) / inc;
+  uint64_t*      histo       = new uint64_t[nb_buckets];
   memset(histo, '\0', sizeof(uint64_t) * nb_buckets);
 
   if(!header.format().compare(binary_dumper::format)) {

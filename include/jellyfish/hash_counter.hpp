@@ -95,8 +95,26 @@ public:
   /// entry `k` did not exist in the hash. In `id` is returned the
   /// final position of `k` in the hash array.
   void add(const Key& k, uint64_t v, bool* is_new, size_t* id) {
-    while(!ary_->add(k, v, is_new, id))
+    unsigned int carry_shift  = 0;
+    bool*        is_new_ptr   = is_new;
+    size_t*      id_ptr       = id;
+    bool         is_new_void  = false;
+    size_t       id_void      = false;
+
+    while(!ary_->add(k, v, &carry_shift, is_new_ptr, id_ptr)) {
       handle_full_ary();
+      v &= ~(uint64_t)0 << carry_shift;
+      // If carry_shift == 0, failed to allocate the first field for
+      // key, hence status of is_new and value for id are not
+      // determined yet. On the other hand, if carry_shift > 0, we
+      // failed while adding extra field for large key, so the status
+      // of is_new and value of id are known. We do not update them in future
+      // calls.
+      if(carry_shift) {
+        is_new_ptr = &is_new_void;
+        id_ptr     = &id_void;
+      }
+    }
   }
 
   /// Add `v` to the entry `k`. This method is multi-thread safe. If
@@ -110,6 +128,45 @@ public:
     add(k, v, &is_new, &id);
   }
 
+  /// Insert the key `k` in the hash. The value is not changed or set
+  /// to 0 if not already in the hash.
+  ///
+  /// @param k Key to insert
+  inline void set(const Key& k) {
+    bool   is_new;
+    size_t id;
+    set(k, &is_new, &id);
+  }
+
+  /// Insert the key `k` in the hash. The value is not changed or set
+  /// to 0 if not already in the hash. Set `is_new` to true if `k` did
+  /// not already exist in the hash. In `id` is returned the final
+  /// position of `k` in the hash.
+  void set(const Key& k, bool* is_new, size_t* id) {
+    while(!ary_->set(k, is_new, id))
+      handle_full_ary();
+  }
+
+  /// Update the value of key `k` by adding `v`, if `k` is already
+  /// present in the hash, otherwise this nothing happens. Returns
+  /// true if `k` is already in the hash, false otherwise.
+  bool update_add(const Key& k, uint64_t v) {
+    Key tmp_key;
+    return update_add(k, v, tmp_key);
+  }
+
+  bool update_add(const Key& k, uint64_t v, Key& tmp_key) {
+    unsigned int carry_shift = 0;
+
+    while(true) {
+      if(ary_->update_add(k, v, &carry_shift, tmp_key))
+        return true;
+      if(carry_shift == 0)
+        return false;
+      handle_full_ary();
+      v &= ~(uint64_t)0 << carry_shift;
+    }
+  }
 
   /// Signify that thread is done and wait for all threads to be done.
   void done() {

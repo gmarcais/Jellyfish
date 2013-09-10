@@ -220,7 +220,7 @@ public:
     return res;
   }
 
-  bool operator!=(const mer_base& rhs) { return !this->operator==(rhs); }
+  bool operator!=(const mer_base& rhs) const { return !this->operator==(rhs); }
   bool operator<(const mer_base& rhs) const {
     unsigned int i = nb_words();
     while(i >= 8) {

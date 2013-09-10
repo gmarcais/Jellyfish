@@ -26,6 +26,10 @@
 #include <string.h>
 #include <errno.h>
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 namespace jellyfish {
 namespace err {
 class code {
@@ -42,17 +46,17 @@ public:
     char  err_str[1024];
     char* str;
 
-#if (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && ! _GNU_SOURCE
-    int err = strerror_r(e, err_str, sizeof(err_str));
-    if(err)
-      strcpy(err_str, "error");
-    str = err_str;
-#else
+#ifdef STRERROR_R_CHAR_P
     str = strerror_r(e, err_str, sizeof(err_str));
     if(!str) { // Should never happen
       strcpy(err_str, "error");
       str = err_str;
     }
+#else
+    int err = strerror_r(e, err_str, sizeof(err_str));
+    if(err)
+      strcpy(err_str, "error");
+    str = err_str;
 #endif
     os << ": " << str;
   }

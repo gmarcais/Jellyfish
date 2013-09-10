@@ -41,8 +41,8 @@ $JF count -t $nCPUs -o ${pref}_m15_s2M_L2_U3_automerge.jf -s 2M -C -m 15 -L2 -U3
 $JF histo ${pref}_m15_s2M_L2_U3_automerge.jf > ${pref}_m15_s2M_L2_U3_automerge.histo
 
 # Check query
-$JF query ${pref}_binary.jf -s seq1m_0.fa    | grep ' 1$' | wc -l > ${pref}_query_one_count
-$JF query ${pref}_binary.jf -s seq1m_0.fa -C | grep ' 1$' | wc -l > ${pref}_query_canonical_one_count
+$JF query ${pref}_binary.jf -s seq1m_0.fa    | grep ' 1$' | wc -l | sed -e 's/ //g' > ${pref}_query_one_count
+$JF query ${pref}_binary.jf -s seq1m_0.fa -C | grep ' 1$' | wc -l | sed -e 's/ //g' > ${pref}_query_canonical_one_count
 
 # $JF count -m 40 -t $nCPUs -o ${pref}_text -s 2M --text seq1m_0.fa
 # $JF info -s ${pref}_text0 | sort >  ${pref}_text0_dump

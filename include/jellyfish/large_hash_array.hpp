@@ -1,6 +1,6 @@
 /*  This file is part of Jellyfish.
 
-n    Jellyfish is free software: you can redistribute it and/or modify
+    Jellyfish is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
@@ -182,10 +182,12 @@ public:
   array_base(array_base&& ary) :
     lsize_(ary.lsize_),
     size_(ary.size_),
+    size_mask_(size_ - 1),
     reprobe_limit_(ary.reprobe_limit_),
     key_len_(ary.key_len_),
     raw_key_len_(ary.raw_key_len_),
     offsets_(std::move(ary.offsets_)),
+    size_bytes_(ary.size_bytes_),
     data_(ary.data_),
     reprobes_(ary.reprobes_),
     hash_matrix_(std::move(ary.hash_matrix_)),
@@ -269,15 +271,31 @@ public:
    * The matrix multiplication gets only a uint64_t. The lsb of the
    * matrix product, the hsb are assume to be equal to the key itself
    * (the matrix has a partial identity on the first rows).
+   *
+   * In case of failure (false is returned), carry_shift contains the
+   * number of bits of the value that were successfully stored in the
+   * hash (low significant bits). If carry_shift == 0, then nothing
+   * was stored and the key is not in the hash at all. In that case,
+   * the value of *is_new and *id are not valid. If carry_shift > 0,
+   * then the key is present but the value stored is not correct
+   * (missing the high significant bits of value), but *is_new and *id
+   * contain the proper information.
    */
-  inline bool add(const key_type& key, mapped_type val, bool* is_new, size_t* id) {
+  inline bool add(const key_type& key, mapped_type val, unsigned int* carry_shift, bool* is_new, size_t* id) {
     uint64_t hash = hash_matrix_.times(key);
-    return add_rec(hash & size_mask_, key, val, false, is_new, id);
+    *carry_shift  = 0;
+    return add_rec(hash & size_mask_, key, val, false, is_new, id, carry_shift);
   }
+
+  inline bool add(const key_type& key, mapped_type val, unsigned int* carry_shift) {
+    bool   is_new = false;
+    size_t id     = 0;
+    return add(key, val, carry_shift, &is_new, &id);
+  }
+
   inline bool add(const key_type& key, mapped_type val) {
-    bool is_new;
-    size_t id;
-    return add(key, val, &is_new, &id);
+    unsigned int carry_shift = 0;
+    return add(key, val, &carry_shift);
   }
 
   inline bool set(const key_type& key) {
@@ -291,6 +309,31 @@ public:
 
     *id = hash_matrix_.times(key) & size_mask_;
     return claim_key(key, is_new, id, &o, &w);
+  }
+
+  /**
+   * Use hash values as counters, if already exists
+   *
+   * Add val to the value associated with key if key is already in the
+   * hash. Returns true if the update was done, false otherwise.
+   */
+  inline bool update_add(const key_type& key, mapped_type val) {
+    key_type     tmp_key;
+    unsigned int carry_shift;
+    return update_add(key, val, &carry_shift, tmp_key);
+  }
+
+
+  // Optimization. Use tmp_key as buffer. Avoids allocation if update_add is called repeatedly.
+  bool update_add(const key_type& key, mapped_type val, unsigned int* carry_shift, key_type& tmp_key) {
+    size_t          id;
+    word*           w;
+    const offset_t* o;
+    *carry_shift = 0;
+
+    if(get_key_id(key, &id, tmp_key, (const word**)&w, &o))
+      return add_rec_at(id, key, val, o, w, carry_shift);
+    return false;
   }
 
   // Get the value, stored in *val, associated with key. If the key is
@@ -379,7 +422,7 @@ public:
   // Optimization version again. Also return the word and the offset
   // information where the key was found. These can be used later one
   // to fetch the value associated with the key.
-  bool get_key_id(const key_type& key, size_t* id, key_type& tmp_key, const word** w, const offset_t** o) const {
+  bool get_key_id(const key_type& key, size_t* id, key_type& tmp_key, const word**  w, const offset_t** o) const {
     const size_t oid = hash_matrix_.times(key) & size_mask_;
     prefetch_info info_ary[prefetch_buffer::capacity()];
     prefetch_buffer buffer(info_ary);
@@ -587,7 +630,7 @@ public:
   // computation). eid is set to the effective place in the
   // array. large is set to true is setting a large key (upon
   // recurrence if there is a carry).
-  bool add_rec(size_t id, const key_type& key, word val, bool large, bool* is_new, size_t* eid) {
+  bool add_rec(size_t id, const key_type& key, word val, bool large, bool* is_new, size_t* eid, unsigned int* carry_shift) {
     const offset_t *ao = 0;
     word	   *w  = 0;
 
@@ -599,36 +642,41 @@ public:
     if(!claimed)
       return false;
     *eid = id;
+    return add_rec_at(id, key, val, ao, w, carry_shift);
+  }
 
+  bool add_rec_at(size_t id, const key_type& key, word val, const offset_t* ao, word* w, unsigned int* carry_shift) {
     // Increment value
-    word *vw = w + ao->val.woff;
-    word cary = add_val(vw, val, ao->val.boff, ao->val.mask1);
-    cary >>= ao->val.shift;
+    word *vw       = w + ao->val.woff;
+    word  cary     = add_val(vw, val, ao->val.boff, ao->val.mask1);
+    cary         >>= ao->val.shift;
+    *carry_shift  += ao->val.shift;
     if(cary && ao->val.mask2) { // value split on two words
-      cary = add_val(vw + 1, cary, 0, ao->val.mask2);
-      cary >>= ao->val.cshift;
+      cary           = add_val(vw + 1, cary, 0, ao->val.mask2);
+      cary         >>= ao->val.cshift;
+      *carry_shift  += ao->val.cshift;
     }
-    if(cary) {
-      id = (id + reprobes_[0]) & size_mask_;
-      size_t ignore_eid;
-      bool   ignore_is_new;
-      if(add_rec(id, key, cary, true, &ignore_is_new, &ignore_eid))
-        return true;
+    if(!cary)
+      return true;
 
-      // Adding failed, table is full. Need to back-track and
-      // substract val.
-      cary = add_val(vw, ((word)1 << offsets_.val_len()) - val,
-                     ao->val.boff, ao->val.mask1);
-      cary >>= ao->val.shift;
-      if(cary && ao->val.mask2) {
-        // Can I ignore the cary here? Table is known to be full, so
-        // not much of a choice. But does it leave the table in a
-        // consistent state?
-        add_val(vw + 1, cary, 0, ao->val.mask2);
-      }
-      return false;
-    }
-    return true;
+    id = (id + reprobes_[0]) & size_mask_;
+    size_t ignore_eid;
+    bool   ignore_is_new;
+    return add_rec(id, key, cary, true, &ignore_is_new, &ignore_eid, carry_shift);
+
+      // // Adding failed, table is full. Need to back-track and
+      // // substract val.
+      //      std::cerr << "Failed to add large part of value -> return false\n";
+      // cary = add_val(vw, ((word)1 << offsets_.val_len()) - val,
+      //                ao->val.boff, ao->val.mask1);
+      // cary >>= ao->val.shift;
+      // if(cary && ao->val.mask2) {
+      //   // Can I ignore the cary here? Table is known to be full, so
+      //   // not much of a choice. But does it leave the table in a
+      //   // consistent state?
+      //   add_val(vw + 1, cary, 0, ao->val.mask2);
+      // }
+      //      return false;
   }
 
   // Atomic methods to set the key. Attempt to set nkey in word w. All

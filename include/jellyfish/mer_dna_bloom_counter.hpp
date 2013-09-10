@@ -27,7 +27,7 @@ template<>
 struct hash_pair<mer_dna> {
   RectangularBinaryMatrix m1, m2;
 
-  hash_pair() : m1(8 * sizeof(uint64_t), mer_dna::k()), m2(8 * sizeof(uint64_t), mer_dna::k()) {
+  hash_pair() : m1(8 * sizeof(uint64_t), mer_dna::k() * 2), m2(8 * sizeof(uint64_t), mer_dna::k() * 2) {
     m1.randomize(random_bits);
     m2.randomize(random_bits);
   }

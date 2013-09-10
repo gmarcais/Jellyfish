@@ -148,15 +148,16 @@ TEST_P(MatrixVectorProd, EveryOtherOnes) {
 #if HAVE_SSE || HAVE_INT128
 TEST_P(MatrixVectorProd, Optimizations) {
   static const int nb_tests = 100;
+  const unsigned int nb_words = col / 64 + (col % 64 != 0);
+  uint64_t v[nb_words];
+
   for(int i = 0; i < nb_tests; ++i) {
-    unsigned int r = 2 * (random() % 31 + 1);
-    unsigned int c = 2 * (random() % 100) + r;
+    // unsigned int r = 2 * (random() % 31 + 1);
+    // unsigned int c = 2 * (random() % 100) + r;
 
-    RectangularBinaryMatrix m(r, c);
-    m.randomize(random_bits);
+    // RectangularBinaryMatrix m(r, c);
+    // m.randomize(random_bits);
 
-    const unsigned int nb_words = c / 64 + (c % 64 != 0);
-    uint64_t v[nb_words];
     for(unsigned int j = 0; j < nb_words; ++j)
       v[j] = random_bits();
 
