@@ -81,4 +81,17 @@ TEST(Slices, NonOverlapAll) {
     ASSERT_EQ(size, total);
   }
 }
+
+TEST(QuoteArg, Nothing) {
+  const std::string arg = "hello_world.1234_coucou/voila-bouh";
+  EXPECT_EQ(arg, jellyfish::quote_arg(arg));
+}
+TEST(QuoteArg, Quote) {
+  const std::string arg = "coucou voila";
+  EXPECT_EQ("'" + arg + "'", jellyfish::quote_arg(arg));
+}
+TEST(QuoteArg, QuoteSlash) {
+  const std::string arg = "coucou_'voila";
+  EXPECT_EQ("'coucou_'\\''voila'", jellyfish::quote_arg(arg));
+}
 }
