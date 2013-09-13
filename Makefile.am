@@ -209,8 +209,10 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_mer_dna_bloom_counter.cc		\
 	               unit_tests/test_whole_sequence_parser.cc		\
 	               unit_tests/test_allocators_mmap.cc		\
-	               unit_tests/test_cooperative_pool2.cc
-bin_test_all_SOURCES += jellyfish/backtrace.cc
+	               unit_tests/test_cooperative_pool2.cc		\
+	               unit_tests/test_generator_manager.cc
+bin_test_all_SOURCES += jellyfish/backtrace.cc		\
+                        jellyfish/generator_manager.cc
 
 bin_test_all_CPPFLAGS = -Dprotected=public -Dprivate=public -DJSON_IS_AMALGAMATION=1
 bin_test_all_CXXFLAGS = $(AM_CXXFLAGS) -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)/unit_tests -I$(top_srcdir)/include
