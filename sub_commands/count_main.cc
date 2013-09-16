@@ -36,6 +36,7 @@
 #include <jellyfish/jellyfish.hpp>
 #include <jellyfish/merge_files.hpp>
 #include <jellyfish/mer_dna_bloom_counter.hpp>
+#include <jellyfish/generator_manager.hpp>
 #include <sub_commands/count_main_cmdline.hpp>
 
 using std::chrono::steady_clock;
@@ -48,7 +49,7 @@ inline double as_seconds(DtnType dtn) { return duration_cast<duration<double>>(d
 using jellyfish::mer_dna;
 using jellyfish::mer_dna_bloom_counter;
 typedef std::vector<const char*> file_vector;
-typedef jellyfish::mer_overlap_sequence_parser<jellyfish::stream_manager<file_vector::iterator> > sequence_parser;
+typedef jellyfish::mer_overlap_sequence_parser<jellyfish::stream_manager<file_vector::const_iterator> > sequence_parser;
 typedef jellyfish::mer_iterator<sequence_parser, mer_dna> mer_iterator;
 
 static count_main_cmdline args; // Command line switches and arguments
@@ -79,11 +80,14 @@ class mer_counter : public jellyfish::thread_exec {
   OPERATION                               op_;
 
 public:
-  mer_counter(int nb_threads, uint32_t nb_readers, mer_hash& ary, PathIterator file_begin, PathIterator file_end, OPERATION op,
-              FilterType filter = FilterType()) :
+  mer_counter(int nb_threads, mer_hash& ary,
+              PathIterator file_begin, PathIterator file_end,
+              PathIterator pipe_begin, PathIterator pipe_end,
+               uint32_t concurent_files,
+              OPERATION op, FilterType filter = FilterType()) :
     ary_(ary),
-    streams_(file_begin, file_end),
-    parser_(mer_dna::k(), nb_readers, 3 * nb_threads, 4096, streams_),
+    streams_(file_begin, file_end, pipe_begin, pipe_end, concurent_files),
+    parser_(mer_dna::k(), concurent_files, 3 * nb_threads, 4096, streams_),
     filter_(filter),
     op_(op)
   { }
@@ -156,6 +160,12 @@ int count_main(int argc, char *argv[])
   args.parse(argc, argv);
   mer_dna::k(args.mer_len_arg);
 
+  std::unique_ptr<jellyfish::generator_manager> generator_manager;
+  if(args.generator_given) {
+    generator_manager.reset(new jellyfish::generator_manager(args.generator_arg, args.Generators_arg));
+    generator_manager->start();
+  }
+
   mer_hash ary(args.size_arg, args.mer_len_arg * 2, args.counter_len_arg, args.threads_arg, args.reprobes_arg);
   if(args.disk_flag)
     ary.do_size_doubling(false);
@@ -171,23 +181,31 @@ int count_main(int argc, char *argv[])
 
   OPERATION do_op = COUNT;
   if(args.if_given) {
-    mer_counter<file_vector::iterator, filter_true> counter(args.threads_arg, args.readers_arg,
-                                                            ary, args.if_arg.begin(), args.if_arg.end(),
-                                                            PRIME);
+    mer_counter<file_vector::const_iterator, filter_true> counter(args.threads_arg, ary,
+                                                                  args.if_arg.begin(), args.if_arg.end(),
+                                                                  args.if_arg.end(), args.if_arg.end(), // no multi pipes
+                                                                  args.Files_arg, PRIME);
     counter.exec_join(args.threads_arg);
     do_op = UPDATE;
   }
 
+  // Iterators to the multi pipe paths. If not generator manager,
+  // generate an empty range.
+  auto pipes_begin = generator_manager.get() ? generator_manager->pipes().begin() : args.file_arg.end();
+  auto pipes_end = (bool)generator_manager ? generator_manager->pipes().end() : args.file_arg.end();
   if(args.bf_given) {
     mer_dna_bloom_counter bc = load_bloom_filter(args.bf_arg);
-    mer_counter<file_vector::iterator, filter_bf>  counter(args.threads_arg, args.readers_arg, ary,
-                                                           args.file_arg.begin(), args.file_arg.end(),
-                                                           do_op, filter_bf(bc));
+    mer_counter<file_vector::const_iterator, filter_bf>  counter(args.threads_arg, ary,
+                                                                 args.file_arg.begin(), args.file_arg.end(),
+                                                                 pipes_begin, pipes_end,
+                                                                 args.Files_arg,
+                                                                 do_op, filter_bf(bc));
     counter.exec_join(args.threads_arg);
   } else {
-    mer_counter<file_vector::iterator, filter_true> counter(args.threads_arg, args.readers_arg,
-                                                            ary, args.file_arg.begin(), args.file_arg.end(),
-                                                            do_op);
+    mer_counter<file_vector::const_iterator, filter_true> counter(args.threads_arg, ary,
+                                                                  args.file_arg.begin(), args.file_arg.end(),
+                                                                  pipes_begin, pipes_end,
+                                                                  args.Files_arg, do_op);
     counter.exec_join(args.threads_arg);
   }
 

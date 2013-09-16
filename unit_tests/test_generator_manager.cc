@@ -5,7 +5,7 @@
 
 #include <gtest/gtest.h>
 #include <unit_tests/test_main.hpp>
-#include <jellyfish/spawn_external.hpp>
+#include <jellyfish/generator_manager.hpp>
 
 namespace {
 static const int nb_pipes = 5;

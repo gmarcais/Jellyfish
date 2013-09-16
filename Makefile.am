@@ -45,7 +45,8 @@ bin_jellyfish_SOURCES = sub_commands/jellyfish.cc	\
                         sub_commands/merge_main.cc	\
                         sub_commands/bf_main.cc		\
                         sub_commands/query_main.cc	\
-                        jellyfish/merge_files.cc
+                        jellyfish/merge_files.cc	\
+                        jellyfish/generator_manager.cc
 bin_jellyfish_LDFLAGS = $(AM_LDFLAGS) $(STATIC_FLAGS)
 
 
@@ -147,7 +148,7 @@ AM_SH_LOG_FLAGS =
 
 TESTS = tests/generate_sequence.sh tests/parallel_hashing.sh	\
         tests/merge.sh tests/bloom_filter.sh tests/big.sh	\
-        tests/subset_hashing.sh tests/multifile.sh
+        tests/subset_hashing.sh tests/multi_file.sh
 # TESTS = tests/generate_sequence.sh tests/serial_hashing.sh		\
 #         tests/parallel_hashing.sh tests/serial_direct_indexing.sh	\
 #         tests/parallel_direct_indexing.sh tests/raw_hash.sh		\

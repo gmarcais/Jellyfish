@@ -10,8 +10,14 @@ option("size", "s") {
 option("threads", "t") {
   description "Number of threads"
   uint32; default "1" }
-option("readers", "R") {
-  description "Number of reading threads"
+option("F", "Files") {
+  description "Number files open simultaneously"
+  uint32; default "1" }
+option("g", "generator") {
+  description "File of commands generating fast[aq]"
+  c_string; typestr "path" }
+option("G", "Generators") {
+  description "Number of generators run simultaneously"
   uint32; default "1" }
 option("output", "o") {
   description "Output file"

@@ -49,6 +49,28 @@ public:
   void close() { delete std::istream::rdbuf(0); }
 };
 
+// // Transform an iterator on vector<string> to an iterator of
+// // vector<const char*>, where the values returned are the c_str of the
+// // elements.
+// class char_ptr_iterator : public std::iterator<std::input_iterator_tag, const char*> {
+//   std::vector<std::string>::const_iterator it_;
+// public:
+//   char_ptr_iterator(const std::vector<std::string>::const_iterator& it) : it_(it) { }
+//   char_ptr_iterator(const char_ptr_iterator& rhs) : it_(rhs.it_) { }
+//   char_ptr_iterator& operator=(const char_ptr_iterator& rhs) {
+//     it_ = rhs.it_;
+//     return *this;
+//   }
+//   const char* operator*() { return it_->c_str(); }
+//   char_ptr_iterator& operator++() { ++it_; return *this; }
+//   char_ptr_iterator operator++(int) { char_ptr_iterator tmp(*this); operator++(); return tmp; }
+//   bool operator==(const char_ptr_iterator& rhs) const { return it_ == rhs.it_; }
+//   bool operator!=(const char_ptr_iterator& rhs) const { return it_ != rhs.it_; }
+//   void swap(char_ptr_iterator& rhs) { std::swap(it_, rhs.it_); }
+// };
+// inline void swap(char_ptr_iterator a, char_ptr_iterator b) { a.swap(b); }
+
+
 // This class is responsible for creating a tmp directory and
 // populating it with fifos.
 class tmp_pipes {
@@ -57,11 +79,16 @@ class tmp_pipes {
 
   std::string              tmpdir_;
   std::vector<std::string> pipes_;
+  std::vector<const char*> pipes_paths_;
+
 public:
   tmp_pipes(int nb_pipes):
   tmpdir_(create_tmp_dir()),
   pipes_(create_pipes(tmpdir_, nb_pipes))
-  { }
+  {
+    for(auto it = pipes_.cbegin(); it != pipes_.cend(); ++it)
+      pipes_paths_.push_back(it->c_str());
+  }
   ~tmp_pipes() {
     for(auto it = pipes_.cbegin(); it != pipes_.cend(); ++it) {
       if(!it->empty())
@@ -72,6 +99,9 @@ public:
 
   size_t size() const { return pipes_.size(); }
   const char* operator[](int i) const { return pipes_[i].c_str(); }
+  std::vector<const char*>::const_iterator begin() const { return pipes_paths_.cbegin(); }
+  std::vector<const char*>::const_iterator end() const { return pipes_paths_.cend(); }
+
   // Discard a pipe: unlink it while it is open for writing. The
   // reading process will get no data and won't be able to reopen the
   // file, marking the end of this pipe.

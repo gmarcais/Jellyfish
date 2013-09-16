@@ -28,7 +28,7 @@
 #include <map>
 #include <memory>
 
-#include <jellyfish/spawn_external.hpp>
+#include <jellyfish/generator_manager.hpp>
 #include <jellyfish/err.hpp>
 #include <jellyfish/start_debugger.hpp>
 
@@ -82,6 +82,7 @@ void tmp_pipes::discard(int i) {
   if(rename(pipes_[i].c_str(), discarded_name.c_str()) == -1)
     return;
   pipes_[i].clear();
+  pipes_paths_[i] = 0;
   int fd = open(discarded_name.c_str(), O_WRONLY|O_NONBLOCK);
   if(fd != -1)
     close(fd);
@@ -152,7 +153,7 @@ void generator_manager::start_one_command(const std::string& command, int pipe)
 void generator_manager::start_commands()
 {
   std::string command;
-  int i;
+  size_t i;
   for(i = 0; i < pipes_.size(); ++i) {
     if(!std::getline(cmds_, command))
       break;

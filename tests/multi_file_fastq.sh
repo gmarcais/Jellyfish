@@ -3,7 +3,7 @@
 cd tests
 . ./compat.sh
 
-sort > ${pref}.md5sum <<EOF
+sort -k2,2 > ${pref}.md5sum <<EOF
 8ebb01305cbb36754ef060c1e37d6e4d ${pref}.histo
 EOF
 echo "Counting 22-mers on ${nCPUs} CPU" &&      \
