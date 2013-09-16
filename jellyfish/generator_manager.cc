@@ -30,7 +30,6 @@
 
 #include <jellyfish/generator_manager.hpp>
 #include <jellyfish/err.hpp>
-#include <jellyfish/start_debugger.hpp>
 
 namespace jellyfish {
 std::string tmp_pipes::create_tmp_dir() {

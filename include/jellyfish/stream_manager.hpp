@@ -38,11 +38,9 @@ class stream_manager {
     file_stream(const char* path, stream_manager& manager) :
       std::ifstream(path),
       manager_(manager)
-    { }
-    file_stream(std::ifstream&& stream, stream_manager& manager) :
-      std::ifstream(stream),
-      manager_(manager)
-    { }
+    {
+      manager_.take_file();
+    }
     virtual ~file_stream() { manager_.release_file(); }
   };
   friend class file_stream;
@@ -71,7 +69,7 @@ class stream_manager {
   const int              concurrent_files_;
   std::list<const char*> free_pipes_;
   std::set<const char*>  busy_pipes_;
-  locks::pthread::mutex  mutex_;
+  locks::pthread::mutex_recursive  mutex_;
 
 public:
   define_error_class(Error);
@@ -105,12 +103,11 @@ protected:
     if(files_open_ >= concurrent_files_)
       return;
     while(paths_cur_ != paths_end_) {
-      std::ifstream nf(*paths_cur_);
+      res.reset(new file_stream(*paths_cur_, *this));
       ++paths_cur_;
-      if(nf.good()) {
-        res.reset(new file_stream(std::move(nf), *this));
+      if(res->good())
         return;
-      }
+      res.reset();
       std::cerr << "Can't open file '" << *paths_cur_ << "'" << std::endl;
     }
   }
@@ -120,17 +117,19 @@ protected:
       const char* path = free_pipes_.front();
       free_pipes_.pop_front();
       res.reset(new pipe_stream(path, *this));
-      if(!res) {
-        std::cerr << "Can't allocate new stream object";
-        continue;
-      }
       if(res->good()) {
         busy_pipes_.insert(path);
         return;
       }
-      std::cerr << "Can't open pipe '" << path << "'\n";
+      // The pipe failed to open, so it is not marked as busy. This
+      // reset will make us forget about this path.
       res.reset();
     }
+  }
+
+  void take_file() {
+    locks::pthread::mutex_lock lock(mutex_);
+    ++files_open_;
   }
 
   void release_file() {
@@ -138,10 +137,13 @@ protected:
     --files_open_;
   }
 
+  // void take_pipe(const char* path) {
+  //   locks::pthread::mutex_lock lock(mutex_);
+  // }
   void release_pipe(const char* path) {
     locks::pthread::mutex_lock lock(mutex_);
     if(busy_pipes_.erase(path) == 0)
-      return; // Nothing erased. Something fishy going on!!!
+      return; // Nothing erased. We forget about that path
     free_pipes_.push_back(path);
   }
 };
