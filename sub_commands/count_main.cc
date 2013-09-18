@@ -39,7 +39,7 @@
 #include <jellyfish/generator_manager.hpp>
 #include <sub_commands/count_main_cmdline.hpp>
 
-using std::chrono::steady_clock;
+using std::chrono::system_clock;
 using std::chrono::duration;
 using std::chrono::duration_cast;
 
@@ -151,7 +151,7 @@ mer_dna_bloom_counter load_bloom_filter(const char* path) {
 
 int count_main(int argc, char *argv[])
 {
-  auto start_time = steady_clock::now();
+  auto start_time = system_clock::now();
 
   jellyfish::file_header header;
   header.fill_standard();
@@ -180,7 +180,7 @@ int count_main(int argc, char *argv[])
     dumper.reset(new binary_dumper(args.out_counter_len_arg, ary.key_len(), args.threads_arg, args.output_arg, &header));
   ary.dumper(dumper.get());
 
-  auto after_init_time = steady_clock::now();
+  auto after_init_time = system_clock::now();
 
   OPERATION do_op = COUNT;
   if(args.if_given) {
@@ -212,7 +212,7 @@ int count_main(int argc, char *argv[])
     counter.exec_join(args.threads_arg);
   }
 
-  auto after_count_time = steady_clock::now();
+  auto after_count_time = system_clock::now();
 
   // If no intermediate files, dump directly into output file. If not, will do a round of merging
   if(!args.no_write_flag) {
@@ -242,7 +242,7 @@ int count_main(int argc, char *argv[])
     } // if(!args.no_merge_flag
   }
 
-  auto after_dump_time = steady_clock::now();
+  auto after_dump_time = system_clock::now();
 
   if(args.timing_given) {
     std::ofstream timing_file(args.timing_arg);
