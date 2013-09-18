@@ -18,7 +18,7 @@ cat > ${pref}_gunzip_cmds <<EOF
   # Empty lines and comments just for fun
 
 EOF
-find . -name 'seq1m_*.fa.gz' | xargs -n 1 echo zcat >> ${pref}_gunzip_cmds
+find . -name 'seq1m_*.fa.gz' | xargs -n 1 echo gunzip -c >> ${pref}_gunzip_cmds
 $JF count -t $nCPUs -g ${pref}_gunzip_cmds -G 2 -C -m 15 -s 2M -o ${pref}_m15_s2M_zip.jf seq10m.fa
 $JF histo ${pref}_m15_s2M_zip.jf > ${pref}_m15_s2M_zip.histo
 
