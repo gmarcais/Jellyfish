@@ -83,7 +83,7 @@ bool isblunt(char c) {
   return isalnum(c) || c == '_' || c == '-' || c == '/' || c == '.';
 }
 std::string quote_arg(const std::string& arg) {
-  if(std::all_of(arg.cbegin(), arg.cend(), isblunt))
+  if(std::all_of(arg.begin(), arg.end(), isblunt))
     return arg;
 
   std::string res("'");
