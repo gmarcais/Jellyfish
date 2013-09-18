@@ -3,7 +3,7 @@
 cd tests
 . ./compat.sh
 
-sort > ${pref}.md5sum <<EOF 
+sort -k2,2 > ${pref}.md5sum <<EOF 
 EOF
 
 echo "Test double fifo" &&

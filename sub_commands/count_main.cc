@@ -24,23 +24,32 @@
 #include <map>
 #include <sstream>
 #include <memory>
+#include <chrono>
 
 #include <jellyfish/err.hpp>
 #include <jellyfish/thread_exec.hpp>
 #include <jellyfish/hash_counter.hpp>
 #include <jellyfish/locks_pthread.hpp>
+#include <jellyfish/stream_manager.hpp>
 #include <jellyfish/mer_overlap_sequence_parser.hpp>
 #include <jellyfish/mer_iterator.hpp>
-#include <jellyfish/stream_iterator.hpp>
 #include <jellyfish/jellyfish.hpp>
 #include <jellyfish/merge_files.hpp>
 #include <jellyfish/mer_dna_bloom_counter.hpp>
+#include <jellyfish/generator_manager.hpp>
 #include <sub_commands/count_main_cmdline.hpp>
+
+using std::chrono::steady_clock;
+using std::chrono::duration;
+using std::chrono::duration_cast;
+
+template<typename DtnType>
+inline double as_seconds(DtnType dtn) { return duration_cast<duration<double>>(dtn).count(); }
 
 using jellyfish::mer_dna;
 using jellyfish::mer_dna_bloom_counter;
 typedef std::vector<const char*> file_vector;
-typedef jellyfish::mer_overlap_sequence_parser<jellyfish::stream_iterator<file_vector::iterator> > sequence_parser;
+typedef jellyfish::mer_overlap_sequence_parser<jellyfish::stream_manager<file_vector::const_iterator> > sequence_parser;
 typedef jellyfish::mer_iterator<sequence_parser, mer_dna> mer_iterator;
 
 static count_main_cmdline args; // Command line switches and arguments
@@ -63,12 +72,22 @@ struct filter_bf {
 enum OPERATION { COUNT, PRIME, UPDATE };
 template<typename PathIterator, typename FilterType>
 class mer_counter : public jellyfish::thread_exec {
+  int                                     nb_threads_;
+  mer_hash&                               ary_;
+  jellyfish::stream_manager<PathIterator> streams_;
+  sequence_parser                         parser_;
+  FilterType                              filter_;
+  OPERATION                               op_;
+
 public:
-  mer_counter(int nb_threads, mer_hash& ary, PathIterator file_begin, PathIterator file_end, OPERATION op,
-              FilterType filter = FilterType()) :
+  mer_counter(int nb_threads, mer_hash& ary,
+              PathIterator file_begin, PathIterator file_end,
+              PathIterator pipe_begin, PathIterator pipe_end,
+               uint32_t concurent_files,
+              OPERATION op, FilterType filter = FilterType()) :
     ary_(ary),
-    parser_(mer_dna::k(), 3 * nb_threads, 4096, jellyfish::stream_iterator<PathIterator>(file_begin, file_end),
-            jellyfish::stream_iterator<PathIterator>()),
+    streams_(file_begin, file_end, pipe_begin, pipe_end, concurent_files),
+    parser_(mer_dna::k(), concurent_files, 3 * nb_threads, 4096, streams_),
     filter_(filter),
     op_(op)
   { }
@@ -105,11 +124,12 @@ public:
   }
 
 private:
-  int                     nb_threads_;
-  mer_hash&               ary_;
-  sequence_parser         parser_;
-  FilterType              filter_;
-  OPERATION               op_;
+  // int                          nb_threads_;
+  // mer_hash&                    ary_;
+  // stream_manager<PathIterator> streams_;
+  // sequence_parser              parser_;
+  // FilterType                   filter_;
+  // OPERATION                    op_;
 };
 
 mer_dna_bloom_counter load_bloom_filter(const char* path) {
@@ -131,12 +151,23 @@ mer_dna_bloom_counter load_bloom_filter(const char* path) {
 
 int count_main(int argc, char *argv[])
 {
+  auto start_time = steady_clock::now();
+
   jellyfish::file_header header;
   header.fill_standard();
   header.set_cmdline(argc, argv);
 
   args.parse(argc, argv);
   mer_dna::k(args.mer_len_arg);
+
+  std::unique_ptr<jellyfish::generator_manager> generator_manager;
+  if(args.generator_given) {
+    auto gm =
+      new jellyfish::generator_manager(args.generator_arg, args.Generators_arg,
+                                       args.shell_given ? args.shell_arg : (const char*)0);
+    generator_manager.reset(gm);
+    generator_manager->start();
+  }
 
   mer_hash ary(args.size_arg, args.mer_len_arg * 2, args.counter_len_arg, args.threads_arg, args.reprobes_arg);
   if(args.disk_flag)
@@ -149,24 +180,39 @@ int count_main(int argc, char *argv[])
     dumper.reset(new binary_dumper(args.out_counter_len_arg, ary.key_len(), args.threads_arg, args.output_arg, &header));
   ary.dumper(dumper.get());
 
+  auto after_init_time = steady_clock::now();
+
   OPERATION do_op = COUNT;
   if(args.if_given) {
-    mer_counter<file_vector::iterator, filter_true> counter(args.threads_arg, ary, args.if_arg.begin(), args.if_arg.end(),
-                                                            PRIME);
+    mer_counter<file_vector::const_iterator, filter_true> counter(args.threads_arg, ary,
+                                                                  args.if_arg.begin(), args.if_arg.end(),
+                                                                  args.if_arg.end(), args.if_arg.end(), // no multi pipes
+                                                                  args.Files_arg, PRIME);
     counter.exec_join(args.threads_arg);
     do_op = UPDATE;
   }
 
+  // Iterators to the multi pipe paths. If not generator manager,
+  // generate an empty range.
+  auto pipes_begin = generator_manager.get() ? generator_manager->pipes().begin() : args.file_arg.end();
+  auto pipes_end = (bool)generator_manager ? generator_manager->pipes().end() : args.file_arg.end();
   if(args.bf_given) {
     mer_dna_bloom_counter bc = load_bloom_filter(args.bf_arg);
-    mer_counter<file_vector::iterator, filter_bf>  counter(args.threads_arg, ary, args.file_arg.begin(), args.file_arg.end(),
-                                                           do_op, filter_bf(bc));
+    mer_counter<file_vector::const_iterator, filter_bf>  counter(args.threads_arg, ary,
+                                                                 args.file_arg.begin(), args.file_arg.end(),
+                                                                 pipes_begin, pipes_end,
+                                                                 args.Files_arg,
+                                                                 do_op, filter_bf(bc));
     counter.exec_join(args.threads_arg);
   } else {
-    mer_counter<file_vector::iterator, filter_true> counter(args.threads_arg, ary, args.file_arg.begin(), args.file_arg.end(),
-                                                            do_op);
+    mer_counter<file_vector::const_iterator, filter_true> counter(args.threads_arg, ary,
+                                                                  args.file_arg.begin(), args.file_arg.end(),
+                                                                  pipes_begin, pipes_end,
+                                                                  args.Files_arg, do_op);
     counter.exec_join(args.threads_arg);
   }
+
+  auto after_count_time = steady_clock::now();
 
   // If no intermediate files, dump directly into output file. If not, will do a round of merging
   if(!args.no_write_flag) {
@@ -195,5 +241,15 @@ int count_main(int argc, char *argv[])
       } // if(!args.no_merge_flag
     } // if(!args.no_merge_flag
   }
+
+  auto after_dump_time = steady_clock::now();
+
+  if(args.timing_given) {
+    std::ofstream timing_file(args.timing_arg);
+    timing_file << "Init     " << as_seconds(after_init_time - start_time) << "\n"
+                << "Counting " << as_seconds(after_count_time - after_init_time) << "\n"
+                << "Writing  " << as_seconds(after_dump_time - after_count_time) << "\n";
+  }
+
   return 0;
 }

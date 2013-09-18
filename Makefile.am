@@ -45,7 +45,8 @@ bin_jellyfish_SOURCES = sub_commands/jellyfish.cc	\
                         sub_commands/merge_main.cc	\
                         sub_commands/bf_main.cc		\
                         sub_commands/query_main.cc	\
-                        jellyfish/merge_files.cc
+                        jellyfish/merge_files.cc	\
+                        jellyfish/generator_manager.cc
 bin_jellyfish_LDFLAGS = $(AM_LDFLAGS) $(STATIC_FLAGS)
 
 
@@ -100,7 +101,8 @@ library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
                           $(JFI)/mapped_file.hpp			\
                           $(JFI)/mer_dna_bloom_counter.hpp		\
                           $(JFI)/bloom_counter2.hpp			\
-                          $(JFI)/cooperative_pool.hpp
+                          $(JFI)/cooperative_pool.hpp			\
+                          $(JFI)/cooperative_pool2.hpp
 
 noinst_HEADERS += jellyfish/fstream_default.hpp			\
                   include/jflib/tmpstream.hpp			\
@@ -146,7 +148,7 @@ AM_SH_LOG_FLAGS =
 
 TESTS = tests/generate_sequence.sh tests/parallel_hashing.sh	\
         tests/merge.sh tests/bloom_filter.sh tests/big.sh	\
-        tests/subset_hashing.sh
+        tests/subset_hashing.sh tests/multi_file.sh
 # TESTS = tests/generate_sequence.sh tests/serial_hashing.sh		\
 #         tests/parallel_hashing.sh tests/serial_direct_indexing.sh	\
 #         tests/parallel_direct_indexing.sh tests/raw_hash.sh		\
@@ -171,7 +173,7 @@ tests/bloom_filter.log: tests/generate_sequence.log
 #tests/serial_direct_indexing.log: tests/generate_sequence.log
 #tests/parallel_direct_indexing.log: tests/generate_sequence.log
 #tests/parallel_fastq_direct_indexing.log: tests/generate_fastq_sequence.log
-#tests/multi_file.log: tests/generate_sequence.log
+tests/multi_file.log: tests/generate_sequence.log
 #tests/raw_hash.log: tests/generate_sequence.log
 #tests/from_stream.log: tests/generate_sequence.log
 #tests/parallel_fastq_hashing.log: tests/generate_fastq_sequence.log
@@ -207,8 +209,11 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_int128.cc			\
 	               unit_tests/test_mer_dna_bloom_counter.cc		\
 	               unit_tests/test_whole_sequence_parser.cc		\
-	               unit_tests/test_allocators_mmap.cc
-bin_test_all_SOURCES += jellyfish/backtrace.cc
+	               unit_tests/test_allocators_mmap.cc		\
+	               unit_tests/test_cooperative_pool2.cc		\
+	               unit_tests/test_generator_manager.cc
+bin_test_all_SOURCES += jellyfish/backtrace.cc		\
+                        jellyfish/generator_manager.cc
 
 bin_test_all_CPPFLAGS = -Dprotected=public -Dprivate=public -DJSON_IS_AMALGAMATION=1
 bin_test_all_CXXFLAGS = $(AM_CXXFLAGS) -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)/unit_tests -I$(top_srcdir)/include

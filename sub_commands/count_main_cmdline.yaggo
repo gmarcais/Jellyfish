@@ -10,6 +10,18 @@ option("size", "s") {
 option("threads", "t") {
   description "Number of threads"
   uint32; default "1" }
+option("F", "Files") {
+  description "Number files open simultaneously"
+  uint32; default "1" }
+option("g", "generator") {
+  description "File of commands generating fast[aq]"
+  c_string; typestr "path" }
+option("G", "Generators") {
+  description "Number of generators run simultaneously"
+  uint32; default "1" }
+option("S", "shell") {
+  description "Shell used to run generator commands ($SHELL or /bin/sh)"
+  c_string }
 option("output", "o") {
   description "Output file"
   c_string; default "mer_counts" }
@@ -27,8 +39,7 @@ option("bf") {
   c_string; typestr "path" }
 option("if") {
   description "Count only k-mers in this files"
-  c_string; typestr "path"; multiple
-}
+  c_string; typestr "path"; multiple }
 option("reprobes", "p") {
   description "Maximum number of reprobes"
   uint32; default "126" }
@@ -68,9 +79,9 @@ option("upper-count", "U") {
 # option("matrix") {
 #   description "Hash function binary matrix"
 #   string; typestr "Matrix file" }
-# option("timing") {
-#   description "Print timing information"
-#   c_string; typestr "Timing file" }
+option("timing") {
+  description "Print timing information"
+  c_string; typestr "Timing file" }
 # option("stats") {
 #   description "Print stats"
 #   c_string; typestr "Stats file" }
