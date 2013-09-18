@@ -162,7 +162,10 @@ int count_main(int argc, char *argv[])
 
   std::unique_ptr<jellyfish::generator_manager> generator_manager;
   if(args.generator_given) {
-    generator_manager.reset(new jellyfish::generator_manager(args.generator_arg, args.Generators_arg));
+    auto gm =
+      new jellyfish::generator_manager(args.generator_arg, args.Generators_arg,
+                                       args.shell_given ? args.shell_arg : (const char*)0);
+    generator_manager.reset(gm);
     generator_manager->start();
   }
 

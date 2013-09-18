@@ -19,6 +19,9 @@ option("g", "generator") {
 option("G", "Generators") {
   description "Number of generators run simultaneously"
   uint32; default "1" }
+option("S", "shell") {
+  description "Shell used to run generator commands ($SHELL or /bin/sh)"
+  c_string }
 option("output", "o") {
   description "Output file"
   c_string; default "mer_counts" }

@@ -144,9 +144,21 @@ void generator_manager::start_one_command(const std::string& command, int pipe)
     std::cerr << "Failed to dup pipe to stdout. Command '" << command << "' not run" << std::endl;
     exit(EXIT_FAILURE);
   }
-  execl("/bin/sh", "/bin/sh", "-c", command.c_str(), (char*)0);
+  execl(shell_, shell_, "-c", command.c_str(), (char*)0);
   std::cerr << "Failed to exec. Command '" << command << "' not run" << std::endl;
   exit(EXIT_FAILURE);
+}
+
+std::string generator_manager::get_cmd() {
+  std::string command;
+
+  while(std::getline(cmds_, command)) {
+    size_t pos = command.find_first_not_of(" \t\n\v\f\r");
+    if(pos != std::string::npos && command[pos] != '#')
+      break;
+    command.clear();
+  }
+  return command;
 }
 
 void generator_manager::start_commands()
@@ -154,7 +166,8 @@ void generator_manager::start_commands()
   std::string command;
   size_t i;
   for(i = 0; i < pipes_.size(); ++i) {
-    if(!std::getline(cmds_, command))
+    command = get_cmd();
+    if(command.empty())
       break;
     start_one_command(command, i);
   }
@@ -170,7 +183,8 @@ void generator_manager::start_commands()
     }
     cmd_info_type info = pid2pipe_[res];
     pid2pipe_.erase(info.pipe);
-    if(std::getline(cmds_, command)) {
+    command = get_cmd();
+    if(!command.empty()) {
       start_one_command(command, info.pipe);
     } else {
       pipes_.discard(info.pipe);

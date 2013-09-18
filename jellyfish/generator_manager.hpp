@@ -49,27 +49,6 @@ public:
   void close() { delete std::istream::rdbuf(0); }
 };
 
-// // Transform an iterator on vector<string> to an iterator of
-// // vector<const char*>, where the values returned are the c_str of the
-// // elements.
-// class char_ptr_iterator : public std::iterator<std::input_iterator_tag, const char*> {
-//   std::vector<std::string>::const_iterator it_;
-// public:
-//   char_ptr_iterator(const std::vector<std::string>::const_iterator& it) : it_(it) { }
-//   char_ptr_iterator(const char_ptr_iterator& rhs) : it_(rhs.it_) { }
-//   char_ptr_iterator& operator=(const char_ptr_iterator& rhs) {
-//     it_ = rhs.it_;
-//     return *this;
-//   }
-//   const char* operator*() { return it_->c_str(); }
-//   char_ptr_iterator& operator++() { ++it_; return *this; }
-//   char_ptr_iterator operator++(int) { char_ptr_iterator tmp(*this); operator++(); return tmp; }
-//   bool operator==(const char_ptr_iterator& rhs) const { return it_ == rhs.it_; }
-//   bool operator!=(const char_ptr_iterator& rhs) const { return it_ != rhs.it_; }
-//   void swap(char_ptr_iterator& rhs) { std::swap(it_, rhs.it_); }
-// };
-// inline void swap(char_ptr_iterator a, char_ptr_iterator b) { a.swap(b); }
-
 
 // This class is responsible for creating a tmp directory and
 // populating it with fifos.
@@ -115,6 +94,7 @@ class generator_manager {
   cloexec_istream cmds_;
   tmp_pipes       pipes_;
   pid_t           manager_pid_;
+  const char*     shell_;
 
   struct cmd_info_type {
     std::string command;
@@ -124,13 +104,18 @@ class generator_manager {
   pid2pipe_type pid2pipe_;
 
 public:
-  generator_manager(const char* cmds, int nb_pipes) :
+  generator_manager(const char* cmds, int nb_pipes, const char* shell = 0) :
     cmds_(cmds),
     pipes_(nb_pipes),
-    manager_pid_(-1)
+    manager_pid_(-1),
+    shell_(shell)
   {
     if(!cmds_.good())
       eraise(std::runtime_error) << "Failed to open cmds file '" << cmds << "'";
+    if(!shell_)
+      shell_ = getenv("SHELL");
+    if(!shell_)
+      shell_ = "/bin/sh";
   }
   ~generator_manager() { wait(); }
 
@@ -143,6 +128,11 @@ public:
   bool wait();
 
 private:
+  /// Read commands from the cmds stream. There is one command per
+  /// line. Empty lines or lines whose first non-white space character
+  /// is a # are ignored. Return an empty string when no more commands
+  /// are available.
+  std::string get_cmd();
   void start_commands();
   void start_one_command(const std::string& command, int pipe);
   void display_status(int status, const std::string& command);
