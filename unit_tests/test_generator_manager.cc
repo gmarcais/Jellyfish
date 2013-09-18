@@ -55,9 +55,9 @@ TEST(GeneratorManager, OneLiners) {
     std::ofstream cmds(cmds_file, std::ios::out|std::ios::trunc);
     ASSERT_TRUE(cmds.good()) << "Failed to open cmd file '" << cmds_file << "'";
     cmds << "echo hello\n"
-         << "/bin/date\n"
-         << "/usr/bin/uptime\n"
-         << "/bin/uname\n";
+         << "date\n"
+         << "uptime\n"
+         << "uname\n";
     ASSERT_TRUE(cmds.good()) << "Failed to write to cmd file";
   }
 
