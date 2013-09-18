@@ -102,13 +102,15 @@ library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
                           $(JFI)/mer_dna_bloom_counter.hpp		\
                           $(JFI)/bloom_counter2.hpp			\
                           $(JFI)/cooperative_pool.hpp			\
-                          $(JFI)/cooperative_pool2.hpp
+                          $(JFI)/cooperative_pool2.hpp			\
+                          $(JFI)/stream_manager.hpp
 
 noinst_HEADERS += jellyfish/fstream_default.hpp			\
                   include/jflib/tmpstream.hpp			\
                   jellyfish/mer_iterator.hpp jellyfish/dbg.hpp	\
                   jellyfish/randomc.h jellyfish/merge_files.hpp	\
-                  jellyfish/cpp_array.hpp
+                  jellyfish/cpp_array.hpp			\
+                  jellyfish/generator_manager.hpp
 
 
 ###############
