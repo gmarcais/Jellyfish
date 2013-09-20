@@ -79,13 +79,7 @@ public:
     for(auto it = pipes_.cbegin(); it != pipes_.cend(); ++it)
       pipes_paths_.push_back(it->c_str());
   }
-  ~tmp_pipes() {
-    for(auto it = pipes_.cbegin(); it != pipes_.cend(); ++it) {
-      if(!it->empty())
-        unlink(it->c_str());
-    }
-    rmdir(tmpdir_.c_str());
-  }
+  ~tmp_pipes() { cleanup(); }
 
   size_t size() const { return pipes_.size(); }
   const char* operator[](int i) const { return pipes_[i].c_str(); }
@@ -96,6 +90,8 @@ public:
   // reading process will get no data and won't be able to reopen the
   // file, marking the end of this pipe.
   void discard(int i);
+  // Discard all pipes
+  void cleanup();
 };
 
 // This class creates a new process which manages a bunch of
@@ -106,6 +102,7 @@ class generator_manager {
   tmp_pipes       pipes_;
   pid_t           manager_pid_;
   const char*     shell_;
+  int             kill_signal_; // if >0, process has received that signal
 
   struct cmd_info_type {
     std::string command;
@@ -119,7 +116,8 @@ public:
     cmds_(cmds),
     pipes_(nb_pipes),
     manager_pid_(-1),
-    shell_(shell)
+    shell_(shell),
+    kill_signal_(0)
   {
     if(!cmds_.good())
       eraise(std::runtime_error) << "Failed to open cmds file '" << cmds << "'";
@@ -131,6 +129,7 @@ public:
   ~generator_manager() { wait(); }
 
   const tmp_pipes& pipes() const { return pipes_; }
+  pid_t pid() const { return manager_pid_; }
 
   // Start the manager process
   void start();
@@ -146,7 +145,11 @@ private:
   std::string get_cmd();
   void start_commands();
   void start_one_command(const std::string& command, int pipe);
-  void display_status(int status, const std::string& command);
+  bool display_status(int status, const std::string& command);
+  void setup_signal_handlers();
+  void unset_signal_handlers();
+  static void signal_handler(int signal);
+  void cleanup();
 };
 }
 

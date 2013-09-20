@@ -21,6 +21,8 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <signal.h>
+#include <assert.h>
 
 #include <cstdlib>
 #include <vector>
@@ -88,6 +90,13 @@ void tmp_pipes::discard(int i) {
   unlink(discarded_name.c_str());
 }
 
+void tmp_pipes::cleanup() {
+  for(size_t i = 0; i < pipes_.size(); ++i) {
+    discard(i);
+  }
+  rmdir(tmpdir_.c_str());
+}
+
 void generator_manager::start()  {
   if(manager_pid_ != -1)
     return;
@@ -98,12 +107,50 @@ void generator_manager::start()  {
     break;
   case 0:
     manager_pid_ = -1;
-    start_commands(); // child start commands
-    exit(EXIT_SUCCESS);
+    break;
   default:
     cmds_.close();
     return;
   }
+
+
+  // In child
+  setup_signal_handlers();
+  start_commands(); // child start commands
+  int signal = kill_signal_;
+  if(signal == 0)
+    exit(EXIT_SUCCESS);
+
+  // Got killed. Kill all children, cleanup and kill myself with the
+  // same signal (and die from it this time :). We do not wait on the
+  // dead children as we are going to die soon as well, and we don't
+  // care about the return value at that point. Let init take care of
+  // that for us...
+  cleanup();
+  unset_signal_handlers();
+  kill(getpid(), signal); // kill myself
+  exit(EXIT_FAILURE); // Should not be reached
+}
+
+static generator_manager* manager = 0;
+void generator_manager::signal_handler(int signal) {
+  manager->kill_signal_ = signal;
+}
+void generator_manager::setup_signal_handlers() {
+  int res;
+  struct sigaction act;
+  memset(&act, '\0', sizeof(act));
+  act.sa_handler = signal_handler;
+  res = sigaction(SIGTERM, &act, 0);
+  assert(res == 0);
+  // Should we redefine other signals as well? Like SIGINT, SIGQUIT?
+}
+
+void generator_manager::unset_signal_handlers() {
+  struct sigaction act;
+  memset(&act, '\0', sizeof(act));
+  act.sa_handler = SIG_DFL;
+  assert(sigaction(SIGTERM, &act, 0) == 0);
 }
 
 bool generator_manager::wait() {
@@ -114,6 +161,14 @@ bool generator_manager::wait() {
   if(pid != waitpid(pid, &status, 0))
     return false;
   return WIFEXITED(status) && (WEXITSTATUS(status) == 0);
+}
+
+void generator_manager::cleanup() {
+  for(auto it = pid2pipe_.begin(); it != pid2pipe_.end(); ++it) {
+    kill(it->first, SIGTERM);
+    pipes_.discard(it->second.pipe);
+  }
+  pipes_.cleanup();
 }
 
 void generator_manager::start_one_command(const std::string& command, int pipe)
@@ -189,19 +244,25 @@ void generator_manager::start_commands()
     } else {
       pipes_.discard(info.pipe);
     }
-    display_status(status, info.command);
+    if(!display_status(status, info.command)) {
+      cleanup();
+      exit(EXIT_FAILURE);
+    }
   }
 }
 
-void generator_manager::display_status(int status, const std::string& command)
+bool generator_manager::display_status(int status, const std::string& command)
 {
   if(WIFEXITED(status) && WEXITSTATUS(status) != 0) {
     std::cerr << "Command '" << command
               << "' exited with error status " << WEXITSTATUS(status) << std::endl;
+    return false;
   } else if(WIFSIGNALED(status)) {
     std::cerr << "Command '" << command
               << "' killed by signal " << WTERMSIG(status) << std::endl;
+    return false;
   }
+  return true;
 }
 
 } // namespace jellyfish

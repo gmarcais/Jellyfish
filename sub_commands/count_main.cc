@@ -17,6 +17,8 @@
 #include <cstdlib>
 #include <unistd.h>
 #include <assert.h>
+#include <signal.h>
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -149,6 +151,16 @@ mer_dna_bloom_counter load_bloom_filter(const char* path) {
   return res;
 }
 
+// If get a termination signal, kill the manager and then kill myself.
+static pid_t manager_pid = 0;
+void signal_handler(int sig) {
+  if(manager_pid)
+    kill(manager_pid, SIGTERM);
+  signal(sig, SIG_DFL);
+  kill(getpid(), sig);
+  _exit(EXIT_FAILURE); // Should not be reached
+}
+
 int count_main(int argc, char *argv[])
 {
   auto start_time = system_clock::now();
@@ -167,6 +179,11 @@ int count_main(int argc, char *argv[])
                                        args.shell_given ? args.shell_arg : (const char*)0);
     generator_manager.reset(gm);
     generator_manager->start();
+    manager_pid = generator_manager->pid();
+    struct sigaction act;
+    memset(&act, '\0', sizeof(act));
+    act.sa_handler = signal_handler;
+    assert(sigaction(SIGTERM, &act, 0) == 0);
   }
 
   mer_hash ary(args.size_arg, args.mer_len_arg * 2, args.counter_len_arg, args.threads_arg, args.reprobes_arg);
@@ -210,6 +227,15 @@ int count_main(int argc, char *argv[])
                                                                   pipes_begin, pipes_end,
                                                                   args.Files_arg, do_op);
     counter.exec_join(args.threads_arg);
+  }
+
+  // If we have a manager, wait for it
+  if(generator_manager) {
+    signal(SIGTERM, SIG_DFL);
+    manager_pid = 0;
+    if(!generator_manager->wait())
+      die << "Some generator commands failed";
+    generator_manager.reset();
   }
 
   auto after_count_time = system_clock::now();

@@ -103,12 +103,13 @@ protected:
     if(files_open_ >= concurrent_files_)
       return;
     while(paths_cur_ != paths_end_) {
-      res.reset(new file_stream(*paths_cur_, *this));
+      std::string path = *paths_cur_;
       ++paths_cur_;
+      res.reset(new file_stream(path.c_str(), *this));
       if(res->good())
         return;
       res.reset();
-      std::cerr << "Can't open file '" << *paths_cur_ << "'" << std::endl;
+      eraise(std::runtime_error) << "Can't open file '" << path << "'";
     }
   }
 
