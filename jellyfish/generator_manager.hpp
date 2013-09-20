@@ -18,6 +18,11 @@
 #ifndef __JELLYFISH_SPAWN_EXTERNAL_HPP_
 #define __JELLYFISH_SPAWN_EXTERNAL_HPP_
 
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #include <iostream>
 #include <vector>
 #include <map>
@@ -33,7 +38,13 @@ namespace jellyfish {
 class cloexec_istream : public std::istream
 {
   static std::streambuf* open_file(const char* path) {
+#ifdef O_CLOEXEC
     int fd = open(path, O_RDONLY | O_CLOEXEC);
+#else
+    int fd = open(path, O_RDONLY);
+    if(fd != -1)
+      fcntl(fd, F_SETFD, FD_CLOXEC);
+#endif
     return new __gnu_cxx::stdio_filebuf<std::istream::char_type>(fd, std::ios::in);
   }
 
