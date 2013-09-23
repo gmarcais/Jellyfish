@@ -98,6 +98,12 @@ public:
     return res;
   }
 
+  int concurrent_files() const { return concurrent_files_; }
+  // Number of pipes available. Not thread safe
+  int concurrent_pipes() const { return free_pipes_.size() + busy_pipes_.size(); }
+  // Number of streams available. Not thread safe
+  int nb_streams() const { return concurrent_files() + concurrent_pipes(); }
+
 protected:
   void open_next_file(stream_type& res) {
     if(files_open_ >= concurrent_files_)

@@ -89,7 +89,7 @@ public:
               OPERATION op, FilterType filter = FilterType()) :
     ary_(ary),
     streams_(file_begin, file_end, pipe_begin, pipe_end, concurent_files),
-    parser_(mer_dna::k(), concurent_files, 3 * nb_threads, 4096, streams_),
+    parser_(mer_dna::k(), streams_.nb_streams(), 3 * nb_threads, 4096, streams_),
     filter_(filter),
     op_(op)
   { }
@@ -209,7 +209,7 @@ int count_main(int argc, char *argv[])
     do_op = UPDATE;
   }
 
-  // Iterators to the multi pipe paths. If not generator manager,
+  // Iterators to the multi pipe paths. If no generator manager,
   // generate an empty range.
   auto pipes_begin = generator_manager.get() ? generator_manager->pipes().begin() : args.file_arg.end();
   auto pipes_end = (bool)generator_manager ? generator_manager->pipes().end() : args.file_arg.end();

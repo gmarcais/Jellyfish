@@ -24,7 +24,7 @@ option("S", "shell") {
   c_string }
 option("output", "o") {
   description "Output file"
-  c_string; default "mer_counts" }
+  c_string; default "mer_counts.jf" }
 option("counter-len", "c") {
   description "Length bits of counting field"
   uint32; default "7"; typestr "Length in bits" }
