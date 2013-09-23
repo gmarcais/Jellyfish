@@ -85,7 +85,7 @@ public:
   mer_counter(int nb_threads, mer_hash& ary,
               PathIterator file_begin, PathIterator file_end,
               PathIterator pipe_begin, PathIterator pipe_end,
-               uint32_t concurent_files,
+              uint32_t concurent_files,
               OPERATION op, FilterType filter = FilterType()) :
     ary_(ary),
     streams_(file_begin, file_end, pipe_begin, pipe_end, concurent_files),
@@ -153,7 +153,7 @@ mer_dna_bloom_counter load_bloom_filter(const char* path) {
 
 // If get a termination signal, kill the manager and then kill myself.
 static pid_t manager_pid = 0;
-void signal_handler(int sig) {
+static void signal_handler(int sig) {
   if(manager_pid)
     kill(manager_pid, SIGTERM);
   signal(sig, SIG_DFL);

@@ -8,7 +8,11 @@ sort -k2,2 > ${pref}.md5sum <<EOF
 9251799dd5dbd3f617124aa2ff72112a ${pref}_filtered.histo
 EOF
 
-$JF bf -t $nCPUs -o ${pref}.bf -s 1M -C -m 40 seq1m_0.fa seq1m_0.fa
+cat > ${pref}_commands <<EOF
+gunzip -c seq1m_0.fa.gz
+gunzip -c seq1m_0.fa.gz
+EOF
+$JF bf -t $nCPUs -o ${pref}.bf -s 1M -C -m 40 --timing ${pref}.timing -g ${pref}_commands -G 2
 # Counting without filtering
 $JF count -t $nCPUs -o ${pref}.jf -s 2M -C -m 40 seq1m_0.fa
 # Filtereing should not do anything here: all mers are loaded twice in the bf
