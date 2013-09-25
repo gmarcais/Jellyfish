@@ -103,6 +103,11 @@ public:
 
   std::string format() const { return root_["format"].asString(); }
   void format(const std::string& s) { root_["format"] = s; }
+
+  /// Is the file an intermediary file? Return index >= if yes, -1
+  /// otherwise.
+  int intermediary() const { return root_.get("intermediary", -1).asInt(); }
+  void intermediary(int i) { root_["intermediary"] = (Json::Int)i; }
 };
 } // namespace jellyfish
 

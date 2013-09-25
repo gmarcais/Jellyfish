@@ -87,6 +87,10 @@ struct cmask<U, len, 0> {
   static const U v = 0;
 };
 
+inline int popcount(unsigned int x) { return __builtin_popcount(x); }
+inline int popcount(unsigned long x) { return __builtin_popcountl(x); }
+inline int popcount(unsigned long long x) { return __builtin_popcountll(x); }
+
 // Fast reverse complement of one word through bit tweedling.
 inline uint32_t word_reverse_complement(uint32_t w) {
   typedef uint64_t U;
@@ -266,6 +270,13 @@ public:
     for(unsigned int i = 0; i < nb_words(); ++i)
       _data[i] = random_bits(wbits);
     clean_msw();
+  }
+
+  unsigned int GC_content() const {
+    unsigned int res = 0;
+    for(unsigned int i = 0; i < nb_words(); ++i)
+      res += popcount((_data[i] ^ (_data[i] >> 1)) & cmask<T, 1>::v);
+    return res;
   }
 
   derived& operator=(const mer_base& rhs) {

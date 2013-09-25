@@ -91,7 +91,8 @@ library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
                           $(JFI)/whole_sequence_parser.hpp		\
                           $(JFI)/binary_dumper.hpp			\
                           $(JFI)/sorted_dumper.hpp			\
-                          $(JFI)/text_dumper.hpp $(JFI)/dumper.hpp	\
+                          $(JFI)/text_dumper.hpp			\
+                          $(JFI)/raw_dumper.hpp $(JFI)/dumper.hpp	\
                           $(JFI)/time.hpp $(JFI)/mer_heap.hpp		\
                           $(JFI)/token_ring.hpp				\
                           $(JFI)/locks_pthread.hpp			\

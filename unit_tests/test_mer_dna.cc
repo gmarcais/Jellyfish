@@ -235,6 +235,27 @@ TEST(MerDNASimple, IO) {
   }
 }
 
+TEST(MerDNASimple, GCcontent) {
+  for(int i = 0 ; i < 1000; ++i) {
+    mer_dna::k(::random_bits(9) + 1);
+    mer_dna m1;
+    m1.randomize();
+    unsigned int gc = 0;
+    for(unsigned int i = 0; i < mer_dna::k(); ++i)
+      gc += m1.base(i) == 'G' || m1.base(i) == 'C';
+    EXPECT_EQ(gc, m1.GC_content());
+    EXPECT_EQ(gc, m1.get_reverse_complement().GC_content());
+    m1.polyA();
+    EXPECT_EQ((unsigned int)0, m1.GC_content());
+    m1.polyT();
+    EXPECT_EQ((unsigned int)0, m1.GC_content());
+    m1.polyC();
+    EXPECT_EQ(mer_dna::k(), m1.GC_content());
+    m1.polyG();
+    EXPECT_EQ(mer_dna::k(), m1.GC_content());
+  }
+}
+
 // Value Type Container class
 template <typename T, int N>
 class VTC {

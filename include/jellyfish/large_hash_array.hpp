@@ -17,6 +17,8 @@
 #ifndef __JELLYFISH_LARGE_HASH_ARRAY_HPP__
 #define __JELLYFISH_LARGE_HASH_ARRAY_HPP__
 
+#include <limits>
+
 #include <jellyfish/storage.hpp>
 #include <jellyfish/atomic_gcc.hpp>
 #include <jellyfish/allocators_mmap.hpp>
@@ -248,9 +250,13 @@ public:
       *memlen = 0;
       return;
     }
-    *memlen = blen * offsets_.block_word_len() * sizeof(word);
-    if(*start_ptr + *memlen > end_ptr)
-      *memlen = end_ptr - *start_ptr;
+    if(blen != std::numeric_limits<size_t>::max()) {
+      *memlen = blen * offsets_.block_word_len() * sizeof(word);
+      if(*start_ptr + *memlen > end_ptr)
+        *memlen = end_ptr - *start_ptr;
+    } else {
+      *memlen = size_bytes_;
+    }
   }
 
   /**

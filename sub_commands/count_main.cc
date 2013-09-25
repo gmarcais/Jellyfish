@@ -190,12 +190,11 @@ int count_main(int argc, char *argv[])
   if(args.disk_flag)
     ary.do_size_doubling(false);
 
-  std::auto_ptr<jellyfish::dumper_t<mer_array> > dumper;
-  if(args.text_flag)
-    dumper.reset(new text_dumper(args.threads_arg, args.output_arg, &header));
-  else
-    dumper.reset(new binary_dumper(args.out_counter_len_arg, ary.key_len(), args.threads_arg, args.output_arg, &header));
-  ary.dumper(dumper.get());
+  std::unique_ptr<jellyfish::dumper_t<mer_array> > intermediate_dumper;
+  if(!args.no_write_flag) {
+    intermediate_dumper.reset(new raw_dumper(args.output_arg, &header));
+    ary.dumper(intermediate_dumper.get());
+  }
 
   auto after_init_time = system_clock::now();
 
@@ -241,8 +240,14 @@ int count_main(int argc, char *argv[])
   auto after_count_time = system_clock::now();
 
   // If no intermediate files, dump directly into output file. If not, will do a round of merging
+  std::unique_ptr<jellyfish::dumper_t<mer_array>> dumper;
+  if(args.text_flag)
+    dumper.reset(new text_dumper(args.threads_arg, args.output_arg, &header));
+  else
+    dumper.reset(new binary_dumper(args.out_counter_len_arg, ary.key_len(), args.threads_arg, args.output_arg, &header));
+
   if(!args.no_write_flag) {
-    if(dumper->nb_files() == 0) {
+    if(intermediate_dumper->nb_files() == 0) {
       dumper->one_file(true);
       if(args.lower_count_given)
         dumper->min(args.lower_count_arg);
@@ -250,21 +255,22 @@ int count_main(int argc, char *argv[])
         dumper->max(args.upper_count_arg);
       dumper->dump(ary.ary());
     } else {
-      dumper->dump(ary.ary());
-      if(!args.no_merge_flag) {
-        std::vector<const char*> files = dumper->file_names_cstr();
-        uint64_t min = args.lower_count_given ? args.lower_count_arg : 0;
-        uint64_t max = args.upper_count_given ? args.upper_count_arg : std::numeric_limits<uint64_t>::max();
-        try {
-          merge_files(files, args.output_arg, header, min, max);
-        } catch(MergeError e) {
-          die << e.what();
-        }
-        if(!args.no_unlink_flag) {
-          for(int i =0; i < dumper->nb_files(); ++i)
-            unlink(files[i]);
-        }
-      } // if(!args.no_merge_flag
+      std::cerr << "Merging needs reimplementing\n";
+      // dumper->dump(ary.ary());
+      // if(!args.no_merge_flag) {
+      //   std::vector<const char*> files = dumper->file_names_cstr();
+      //   uint64_t min = args.lower_count_given ? args.lower_count_arg : 0;
+      //   uint64_t max = args.upper_count_given ? args.upper_count_arg : std::numeric_limits<uint64_t>::max();
+      //   try {
+      //     merge_files(files, args.output_arg, header, min, max);
+      //   } catch(MergeError e) {
+      //     die << e.what();
+      //   }
+      // if(!args.no_unlink_flag) {
+      //   for(int i =0; i < dumper->nb_files(); ++i)
+      //     unlink(files[i]);
+      // }
+      //    } // if(!args.no_merge_flag
     } // if(!args.no_merge_flag
   }
 
