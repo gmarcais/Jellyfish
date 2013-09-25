@@ -23,6 +23,7 @@
 
 #include <jellyfish/err.hpp>
 #include <jellyfish/cooperative_pool2.hpp>
+#include <jellyfish/cpp_array.hpp>
 
 namespace jellyfish {
 
@@ -53,7 +54,7 @@ class mer_overlap_sequence_parser : public jellyfish::cooperative_pool2<mer_over
   char*                          seam_buffer;
   locks::pthread::mutex          streams_mutex;
   char*                          data;
-  std::vector<stream_status>     streams_;
+  cpp_array<stream_status>       streams_;
   StreamIterator&                streams_iterator_;
 
 public:
@@ -77,6 +78,7 @@ public:
     for(sequence_ptr* it = super::element_begin(); it != super::element_end(); ++it)
       it->start = it->end = buffer + (it - super::element_begin()) * buf_size;
     for(uint32_t i = 0; i < max_producers; ++i) {
+      streams_.init(i);
       streams_[i].seam = seam_buffer + i * (mer_len - 1);
       open_next_file(streams_[i]);
     }

@@ -6,6 +6,7 @@
 
 #include <jellyfish/err.hpp>
 #include <jellyfish/cooperative_pool2.hpp>
+#include <jellyfish/cpp_array.hpp>
 
 namespace jellyfish {
 struct sequence_strings {
@@ -26,8 +27,8 @@ class whole_sequence_parser : public jellyfish::cooperative_pool2<whole_sequence
     stream_type stream;
     stream_status() : type(DONE_TYPE) { }
   };
-  std::vector<stream_status> streams_;
-  StreamIterator&            streams_iterator_;
+  cpp_array<stream_status> streams_;
+  StreamIterator&          streams_iterator_;
 
 public:
   /// Size is the number of buffers to keep around. It should be
@@ -38,8 +39,10 @@ public:
     streams_(max_producers),
     streams_iterator_(streams)
   {
-    for(uint32_t i = 0; i < max_producers; ++i)
+    for(uint32_t i = 0; i < max_producers; ++i) {
+      streams_.init(i);
       open_next_file(streams_[i]);
+    }
   }
 
   inline bool produce(uint32_t i, sequence_strings& buff) {

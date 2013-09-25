@@ -29,6 +29,7 @@
 #include <string>
 #include <map>
 #include <memory>
+#include <sstream>
 
 #include <jellyfish/generator_manager.hpp>
 #include <jellyfish/err.hpp>
@@ -59,12 +60,12 @@ std::string tmp_pipes::create_tmp_dir() {
 std::vector<std::string> tmp_pipes::create_pipes(const std::string& tmpdir, int nb_pipes)
 {
   std::vector<std::string> pipes;
-  std::string path;
   for(int i = 0; i < nb_pipes; ++i) {
-    path = tmpdir + "/fifo" + std::to_string(i);
-    if(mkfifo(path.c_str(), S_IRUSR|S_IWUSR) == -1)
+    std::ostringstream path;
+    path << tmpdir << "/fifo" << i;
+    if(mkfifo(path.str().c_str(), S_IRUSR|S_IWUSR) == -1)
       eraise(std::runtime_error) << "Failed to create named fifos";
-    pipes.push_back(path);
+    pipes.push_back(path.str());
   }
   return pipes;
 }
