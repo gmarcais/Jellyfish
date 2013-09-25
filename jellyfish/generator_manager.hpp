@@ -43,7 +43,7 @@ class cloexec_istream : public std::istream
 #else
     int fd = open(path, O_RDONLY);
     if(fd != -1)
-      fcntl(fd, F_SETFD, FD_CLOXEC);
+      fcntl(fd, F_SETFD, FD_CLOEXEC);
 #endif
     return new __gnu_cxx::stdio_filebuf<std::istream::char_type>(fd, std::ios::in);
   }
