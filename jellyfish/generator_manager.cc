@@ -35,6 +35,17 @@
 #include <jellyfish/err.hpp>
 
 namespace jellyfish {
+int open_cloexec(const char* path, int flags) {
+#ifdef O_CLOEXEC
+    int fd = open(path, flags|O_CLOEXEC);
+#else
+    int fd = open(path, flags);
+    if(fd != -1)
+      fcntl(fd, F_SETFD, FD_CLOEXEC);
+#endif
+    return fd;
+}
+
 std::string tmp_pipes::create_tmp_dir() {
   std::vector<const char*> prefixes;
   const char* tmpdir = getenv("TMPDIR");
@@ -188,10 +199,11 @@ void generator_manager::start_one_command(const std::string& command, int pipe)
   }
 
   // In child
-  int dev_null = open("/dev/null", O_RDONLY|O_CLOEXEC);
+  int dev_null = open_cloexec("/dev/null", O_RDONLY);
   if(dev_null != -1)
     dup2(dev_null, 0);
-  int pipe_fd = open(pipes_[pipe], O_WRONLY|O_CLOEXEC);
+
+  int pipe_fd = open_cloexec(pipes_[pipe], O_WRONLY);
   if(pipe_fd == -1) {
     std::cerr << "Failed to open output pipe. Command '" << command << "' not run" << std::endl;
     exit(EXIT_FAILURE);

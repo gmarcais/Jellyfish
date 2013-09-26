@@ -33,18 +33,15 @@
 #include <jellyfish/err.hpp>
 
 namespace jellyfish {
+// Open a path and set CLOEXEC flags
+int open_cloexec(const char* path, int flags);
+
 // Input stream (inherit from std::istream, behaves mostly like an
 // ifstream), with flag O_CLOEXEC (close-on-exec) turned on.
 class cloexec_istream : public std::istream
 {
   static std::streambuf* open_file(const char* path) {
-#ifdef O_CLOEXEC
-    int fd = open(path, O_RDONLY | O_CLOEXEC);
-#else
-    int fd = open(path, O_RDONLY);
-    if(fd != -1)
-      fcntl(fd, F_SETFD, FD_CLOEXEC);
-#endif
+    int fd = open_cloexec(path, O_RDONLY);
     return new __gnu_cxx::stdio_filebuf<std::istream::char_type>(fd, std::ios::in);
   }
 
