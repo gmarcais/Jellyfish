@@ -41,20 +41,21 @@ static query_main_cmdline args;
 
 template<typename PathIterator, typename Database>
 void query_from_sequence(PathIterator file_begin, PathIterator file_end, const Database& db,
-                         std::ostream& out) {
+                         std::ostream& out, bool canonical) {
   jellyfish::stream_manager<PathIterator> streams(file_begin, file_end);
   sequence_parser parser(mer_dna::k(), 1, 3, 4096, streams);
-  for(mer_iterator mers(parser, args.canonical_flag); mers; ++mers)
+  for(mer_iterator mers(parser, canonical); mers; ++mers)
     out << *mers << " " << db.check(*mers) << "\n";
 }
 
 template<typename Database>
-void query_from_cmdline(std::vector<const char*> mers, const Database& db, std::ostream& out) {
+void query_from_cmdline(std::vector<const char*> mers, const Database& db, std::ostream& out,
+                        bool canonical) {
   mer_dna m;
   for(auto it = mers.cbegin(); it != mers.cend(); ++it) {
     try {
       m = *it;
-      if(args.canonical_flag)
+      if(canonical)
         m.canonicalize();
       out << m << " " << db.check(m) << "\n";
     } catch(std::length_error e) {
@@ -82,14 +83,14 @@ int query_main(int argc, char *argv[])
     if(!in.good())
       die << "Bloom filter file is truncated";
     in.close();
-    query_from_sequence(args.sequence_arg.begin(), args.sequence_arg.end(), filter, out);
-    query_from_cmdline(args.mers_arg, filter, out);
+    query_from_sequence(args.sequence_arg.begin(), args.sequence_arg.end(), filter, out, header.canonical());
+    query_from_cmdline(args.mers_arg, filter, out, header.canonical());
   } else if(header.format() == binary_dumper::format) {
     jellyfish::mapped_file binary_map(args.file_arg);
     binary_query bq(binary_map.base() + header.offset(), header.key_len(), header.counter_len(), header.matrix(),
                                header.size() - 1, binary_map.length() - header.offset());
-    query_from_sequence(args.sequence_arg.begin(), args.sequence_arg.end(), bq, out);
-    query_from_cmdline(args.mers_arg, bq, out);
+    query_from_sequence(args.sequence_arg.begin(), args.sequence_arg.end(), bq, out, header.canonical());
+    query_from_cmdline(args.mers_arg, bq, out, header.canonical());
   } else {
     die << "Unsupported format '" << header.format() << "'. Must be a bloom counter or binary list.";
   }

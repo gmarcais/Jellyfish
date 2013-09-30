@@ -33,7 +33,7 @@ int info_main(int argc, char *argv[]) {
   if(!file.good())
     die << "Can't open '" << args.file_arg << "'" << jellyfish::err::no;
 
-  jellyfish::generic_file_header header;
+  jellyfish::file_header header;
   header.read(file);
 
   if(args.skip_flag)
@@ -45,7 +45,8 @@ int info_main(int argc, char *argv[]) {
   else
     std::cout << "command: " << get_command(header) << "\n"
               << "where: " << get_where(header) << "\n"
-              << "when: " << header["time"] << "\n";
+              << "when: " << header["time"] << "\n"
+              << "canonical: " << (header.canonical() ? "yes" : "no") << "\n";
 
   return 0;
 }

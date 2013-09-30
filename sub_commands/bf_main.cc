@@ -104,6 +104,7 @@ int bf_main(int argc, char *argv[])
     assert(sigaction(SIGTERM, &act, 0) == 0);
   }
 
+  header.canonical(args.canonical_flag);
   std::ofstream output(args.output_arg);
   if(!output.good())
     die << "Can't open output file '" << args.output_arg << "'";

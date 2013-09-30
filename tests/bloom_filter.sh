@@ -33,12 +33,12 @@ COLLISION=$(cut -d\  -f2 ${pref}_none.histo)
     false
 }
 
-QUERY_TOT=$($JF query -C -s seq1m_0.fa ${pref}.bf | grep -c ' 2$')
+QUERY_TOT=$($JF query -s seq1m_0.fa ${pref}.bf | grep -c ' 2$')
 [ $QUERY_TOT = $TOTAL ] || {
     echo >&2 "Queried count 2 mers should be all mers"
     false
 }
-QUERY_COL=$($JF query -C -s seq1m_0.fa ${pref}_none.bf | grep -c ' 2$')
+QUERY_COL=$($JF query -s seq1m_0.fa ${pref}_none.bf | grep -c ' 2$')
 [ $QUERY_COL = $COLLISION ] || {
     echo >&2 "Queried count 2 mers should equal collisions"
     false

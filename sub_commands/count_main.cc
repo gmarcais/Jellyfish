@@ -186,6 +186,7 @@ int count_main(int argc, char *argv[])
     assert(sigaction(SIGTERM, &act, 0) == 0);
   }
 
+  header.canonical(args.canonical_flag);
   mer_hash ary(args.size_arg, args.mer_len_arg * 2, args.counter_len_arg, args.threads_arg, args.reprobes_arg);
   if(args.disk_flag)
     ary.do_size_doubling(false);

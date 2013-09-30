@@ -83,6 +83,9 @@ public:
   unsigned long nb_hashes() const { return root_["nb_hashes"].asUInt(); }
   void nb_hashes(unsigned long nbh) { root_["nb_hashes"] = (Json::UInt)nbh; }
 
+  bool canonical() const { return root_.get("canonical", false).asBool(); }
+  void canonical(bool v) { root_["canonical"] = v; }
+
   /// reprobes must be at least max_reprobe() + 1 long
   void get_reprobes(size_t* reprobes) const {
     for(unsigned int i = 0; i <= max_reprobe(); ++i)
