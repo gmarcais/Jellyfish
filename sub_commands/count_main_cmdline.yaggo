@@ -36,7 +36,7 @@ option("C", "canonical") {
   flag; off }
 option("bf") {
   description "Bloom filter to filter out singleton mers"
-  c_string; typestr "path" }
+  c_string; typestr "path";  }
 option("if") {
   description "Count only k-mers in this files"
   c_string; typestr "path"; multiple }
