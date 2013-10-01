@@ -1,0 +1,1240 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass report
+\begin_preamble
+\usepackage[letterpaper]{geometry}
+\usepackage{siunitx}
+\end_preamble
+\use_default_options true
+\begin_modules
+theorems-ams
+eqs-within-sections
+figs-within-sections
+\end_modules
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 1
+\use_mathdots 1
+\cite_engine basic
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 2
+\tocdepth 2
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Jellyfish 2 User Guide
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset toc
+LatexCommand tableofcontents
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Chapter
+Getting started
+\end_layout
+
+\begin_layout Section
+Counting all 
+\begin_inset Formula $k$
+\end_inset
+
+-mers
+\end_layout
+
+\begin_layout Standard
+The basic command to count all 
+\begin_inset Formula $k$
+\end_inset
+
+-mers is as follows:
+\end_layout
+
+\begin_layout LyX-Code
+jellyfish count -m 21 -s 100M -t 10 -C reads.fasta
+\end_layout
+
+\begin_layout Standard
+This will count canonical (
+\family sans
+-C
+\family default
+) 
+\begin_inset Formula $21$
+\end_inset
+
+-mers (
+\family sans
+-m 21
+\family default
+), using a hash with 100 million elements (
+\family sans
+-s 100M
+\family default
+) and 10 threads (
+\family sans
+-t 10
+\family default
+) in the sequences in the file 
+\family sans
+reads.fasta
+\family default
+.
+ The output is written in the file '
+\family sans
+mer_counts.jf
+\family default
+' by default (change with 
+\family sans
+-o
+\family default
+ switch).
+ 
+\end_layout
+
+\begin_layout Standard
+To compute the histogram of the 
+\begin_inset Formula $k$
+\end_inset
+
+-mer occurrences, use the 
+\family sans
+histo
+\family default
+ subcommand (see section
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:histo"
+
+\end_inset
+
+):
+\end_layout
+
+\begin_layout LyX-Code
+jellyfish histo mer_counts.jf
+\end_layout
+
+\begin_layout Standard
+To query the counts of a particular 
+\begin_inset Formula $k$
+\end_inset
+
+-mer, use the 
+\family sans
+query
+\family default
+ subcommand (see section
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:query"
+
+\end_inset
+
+):
+\end_layout
+
+\begin_layout LyX-Code
+jellyfish query mer_counts.jf AACGTTG
+\end_layout
+
+\begin_layout Standard
+To output all the counts for all the 
+\begin_inset Formula $k$
+\end_inset
+
+-mers in the file, use the 
+\family sans
+dump
+\family default
+ subcommand (see section
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:dump"
+
+\end_inset
+
+):
+\end_layout
+
+\begin_layout LyX-Code
+jellyfish dump mer_counts.jf > mer_counts_dumps.fa
+\end_layout
+
+\begin_layout Standard
+To get some information on how, when and where this jellyfish file was generated
+, use the 
+\family sans
+info
+\family default
+ subcommand (see section
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:info"
+
+\end_inset
+
+):
+\end_layout
+
+\begin_layout LyX-Code
+jellyfish info mer_counts.jf
+\end_layout
+
+\begin_layout Standard
+For more detail information, see the relevant sections in this document.
+ All commands understand 
+\family sans
+-
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{}
+\end_layout
+
+\end_inset
+
+-help
+\family default
+ and will produce some information about the switches available.
+\end_layout
+
+\begin_layout Subsection
+Counting 
+\begin_inset Formula $k$
+\end_inset
+
+-mers in sequencing reads
+\end_layout
+
+\begin_layout Standard
+In sequencing reads, it is unknown which strands of the DNA is sequenced.
+ As a consequence, a 
+\begin_inset Formula $k$
+\end_inset
+
+-mer or its reverse complement are essentially equivalent.
+ The canonical representative of a 
+\begin_inset Formula $k$
+\end_inset
+
+-mer 
+\begin_inset Formula $m$
+\end_inset
+
+ is by definition 
+\begin_inset Formula $m$
+\end_inset
+
+ or the reverse complement of 
+\begin_inset Formula $m$
+\end_inset
+
+, whichever comes first lexicographically.
+ The 
+\family sans
+-C
+\family default
+ switch instructs to save in the hash only canonical 
+\begin_inset Formula $k$
+\end_inset
+
+-mers, while the count is the number of occurrences of both a 
+\begin_inset Formula $k$
+\end_inset
+
+-mer and it reverse complement.
+\end_layout
+
+\begin_layout Standard
+The size parameter (given with 
+\family sans
+-s
+\family default
+) is an indication of the number 
+\begin_inset Formula $k$
+\end_inset
+
+-mers that will be stored in the hash.
+ For sequencing reads, one this size should be the size of the genome plus
+ the 
+\begin_inset Formula $k$
+\end_inset
+
+-mers generated by sequencing errors.
+ For example, if the error rate is 
+\begin_inset Formula $e$
+\end_inset
+
+ (e.g.
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+@
+\end_layout
+
+\end_inset
+
+ Illumina reads, usually 
+\begin_inset Formula $e\approx1\%$
+\end_inset
+
+), with an estimated genome size of 
+\begin_inset Formula $G$
+\end_inset
+
+ and a coverage of 
+\begin_inset Formula $c$
+\end_inset
+
+, the number of expected 
+\begin_inset Formula $k$
+\end_inset
+
+-mers is 
+\begin_inset Formula $G+Gcek$
+\end_inset
+
+.
+ This assume
+\end_layout
+
+\begin_layout Quote
+NOTE: unlike in Jellyfish 1, this 
+\family sans
+-s
+\family default
+ parameter is only an estimation.
+ If the size given is too small to fit all the 
+\begin_inset Formula $k$
+\end_inset
+
+-mers, the hash size will be increased automatically or partial results
+ will be written to disk and finally merged automatically.
+ Running '
+\family sans
+jellyfish merge
+\family default
+' should never be necessary, as now jellyfish now takes care of this task
+ on its own.
+\end_layout
+
+\begin_layout Standard
+If the low frequency 
+\begin_inset Formula $k$
+\end_inset
+
+-mers (
+\begin_inset Formula $k$
+\end_inset
+
+-mers occurring only once), which are mostly due to sequencing errors, are
+ not of interest, one might consider counting only high-frequency 
+\begin_inset Formula $k$
+\end_inset
+
+-mers (see section
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:Counting-high-frequency--mers"
+
+\end_inset
+
+), which uses less memory and is potentially faster.
+\end_layout
+
+\begin_layout Subsection
+Counting 
+\begin_inset Formula $k$
+\end_inset
+
+-mers in a genome
+\end_layout
+
+\begin_layout Standard
+In an actual genome or finished sequence, a 
+\begin_inset Formula $k$
+\end_inset
+
+-mer and its reverse complement are not equivalent, hence using the 
+\family sans
+-C
+\family default
+ switch does not make sense.
+ In addition, the size for the hash can be set directly to the size of the
+ genome.
+\end_layout
+
+\begin_layout Section
+Counting high-frequency 
+\begin_inset Formula $k$
+\end_inset
+
+-mers
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Counting-high-frequency--mers"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Jellyfish offers two way to count only high-frequency 
+\begin_inset Formula $k$
+\end_inset
+
+-mers (meaning only 
+\begin_inset Formula $k$
+\end_inset
+
+-mers with count 
+\begin_inset Formula $>1$
+\end_inset
+
+), which reduces significantly the memory usage.
+ Both methods are based on using Bloom filters.
+ The first method is a one pass method, which provides approximate count
+ for some percentage of the 
+\begin_inset Formula $k$
+\end_inset
+
+-mers.
+ The second method is a two pass method which provides exact count.
+ In both methods, most of the low-frequency 
+\begin_inset Formula $k$
+\end_inset
+
+-mers are not reported.
+\end_layout
+
+\begin_layout Subsection
+One pass method
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:One-pass-method"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Adding the 
+\family sans
+--bf-size
+\family default
+ switch make jellyfish first insert all 
+\begin_inset Formula $k$
+\end_inset
+
+-mers first into a Bloom filter and only insert into the hash the 
+\begin_inset Formula $k$
+\end_inset
+
+-mers which have already been seen at least once.
+ The argument to -
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{}
+\end_layout
+
+\end_inset
+
+-bf-size should the total number of 
+\begin_inset Formula $k$
+\end_inset
+
+-mer expected in the data set while the 
+\family sans
+--size argument should be the number of 
+\begin_inset Formula $k$
+\end_inset
+
+-mers occurring more than once.
+ For example:
+\end_layout
+
+\begin_layout LyX-Code
+jellyfish count -m 25 -s 3G --bf-size 100G -t 16 homo_sapiens.fa
+\end_layout
+
+\begin_layout Standard
+would be appropriate for counting 
+\begin_inset Formula $25$
+\end_inset
+
+-mers in human reads at 
+\begin_inset Formula $30\times$
+\end_inset
+
+ coverage.
+ The approximate memory usage is 
+\begin_inset Formula $\SI{9}{bits}$
+\end_inset
+
+ per 
+\begin_inset Formula $k$
+\end_inset
+
+-mer in the Bloom filter.
+\end_layout
+
+\begin_layout Standard
+The count reported for each 
+\begin_inset Formula $k$
+\end_inset
+
+-mer (by '
+\family sans
+jellyfish dump
+\family default
+' or '
+\family sans
+jellyfish query
+\family default
+') is one less than the actual count.
+ Meaning, the count 
+\begin_inset Formula $1$
+\end_inset
+
+ 
+\begin_inset Formula $k$
+\end_inset
+
+-mer are not reported, count 
+\begin_inset Formula $2$
+\end_inset
+
+ 
+\begin_inset Formula $k$
+\end_inset
+
+-mer are reported to have count 
+\begin_inset Formula $1$
+\end_inset
+
+, etc.
+\end_layout
+
+\begin_layout Standard
+The drawback of this method is some percentage of the 
+\begin_inset Formula $k$
+\end_inset
+
+-mer that should not be reported (because they occur only once) are reported.
+ This is due to the random nature of the Bloom filter data structure.
+ The percentage is 
+\begin_inset Formula $<1\%$
+\end_inset
+
+ by default and can be changed with the 
+\family sans
+-
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\family sans
+{}
+\end_layout
+
+\end_inset
+
+-bf-fp
+\family default
+ switch.
+\end_layout
+
+\begin_layout Subsection
+Two pass method
+\end_layout
+
+\begin_layout Standard
+In the two pass method, first a Bloom counter is created from the reads
+ with '
+\family sans
+jellyfish bc
+\family default
+'.
+ Then this Bloom counter is given to the '
+\family sans
+jelllyfish count
+\family default
+' command and only the 
+\begin_inset Formula $k$
+\end_inset
+
+-mers which have been seen twice in the first pass will be inserted in the
+ hash.
+ For example, with a human data set similar that in section
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:One-pass-method"
+
+\end_inset
+
+:
+\end_layout
+
+\begin_layout LyX-Code
+jellyfish bc -m 25 -s 100G -t 16 -o homo_sapiens.bc homo_sapiens.fa
+\end_layout
+
+\begin_layout LyX-Code
+jellyfish count -m 25 -s 3G -t 16 --bc homo_sapiens.bc homo_sapiens.fa
+\end_layout
+
+\begin_layout Standard
+The advantage of this method is that the counts reported for the 
+\begin_inset Formula $k$
+\end_inset
+
+-mers are all correct.
+ Most count 
+\begin_inset Formula $1$
+\end_inset
+
+ 
+\begin_inset Formula $k$
+\end_inset
+
+-mer are not reported, except for a small percentage (set by the 
+\family sans
+-f
+\family default
+ switch of the 
+\family sans
+bc
+\family default
+ subcommand) of them which are reported (correctly with count 
+\begin_inset Formula $1$
+\end_inset
+
+).
+ All other 
+\begin_inset Formula $k$
+\end_inset
+
+-mers are reported with the correct count.
+\end_layout
+
+\begin_layout Standard
+The drawback of this method is that it requires to parse the entire reads
+ data set twice and the memory usage of the Bloom counter is greater than
+ that of the Bloom filter (slightly less than twice as much).
+\end_layout
+
+\begin_layout Chapter
+FAQ
+\end_layout
+
+\begin_layout Section
+How to read compressed files (or other format)?
+\end_layout
+
+\begin_layout Standard
+Jellyfish only reads FASTA or FASTQ formatted input files.
+ By reading from pipes, jellyfish can read compressed files, like this:
+\end_layout
+
+\begin_layout LyX-Code
+zcat *.fastq.gz | jellyfish count /dev/fd/0 ...
+\end_layout
+
+\begin_layout Standard
+or by using the 
+\family sans
+'<()
+\family default
+' 
+\family sans
+redirection
+\family default
+ provided by the shell (e.g.
+ bash, zsh):
+\end_layout
+
+\begin_layout LyX-Code
+jellyfish count <(zcat file1.fastq.gz) <(zcat file2.fasta.gz) ...
+\end_layout
+
+\begin_layout Section
+How to read multiple files at once?
+\end_layout
+
+\begin_layout Standard
+Often, jellyfish can parse an input sequence file faster than 
+\family sans
+gzip
+\family default
+ or 
+\family sans
+fastq-dump
+\family default
+ (to parse SRA files) can output the sequence.
+ This leads to many threads in jellyfish going partially unused.
+ Jellyfish can be instructed to open multiple file at once.
+ For example, to read two short read archive files simultaneously:
+\end_layout
+
+\begin_layout LyX-Code
+jellyfish count -F 2 <(fastq-dump -Z file1.sra) <(fastq-dump -Z file2.sra)
+ ...
+\end_layout
+
+\begin_layout Standard
+Another way is to use 
+\begin_inset Quotes eld
+\end_inset
+
+generators
+\begin_inset Quotes erd
+\end_inset
+
+.
+ First, create a file containing, one per line, commands to generate sequence.
+ Then pass this file to jellyfish and the number of generators to run simultaneo
+usly.
+ Jellyfish will spawn subprocesses running the commands passed and read
+ their standard output for sequence.
+ By default, the commands are run using the shell in the SHELL environment
+ variable, and this can be changed by the 
+\family sans
+-S
+\family default
+ switch.
+ Multiple generators will be run simultaneously as specified by the 
+\family sans
+-G
+\family default
+ switch.
+ For example:
+\end_layout
+
+\begin_layout LyX-Code
+ls *.fasta.gz | xargs -n 1 echo gunzip -c > generators
+\end_layout
+
+\begin_layout LyX-Code
+jellyfish count -g generators -G 4 ...
+\end_layout
+
+\begin_layout Standard
+The first command created the command list into the '
+\family sans
+generators
+\family default
+' file, each command unzipping one FASTA file in the current directory.
+ The second command runs jellyfish with 
+\begin_inset Formula $4$
+\end_inset
+
+ concurrent generators.
+\end_layout
+
+\begin_layout Section
+How to reduce the output size?
+\end_layout
+
+\begin_layout Standard
+The output file was design to be easy to read, but the file generated can
+ be rather large.
+ By default, a 
+\begin_inset Formula $\SI{4}{bytes}$
+\end_inset
+
+ counter value is saved for every 
+\begin_inset Formula $k$
+\end_inset
+
+-mer (i.e.
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+@
+\end_layout
+
+\end_inset
+
+ a maximum count of over 4 billion).
+ Instead, a counter size of 
+\begin_inset Formula $\SI{2}{bytes}$
+\end_inset
+
+ or 
+\begin_inset Formula $\SI{1}{byte}$
+\end_inset
+
+ can be used with the switch 
+\family sans
+--out-counter-len
+\family default
+, which reduces significantly the output size.
+\end_layout
+
+\begin_layout Standard
+The count of 
+\begin_inset Formula $k$
+\end_inset
+
+-mers which cannot be represented with the given number of bytes will have
+ a value equal to the maximum value that can be represented.
+ Meaning, if the counter field uses 
+\begin_inset Formula $\SI{1}{byte}$
+\end_inset
+
+, any 
+\begin_inset Formula $k$
+\end_inset
+
+-mers with count greater or equal to 
+\begin_inset Formula $255$
+\end_inset
+
+ will be reported of having a count 
+\begin_inset Formula $255$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Also, low frequency and high frequency 
+\begin_inset Formula $k$
+\end_inset
+
+-mers can be skipped using the 
+\family sans
+-L
+\family default
+ and 
+\family sans
+-U
+\family default
+ switches respectively.
+ Although it might be more appropriate to filter out the low frequency 
+\begin_inset Formula $k$
+\end_inset
+
+-mers using Bloom filters, as shown in section
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:Counting-high-frequency--mers"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Chapter
+Subcommands
+\end_layout
+
+\begin_layout Section
+
+\family sans
+histo
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:histo"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The 
+\family sans
+histo
+\family default
+ subcommand outputs the histogram of 
+\begin_inset Formula $k$
+\end_inset
+
+-mers frequencies.
+ The last bin, with value one above the high setting set by the 
+\family sans
+-h
+\family default
+ switch (
+\begin_inset Formula $10\,000$
+\end_inset
+
+ by default), is a catch all: all 
+\begin_inset Formula $k$
+\end_inset
+
+-mers with a count greater than the high setting are tallied in that one
+ bin.
+ If the low setting is set (
+\family sans
+-l
+\family default
+ switch), then the first bin, with value one below the low setting, is also
+ similarly a catch all.
+\end_layout
+
+\begin_layout Standard
+By default, the bins with a zero count are skipped.
+ This can be changed with the 
+\family sans
+-f
+\family default
+ switch.
+\end_layout
+
+\begin_layout Section
+
+\family sans
+dump
+\family default
+
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:dump"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The 
+\family sans
+dump
+\family default
+ subcommand outputs a list of all the 
+\begin_inset Formula $k$
+\end_inset
+
+-mers in the file associated with their count.
+ By default, the output is in FASTA format, where the header line contains
+ the count of the 
+\begin_inset Formula $k$
+\end_inset
+
+-mer and the sequence part is the sequence of the 
+\begin_inset Formula $k$
+\end_inset
+
+-mer.
+ This format has the advantage that the output contains the sequence of
+ 
+\begin_inset Formula $k$
+\end_inset
+
+-mers and can be directly fed into another program expecting the very common
+ FASTA format.
+ A more convenient column format (for human beings) is selected with the
+ 
+\family sans
+-c
+\family default
+ switch.
+\end_layout
+
+\begin_layout Standard
+Low frequency and high frequency 
+\begin_inset Formula $k$
+\end_inset
+
+-mers can be skipped with the 
+\family sans
+-L
+\family default
+ and 
+\family sans
+-U
+\family default
+ switches respectively.
+\end_layout
+
+\begin_layout Standard
+In the output of the 
+\family sans
+dump
+\family default
+ subcommand, the 
+\begin_inset Formula $k$
+\end_inset
+
+-mers are sorted according to the hash function used by Jellyfish.
+ The output can be considered to be 
+\begin_inset Quotes eld
+\end_inset
+
+fairly pseudo-random
+\begin_inset Quotes erd
+\end_inset
+
+.
+ By 
+\begin_inset Quotes eld
+\end_inset
+
+fairly
+\begin_inset Quotes erd
+\end_inset
+
+ we mean that NO guarantee is made about the actual randomness of this order,
+ it is just good enough for the hash table to work properly.
+ And by 
+\begin_inset Quotes eld
+\end_inset
+
+pseudo-random
+\begin_inset Quotes erd
+\end_inset
+
+ we mean that the order is actually deterministic: given the same hash function,
+ the output will be always the same and two different files generated with
+ the same hash function can be merged easily.
+\end_layout
+
+\begin_layout Section
+
+\family sans
+query
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:query"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The 
+\family sans
+query
+\family default
+ subcommand outputs the 
+\begin_inset Formula $k$
+\end_inset
+
+-mers and their counts for some subset of 
+\begin_inset Formula $k$
+\end_inset
+
+-mers.
+ It will outputs the counts of all the 
+\begin_inset Formula $k$
+\end_inset
+
+-mers passed on the command line or of all the 
+\begin_inset Formula $k$
+\end_inset
+
+-mers in the sequence read from the FASTA or FASTQ formatted file passed
+ to the switch 
+\family sans
+-s
+\family default
+ (this switch can be given multiple times).
+\end_layout
+
+\begin_layout Section
+
+\family sans
+info
+\family default
+
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:info"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The 
+\family sans
+info
+\family default
+ subcommand outputs some information about the jellyfish file and the command
+ used to generated it, in which directory and at what time the command was
+ run.
+ Hopefully, the information given should be enough to rerun jellyfish under
+ the same conditions and reproduce the output file.
+ In particular, the 
+\family sans
+-c
+\family default
+ switch outputs the command, properly escaped and ready to run in a shell.
+\end_layout
+
+\begin_layout Standard
+The header is saved in JSON format and contains more information than is
+ written by the default.
+ The full header in JSON format can be written out using the 
+\family sans
+-j
+\family default
+ switch.
+\end_layout
+
+\begin_layout Section
+
+\family sans
+merge
+\family default
+
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:merge"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The 
+\family sans
+merge
+\family default
+ subcommand is a little direct use with version version 2 of jellyfish.
+ When intermediary files were written to disk, because not all 
+\begin_inset Formula $k$
+\end_inset
+
+-mers would fit in memory, they can be merged into one file containing the
+ final result with the 
+\family sans
+merge
+\family default
+ subcommand.
+ The 
+\family sans
+count
+\family default
+ will merge intermediary files automatically as needed.
+\end_layout
+
+\begin_layout Section
+cite
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:cite"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The 
+\family sans
+cite
+\family default
+ subcommand prints the citation for the jellyfish paper.
+ With the 
+\family sans
+-b
+\family default
+, it is formatted in Bibtex format.
+ How convenient!
+\end_layout
+
+\end_body
+\end_document
