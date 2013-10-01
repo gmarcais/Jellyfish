@@ -39,7 +39,7 @@ option("bc") {
   c_string; typestr "path";  }
 option("bf-size") {
   description "Use bloom filter to count high-frequency mers"
-  uint64; conflict "bc" }
+  uint64; suffix; conflict "bc" }
 option("bf-fp") {
   description "False positive rate of bloom filter"
   double; default 0.01 }

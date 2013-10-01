@@ -79,7 +79,7 @@ static void signal_handler(int sig) {
   _exit(EXIT_FAILURE); // Should not be reached
 }
 
-int bf_main(int argc, char *argv[])
+int bc_main(int argc, char *argv[])
 {
   auto start_time = system_clock::now();
 
