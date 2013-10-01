@@ -34,9 +34,15 @@ option("out-counter-len") {
 option("C", "canonical") {
   description "Count both strand, canonical representation"
   flag; off }
-option("bf") {
-  description "Bloom filter to filter out singleton mers"
+option("bc") {
+  description "Bloom counter to filter out singleton mers"
   c_string; typestr "path";  }
+option("bf-size") {
+  description "Use bloom filter to count high-frequency mers"
+  uint64; conflict "bc" }
+option("bf-fp") {
+  description "False positive rate of bloom filter"
+  double; default 0.01 }
 option("if") {
   description "Count only k-mers in this files"
   c_string; typestr "path"; multiple }
@@ -88,24 +94,6 @@ option("timing") {
 option("no-write") {
   description "Don't write database"
   flag; off; hidden }
-# option("measure", "u") {
-#   description "Write usage statistics"
-#   flag; off; hidden }
-# option("buffers") {
-#   description "Number of buffers per thread"
-#   uint64; hidden }
-# option("buffer-size") {
-#   description "Size of buffers"
-#   uint64; hidden; default "8192" }
-# option("out-buffer-size") {
-#   description "Size of output buffer per thread"
-#   uint64; hidden; default "20000000" }
-# option("lock") {
-#   description "Lock hash in memory (no swapping)"
-#   flag; off; hidden }
-# option("stream") {
-#   description "Read from stream, not memory map"
-#   flag; off; hidden }
 arg("file") {
   description "Sequence file(s) in fasta or fastq format"
   c_string; multiple; typestr "path" }

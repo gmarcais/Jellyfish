@@ -50,6 +50,7 @@ inline double as_seconds(DtnType dtn) { return duration_cast<duration<double>>(d
 
 using jellyfish::mer_dna;
 using jellyfish::mer_dna_bloom_counter;
+using jellyfish::mer_dna_bloom_filter;
 typedef std::vector<const char*> file_vector;
 typedef jellyfish::mer_overlap_sequence_parser<jellyfish::stream_manager<file_vector::const_iterator> > sequence_parser;
 typedef jellyfish::mer_iterator<sequence_parser, mer_dna> mer_iterator;
@@ -69,15 +70,27 @@ struct filter {
   }
 };
 
-struct filter_bf : public filter {
+struct filter_bc : public filter {
   const mer_dna_bloom_counter& counter_;
-  filter_bf(const mer_dna_bloom_counter& counter, filter* prev = 0) :
+  filter_bc(const mer_dna_bloom_counter& counter, filter* prev = 0) :
     filter(prev),
     counter_(counter)
   { }
   bool operator()(const mer_dna& m) {
     unsigned int c = counter_.check(m);
     return and_res(c > 1, m);
+  }
+};
+
+struct filter_bf : public filter {
+  mer_dna_bloom_filter& bf_;
+  filter_bf(mer_dna_bloom_filter& bf, filter* prev = 0) :
+    filter(prev),
+    bf_(bf)
+  { }
+  bool operator()(const mer_dna& m) {
+    unsigned int c = bf_.insert(m);
+    return and_res(c > 0, m);
   }
 };
 
@@ -226,11 +239,22 @@ int count_main(int argc, char *argv[])
   // generate an empty range.
   auto pipes_begin = generator_manager.get() ? generator_manager->pipes().begin() : args.file_arg.end();
   auto pipes_end = (bool)generator_manager ? generator_manager->pipes().end() : args.file_arg.end();
+
+  // Bloom counter read from file to filter out low frequency
+  // k-mers. Two pass algorithm.
   std::unique_ptr<filter> mer_filter(new filter);
   std::unique_ptr<mer_dna_bloom_counter> bc;
-  if(args.bf_given) {
-    bc.reset(load_bloom_filter(args.bf_arg));
-    mer_filter.reset(new filter_bf(*bc));
+  if(args.bc_given) {
+    bc.reset(load_bloom_filter(args.bc_arg));
+    mer_filter.reset(new filter_bc(*bc));
+  }
+
+  // Bloom filter to filter out low frequency k-mers. One pass
+  // algorithm.
+  std::unique_ptr<mer_dna_bloom_filter> bf;
+  if(args.bf_size_given) {
+    bf.reset(new mer_dna_bloom_filter(args.bf_fp_arg, args.bf_size_arg));
+    mer_filter.reset(new filter_bf(*bf));
   }
 
   mer_counter<file_vector::const_iterator>  counter(args.threads_arg, ary,
