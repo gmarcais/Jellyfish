@@ -79,7 +79,7 @@ static void signal_handler(int sig) {
   _exit(EXIT_FAILURE); // Should not be reached
 }
 
-int bf_main(int argc, char *argv[])
+int bc_main(int argc, char *argv[])
 {
   auto start_time = system_clock::now();
 
@@ -104,6 +104,7 @@ int bf_main(int argc, char *argv[])
     assert(sigaction(SIGTERM, &act, 0) == 0);
   }
 
+  header.canonical(args.canonical_flag);
   std::ofstream output(args.output_arg);
   if(!output.good())
     die << "Can't open output file '" << args.output_arg << "'";

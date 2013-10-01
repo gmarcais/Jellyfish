@@ -13,7 +13,6 @@ sort -k2,2 > ${pref}.md5sum <<EOF
 94625cd2d59e278f08421a673eb0926a ${pref}_m15_s2M_L2_U3.histo
 94625cd2d59e278f08421a673eb0926a ${pref}_m15_s2M_L2_U3_automerge.histo
 45fb383344e0fb0b7540718339be4c03 ${pref}_query_one_count
-8925ab145c56af3f4a21a5776129ff54 ${pref}_query_canonical_one_count
 EOF
 
 # Count with in memory hash doubling
@@ -42,7 +41,7 @@ $JF histo ${pref}_m15_s2M_L2_U3_automerge.jf > ${pref}_m15_s2M_L2_U3_automerge.h
 
 # Check query
 $JF query ${pref}_binary.jf -s seq1m_0.fa    | grep ' 1$' | wc -l | sed -e 's/ //g' > ${pref}_query_one_count
-$JF query ${pref}_binary.jf -s seq1m_0.fa -C | grep ' 1$' | wc -l | sed -e 's/ //g' > ${pref}_query_canonical_one_count
+# $JF query ${pref}_binary.jf -s seq1m_0.fa -C | grep ' 1$' | wc -l | sed -e 's/ //g' > ${pref}_query_canonical_one_count
 
 # $JF count -m 40 -t $nCPUs -o ${pref}_text -s 2M --text seq1m_0.fa
 # $JF info -s ${pref}_text0 | sort >  ${pref}_text0_dump

@@ -1,9 +1,6 @@
 purpose "Query a Jellyfish database"
 package "jellyfish query"
 
-option("C", "canonical") {
-  description "Count both strand, canonical representation"
-  flag; off }
 option("s", "sequence") {
   description "Output counts for all mers in sequence"
   c_string; typestr "path"; multiple }

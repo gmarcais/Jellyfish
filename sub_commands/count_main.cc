@@ -50,35 +50,58 @@ inline double as_seconds(DtnType dtn) { return duration_cast<duration<double>>(d
 
 using jellyfish::mer_dna;
 using jellyfish::mer_dna_bloom_counter;
+using jellyfish::mer_dna_bloom_filter;
 typedef std::vector<const char*> file_vector;
 typedef jellyfish::mer_overlap_sequence_parser<jellyfish::stream_manager<file_vector::const_iterator> > sequence_parser;
 typedef jellyfish::mer_iterator<sequence_parser, mer_dna> mer_iterator;
 
 static count_main_cmdline args; // Command line switches and arguments
 
-// k-mer filters
-struct filter_true {
-  template<typename T>
-  bool operator()(const T& x) const { return true; }
+// k-mer filters. Organized in a linked list, interpreted as a &&
+// (logical and). I.e. all filter must return true for the result to
+// be true. By default, filter returns true.
+struct filter {
+  filter* prev_;
+  filter(filter* prev = 0) : prev_(prev) { }
+  virtual ~filter() { }
+  virtual bool operator()(const mer_dna& x) { return and_res(true, x); }
+  bool and_res(bool r, const mer_dna& x) const {
+    return r ? (prev_ ? (*prev_)(x) : true) : false;
+  }
 };
 
-struct filter_bf {
+struct filter_bc : public filter {
   const mer_dna_bloom_counter& counter_;
-  filter_bf(const mer_dna_bloom_counter& counter) : counter_(counter) { }
-  bool operator()(const mer_dna& m) const {
+  filter_bc(const mer_dna_bloom_counter& counter, filter* prev = 0) :
+    filter(prev),
+    counter_(counter)
+  { }
+  bool operator()(const mer_dna& m) {
     unsigned int c = counter_.check(m);
-    return c > 1;
+    return and_res(c > 1, m);
+  }
+};
+
+struct filter_bf : public filter {
+  mer_dna_bloom_filter& bf_;
+  filter_bf(mer_dna_bloom_filter& bf, filter* prev = 0) :
+    filter(prev),
+    bf_(bf)
+  { }
+  bool operator()(const mer_dna& m) {
+    unsigned int c = bf_.insert(m);
+    return and_res(c > 0, m);
   }
 };
 
 enum OPERATION { COUNT, PRIME, UPDATE };
-template<typename PathIterator, typename FilterType>
+template<typename PathIterator>
 class mer_counter : public jellyfish::thread_exec {
   int                                     nb_threads_;
   mer_hash&                               ary_;
   jellyfish::stream_manager<PathIterator> streams_;
   sequence_parser                         parser_;
-  FilterType                              filter_;
+  filter*                                 filter_;
   OPERATION                               op_;
 
 public:
@@ -86,7 +109,7 @@ public:
               PathIterator file_begin, PathIterator file_end,
               PathIterator pipe_begin, PathIterator pipe_end,
               uint32_t concurent_files,
-              OPERATION op, FilterType filter = FilterType()) :
+              OPERATION op, filter* filter = new filter) :
     ary_(ary),
     streams_(file_begin, file_end, pipe_begin, pipe_end, concurent_files),
     parser_(mer_dna::k(), streams_.nb_streams(), 3 * nb_threads, 4096, streams_),
@@ -100,7 +123,7 @@ public:
     switch(op_) {
     case COUNT:
       for(mer_iterator mers(parser_, args.canonical_flag) ; mers; ++mers) {
-        if(filter_(*mers))
+        if((*filter_)(*mers))
           ary_.add(*mers, 1);
         ++count;
       }
@@ -108,7 +131,8 @@ public:
 
     case PRIME:
       for(mer_iterator mers(parser_, args.canonical_flag) ; mers; ++mers) {
-        ary_.set(*mers);
+        if((*filter_)(*mers))
+          ary_.set(*mers);
         ++count;
       }
       break;
@@ -116,7 +140,8 @@ public:
     case UPDATE:
       mer_dna tmp;
       for(mer_iterator mers(parser_, args.canonical_flag) ; mers; ++mers) {
-        ary_.update_add(*mers, 1, tmp);
+        if((*filter_)(*mers))
+          ary_.update_add(*mers, 1, tmp);
         ++count;
       }
       break;
@@ -134,7 +159,7 @@ private:
   // OPERATION                    op_;
 };
 
-mer_dna_bloom_counter load_bloom_filter(const char* path) {
+mer_dna_bloom_counter* load_bloom_filter(const char* path) {
   std::ifstream in(path, std::ios::in|std::ios::binary);
   jellyfish::file_header header(in);
   if(!in.good())
@@ -144,7 +169,7 @@ mer_dna_bloom_counter load_bloom_filter(const char* path) {
   if(header.key_len() != mer_dna::k() * 2)
     die << "Invalid mer length in bloom filter";
   jellyfish::hash_pair<mer_dna> fns(header.matrix(1), header.matrix(2));
-  mer_dna_bloom_counter res(header.size(), header.nb_hashes(), in, fns);
+  auto res = new mer_dna_bloom_counter(header.size(), header.nb_hashes(), in, fns);
   if(!in.good())
     die << "Bloom filter file is truncated";
   in.close();
@@ -186,6 +211,7 @@ int count_main(int argc, char *argv[])
     assert(sigaction(SIGTERM, &act, 0) == 0);
   }
 
+  header.canonical(args.canonical_flag);
   mer_hash ary(args.size_arg, args.mer_len_arg * 2, args.counter_len_arg, args.threads_arg, args.reprobes_arg);
   if(args.disk_flag)
     ary.do_size_doubling(false);
@@ -201,10 +227,10 @@ int count_main(int argc, char *argv[])
 
   OPERATION do_op = COUNT;
   if(args.if_given) {
-    mer_counter<file_vector::const_iterator, filter_true> counter(args.threads_arg, ary,
-                                                                  args.if_arg.begin(), args.if_arg.end(),
-                                                                  args.if_arg.end(), args.if_arg.end(), // no multi pipes
-                                                                  args.Files_arg, PRIME);
+    mer_counter<file_vector::const_iterator> counter(args.threads_arg, ary,
+                                                     args.if_arg.begin(), args.if_arg.end(),
+                                                     args.if_arg.end(), args.if_arg.end(), // no multi pipes
+                                                     args.Files_arg, PRIME);
     counter.exec_join(args.threads_arg);
     do_op = UPDATE;
   }
@@ -213,21 +239,30 @@ int count_main(int argc, char *argv[])
   // generate an empty range.
   auto pipes_begin = generator_manager.get() ? generator_manager->pipes().begin() : args.file_arg.end();
   auto pipes_end = (bool)generator_manager ? generator_manager->pipes().end() : args.file_arg.end();
-  if(args.bf_given) {
-    mer_dna_bloom_counter bc = load_bloom_filter(args.bf_arg);
-    mer_counter<file_vector::const_iterator, filter_bf>  counter(args.threads_arg, ary,
-                                                                 args.file_arg.begin(), args.file_arg.end(),
-                                                                 pipes_begin, pipes_end,
-                                                                 args.Files_arg,
-                                                                 do_op, filter_bf(bc));
-    counter.exec_join(args.threads_arg);
-  } else {
-    mer_counter<file_vector::const_iterator, filter_true> counter(args.threads_arg, ary,
-                                                                  args.file_arg.begin(), args.file_arg.end(),
-                                                                  pipes_begin, pipes_end,
-                                                                  args.Files_arg, do_op);
-    counter.exec_join(args.threads_arg);
+
+  // Bloom counter read from file to filter out low frequency
+  // k-mers. Two pass algorithm.
+  std::unique_ptr<filter> mer_filter(new filter);
+  std::unique_ptr<mer_dna_bloom_counter> bc;
+  if(args.bc_given) {
+    bc.reset(load_bloom_filter(args.bc_arg));
+    mer_filter.reset(new filter_bc(*bc));
   }
+
+  // Bloom filter to filter out low frequency k-mers. One pass
+  // algorithm.
+  std::unique_ptr<mer_dna_bloom_filter> bf;
+  if(args.bf_size_given) {
+    bf.reset(new mer_dna_bloom_filter(args.bf_fp_arg, args.bf_size_arg));
+    mer_filter.reset(new filter_bf(*bf));
+  }
+
+  mer_counter<file_vector::const_iterator>  counter(args.threads_arg, ary,
+                                                    args.file_arg.begin(), args.file_arg.end(),
+                                                    pipes_begin, pipes_end,
+                                                    args.Files_arg,
+                                                    do_op, mer_filter.get());
+  counter.exec_join(args.threads_arg);
 
   // If we have a manager, wait for it
   if(generator_manager) {
