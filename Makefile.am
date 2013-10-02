@@ -100,7 +100,9 @@ library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
                           $(JFI)/json.h $(JFI)/hash_counter.hpp		\
                           $(JFI)/mapped_file.hpp			\
                           $(JFI)/mer_dna_bloom_counter.hpp		\
+                          $(JFI)/bloom_common.hpp			\
                           $(JFI)/bloom_counter2.hpp			\
+                          $(JFI)/bloom_filter.hpp			\
                           $(JFI)/cooperative_pool.hpp			\
                           $(JFI)/cooperative_pool2.hpp			\
                           $(JFI)/stream_manager.hpp
