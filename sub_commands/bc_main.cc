@@ -29,7 +29,7 @@
 #include <jellyfish/mer_dna_bloom_counter.hpp>
 #include <jellyfish/thread_exec.hpp>
 #include <jellyfish/file_header.hpp>
-#include <sub_commands/bf_main_cmdline.hpp>
+#include <sub_commands/bc_main_cmdline.hpp>
 
 using std::chrono::system_clock;
 using std::chrono::duration;
@@ -38,7 +38,7 @@ using std::chrono::duration_cast;
 template<typename DtnType>
 inline double as_seconds(DtnType dtn) { return duration_cast<duration<double>>(dtn).count(); }
 
-static bf_main_cmdline args; // Command line switches and arguments
+static bc_main_cmdline args; // Command line switches and arguments
 typedef std::vector<const char*> file_vector;
 using jellyfish::mer_dna;
 using jellyfish::mer_dna_bloom_counter;
