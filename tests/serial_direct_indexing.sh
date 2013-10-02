@@ -3,7 +3,7 @@
 cd tests
 . ./compat.sh
 
-sort > ${pref}.md5sum <<EOF
+sort -k2,2 > ${pref}.md5sum <<EOF
 dcbb23c4a74a923c37a3b059f6a6d89a ${pref}_0
 EOF
 echo "Counting 10-mers on 1 CPU" && \

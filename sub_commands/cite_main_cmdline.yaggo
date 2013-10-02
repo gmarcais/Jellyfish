@@ -2,9 +2,6 @@ purpose "How to cite Jellyfish's paper"
 package "jellyfish cite"
 description "Citation of paper"
 
-output "cite_cmdline.hpp"
-name "cite_cmdline"
-
 option("bibtex", "b") {
   description "Bibtex format"
   flag; off

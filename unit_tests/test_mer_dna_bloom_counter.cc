@@ -27,15 +27,32 @@
 
 namespace {
 using jellyfish::mer_dna;
-using jellyfish::mer_dna_bloom_counter;
 
 static const size_t nb_inserts = 10000;
 static const double error_rate = 0.001;
 
-TEST(MerDnaBloomCounter, FalsePositive) {
+template<typename T>
+class MerDnaBloomTest : public ::testing::Test { };
+
+struct TestBloomCounter {
+  typedef jellyfish::mer_dna_bloom_counter bloom_type;
+  typedef jellyfish::mer_dna_bloom_counter_file file_type;
+  static const unsigned int threshold_twice = 2; // Bloom counter counts up to 2.
+};
+struct TestBloomFilter {
+  typedef jellyfish::mer_dna_bloom_filter bloom_type;
+  typedef jellyfish::mer_dna_bloom_filter_file file_type;
+  static const unsigned int threshold_twice = 1; // Bloom filter counts up to 1.
+};
+
+typedef ::testing::Types<TestBloomCounter, TestBloomFilter> TestBloomCounterTypes;
+TYPED_TEST_CASE(MerDnaBloomTest, TestBloomCounterTypes);
+
+
+TYPED_TEST(MerDnaBloomTest, FalsePositive) {
   mer_dna::k(50);
   std::set<mer_dna> mer_set;
-  mer_dna_bloom_counter bc(error_rate, nb_inserts);
+  typename TypeParam::bloom_type bc(error_rate, nb_inserts);
 
   size_t collisions2 = 0;
   size_t collisions3 = 0;
@@ -64,22 +81,22 @@ TEST(MerDnaBloomCounter, FalsePositive) {
       nb_errors += oc < 1;
     }
     EXPECT_GT(2 * error_rate * nb_inserts, nb_collisions);
+    EXPECT_EQ((size_t)0, nb_errors);
   }
 
   // Write to file and reload two different ways
-  file_unlink f("bloom_counter_file");
-  size_t file_size = bc.m() / 5 + (bc.m() % 5 != 0);
+  file_unlink f("bloom_file");
   {
     std::ofstream out(f.path.c_str());
     bc.write_bits(out);
     EXPECT_TRUE(out.good());
-    EXPECT_EQ(file_size, out.tellp());
+    EXPECT_EQ(bc.nb_bytes(), out.tellp());
   }
   std::ifstream in(f.path.c_str());
-  mer_dna_bloom_counter bc_read(bc.m(), bc.k(), in, bc.hash_functions());
-  EXPECT_EQ(file_size, in.tellg());
+  typename TypeParam::bloom_type bc_read(bc.m(), bc.k(), in, bc.hash_functions());
+  EXPECT_EQ(bc.nb_bytes(), in.tellg());
   in.close();
-  jellyfish::bloom_counter2_file<mer_dna> bc_map(bc.m(), bc.k(), f.path.c_str(), bc.hash_functions());
+  typename TypeParam::file_type bc_map(bc.m(), bc.k(), f.path.c_str(), bc.hash_functions());
   EXPECT_EQ(bc.m(), bc_read.m());
   EXPECT_EQ(bc.k(), bc_read.k());
   EXPECT_EQ(bc.m(), bc_map.m());
@@ -95,7 +112,7 @@ TEST(MerDnaBloomCounter, FalsePositive) {
       EXPECT_EQ(check, bc_read.check(*it));
       EXPECT_EQ(check, bc_map.check(*it));
       if(i < nb_inserts / 2) {
-        nb_errors += check < 2;
+        nb_errors += check < TypeParam::threshold_twice;
       } else {
         nb_errors += check < 1;
         nb_collisions += check > 1;
@@ -114,19 +131,20 @@ TEST(MerDnaBloomCounter, FalsePositive) {
       unsigned int check = bc.check(m);
       EXPECT_EQ(check, bc_read.check(m));
       EXPECT_EQ(check, bc_map.check(m));
-      nb_collisions += check > 1;
+      nb_collisions += check > 0;
     }
     EXPECT_GT(2 * error_rate * nb_inserts, nb_collisions);
   }
 }
 
-TEST(MerDnaBloomCounter, Move) {
+TYPED_TEST(MerDnaBloomTest, Move) {
   mer_dna::k(100);
-  mer_dna_bloom_counter bc(error_rate, nb_inserts);
-  const unsigned long   k = bc.k();
-  const size_t          m = bc.m();
-  mer_dna_bloom_counter bc2(std::move(bc));
+  typename TypeParam::bloom_type bc(error_rate, nb_inserts);
+  const unsigned long            k = bc.k();
+  const size_t                   m = bc.m();
+  typename TypeParam::bloom_type bc2(std::move(bc));
   EXPECT_EQ(k, bc2.k());
   EXPECT_EQ(m, bc.m());
 }
+
 }

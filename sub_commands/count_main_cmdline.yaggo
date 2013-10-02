@@ -10,9 +10,21 @@ option("size", "s") {
 option("threads", "t") {
   description "Number of threads"
   uint32; default "1" }
+option("F", "Files") {
+  description "Number files open simultaneously"
+  uint32; default "1" }
+option("g", "generator") {
+  description "File of commands generating fast[aq]"
+  c_string; typestr "path" }
+option("G", "Generators") {
+  description "Number of generators run simultaneously"
+  uint32; default "1" }
+option("S", "shell") {
+  description "Shell used to run generator commands ($SHELL or /bin/sh)"
+  c_string }
 option("output", "o") {
   description "Output file"
-  c_string; default "mer_counts" }
+  c_string; default "mer_counts.jf" }
 option("counter-len", "c") {
   description "Length bits of counting field"
   uint32; default "7"; typestr "Length in bits" }
@@ -22,13 +34,18 @@ option("out-counter-len") {
 option("C", "canonical") {
   description "Count both strand, canonical representation"
   flag; off }
-option("bf") {
-  description "Bloom filter to filter out singleton mers"
-  c_string; typestr "path" }
+option("bc") {
+  description "Bloom counter to filter out singleton mers"
+  c_string; typestr "path";  }
+option("bf-size") {
+  description "Use bloom filter to count high-frequency mers"
+  uint64; suffix; conflict "bc" }
+option("bf-fp") {
+  description "False positive rate of bloom filter"
+  double; default 0.01 }
 option("if") {
   description "Count only k-mers in this files"
-  c_string; typestr "path"; multiple
-}
+  c_string; typestr "path"; multiple }
 option("reprobes", "p") {
   description "Maximum number of reprobes"
   uint32; default "126" }
@@ -68,33 +85,15 @@ option("upper-count", "U") {
 # option("matrix") {
 #   description "Hash function binary matrix"
 #   string; typestr "Matrix file" }
-# option("timing") {
-#   description "Print timing information"
-#   c_string; typestr "Timing file" }
+option("timing") {
+  description "Print timing information"
+  c_string; typestr "Timing file" }
 # option("stats") {
 #   description "Print stats"
 #   c_string; typestr "Stats file" }
 option("no-write") {
   description "Don't write database"
   flag; off; hidden }
-# option("measure", "u") {
-#   description "Write usage statistics"
-#   flag; off; hidden }
-# option("buffers") {
-#   description "Number of buffers per thread"
-#   uint64; hidden }
-# option("buffer-size") {
-#   description "Size of buffers"
-#   uint64; hidden; default "8192" }
-# option("out-buffer-size") {
-#   description "Size of output buffer per thread"
-#   uint64; hidden; default "20000000" }
-# option("lock") {
-#   description "Lock hash in memory (no swapping)"
-#   flag; off; hidden }
-# option("stream") {
-#   description "Read from stream, not memory map"
-#   flag; off; hidden }
 arg("file") {
   description "Sequence file(s) in fasta or fastq format"
   c_string; multiple; typestr "path" }

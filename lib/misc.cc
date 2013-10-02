@@ -78,4 +78,25 @@ uint64_t random_bits(int length) {
   }
   return res & ((uint64_t)-1 >> (bsizeof(uint64_t) - length));
 }
+
+bool isblunt(char c) {
+  return isalnum(c) || c == '_' || c == '-' || c == '/' || c == '.';
+}
+std::string quote_arg(const std::string& arg) {
+  if(std::all_of(arg.begin(), arg.end(), isblunt))
+    return arg;
+
+  std::string res("'");
+  size_t pos = 0;
+  while(true) {
+    size_t qpos = arg.find_first_of("'", pos);
+    res += arg.substr(pos, qpos - pos);
+    if(qpos == std::string::npos) break;
+    res += "'\\''";
+    pos = qpos + 1;
+  }
+  res += "'";
+  return res;
+}
+
 } // namespace jellyfish

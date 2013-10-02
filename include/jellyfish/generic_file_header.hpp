@@ -158,8 +158,8 @@ public:
     root_["exe_path"] = get_exe_path();
   }
 
-  std::string operator[](const std::string& key) { return root_.get(key, "").asString(); }
-  std::string operator[](const char* key) { return root_.get(key, "").asString(); }
+  std::string operator[](const std::string& key) const { return root_.get(key, "").asString(); }
+  std::string operator[](const char* key) const { return root_.get(key, "").asString(); }
   int alignment() const { return std::max(0, root_.get("alignment", 0).asInt()); }
   size_t offset() const { return offset_; }
 

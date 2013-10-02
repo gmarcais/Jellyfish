@@ -69,8 +69,11 @@ class mutex {
   pthread_mutex_t     _mutex;
 
 public:
-  mutex() {
-    pthread_mutex_init(&_mutex, NULL);
+  mutex(int type = PTHREAD_MUTEX_DEFAULT) {
+    pthread_mutexattr_t attr;
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, type);
+    pthread_mutex_init(&_mutex, &attr);
   }
 
   ~mutex() {
@@ -80,6 +83,11 @@ public:
   inline void lock() { pthread_mutex_lock(&_mutex); }
   inline void unlock() { pthread_mutex_unlock(&_mutex); }
   inline bool try_lock() { return !pthread_mutex_trylock(&_mutex); }
+};
+
+class mutex_recursive : public mutex {
+public:
+  mutex_recursive() : mutex(PTHREAD_MUTEX_RECURSIVE) { }
 };
 
 class mutex_lock {

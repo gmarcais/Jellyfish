@@ -19,6 +19,7 @@
 
 #include <jellyfish/mer_dna.hpp>
 #include <jellyfish/bloom_counter2.hpp>
+#include <jellyfish/bloom_filter.hpp>
 #include <jellyfish/rectangular_binary_matrix.hpp>
 #include <jellyfish/misc.hpp>
 
@@ -41,6 +42,9 @@ struct hash_pair<mer_dna> {
 };
 
 typedef bloom_counter2<mer_dna> mer_dna_bloom_counter;
+typedef bloom_counter2_file<mer_dna> mer_dna_bloom_counter_file;
+typedef bloom_filter<mer_dna> mer_dna_bloom_filter;
+typedef bloom_filter_file<mer_dna> mer_dna_bloom_filter_file;
 }
 
 #endif /* __JELLYFISH_MER_DNA_BLOOM_COUNTER_HPP_ */

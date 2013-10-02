@@ -7,7 +7,7 @@ JF="$DIR/jellyfish"
 [ -n "$VALGRIND" ] && JF="valgrind $JF"
 
 check () {
-    cut -d\  -f 2 $1 | xargs @MD5@ | sort | diff -w $DIFFFLAGS $1 -
+    cut -d\  -f 2 $1 | xargs @MD5@ | sort -k2,2 | diff -w $DIFFFLAGS $1 -
 }
 
 

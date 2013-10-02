@@ -26,10 +26,6 @@
 #include <string.h>
 #include <errno.h>
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
 namespace jellyfish {
 namespace err {
 class code {
@@ -40,25 +36,24 @@ public:
 };
 
 class no_t {
+  // Select the correct version (GNU or XSI) version of
+  // strerror_r. strerror_ behaves like the GNU version of strerror_r,
+  // regardless of which version is provided by the system.
+  static const char* strerror__(char* buf, int res) {
+    return res != -1 ? buf : "error";
+  }
+  static const char* strerror__(char* buf, char* res) {
+    return res;
+  }
+  static const char* strerror_(int err, char* buf, size_t buflen) {
+    return strerror__(buf, strerror_r(err, buf, buflen));
+  }
+
 public:
   no_t() {}
   static void write(std::ostream &os, int e) {
-    char  err_str[1024];
-    char* str;
-
-#ifdef STRERROR_R_CHAR_P
-    str = strerror_r(e, err_str, sizeof(err_str));
-    if(!str) { // Should never happen
-      strcpy(err_str, "error");
-      str = err_str;
-    }
-#else
-    int err = strerror_r(e, err_str, sizeof(err_str));
-    if(err)
-      strcpy(err_str, "error");
-    str = err_str;
-#endif
-    os << ": " << str;
+    char buf[1024];
+    os << ": " << strerror_(e, buf, sizeof(buf));
   }
 };
 static const no_t no;

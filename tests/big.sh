@@ -8,7 +8,7 @@ if [ -z "$BIG" ]; then
     exit 77
 fi
 
-sort > ${pref}.md5sum <<EOF 
+sort -k2,2 > ${pref}.md5sum <<EOF 
 f52abd3e2a7cc5089cc8f32cb607c4c5 ${pref}_16.histo
 EOF
 

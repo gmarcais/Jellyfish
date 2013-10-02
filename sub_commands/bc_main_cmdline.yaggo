@@ -26,6 +26,21 @@ option("t", "threads") {
 option("output", "o") {
   description "Output file"
   c_string; default "mer_bloom_filter" }
+option("F", "Files") {
+  description "Number files open simultaneously"
+  uint32; default "1" }
+option("g", "generator") {
+  description "File of commands generating fast[aq]"
+  c_string; typestr "path" }
+option("G", "Generators") {
+  description "Number of generators run simultaneously"
+  uint32; default "1" }
+option("S", "shell") {
+  description "Shell used to run generator commands ($SHELL or /bin/sh)"
+  c_string }
+option("timing") {
+  description "Print timing information"
+  c_string; typestr "Timing file" }
 arg("file") {
   description "Sequence file(s) in fasta or fastq format"
   c_string; multiple; typestr "path" }

@@ -30,8 +30,6 @@ YAGGO_SOURCES = # Append all file to be built by yaggo
 bin_PROGRAMS += bin/jellyfish
 lib_LTLIBRARIES = libjellyfish-2.0.la
 LDADD = libjellyfish-2.0.la # $(VALGRIND_LIBS)
-# check_PROGRAMS =  bin/test_double_fifo_input	\
-#                  bin/test_read_parser
 check_PROGRAMS = bin/generate_sequence
 
 ############################
@@ -43,9 +41,11 @@ bin_jellyfish_SOURCES = sub_commands/jellyfish.cc	\
                         sub_commands/dump_main.cc	\
                         sub_commands/histo_main.cc	\
                         sub_commands/merge_main.cc	\
-                        sub_commands/bf_main.cc		\
+                        sub_commands/bc_main.cc		\
                         sub_commands/query_main.cc	\
-                        jellyfish/merge_files.cc
+                        sub_commands/cite_main.cc	\
+                        jellyfish/merge_files.cc	\
+                        jellyfish/generator_manager.cc
 bin_jellyfish_LDFLAGS = $(AM_LDFLAGS) $(STATIC_FLAGS)
 
 
@@ -54,8 +54,9 @@ YAGGO_SOURCES += sub_commands/count_main_cmdline.hpp	\
                  sub_commands/dump_main_cmdline.hpp	\
                  sub_commands/histo_main_cmdline.hpp	\
                  sub_commands/merge_main_cmdline.hpp	\
-                 sub_commands/bf_main_cmdline.hpp	\
-                 sub_commands/query_main_cmdline.hpp
+                 sub_commands/bc_main_cmdline.hpp	\
+                 sub_commands/query_main_cmdline.hpp	\
+                 sub_commands/cite_main_cmdline.hpp
 
 ######################################
 # Build Jellyfish the shared library #
@@ -99,14 +100,19 @@ library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
                           $(JFI)/json.h $(JFI)/hash_counter.hpp		\
                           $(JFI)/mapped_file.hpp			\
                           $(JFI)/mer_dna_bloom_counter.hpp		\
+                          $(JFI)/bloom_common.hpp			\
                           $(JFI)/bloom_counter2.hpp			\
-                          $(JFI)/cooperative_pool.hpp
+                          $(JFI)/bloom_filter.hpp			\
+                          $(JFI)/cooperative_pool.hpp			\
+                          $(JFI)/cooperative_pool2.hpp			\
+                          $(JFI)/stream_manager.hpp
 
 noinst_HEADERS += jellyfish/fstream_default.hpp			\
                   include/jflib/tmpstream.hpp			\
                   jellyfish/mer_iterator.hpp jellyfish/dbg.hpp	\
                   jellyfish/randomc.h jellyfish/merge_files.hpp	\
-                  jellyfish/cpp_array.hpp
+                  jellyfish/cpp_array.hpp			\
+                  jellyfish/generator_manager.hpp
 
 
 ###############
@@ -118,25 +124,6 @@ bin_generate_sequence_SOURCES = jellyfish/generate_sequence.cc		\
                                 jellyfish/dbg.cc
 YAGGO_SOURCES += jellyfish/generate_sequence_cmdline.hpp
 
-# bin_test_double_fifo_input_SOURCES =						\
-#                                      jellyfish/test_double_fifo_input.cc	\
-#                                      jellyfish/parse_dna.cc			\
-#                                      jellyfish/file_parser.cc			\
-#                                      jellyfish/sequence_parser.cc		\
-#                                      jellyfish/backtrace.cc			\
-#                                      jellyfish/thread_exec.cc			\
-#                                      jellyfish/dbg.cc				\
-#                                      jellyfish/time.cc				\
-#                                      jellyfish/allocators_mmap.cc		\
-#                                      jellyfish/dna_codes.cc
-# bin_test_read_parser_SOURCES = jellyfish/test_read_parser.cc		\
-#                                jellyfish/file_parser.cc			\
-#                                jellyfish/read_parser.cc			\
-#                                jellyfish/parse_read.cc			\
-#                                jellyfish/dbg.cc jellyfish/backtrace.cc	\
-#                                jellyfish/time.cc
-# EXTRA_DIST += jellyfish/randomc.h jellyfish/generate_sequence_cmdline.hpp
-
 #########
 # Tests #
 #########
@@ -146,17 +133,8 @@ AM_SH_LOG_FLAGS =
 
 TESTS = tests/generate_sequence.sh tests/parallel_hashing.sh	\
         tests/merge.sh tests/bloom_filter.sh tests/big.sh	\
-        tests/subset_hashing.sh
-# TESTS = tests/generate_sequence.sh tests/serial_hashing.sh		\
-#         tests/parallel_hashing.sh tests/serial_direct_indexing.sh	\
-#         tests/parallel_direct_indexing.sh tests/raw_hash.sh		\
-#         tests/generate_fastq_sequence.sh				\
-#         tests/parallel_fastq_hashing.sh tests/multi_file.sh		\
-#         tests/multi_file_fastq.sh tests/from_stream.sh			\
-#         tests/parallel_fastq_sequence_hashing.sh			\
-#         tests/from_stream_fastq.sh tests/merge.sh tests/min_qual.sh	\
-#         tests/big.sh tests/parsers.sh tests/small.sh			\
-#         tests/parallel_fastq_direct_indexing.sh
+        tests/subset_hashing.sh tests/multi_file.sh		\
+        tests/bloom_counter.sh
 
 EXTRA_DIST += $(TESTS)
 clean-local: clean-local-check
@@ -164,20 +142,11 @@ clean-local: clean-local-check
 clean-local-check:
 	-cd tests; rm -f *
 
-#tests/serial_hashing.log: tests/generate_sequence.log
 tests/parallel_hashing.log: tests/generate_sequence.log
 tests/subset_hashing.log: tests/generate_sequence.log
 tests/bloom_filter.log: tests/generate_sequence.log
-#tests/serial_direct_indexing.log: tests/generate_sequence.log
-#tests/parallel_direct_indexing.log: tests/generate_sequence.log
-#tests/parallel_fastq_direct_indexing.log: tests/generate_fastq_sequence.log
-#tests/multi_file.log: tests/generate_sequence.log
-#tests/raw_hash.log: tests/generate_sequence.log
-#tests/from_stream.log: tests/generate_sequence.log
-#tests/parallel_fastq_hashing.log: tests/generate_fastq_sequence.log
-##tests/parallel_fastq_sequence_hashing.log: tests/generate_fastq_sequence.log
-#tests/multi_file_fastq.log: tests/generate_fastq_sequence.log
-##tests/from_stream_fastq.log: tests/generate_fastq_sequence.log
+tests/bloom_counter.log: tests/generate_sequence.log
+tests/multi_file.log: tests/generate_sequence.log
 tests/merge.log: tests/generate_sequence.log
 tests/min_qual.log: tests/generate_fastq_sequence.log
 
@@ -207,8 +176,11 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_int128.cc			\
 	               unit_tests/test_mer_dna_bloom_counter.cc		\
 	               unit_tests/test_whole_sequence_parser.cc		\
-	               unit_tests/test_allocators_mmap.cc
-bin_test_all_SOURCES += jellyfish/backtrace.cc
+	               unit_tests/test_allocators_mmap.cc		\
+	               unit_tests/test_cooperative_pool2.cc		\
+	               unit_tests/test_generator_manager.cc
+bin_test_all_SOURCES += jellyfish/backtrace.cc		\
+                        jellyfish/generator_manager.cc
 
 bin_test_all_CPPFLAGS = -Dprotected=public -Dprivate=public -DJSON_IS_AMALGAMATION=1
 bin_test_all_CXXFLAGS = $(AM_CXXFLAGS) -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)/unit_tests -I$(top_srcdir)/include

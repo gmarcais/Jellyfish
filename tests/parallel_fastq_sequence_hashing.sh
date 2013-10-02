@@ -3,7 +3,7 @@
 cd tests
 . ./compat.sh
 
-sort > ${pref}.md5sum <<EOF
+sort -k2,2 > ${pref}.md5sum <<EOF
 8a0fe8ee1293f341fbde69e670beb74c ${pref}.histo
 EOF
 echo "Counting 22-mers, fastq format, no quality, on ${nCPUs} CPU" && \

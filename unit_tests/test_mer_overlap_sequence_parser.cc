@@ -7,15 +7,31 @@
 namespace {
 using std::string;
 using std::istringstream;
-typedef jellyfish::mer_overlap_sequence_parser<jflib::tmpstream*> parser_type;
+template<typename Iterator>
+struct opened_streams {
+  Iterator begin_, end_;
+
+  opened_streams(Iterator begin, Iterator end) : begin_(begin), end_(end) { }
+  std::unique_ptr<std::istream> next() {
+    std::unique_ptr<std::istream> res;
+    if(begin_ != end_) {
+      res.reset(*begin_);
+      ++begin_;
+    }
+    return res;
+  }
+};
+typedef jellyfish::mer_overlap_sequence_parser<opened_streams<jflib::tmpstream**> > parser_type;
+
 
 TEST(MerOverlapSequenceParser, OneSmallSequence) {
   static const char* seq = "ATTACCTTGTACCTTCAGAGC";
-  jflib::tmpstream sequence;
-  sequence << ">header\n" << seq;
-  sequence.seekg(0);
+  jflib::tmpstream* sequence = new jflib::tmpstream;
+  *sequence << ">header\n" << seq;
+  sequence->seekg(0);
+  opened_streams<jflib::tmpstream**> streams(&sequence, &sequence + 1);
 
-  parser_type parser(10, 10, 100, &sequence, &sequence + 1);
+  parser_type parser(10, 1, 10, 100, streams);
 
   parser_type::job j(parser);
   ASSERT_FALSE(j.is_empty());
@@ -57,14 +73,15 @@ string generate_sequences(std::ostream& os, int a, int b, int nb, bool fastq = f
 }
 
 TEST(MerOverlapSequenceParser, ManySmallSequences) {
-  jflib::tmpstream sequence;
+  jflib::tmpstream* sequence = new jflib::tmpstream;
 
   static const int nb_reads = 20;
   static const int mer_len = 10;
-  string res = generate_sequences(sequence, 20, 64, nb_reads);
-  sequence.seekg(0);
+  string res = generate_sequences(*sequence, 20, 64, nb_reads);
+  sequence->seekg(0);
+  opened_streams<jflib::tmpstream**> streams(&sequence, &sequence + 1);
 
-  parser_type parser(mer_len, 10, 100, &sequence, &sequence + 1);
+  parser_type parser(mer_len, 1, 10, 100, streams);
   size_t offset = 0;
   while(true) {
     parser_type::job j(parser);
@@ -78,14 +95,17 @@ TEST(MerOverlapSequenceParser, ManySmallSequences) {
 }
 
 TEST(MerOverlapSequenceParser, BigSequences) {
-  jflib::tmpstream* tmps = new jflib::tmpstream[2];
-  string res0 = generate_sequences(tmps[0], 200, 100, 3);
-  tmps[0].seekg(0);
-  string res1 = generate_sequences(tmps[1], 200, 100, 3);
-  tmps[1].seekg(0);
+  jflib::tmpstream* tmps[2];
+  tmps[0] = new jflib::tmpstream;
+  string res0 = generate_sequences(*tmps[0], 200, 100, 3);
+  tmps[0]->seekg(0);
+  tmps[1] = new jflib::tmpstream;
+  string res1 = generate_sequences(*tmps[1], 200, 100, 3);
+  tmps[1]->seekg(0);
+  opened_streams<jflib::tmpstream**> streams(tmps, tmps + 2);
 
   static const int mer_len = 10;
-  parser_type parser(mer_len, 10, 100, tmps, tmps + 2);
+  parser_type parser(mer_len, 1, 10, 100, streams);
 
   size_t offset = 0;
   while(offset < res0.size() - mer_len + 1) {
@@ -109,17 +129,16 @@ TEST(MerOverlapSequenceParser, BigSequences) {
 
   parser_type::job j2(parser);
   EXPECT_TRUE(j2.is_empty());
-
-  delete [] tmps;
 }
 
 TEST(MerOverlapSequenceParser, Fastq) {
-  jflib::tmpstream sequence;
+  jflib::tmpstream* sequence = new jflib::tmpstream;
   static const int nb_reads = 100;
   static const int mer_len = 20;
-  string res = generate_sequences(sequence, 10, 50, nb_reads, true);
-  sequence.seekg(0);
-  parser_type parser(mer_len, 10, 100, &sequence, &sequence + 1);
+  string res = generate_sequences(*sequence, 10, 50, nb_reads, true);
+  sequence->seekg(0);
+  opened_streams<jflib::tmpstream**> streams(&sequence, &sequence + 1);
+  parser_type parser(mer_len, 1, 10, 100, streams);
 
   size_t offset = 0;
   while(true) {

@@ -3,7 +3,7 @@
 cd tests/
 . ./compat.sh
 
-sort > ${pref}.md5sum <<EOF
+sort -k2,2 > ${pref}.md5sum <<EOF
 bd7a5f6ba000b282cd79cb9f342e7ede ${pref}_m35_s2M_if.histo
 8eb6d4a50aeba178e4847c2da71dbb70 ${pref}_m10_s2M_if.histo
 EOF

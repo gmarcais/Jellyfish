@@ -23,14 +23,14 @@
 typedef int (main_func_t)(int argc, char *argv[]);
 
 main_func_t count_main;
-main_func_t bf_main;
+main_func_t bc_main;
 main_func_t info_main;
 // main_func_t stats_main;
 main_func_t merge_main;
 main_func_t histo_main;
 main_func_t query_main;
 main_func_t dump_main;
-// main_func_t cite_main;
+main_func_t cite_main;
 // main_func_t dump_fastq_main;
 // main_func_t histo_fastq_main;
 // main_func_t hash_fastq_merge_main;
@@ -45,14 +45,14 @@ struct cmd_func {
 };
 cmd_func cmd_list[] = {
   {"count",             &count_main},
-  {"bf",                &bf_main},
+  {"bc",                &bc_main},
   {"info",              &info_main},
   // {"stats",             &stats_main},
   {"histo",             &histo_main},
   {"dump",              &dump_main},
   {"merge",             &merge_main},
   {"query",             &query_main},
-  // {"cite",              &cite_main},
+  {"cite",              &cite_main},
   // {"qhisto",            &histo_fastq_main},
   // {"qdump",             &dump_fastq_main},
   // {"qmerge",            &hash_fastq_merge_main},
