@@ -44,8 +44,7 @@ bin_jellyfish_SOURCES = sub_commands/jellyfish.cc	\
                         sub_commands/bc_main.cc		\
                         sub_commands/query_main.cc	\
                         sub_commands/cite_main.cc	\
-                        jellyfish/merge_files.cc	\
-                        jellyfish/generator_manager.cc
+                        jellyfish/merge_files.cc
 bin_jellyfish_LDFLAGS = $(AM_LDFLAGS) $(STATIC_FLAGS)
 
 
@@ -66,8 +65,9 @@ libjellyfish_2_0_la_SOURCES = lib/rectangular_binary_matrix.cc		\
                               lib/mer_dna.cc lib/storage.cc		\
                               lib/allocators_mmap.cc lib/misc.cc	\
                               lib/int128.cc lib/thread_exec.cc		\
-                              lib/err.cc lib/jsoncpp.cpp		\
-                              lib/time.cc
+                              lib/err.cc lib/jsoncpp.cpp lib/time.cc	\
+                              lib/generator_manager.cc
+
 
 library_includedir=$(includedir)/jellyfish-@PACKAGE_VERSION@/jellyfish
 JFI = include/jellyfish
@@ -105,15 +105,15 @@ library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
                           $(JFI)/bloom_filter.hpp			\
                           $(JFI)/cooperative_pool.hpp			\
                           $(JFI)/cooperative_pool2.hpp			\
-                          $(JFI)/stream_manager.hpp
+                          $(JFI)/stream_manager.hpp			\
+                          jellyfish/generator_manager.hpp
+
 
 noinst_HEADERS += jellyfish/fstream_default.hpp			\
                   include/jflib/tmpstream.hpp			\
                   jellyfish/mer_iterator.hpp jellyfish/dbg.hpp	\
                   jellyfish/randomc.h jellyfish/merge_files.hpp	\
-                  jellyfish/cpp_array.hpp			\
-                  jellyfish/generator_manager.hpp
-
+                  jellyfish/cpp_array.hpp 
 
 ###############
 # Build tests #
