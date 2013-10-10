@@ -251,15 +251,22 @@ namespace jellyfish {
 
     uint64_t *p = _columns + _c - 8;
 
-#ifdef __ICC
-    register xmm_t acc;
-    register xmm_t load;
-    memset(&acc, '\0', 16);
-    memset(&load, '\0', 16);
-#else
+    // //#ifdef __ICC
+    // register xmm_t acc;
+    // register xmm_t load;
+    // memset(&acc, '\0', 16);
+    // memset(&load, '\0', 16);
+    // #else
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wuninitialized"
+#endif
     register xmm_t acc  = acc ^ acc; // Set acc to 0
     register xmm_t load = load ^ load;
+#ifdef __clang__
+#pragma clang diagnostic pop
 #endif
+    // #endif
 
 //     // Zero out acc
 // #pragma GCC diagnostic push

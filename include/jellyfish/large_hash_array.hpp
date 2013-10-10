@@ -424,6 +424,8 @@ public:
   // to fetch the value associated with the key.
   bool get_key_id(const key_type& key, size_t* id, key_type& tmp_key, const word**  w, const offset_t** o) const {
     const size_t oid = hash_matrix_.times(key) & size_mask_;
+    // This static_assert makes clang++ happy
+    static_assert(std::is_pod<prefetch_info>::value, "prefetch_info must be a POD");
     prefetch_info info_ary[prefetch_buffer::capacity()];
     prefetch_buffer buffer(info_ary);
     warm_up_cache(buffer, oid);

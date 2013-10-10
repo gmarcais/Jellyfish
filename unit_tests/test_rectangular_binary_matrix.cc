@@ -29,9 +29,9 @@ TEST(RectangularBinaryMatrix, InitSizes) {
   EXPECT_EQ(60u, m.c());
   EXPECT_TRUE(m.is_zero());
 
-  EXPECT_THROW(allocate_matrix(100, 100) == true, std::out_of_range);
-  EXPECT_THROW(allocate_matrix(0, 100) == true, std::out_of_range);
-  EXPECT_THROW(allocate_matrix(10, 0) == true, std::out_of_range);
+  EXPECT_THROW(allocate_matrix(100, 100), std::out_of_range);
+  EXPECT_THROW(allocate_matrix(0, 100), std::out_of_range);
+  EXPECT_THROW(allocate_matrix(10, 0), std::out_of_range);
 }
 
 TEST(RectangularBinaryMatrix, Copy) {

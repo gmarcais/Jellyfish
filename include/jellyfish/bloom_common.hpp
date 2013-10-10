@@ -49,7 +49,7 @@ public:
 
   bloom_base(const bloom_base& rhs) = delete;
   bloom_base(bloom_base&& rhs) :
-    d_(rhs.d_), k_(rhs.k_), data_(data_), hash_fns_(std::move(rhs.hash_fns_))
+    d_(rhs.d_), k_(rhs.k_), data_(rhs.data_), hash_fns_(std::move(rhs.hash_fns_))
   { }
 
 

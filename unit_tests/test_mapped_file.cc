@@ -38,14 +38,17 @@ TEST(MappedFile, CreateMove) {
   ASSERT_EQ((char*)0, mf.base());
 }
 
+// Clang does not
+#ifndef __clang__
 TEST(MappedFile, Fail) {
   const char* bad_file = "/doesntexistsforsure/thatwouldbecrazy!";
-  EXPECT_THROW({ mapped_file mf(bad_file); }, mapped_file::ErrorMMap);
+  EXPECT_THROW(mapped_file mf(bad_file), jellyfish::mapped_file::ErrorMMap);
 
   mapped_file mf;
-  EXPECT_THROW(mf.map(bad_file), mapped_file::ErrorMMap);
+  EXPECT_THROW(mf.map(bad_file), jellyfish::mapped_file::ErrorMMap);
   EXPECT_EQ((char*)0, mf.base());
-  EXPECT_THROW(mf.map(-1), mapped_file::ErrorMMap);
+  EXPECT_THROW(mf.map(-1), jellyfish::mapped_file::ErrorMMap);
   EXPECT_EQ((char*)0, mf.base());
 }
+#endif
 }

@@ -59,7 +59,7 @@ public:
       return true;
     }
 
-    if(*st.stream)
+    if(st.stream->good())
       return false;
 
     // Reach the end of file, close current and try to open the next one
@@ -109,7 +109,7 @@ protected:
       std::getline(*st.stream, st.buffer); // Wish there was an easy way to combine the
       buff.seq.append(st.buffer);             // two lines avoiding copying
     }
-    if(!*st.stream)
+    if(!st.stream->good())
       eraise(std::runtime_error) << "Truncated fastq file";
     st.stream->ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     buff.qual.clear();
