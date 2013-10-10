@@ -90,8 +90,8 @@ public:
 
   // Limited std::map interface compatibility
   class element_proxy {
-    Derived& bc_;
-    const Key&      k_;
+    Derived&   bc_;
+    const Key& k_;
 
   public:
     element_proxy(Derived& bc, const Key& k) : bc_(bc), k_(k) { }
@@ -108,16 +108,16 @@ public:
 
   class const_element_proxy {
     const Derived& bc_;
-    const Key&            k_;
+    const Key&     k_;
 
   public:
-    const_element_proxy(const bloom_base& bc, const Key& k) : bc_(bc), k_(k) { }
+    const_element_proxy(const Derived& bc, const Key& k) : bc_(bc), k_(k) { }
 
     unsigned int operator*() const { return bc_.check(k_); }
     operator unsigned int() const { return bc_.check(k_); }
   };
   element_proxy operator[](const Key& k) { return element_proxy(*static_cast<Derived*>(this), k); }
-  const_element_proxy operator[](const Key& k) const { return const_element_proxy(*static_cast<Derived*>(this), k); }
+  const_element_proxy operator[](const Key& k) const { return const_element_proxy(*static_cast<const Derived*>(this), k); }
 };
 template<typename Key, typename Derived, typename HashPair>
 const double bloom_base<Key, Derived, HashPair>::LOG2 = 0.6931471805599453;

@@ -76,6 +76,7 @@ public:
   }
 
   array* ary() { return ary_; }
+  const array* ary() const { return ary_; }
   size_t size() const { return ary_->size(); }
   uint16_t key_len() const { return ary_->key_len(); }
   uint16_t val_len() const { return ary_->val_len(); }

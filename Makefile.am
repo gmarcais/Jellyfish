@@ -107,13 +107,13 @@ library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
                           $(JFI)/cooperative_pool2.hpp			\
                           $(JFI)/stream_manager.hpp			\
                           $(JFI)/generator_manager.hpp			\
+                          $(JFI)/cpp_array.hpp				\
                           $(JFI)/mer_iterator.hpp
 
 
 noinst_HEADERS += jellyfish/fstream_default.hpp			\
                   include/jflib/tmpstream.hpp jellyfish/dbg.hpp	\
-                  jellyfish/randomc.h jellyfish/merge_files.hpp	\
-                  jellyfish/cpp_array.hpp
+                  jellyfish/randomc.h jellyfish/merge_files.hpp
 
 ###############
 # Build tests #

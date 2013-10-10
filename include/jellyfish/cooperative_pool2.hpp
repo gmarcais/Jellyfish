@@ -132,7 +132,7 @@ public:
 
     // Every producer token is free
     for(uint32_t i = 0; i < max_producers_; ++i)
-      assert(tokens_.enqueue(i));
+      tokens_.enqueue(i);
     //      tokens_.enqueue_no_check(i);
   }
 

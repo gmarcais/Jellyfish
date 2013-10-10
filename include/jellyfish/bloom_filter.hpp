@@ -24,9 +24,9 @@
 namespace jellyfish {
 template<typename Key, typename HashPair = hash_pair<Key>, typename atomic_t = ::atomic::gcc>
 class bloom_filter_base :
-    public bloom_base<Key, bloom_filter_base<Key, HashPair> >
+    public bloom_base<Key, bloom_filter_base<Key, HashPair>, HashPair>
 {
-  typedef bloom_base<Key, bloom_filter_base<Key, HashPair> > super;
+  typedef bloom_base<Key, bloom_filter_base<Key, HashPair>, HashPair> super;
 
 protected:
   static size_t nb_bytes__(size_t l) {
