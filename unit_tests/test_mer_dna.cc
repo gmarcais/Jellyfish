@@ -235,6 +235,21 @@ TEST(MerDNASimple, IO) {
   }
 }
 
+TEST(MerDNASimple, MultipleSize) {
+  typedef jellyfish::mer_dna_ns::mer_base_static<uint64_t, 1> mer_dna1;
+  typedef jellyfish::mer_dna_ns::mer_base_static<uint64_t, 2> mer_dna2;
+
+  mer_dna::k(10);
+  mer_dna1::k(50);
+  mer_dna2::k(100);
+  EXPECT_EQ(10, mer_dna::k());
+  EXPECT_EQ(0, mer_dna::class_index);
+  EXPECT_EQ(50, mer_dna1::k());
+  EXPECT_EQ(1, mer_dna1::class_index);
+  EXPECT_EQ(100, mer_dna2::k());
+  EXPECT_EQ(2, mer_dna2::class_index);
+}
+
 // Value Type Container class
 template <typename T, int N>
 class VTC {

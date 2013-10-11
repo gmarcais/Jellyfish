@@ -583,11 +583,16 @@ private:
 
 // Mer type where the length is a static variable: the mer size is
 // fixed for all k-mers in the application.
-template<typename T = uint64_t>
-class mer_base_static : public mer_base<T, mer_base_static<T> > {
+//
+// The CI (Class Index) template parameter allows to have more than one such
+// class with different length in the same application. Each class has
+// its own static variable associated with it.
+template<typename T = uint64_t, int CI = 0>
+class mer_base_static : public mer_base<T, mer_base_static<T, CI> > {
 public:
-  typedef mer_base<T, mer_base_static<T> > super;
+  typedef mer_base<T, mer_base_static<T, CI> > super;
   typedef T base_type;
+  static const int class_index = CI;
 
   mer_base_static() : super(k_) { }
   explicit mer_base_static(unsigned int k) : super(k_) {
@@ -613,13 +618,16 @@ public:
 
   static unsigned int k(); // { return k_; }
   static unsigned int k(unsigned int k) { std::swap(k, k_); return k; }
+
 private:
   static unsigned int k_;
 };
-template<typename T>
-unsigned int mer_base_static<T>::k_ = 22;
-template<typename T>
-unsigned int mer_base_static<T>::k() { return k_; }
+template<typename T, int CI>
+unsigned int mer_base_static<T, CI>::k_ = 22;
+template<typename T, int CI>
+unsigned int mer_base_static<T, CI>::k() { return k_; }
+template<typename T, int CI>
+const int mer_base_static<T, CI>::class_index;
 
 typedef std::ostream_iterator<char> ostream_char_iterator;
 template<typename T, typename derived>
@@ -654,10 +662,10 @@ inline std::istream& operator>>(std::istream& is, mer_base<T, derived>& mer) {
 } // namespace mer_dna_ns
 
 
-typedef mer_dna_ns::mer_base_static<uint32_t> mer_dna32;
-typedef mer_dna_ns::mer_base_static<uint64_t> mer_dna64;
+typedef mer_dna_ns::mer_base_static<uint32_t, 0> mer_dna32;
+typedef mer_dna_ns::mer_base_static<uint64_t, 0> mer_dna64;
 #ifdef HAVE_INT128
-typedef mer_dna_ns::mer_base_static<unsigned __int128> mer_dna128;
+typedef mer_dna_ns::mer_base_static<unsigned __int128, 0> mer_dna128;
 #endif
 
 typedef mer_dna64 mer_dna;
