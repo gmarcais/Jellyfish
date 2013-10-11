@@ -134,7 +134,7 @@ AM_SH_LOG_FLAGS =
 TESTS = tests/generate_sequence.sh tests/parallel_hashing.sh	\
         tests/merge.sh tests/bloom_filter.sh tests/big.sh	\
         tests/subset_hashing.sh tests/multi_file.sh		\
-        tests/bloom_counter.sh
+        tests/bloom_counter.sh tests/large_key.sh
 
 EXTRA_DIST += $(TESTS)
 clean-local: clean-local-check
@@ -149,6 +149,7 @@ tests/bloom_counter.log: tests/generate_sequence.log
 tests/multi_file.log: tests/generate_sequence.log
 tests/merge.log: tests/generate_sequence.log
 tests/min_qual.log: tests/generate_fastq_sequence.log
+tests/large_key.log: tests/generate_sequence.log
 
 ##############
 # Unit tests #
