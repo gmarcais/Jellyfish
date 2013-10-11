@@ -50,16 +50,19 @@ void __print_digits(std::ostream& os, unsigned __int128 x,
   os.write(ptr, buf + sizeof(buf) - ptr);
 }
 
+inline bool is_negative(unsigned __int128 x) { return false; }
+inline bool is_negative(__int128 x) { return x < 0; }
+
 template<typename T>
 void __print_decimal(std::ostream& prefix, std::ostream& os, T x,
                      const std::ios::fmtflags& ff) {
-  if((ff & std::ios::showpos) && x >= 0)
+  if((ff & std::ios::showpos) && x > 0)
     prefix << "+";
   if(x == 0) {
     os << "0";
     return;
   }
-  if(x < 0) {
+  if(is_negative(x)) {
     prefix << "-";
     x = -x;
   }
