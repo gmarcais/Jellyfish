@@ -120,8 +120,6 @@ inline unsigned __int128 word_reverse_complement(unsigned __int128 w) {
 }
 #endif
 
-template<typename T, typename derived> class mer_base;
-
 template<typename T>
 class base_proxy {
 public:
@@ -147,10 +145,14 @@ private:
 // enum { CODE_A, CODE_C, CODE_G, CODE_T,
 //        CODE_RESET = -1, CODE_IGNORE = -2, CODE_COMMENT = -3 };
 
-template<typename T, typename derived>
+template<typename T>
+struct mer_dna_traits { };
+
+template<typename derived>
 class mer_base {
 public:
-  typedef T base_type;
+  typedef typename mer_dna_traits<derived>::base_type base_type;
+
   enum { CODE_A, CODE_C, CODE_G, CODE_T,
          CODE_RESET = -1, CODE_IGNORE = -2, CODE_COMMENT = -3 };
 
@@ -164,6 +166,15 @@ public:
   _data(new base_type[nb_words(static_cast<const derived*>(&m)->k())])
   {
     memcpy(_data, m._data, nb_words(static_cast<const derived*>(&m)->k()) * sizeof(base_type));
+  }
+
+  template<typename U>
+  mer_base(const unsigned int k, const U& rhs) :
+    _data(new base_type[nb_words(k)])
+  {
+    for(unsigned int i = 0; i < k; ++i)
+      _data[i] = rhs[i];
+    clean_msw();
   }
 
   ~mer_base() {
@@ -548,10 +559,10 @@ protected:
 // Mer type where the length is kept in each mer object: allows to
 // manipulate mers of different size within the same application.
 template<typename T = uint64_t>
-class mer_base_dynamic : public mer_base<T, mer_base_dynamic<T> > {
+class mer_base_dynamic : public mer_base<mer_base_dynamic<T> > {
 public:
-  typedef mer_base<T, mer_base_dynamic<T> > super;
   typedef T base_type;
+  typedef mer_base<mer_base_dynamic<T> > super;
 
   explicit mer_base_dynamic(unsigned int k) : super(k), k_(k) { }
   mer_base_dynamic(const mer_base_dynamic& rhs) : super(rhs), k_(rhs.k()) { }
@@ -564,6 +575,9 @@ public:
   explicit mer_base_dynamic(const std::string& s) : super(s.size()), k_(s.size()) {
     super::from_chars(s.begin());
   }
+
+  template<typename U>
+  explicit mer_base_dynamic(unsigned int k, const U& rhs) : super(k, rhs), k_(k) { }
 
   ~mer_base_dynamic() { }
 
@@ -581,6 +595,11 @@ private:
   const unsigned int k_;
 };
 
+template<typename T>
+struct mer_dna_traits<mer_base_dynamic<T> > {
+  typedef T base_type;
+};
+
 // Mer type where the length is a static variable: the mer size is
 // fixed for all k-mers in the application.
 //
@@ -588,10 +607,10 @@ private:
 // class with different length in the same application. Each class has
 // its own static variable associated with it.
 template<typename T = uint64_t, int CI = 0>
-class mer_base_static : public mer_base<T, mer_base_static<T, CI> > {
+class mer_base_static : public mer_base<mer_base_static<T, CI> > {
 public:
-  typedef mer_base<T, mer_base_static<T, CI> > super;
   typedef T base_type;
+  typedef mer_base<mer_base_static<T, CI> > super;
   static const int class_index = CI;
 
   mer_base_static() : super(k_) { }
@@ -609,6 +628,12 @@ public:
   }
   explicit mer_base_static(const std::string& s) : super(k_) {
     super::from_chars(s.begin());
+  }
+
+  template<typename U>
+  mer_base_static(unsigned int k, const U& rhs) : super(k_, rhs) {
+    if(k != k_)
+      throw std::length_error(error_different_k);
   }
 
   mer_base_static& operator=(const char* s) { return super::operator=(s); }
@@ -629,9 +654,14 @@ unsigned int mer_base_static<T, CI>::k() { return k_; }
 template<typename T, int CI>
 const int mer_base_static<T, CI>::class_index;
 
+template<typename T, int CI>
+struct mer_dna_traits<mer_base_static<T, CI> > {
+  typedef T base_type;
+};
+
 typedef std::ostream_iterator<char> ostream_char_iterator;
-template<typename T, typename derived>
-inline std::ostream& operator<<(std::ostream& os, const mer_base<T, derived>& mer) {
+template<typename derived>
+inline std::ostream& operator<<(std::ostream& os, const mer_base<derived>& mer) {
   //  char s[static_cast<const derived>(mer).k() + 1];
   char s[mer.k() + 1];
   mer.to_str(s);
@@ -639,8 +669,8 @@ inline std::ostream& operator<<(std::ostream& os, const mer_base<T, derived>& me
 }
 
 typedef std::istream_iterator<char> istream_char_iterator;
-template<typename T, typename derived>
-inline std::istream& operator>>(std::istream& is, mer_base<T, derived>& mer) {
+template<typename derived>
+inline std::istream& operator>>(std::istream& is, mer_base<derived>& mer) {
   if(is.flags() & std::ios::skipws) {
     while(isspace(is.peek())) { is.ignore(1); }
   }
