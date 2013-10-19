@@ -268,7 +268,6 @@ class MerDNA : public ::testing::Test {
 public:
   typedef typename VT::Type Type;
   void SetUp() {
-    std::cerr << "Set k:" << GetParam().size() << "\n";
     Type::k(GetParam().size());
   }
   const std::string& GetParam() const {
@@ -320,8 +319,6 @@ TYPED_TEST(MerDNA, MerOnStack) {
   {
     base_type a[mer_stack_type::nb_words()];
     mer_stack_type ms(a);
-    std::cerr << "m.k:" << m.k() << " ms.k:" << ms.k() << " str.size:" << this->GetParam().size() << "\n";
-    //    ms = this->GetParam();
     ms = m;
     EXPECT_EQ(this->GetParam(), ms.to_str());
   }

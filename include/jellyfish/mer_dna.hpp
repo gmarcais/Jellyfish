@@ -733,12 +733,8 @@ public:
 
   ~mer_base_static() { }
 
-  static unsigned int k() {
-    std::cerr << __PRETTY_FUNCTION__ << " &k_:" << (void*)&MerLen::k_ << " k_:" << MerLen::k_ << "\n";
-    return MerLen::k_;
-  }
+  static unsigned int k() { return MerLen::k_; }
   static unsigned int k(unsigned int k) {
-    std::cerr << __PRETTY_FUNCTION__ << " &k_:" << (void*)&MerLen::k_ << " old_k:" << MerLen::k_ << " new_k:" << k << "\n";
     unsigned int old = MerLen::k_;
     MerLen::k_ = k;
     return old;
