@@ -128,6 +128,8 @@ TEST(MerDNASimple, SetBits) {
   static const int pattern_len = 10;
   uint64_t pattern = ::random_bits(pattern_len); // Create a random pattern
   mer_dna even_pattern, odd_pattern;             // And the corresponding mers
+  even_pattern.polyA();
+  odd_pattern.polyA();
   for(int i = pattern_len - 2; i >= 0; i -= 2) {
     even_pattern.shift_left((int)((pattern >> i) & 0x3));
     odd_pattern.shift_left((int)((pattern >> (i + 1)) & 0x3));
@@ -136,6 +138,7 @@ TEST(MerDNASimple, SetBits) {
 
   mer_dna mer;
   for(int i = 0; i <= (int)(mer_dna::k() - pattern_len / 2); ++i, even_pattern.shift_left('A'), odd_pattern.shift_left('A')) {
+    SCOPED_TRACE(::testing::Message() << "i:" << i);
     // Even
     mer.polyA();
     EXPECT_EQ(std::string(mer_dna::k(), 'A'), mer.to_str());
@@ -236,18 +239,18 @@ TEST(MerDNASimple, IO) {
 }
 
 TEST(MerDNASimple, MultipleSize) {
-  typedef jellyfish::mer_dna_ns::mer_base_static<uint64_t, 1> mer_dna1;
-  typedef jellyfish::mer_dna_ns::mer_base_static<uint64_t, 2> mer_dna2;
+  typedef jellyfish::mer_dna_ns::mer_base_static<uint64_t, jellyfish::mer_dna_ns::mer_len_static<1> > mer_dna1;
+  typedef jellyfish::mer_dna_ns::mer_base_static<uint64_t, jellyfish::mer_dna_ns::mer_len_static<2> > mer_dna2;
 
   mer_dna::k(10);
   mer_dna1::k(50);
   mer_dna2::k(100);
   EXPECT_EQ(10, mer_dna::k());
-  EXPECT_EQ(0, mer_dna::class_index);
+  EXPECT_EQ(0, mer_dna::class_index());
   EXPECT_EQ(50, mer_dna1::k());
-  EXPECT_EQ(1, mer_dna1::class_index);
+  EXPECT_EQ(1, mer_dna1::class_index());
   EXPECT_EQ(100, mer_dna2::k());
-  EXPECT_EQ(2, mer_dna2::class_index);
+  EXPECT_EQ(2, mer_dna2::class_index());
 }
 
 // Value Type Container class
@@ -265,6 +268,7 @@ class MerDNA : public ::testing::Test {
 public:
   typedef typename VT::Type Type;
   void SetUp() {
+    std::cerr << "Set k:" << GetParam().size() << "\n";
     Type::k(GetParam().size());
   }
   const std::string& GetParam() const {
@@ -300,6 +304,27 @@ TYPED_TEST(MerDNA, InitFromStr) {
   typename TypeParam::Type m(this->GetParam());
   EXPECT_EQ(this->GetParam().size(), m.k());
   EXPECT_EQ(this->GetParam(), m.to_str());
+  char ostr[m.k() + 1];
+  m.to_str(ostr);
+  EXPECT_STREQ(this->GetParam().c_str(), ostr);
+}
+
+TYPED_TEST(MerDNA, MerOnStack) {
+  typename TypeParam::Type m(this->GetParam());
+  typedef typename jellyfish::mer_dna_ns::mer_dna_traits<typename TypeParam::Type>::base_type base_type;
+  typedef typename jellyfish::mer_dna_ns::mer_len_static<0> mer_len_type;
+  typedef typename jellyfish::mer_dna_ns::mer_dna_exist<base_type> mem_type;
+  typedef jellyfish::mer_dna_ns::mer_base_static<base_type, mer_len_type, mem_type> mer_stack_type;
+  mer_stack_type::k(m.k());
+
+  {
+    base_type a[mer_stack_type::nb_words()];
+    mer_stack_type ms(a);
+    std::cerr << "m.k:" << m.k() << " ms.k:" << ms.k() << " str.size:" << this->GetParam().size() << "\n";
+    //    ms = this->GetParam();
+    ms = m;
+    EXPECT_EQ(this->GetParam(), ms.to_str());
+  }
 }
 
 TYPED_TEST(MerDNA, ShiftLeft) {
