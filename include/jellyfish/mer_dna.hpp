@@ -185,7 +185,11 @@ public:
     clean_msw();
   }
 
-  bool operator==(const mer_base& rhs) const {
+  template<typename D>
+  bool operator==(const mer_base<D>& rhs) const {
+    if(k() != rhs.k())
+      return false;
+
     unsigned int           i         = nb_words() - 1;
     const base_type* const _data     = data();
     const base_type* const _rhs_data = rhs.data();
@@ -214,8 +218,12 @@ public:
     return res;
   }
 
-  bool operator!=(const mer_base& rhs) const { return !this->operator==(rhs); }
-  bool operator<(const mer_base& rhs) const {
+  template<typename D>
+  bool operator!=(const mer_base<D>& rhs) const { return !this->operator==(rhs); }
+  template<typename D>
+  bool operator<(const mer_base<D>& rhs) const {
+    if(k() != rhs.k())
+      return k() < rhs.k();
     unsigned int           i         = nb_words();
     const base_type* const _data     = data();
     const base_type* const _rhs_data = rhs.data();

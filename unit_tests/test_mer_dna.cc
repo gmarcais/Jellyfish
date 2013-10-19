@@ -320,6 +320,7 @@ TYPED_TEST(MerDNA, MerOnStack) {
     base_type a[mer_stack_type::nb_words()];
     mer_stack_type ms(a);
     ms = m;
+    EXPECT_EQ(m, ms);
     EXPECT_EQ(this->GetParam(), ms.to_str());
   }
 }
