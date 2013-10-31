@@ -153,6 +153,8 @@ public:
   }
 
   bool val_id(const Key& key,  Val* res, uint64_t* id) const {
+    if(last_id_ == 0)
+      return false;
     if(key == first_key_) {
       val_at(0, res);
       *id = 0;
