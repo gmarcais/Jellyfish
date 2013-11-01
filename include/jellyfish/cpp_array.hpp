@@ -47,6 +47,7 @@ public:
   ~cpp_array() {
     clear();
     std::return_temporary_buffer(data_.first);
+    std::return_temporary_buffer(init_.first);
   }
 
   /// Initialize element i with 0 argument
