@@ -179,7 +179,8 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_whole_sequence_parser.cc		\
 	               unit_tests/test_allocators_mmap.cc		\
 	               unit_tests/test_cooperative_pool2.cc		\
-	               unit_tests/test_generator_manager.cc
+	               unit_tests/test_generator_manager.cc		\
+	               unit_tests/test_atomic_bits_array.cc
 bin_test_all_SOURCES += jellyfish/backtrace.cc
 
 bin_test_all_CPPFLAGS = -Dprotected=public -Dprivate=public -DJSON_IS_AMALGAMATION=1
