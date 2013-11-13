@@ -108,7 +108,8 @@ library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
                           $(JFI)/stream_manager.hpp			\
                           $(JFI)/generator_manager.hpp			\
                           $(JFI)/cpp_array.hpp				\
-                          $(JFI)/mer_iterator.hpp
+                          $(JFI)/mer_iterator.hpp			\
+                          $(JFI)/atomic_bits_array.hpp
 
 
 noinst_HEADERS += jellyfish/fstream_default.hpp			\
