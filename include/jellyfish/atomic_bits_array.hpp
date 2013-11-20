@@ -42,8 +42,8 @@ class atomic_bits_array_base {
     const int off_;
     T         prev_word_;
 
-    Value get_val() const {
-      return static_cast<Value>((prev_word_ & mask_) >> off_);
+    constexpr Value get_val(T v) {
+      return static_cast<Value>((v & mask_) >> off_);
     }
 
   public:
@@ -51,9 +51,10 @@ class atomic_bits_array_base {
       word_(word), mask_(mask), off_(off)
     { }
 
+    operator Value() const { return get_val(*word_); }
     Value get() {
       prev_word_ = *word_;
-      return get_val();
+      return get_val(prev_word_);
     }
 
     bool set(Value& nval) {
@@ -62,7 +63,7 @@ class atomic_bits_array_base {
       if(__builtin_expect(actual_word == prev_word_, 1))
         return true;
       prev_word_ = actual_word;
-      nval       = get_val();
+      nval       = get_val(prev_word_);
       return false;
     }
   };
@@ -86,6 +87,12 @@ public:
 
   // Return the element at position pos. No check for out of bounds.
   element_proxy operator[](size_t pos) {
+    uint64_t q, r;
+    d_.division(pos, q, r);
+    const int off = r * bits_;
+    return element_proxy(data_ + q, mask_ << off, off);
+  }
+  const element_proxy operator[](size_t pos) const {
     uint64_t q, r;
     d_.division(pos, q, r);
     const int off = r * bits_;
