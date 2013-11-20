@@ -25,14 +25,14 @@
 #include <jellyfish/divisor.hpp>
 
 namespace jellyfish {
-template<typename Value, typename T = uint64_t>
-class atomic_bits_array {
+template<typename Value, typename T, typename Derived>
+class atomic_bits_array_base {
   static const int       w_ = sizeof(T) * 8;
   const int              bits_;
   const size_t           size_;
   const T                mask_;
   const jflib::divisor64 d_;
-  allocators::mmap       mem_;
+  size_t                 size_bytes_;
   T*                     data_;
   static atomic::gcc     atomic_;
 
@@ -68,17 +68,17 @@ class atomic_bits_array {
   };
 
 public:
-  atomic_bits_array(int bits, // Number of bits per entry
-                    size_t size) : // Number of entries
+  atomic_bits_array_base(int bits, // Number of bits per entry
+                         size_t size) : // Number of entries
     bits_(bits),
     size_(size),
     mask_((T)-1 >> (w_ - bits)), // mask of one entry at the LSB of a word
     d_(w_ / bits),              // divisor of the number of entries per word
-    mem_(size / d_ + (size % d_ != 0)),
-    data_((T*)mem_.get_ptr())
+    size_bytes_((size / d_ + (size % d_ != 0)) * sizeof(T)),
+    data_(static_cast<Derived*>(this)->alloc_data(size_bytes_))
   {
     static_assert(sizeof(T) >= sizeof(Value), "Container type T must have at least as many bits as value type");
-    if(bits > sizeof(Value) * 8)
+    if((size_t)bits > sizeof(Value) * 8)
       throw std::runtime_error("The number of bits per entry must be less than the number of bits in the value type");
     if(!data_)
       throw std::runtime_error("Can't allocate memory for atomic_bits_array");
@@ -91,7 +91,57 @@ public:
     const int off = r * bits_;
     return element_proxy(data_ + q, mask_ << off, off);
   }
+  void write(std::ostream& os) const {
+    os.write((const char*)data_, size_bytes_);
+  }
+  size_t size_bytes() const { return size_bytes_; }
 };
+
+template<typename Value, typename T = uint64_t>
+class atomic_bits_array :
+    protected allocators::mmap,
+    public atomic_bits_array_base<Value, T, atomic_bits_array<Value, T> >
+{
+  typedef atomic_bits_array_base<Value, T, atomic_bits_array<Value, T> > super;
+  friend class atomic_bits_array_base<Value, T, atomic_bits_array<Value, T> >;
+public:
+  atomic_bits_array(int bits, size_t size) :
+    allocators::mmap(),
+    super(bits, size)
+  { }
+
+protected:
+  T* alloc_data(size_t s) {
+    allocators::mmap::realloc(s);
+    return (T*)allocators::mmap::get_ptr();
+  }
+};
+
+struct mem_info {
+  void*  ptr_;
+  size_t bytes_;
+  mem_info(void* ptr, size_t bytes) : ptr_(ptr), bytes_(bytes) { }
+};
+template<typename Value, typename T = uint64_t>
+class atomic_bits_array_raw :
+    protected mem_info,
+    public atomic_bits_array_base<Value, T, atomic_bits_array<Value, T> >
+{
+  typedef atomic_bits_array_base<Value, T, atomic_bits_array<Value, T> > super;
+  friend class atomic_bits_array_base<Value, T, atomic_bits_array<Value, T> >;
+public:
+  atomic_bits_array_raw(void* ptr, size_t bytes, int bits, size_t size) :
+    mem_info(ptr, bytes),
+    super(bits, size)
+  { }
+
+protected:
+  T* alloc_data(size_t s) {
+    assert(bytes_ == s);
+    return (T*)ptr_;
+  }
+};
+
 } // namespace jellyfish
 
 #endif /* __JELLYFISH_ATOMIC_BITS_ARRAY_HPP__ */

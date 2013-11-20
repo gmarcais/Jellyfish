@@ -267,6 +267,7 @@ public:
   }
 
   base_proxy<base_type> base(unsigned int i) { return base_proxy<base_type>(_data + i / wbases, 2 * (i % wbases)); }
+  const base_proxy<base_type> base(unsigned int i) const { return base_proxy<base_type>(_data + i / wbases, 2 * (i % wbases)); }
 
   // Make current k-mer all As.
   void polyA() { memset(_data, 0x00, sizeof(base_type) * nb_words()); clean_msw(); }
