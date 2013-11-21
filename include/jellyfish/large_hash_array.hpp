@@ -159,6 +159,7 @@ public:
              uint16_t key_len, // Size of key in bits
              uint16_t val_len, // Size of val in bits
              uint16_t reprobe_limit, // Maximum reprobe
+             RectangularBinaryMatrix m,
              const size_t* reprobes = quadratic_reprobes) : // Reprobing policy
     lsize_(ceilLog2(size)),
     size_((size_t)1 << lsize_),
@@ -170,8 +171,8 @@ public:
     size_bytes_(div_ceil(size_, (size_t)offsets_.block_len()) * offsets_.block_word_len() * sizeof(word)),
     data_(static_cast<Derived*>(this)->alloc_data(size_bytes_)),
     reprobes_(reprobes),
-    hash_matrix_(lsize_, key_len_),
-    hash_inverse_matrix_(hash_matrix_.randomize_pseudo_inverse(random_bits))
+    hash_matrix_(m),
+    hash_inverse_matrix_(hash_matrix_.pseudo_inverse())
   {
     if(!data_)
       eraise(ErrorAllocation) << "Failed to allocate "
@@ -209,6 +210,10 @@ public:
 
   const RectangularBinaryMatrix& matrix() const { return hash_matrix_; }
   const RectangularBinaryMatrix& inverse_matrix() const { return hash_inverse_matrix_; }
+  void matrix(const RectangularBinaryMatrix& m) {
+    hash_inverse_matrix_ = m.pseudo_inverse();
+    hash_matrix_         = m;
+  }
 
   /**
    * Clear hash table. Not thread safe.
@@ -940,7 +945,8 @@ public:
         uint16_t reprobe_limit, // Maximum reprobe
         const size_t* reprobes = quadratic_reprobes) : // Reprobing policy
     mem_block_t(),
-    super(size, key_len, val_len, reprobe_limit, reprobes)
+    super(size, key_len, val_len, reprobe_limit, RectangularBinaryMatrix(ceilLog2(size), key_len).randomize_pseudo_inverse(),
+          reprobes)
   { }
 
 protected:
@@ -970,9 +976,10 @@ public:
             uint16_t key_len, // Size of key in bits
             uint16_t val_len, // Size of val in bits
             uint16_t reprobe_limit, // Maximum reprobe
+            RectangularBinaryMatrix m,
             const size_t* reprobes = quadratic_reprobes) : // Reprobing policy
     ptr_info(ptr, bytes),
-    super(size, key_len, val_len, reprobe_limit, reprobes)
+    super(size, key_len, val_len, reprobe_limit, m, reprobes)
   { }
 
 protected:
