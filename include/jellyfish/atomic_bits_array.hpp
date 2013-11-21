@@ -102,6 +102,7 @@ public:
     os.write((const char*)data_, size_bytes_);
   }
   size_t size_bytes() const { return size_bytes_; }
+  int bits() const { return bits_; }
 };
 
 template<typename Value, typename T = uint64_t>
