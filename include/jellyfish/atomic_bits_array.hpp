@@ -19,6 +19,7 @@
 #define __JELLYFISH_ATOMIC_BITS_ARRAY_HPP__
 
 #include <stdexcept>
+#include <iterator>
 
 #include <jellyfish/allocators_mmap.hpp>
 #include <jellyfish/atomic_gcc.hpp>
@@ -35,6 +36,38 @@ class atomic_bits_array_base {
   size_t                 size_bytes_;
   T*                     data_;
   static atomic::gcc     atomic_;
+
+  friend class iterator;
+  class iterator : public std::iterator<std::input_iterator_tag, Value> {
+    friend class atomic_bits_array_base;
+    const atomic_bits_array_base& ary_;
+    T*                            word_;
+    T                             mask_;
+    int                           off_;
+
+    iterator(const atomic_bits_array_base& a, T* w, T m, int o) : ary_(a), word_(w), mask_(m), off_(o) { }
+  public:
+    bool operator==(const iterator& rhs) const { return word_ == rhs.word_ && off_ == rhs.off_; }
+    bool operator!=(const iterator& rhs) const { return word_ != rhs.word_ || off_ != rhs.off_; }
+    Value operator*() const { return static_cast<Value>((*word_ & mask_) >> off_); }
+    Value* operator->() const { return 0; }
+    iterator& operator++() {
+      off_ += ary_.bits_;
+      if(off_ + ary_.bits_ < w_) {
+        mask_ <<= ary_.bits_;
+      } else {
+        ++word_;
+        mask_ = ary_.mask_;
+        off_  = 0;
+      }
+      return *this;
+    }
+    iterator operator++(int) {
+      iterator res(*this);
+      ++*this;
+      return res;
+    }
+  };
 
   class element_proxy {
     T*        word_;
@@ -103,6 +136,14 @@ public:
   }
   size_t size_bytes() const { return size_bytes_; }
   int bits() const { return bits_; }
+
+  iterator begin() const { return iterator(*this, data_, mask_, 0); }
+  iterator end() const {
+    uint64_t q, r;
+    d_.division(size_, q, r);
+    const int off = r * bits_;
+    return iterator(*this, data_ + q, mask_ << off, off);
+  }
 };
 
 template<typename Value, typename T = uint64_t>

@@ -18,9 +18,15 @@ TEST(AtomicBitsArray, Fill) {
     EXPECT_TRUE(e.set(data[i]));
   }
 
-  for(size_t i = 0; i < size; ++i) {
+  auto it = ary.begin();
+  auto it_end = ary.end();
+  for(size_t i = 0; i < size; ++i, ++it) {
     auto e = ary[i];
     EXPECT_EQ(data[i], e.get());
+    EXPECT_EQ(data[i], (unsigned char)e);
+    ASSERT_NE(it_end, it);
+    EXPECT_EQ(data[i], *it);
   }
+  EXPECT_EQ(it_end, it);
 }
 }
