@@ -108,7 +108,8 @@ library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
                           $(JFI)/stream_manager.hpp			\
                           $(JFI)/generator_manager.hpp			\
                           $(JFI)/cpp_array.hpp				\
-                          $(JFI)/mer_iterator.hpp
+                          $(JFI)/mer_iterator.hpp			\
+                          $(JFI)/atomic_bits_array.hpp
 
 
 noinst_HEADERS += jellyfish/fstream_default.hpp			\
@@ -179,7 +180,8 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_whole_sequence_parser.cc		\
 	               unit_tests/test_allocators_mmap.cc		\
 	               unit_tests/test_cooperative_pool2.cc		\
-	               unit_tests/test_generator_manager.cc
+	               unit_tests/test_generator_manager.cc		\
+	               unit_tests/test_atomic_bits_array.cc
 bin_test_all_SOURCES += jellyfish/backtrace.cc
 
 bin_test_all_CPPFLAGS = -Dprotected=public -Dprivate=public -DJSON_IS_AMALGAMATION=1

@@ -158,7 +158,6 @@ inline uint64_t random_bits() { return random_bits(64); }
 // Quote string that could contain shell special characters
 std::string quote_arg(const std::string& arg);
 
-} // namespace jellyfish
 std::streamoff get_file_size(std::istream& is);
 
 /// Find the first element for which the predicate p is false. The
@@ -243,5 +242,6 @@ template<typename T>
 pointer_integer<T> operator+(T x, pointer_integer<T>& p) { return pointer_integer<T>(x + *p); }
 template<typename T>
 pointer_integer<T> operator-(T x, pointer_integer<T>& p) { return pointer_integer<T>(x - *p); }
+} // namespace jellyfish
 
 #endif // __MISC_HPP__
