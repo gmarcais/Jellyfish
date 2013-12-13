@@ -82,6 +82,19 @@ LatexCommand tableofcontents
 
 \end_layout
 
+\begin_layout Standard
+\begin_inset FormulaMacro
+\newcommand{\switch}[1]{\texttt{-\@-#1}}
+\end_inset
+
+
+\begin_inset FormulaMacro
+\newcommand{\opt}[1]{\texttt{-#1}}
+\end_inset
+
+
+\end_layout
+
 \begin_layout Chapter
 Getting started
 \end_layout
@@ -108,24 +121,36 @@ jellyfish count -m 21 -s 100M -t 10 -C reads.fasta
 
 \begin_layout Standard
 This will count canonical (
-\family sans
--C
-\family default
+\begin_inset Formula $\opt C$
+\end_inset
+
 ) 
 \begin_inset Formula $21$
 \end_inset
 
 -mers (
 \family sans
--m 21
+
+\begin_inset Formula $\opt m\,21$
+\end_inset
+
+
 \family default
 ), using a hash with 100 million elements (
 \family sans
--s 100M
+
+\begin_inset Formula $\opt s\,\unit[100]{M}$
+\end_inset
+
+
 \family default
 ) and 10 threads (
 \family sans
--t 10
+
+\begin_inset Formula $\opt t\,10$
+\end_inset
+
+
 \family default
 ) in the sequences in the file 
 \family sans
@@ -138,7 +163,11 @@ mer_counts.jf
 \family default
 ' by default (change with 
 \family sans
--o
+
+\begin_inset Formula $\opt o$
+\end_inset
+
+
 \family default
  switch).
  
@@ -252,20 +281,9 @@ jellyfish info mer_counts.jf
 \begin_layout Standard
 For more detail information, see the relevant sections in this document.
  All commands understand 
-\family sans
--
-\begin_inset ERT
-status open
-
-\begin_layout Plain Layout
-
-{}
-\end_layout
-
+\begin_inset Formula $\switch{help}$
 \end_inset
 
--help
-\family default
  and will produce some information about the switches available.
 \end_layout
 
@@ -303,7 +321,11 @@ In sequencing reads, it is unknown which strands of the DNA is sequenced.
 , whichever comes first lexicographically.
  The 
 \family sans
--C
+
+\begin_inset Formula $\opt C$
+\end_inset
+
+
 \family default
  switch instructs to save in the hash only canonical 
 \begin_inset Formula $k$
@@ -318,9 +340,9 @@ In sequencing reads, it is unknown which strands of the DNA is sequenced.
 
 \begin_layout Standard
 The size parameter (given with 
-\family sans
--s
-\family default
+\begin_inset Formula $\opt s$
+\end_inset
+
 ) is an indication of the number 
 \begin_inset Formula $k$
 \end_inset
@@ -436,7 +458,11 @@ In an actual genome or finished sequence, a
 
 -mer and its reverse complement are not equivalent, hence using the 
 \family sans
--C
+
+\begin_inset Formula $\opt C$
+\end_inset
+
+
 \family default
  switch does not make sense.
  In addition, the size for the hash can be set directly to the size of the
@@ -501,7 +527,11 @@ name "sub:One-pass-method"
 \begin_layout Standard
 Adding the 
 \family sans
---bf-size
+
+\begin_inset Formula $\switch{bf-size}$
+\end_inset
+
+
 \family default
  switch make jellyfish first insert all 
 \begin_inset Formula $k$
@@ -512,24 +542,21 @@ Adding the
 \end_inset
 
 -mers which have already been seen at least once.
- The argument to -
-\begin_inset ERT
-status open
-
-\begin_layout Plain Layout
-
-{}
-\end_layout
-
+ The argument to 
+\begin_inset Formula $\switch{bf-size}$
 \end_inset
 
--bf-size should the total number of 
+ should the total number of 
 \begin_inset Formula $k$
 \end_inset
 
 -mer expected in the data set while the 
 \family sans
---size argument should be the number of 
+
+\begin_inset Formula $\switch{size}$
+\end_inset
+
+ argument should be the number of 
 \begin_inset Formula $k$
 \end_inset
 
@@ -610,22 +637,10 @@ The drawback of this method is some percentage of the
 \begin_inset Formula $<1\%$
 \end_inset
 
- by default and can be changed with the 
-\family sans
--
-\begin_inset ERT
-status open
-
-\begin_layout Plain Layout
-
-\family sans
-{}
-\end_layout
-
+ by default and can be changed with the
+\begin_inset Formula $\switch{bf-fp}$
 \end_inset
 
--bf-fp
-\family default
  switch.
 \end_layout
 
@@ -688,7 +703,11 @@ The advantage of this method is that the counts reported for the
 
 -mer are not reported, except for a small percentage (set by the 
 \family sans
--f
+
+\begin_inset Formula $\opt f$
+\end_inset
+
+
 \family default
  switch of the 
 \family sans
@@ -718,6 +737,18 @@ FAQ
 
 \begin_layout Section
 How to read compressed files (or other format)?
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+newmacroname
 \end_layout
 
 \begin_layout Standard
@@ -739,6 +770,18 @@ or by using the
 redirection
 \family default
  provided by the shell (e.g.
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+@
+\end_layout
+
+\end_inset
+
  bash, zsh):
 \end_layout
 
@@ -788,12 +831,20 @@ usly.
  By default, the commands are run using the shell in the SHELL environment
  variable, and this can be changed by the 
 \family sans
--S
+
+\begin_inset Formula $\opt S$
+\end_inset
+
+
 \family default
  switch.
  Multiple generators will be run simultaneously as specified by the 
 \family sans
--G
+
+\begin_inset Formula $\opt G$
+\end_inset
+
+
 \family default
  switch.
  For example:
@@ -858,9 +909,9 @@ status open
 \end_inset
 
  can be used with the switch 
-\family sans
---out-counter-len
-\family default
+\begin_inset Formula $\switch{out-counter-len}$
+\end_inset
+
 , which reduces significantly the output size.
 \end_layout
 
@@ -897,11 +948,19 @@ Also, low frequency and high frequency
 
 -mers can be skipped using the 
 \family sans
--L
+
+\begin_inset Formula $\opt L$
+\end_inset
+
+
 \family default
  and 
 \family sans
--U
+
+\begin_inset Formula $\opt U$
+\end_inset
+
+
 \family default
  switches respectively.
  Although it might be more appropriate to filter out the low frequency 
@@ -951,7 +1010,11 @@ histo
 -mers frequencies.
  The last bin, with value one above the high setting set by the 
 \family sans
--h
+
+\begin_inset Formula $\opt h$
+\end_inset
+
+
 \family default
  switch (
 \begin_inset Formula $10\,000$
@@ -965,7 +1028,11 @@ histo
  bin.
  If the low setting is set (
 \family sans
--l
+
+\begin_inset Formula $\opt l$
+\end_inset
+
+
 \family default
  switch), then the first bin, with value one below the low setting, is also
  similarly a catch all.
@@ -975,7 +1042,11 @@ histo
 By default, the bins with a zero count are skipped.
  This can be changed with the 
 \family sans
--f
+
+\begin_inset Formula $\opt f$
+\end_inset
+
+
 \family default
  switch.
 \end_layout
@@ -1037,11 +1108,19 @@ Low frequency and high frequency
 
 -mers can be skipped with the 
 \family sans
--L
+
+\begin_inset Formula $\opt L$
+\end_inset
+
+
 \family default
  and 
 \family sans
--U
+
+\begin_inset Formula $\opt U$
+\end_inset
+
+
 \family default
  switches respectively.
 \end_layout
@@ -1126,7 +1205,11 @@ query
 -mers in the sequence read from the FASTA or FASTQ formatted file passed
  to the switch 
 \family sans
--s
+
+\begin_inset Formula $\opt s$
+\end_inset
+
+
 \family default
  (this switch can be given multiple times).
 \end_layout
@@ -1158,7 +1241,11 @@ info
  the same conditions and reproduce the output file.
  In particular, the 
 \family sans
--c
+
+\begin_inset Formula $\opt c$
+\end_inset
+
+
 \family default
  switch outputs the command, properly escaped and ready to run in a shell.
 \end_layout
@@ -1229,9 +1316,9 @@ cite
 \family default
  subcommand prints the citation for the jellyfish paper.
  With the 
-\family sans
--b
-\family default
+\begin_inset Formula $\opt b$
+\end_inset
+
 , it is formatted in Bibtex format.
  How convenient!
 \end_layout
