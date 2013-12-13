@@ -57,8 +57,8 @@ TEST(BinarySearchFirst, Int) {
   static int size = 1024;
 
   for(int i = 0; i < size; ++i)
-    EXPECT_EQ(i, *binary_search_first_false(pointer_integer<int>(0), pointer_integer<int>(size),
-                                            std::bind2nd(std::less<int>(), i)));
+    EXPECT_EQ(i, *jellyfish::binary_search_first_false(jellyfish::pointer_integer<int>(0), jellyfish::pointer_integer<int>(size),
+                                                       std::bind2nd(std::less<int>(), i)));
 }
 
 TEST(Slices, NonOverlapAll) {

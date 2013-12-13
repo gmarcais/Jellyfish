@@ -159,6 +159,7 @@ public:
              uint16_t key_len, // Size of key in bits
              uint16_t val_len, // Size of val in bits
              uint16_t reprobe_limit, // Maximum reprobe
+             RectangularBinaryMatrix m,
              const size_t* reprobes = quadratic_reprobes) : // Reprobing policy
     lsize_(ceilLog2(size)),
     size_((size_t)1 << lsize_),
@@ -170,8 +171,8 @@ public:
     size_bytes_(div_ceil(size_, (size_t)offsets_.block_len()) * offsets_.block_word_len() * sizeof(word)),
     data_(static_cast<Derived*>(this)->alloc_data(size_bytes_)),
     reprobes_(reprobes),
-    hash_matrix_(lsize_, key_len_),
-    hash_inverse_matrix_(hash_matrix_.randomize_pseudo_inverse(random_bits))
+    hash_matrix_(m),
+    hash_inverse_matrix_(hash_matrix_.pseudo_inverse())
   {
     if(!data_)
       eraise(ErrorAllocation) << "Failed to allocate "
@@ -209,6 +210,10 @@ public:
 
   const RectangularBinaryMatrix& matrix() const { return hash_matrix_; }
   const RectangularBinaryMatrix& inverse_matrix() const { return hash_inverse_matrix_; }
+  void matrix(const RectangularBinaryMatrix& m) {
+    hash_inverse_matrix_ = m.pseudo_inverse();
+    hash_matrix_         = m;
+  }
 
   /**
    * Clear hash table. Not thread safe.
@@ -216,6 +221,15 @@ public:
   void clear() {
     memset(data_, '\0', size_bytes_);
   }
+
+  /**
+   * Write the hash table raw to a stream. Not thread safe.
+   */
+  void write(std::ostream& os) const {
+    os.write((const char*)data_, size_bytes_);
+  }
+
+  size_t size_bytes() const { return size_bytes_; }
 
   /* The storage of the hash is organized in "blocks". A (key,value)
    * pair always start at bit 0 of the block. The following methods
@@ -422,8 +436,14 @@ public:
   // Optimization version again. Also return the word and the offset
   // information where the key was found. These can be used later one
   // to fetch the value associated with the key.
-  bool get_key_id(const key_type& key, size_t* id, key_type& tmp_key, const word**  w, const offset_t** o) const {
-    const size_t oid = hash_matrix_.times(key) & size_mask_;
+  inline bool get_key_id(const key_type& key, size_t* id, key_type& tmp_key, const word** w, const offset_t** o) const {
+    return get_key_id(key, id, tmp_key, w, o, hash_matrix_.times(key) & size_mask_);
+  }
+
+  // Find the actual id of the key in the hash, starting at oid.
+  bool get_key_id(const key_type& key, size_t* id, key_type& tmp_key, const word** w, const offset_t** o, const size_t oid) const {
+    // This static_assert makes clang++ happy
+    static_assert(std::is_pod<prefetch_info>::value, "prefetch_info must be a POD");
     prefetch_info info_ary[prefetch_buffer::capacity()];
     prefetch_buffer buffer(info_ary);
     warm_up_cache(buffer, oid);
@@ -925,13 +945,47 @@ public:
         uint16_t reprobe_limit, // Maximum reprobe
         const size_t* reprobes = quadratic_reprobes) : // Reprobing policy
     mem_block_t(),
-    super(size, key_len, val_len, reprobe_limit, reprobes)
+    super(size, key_len, val_len, reprobe_limit, RectangularBinaryMatrix(ceilLog2(size), key_len).randomize_pseudo_inverse(),
+          reprobes)
   { }
 
 protected:
   word* alloc_data(size_t s) {
     mem_block_t::realloc(s);
     return (word*)mem_block_t::get_ptr();
+  }
+};
+
+struct ptr_info {
+  void*  ptr_;
+  size_t bytes_;
+  ptr_info(void* ptr, size_t bytes) : ptr_(ptr), bytes_(bytes) { }
+};
+template<typename Key, typename word = uint64_t, typename atomic_t = ::atomic::gcc>
+class array_raw :
+    protected ptr_info,
+    public array_base<Key, word, atomic_t, array<Key, word, atomic_t> >
+{
+  typedef array_base<Key, word, atomic_t, array<Key, word, atomic_t> > super;
+  friend class array_base<Key, word, atomic_t, array<Key, word, atomic_t> >;
+
+public:
+  array_raw(void* ptr,
+            size_t bytes, // Memory available at ptr
+            size_t size, // Size of hash in number of entries. To be rounded up to a power of 2
+            uint16_t key_len, // Size of key in bits
+            uint16_t val_len, // Size of val in bits
+            uint16_t reprobe_limit, // Maximum reprobe
+            RectangularBinaryMatrix m,
+            const size_t* reprobes = quadratic_reprobes) : // Reprobing policy
+    ptr_info(ptr, bytes),
+    super(size, key_len, val_len, reprobe_limit, m, reprobes)
+  { }
+
+protected:
+  word* alloc_data(size_t s) {
+    assert(bytes_ == s);
+    return (word*)ptr_;
   }
 };
 

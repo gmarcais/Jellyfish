@@ -153,6 +153,8 @@ public:
   }
 
   bool val_id(const Key& key,  Val* res, uint64_t* id) const {
+    if(last_id_ == 0)
+      return false;
     if(key == first_key_) {
       val_at(0, res);
       *id = 0;
@@ -167,7 +169,7 @@ public:
     if(pos < first_pos_ || pos > last_pos_)
       return false;
     uint64_t first = 0, last = last_id_;
-    while(first < last - 1) {
+    while(first + 1 < last) {
       *id = (first + last) / 2;
       key_at(*id, mid_key_);
       if(key == mid_key_) {

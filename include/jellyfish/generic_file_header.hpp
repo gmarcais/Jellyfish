@@ -93,7 +93,7 @@ public:
   /// length written in text and decimal, followed by the header in
   /// terse JSON format, followed by some padding to align according
   /// to the `alignment_` member.
-  void write(std::ostream& os) const {
+  void write(std::ostream& os) {
     restore_fmtflags flags(os);
     Json::FastWriter writer;
     std::string      header = writer.write(root_);
@@ -108,7 +108,8 @@ public:
         hlen += align - padding;
     }
     os << std::dec << std::right << std::setw(MAX_HEADER_DIGITS) << std::setfill('0') << hlen;
-    os << std::setw(0) << header;
+    os.write(header.c_str(), header.size());
+    offset_ = MAX_HEADER_DIGITS + hlen;
 
     if(padding) {
       char pad[align - padding];

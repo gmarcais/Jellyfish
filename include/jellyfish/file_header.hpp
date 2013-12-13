@@ -40,7 +40,7 @@ public:
     this->set_reprobes(ary.reprobes());
   }
 
-  RectangularBinaryMatrix matrix(int i = 1) {
+  RectangularBinaryMatrix matrix(int i = 1) const {
     std::string name("matrix");
     name += std::to_string((long long int)i); // Cast to make gcc4.4 happy!
     const unsigned int r = root_[name]["r"].asUInt();

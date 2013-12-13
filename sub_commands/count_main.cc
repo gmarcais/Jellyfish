@@ -109,7 +109,7 @@ public:
               PathIterator file_begin, PathIterator file_end,
               PathIterator pipe_begin, PathIterator pipe_end,
               uint32_t concurent_files,
-              OPERATION op, filter* filter = new filter) :
+              OPERATION op, filter* filter = new struct filter) :
     ary_(ary),
     streams_(file_begin, file_end, pipe_begin, pipe_end, concurent_files),
     parser_(mer_dna::k(), streams_.nb_streams(), 3 * nb_threads, 4096, streams_),

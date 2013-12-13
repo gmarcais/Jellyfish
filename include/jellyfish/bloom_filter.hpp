@@ -24,9 +24,9 @@
 namespace jellyfish {
 template<typename Key, typename HashPair = hash_pair<Key>, typename atomic_t = ::atomic::gcc>
 class bloom_filter_base :
-    public bloom_base<Key, bloom_filter_base<Key, HashPair> >
+    public bloom_base<Key, bloom_filter_base<Key, HashPair>, HashPair>
 {
-  typedef bloom_base<Key, bloom_filter_base<Key, HashPair> > super;
+  typedef bloom_base<Key, bloom_filter_base<Key, HashPair>, HashPair> super;
 
 protected:
   static size_t nb_bytes__(size_t l) {
@@ -49,6 +49,9 @@ public:
   // Insert key with given hashes
   unsigned int insert__(const uint64_t *hashes) {
     // Prefetch memory locations
+    // This static_assert make clang++ happy...
+    static_assert(std::is_pod<typename super::prefetch_info>::value, "prefetch_info must be a POD");
+
     typename super::prefetch_info pinfo[super::k_];
     const size_t base    = super::d_.remainder(hashes[0]);
     const size_t inc     = super::d_.remainder(hashes[1]);

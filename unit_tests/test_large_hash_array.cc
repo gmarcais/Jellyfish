@@ -174,7 +174,7 @@ arrays_ptr fill_array(size_t nb_elts, size_t size, int key_len, int val_len, int
 }
 
 TEST_P(HashArray, Iterator) {
-  static const int nb_elts = 1 << (ary_lsize - 1);
+  static const int nb_elts = 1 << (ary_lsize - 1 - (val_len == 1));
   SCOPED_TRACE(::testing::Message() << "key_len:" << key_len << " val_len:" << val_len << " reprobe:" << reprobe_limit);
 
   arrays_ptr   res = fill_array(nb_elts, ary_size, key_len, val_len, reprobe_limit);

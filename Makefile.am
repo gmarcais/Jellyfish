@@ -44,8 +44,7 @@ bin_jellyfish_SOURCES = sub_commands/jellyfish.cc	\
                         sub_commands/bc_main.cc		\
                         sub_commands/query_main.cc	\
                         sub_commands/cite_main.cc	\
-                        jellyfish/merge_files.cc	\
-                        jellyfish/generator_manager.cc
+                        jellyfish/merge_files.cc
 bin_jellyfish_LDFLAGS = $(AM_LDFLAGS) $(STATIC_FLAGS)
 
 
@@ -66,8 +65,9 @@ libjellyfish_2_0_la_SOURCES = lib/rectangular_binary_matrix.cc		\
                               lib/mer_dna.cc lib/storage.cc		\
                               lib/allocators_mmap.cc lib/misc.cc	\
                               lib/int128.cc lib/thread_exec.cc		\
-                              lib/err.cc lib/jsoncpp.cpp		\
-                              lib/time.cc
+                              lib/err.cc lib/jsoncpp.cpp lib/time.cc	\
+                              lib/generator_manager.cc
+
 
 library_includedir=$(includedir)/jellyfish-@PACKAGE_VERSION@/jellyfish
 JFI = include/jellyfish
@@ -105,15 +105,16 @@ library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
                           $(JFI)/bloom_filter.hpp			\
                           $(JFI)/cooperative_pool.hpp			\
                           $(JFI)/cooperative_pool2.hpp			\
-                          $(JFI)/stream_manager.hpp
+                          $(JFI)/stream_manager.hpp			\
+                          $(JFI)/generator_manager.hpp			\
+                          $(JFI)/cpp_array.hpp				\
+                          $(JFI)/mer_iterator.hpp			\
+                          $(JFI)/atomic_bits_array.hpp
+
 
 noinst_HEADERS += jellyfish/fstream_default.hpp			\
-                  include/jflib/tmpstream.hpp			\
-                  jellyfish/mer_iterator.hpp jellyfish/dbg.hpp	\
-                  jellyfish/randomc.h jellyfish/merge_files.hpp	\
-                  jellyfish/cpp_array.hpp			\
-                  jellyfish/generator_manager.hpp
-
+                  include/jflib/tmpstream.hpp jellyfish/dbg.hpp	\
+                  jellyfish/randomc.h jellyfish/merge_files.hpp
 
 ###############
 # Build tests #
@@ -134,7 +135,7 @@ AM_SH_LOG_FLAGS =
 TESTS = tests/generate_sequence.sh tests/parallel_hashing.sh	\
         tests/merge.sh tests/bloom_filter.sh tests/big.sh	\
         tests/subset_hashing.sh tests/multi_file.sh		\
-        tests/bloom_counter.sh
+        tests/bloom_counter.sh tests/large_key.sh
 
 EXTRA_DIST += $(TESTS)
 clean-local: clean-local-check
@@ -149,6 +150,7 @@ tests/bloom_counter.log: tests/generate_sequence.log
 tests/multi_file.log: tests/generate_sequence.log
 tests/merge.log: tests/generate_sequence.log
 tests/min_qual.log: tests/generate_fastq_sequence.log
+tests/large_key.log: tests/generate_sequence.log
 
 ##############
 # Unit tests #
@@ -178,9 +180,9 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_whole_sequence_parser.cc		\
 	               unit_tests/test_allocators_mmap.cc		\
 	               unit_tests/test_cooperative_pool2.cc		\
-	               unit_tests/test_generator_manager.cc
-bin_test_all_SOURCES += jellyfish/backtrace.cc		\
-                        jellyfish/generator_manager.cc
+	               unit_tests/test_generator_manager.cc		\
+	               unit_tests/test_atomic_bits_array.cc
+bin_test_all_SOURCES += jellyfish/backtrace.cc
 
 bin_test_all_CPPFLAGS = -Dprotected=public -Dprivate=public -DJSON_IS_AMALGAMATION=1
 bin_test_all_CXXFLAGS = $(AM_CXXFLAGS) -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)/unit_tests -I$(top_srcdir)/include

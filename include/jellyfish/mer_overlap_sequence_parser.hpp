@@ -105,7 +105,7 @@ public:
       return true;
     }
 
-    if(*st.stream)
+    if(st.stream->good())
       return false;
 
     // Reach the end of file, close current and try to open the next one
@@ -175,13 +175,13 @@ protected:
 
     // Here, the st.stream is assumed to always point to some
     // sequence (or EOF). Never at header.
-    while(*st.stream && read < buf_size_ - mer_len_ - 1) {
+    while(st.stream->good() && read < buf_size_ - mer_len_ - 1) {
       size_t nread  = read_sequence(*st.stream, read, buff.start, '+');
       read         += nread;
       st.seq_len   += nread;
       if(st.stream->peek() == '+') {
         skip_quals(*st.stream, st.seq_len);
-        if(*st.stream) {
+        if(st.stream->good()) {
           *(buff.start + read++) = 'N'; // Add N between reads
           ignore_line(*st.stream); // Skip sequence header
         }
