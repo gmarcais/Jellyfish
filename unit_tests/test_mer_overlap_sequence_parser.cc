@@ -1,7 +1,8 @@
 #include <string>
+#include <fstream>
 
 #include <gtest/gtest.h>
-#include <jflib/tmpstream.hpp>
+#include <unit_tests/test_main.hpp>
 #include <jellyfish/mer_overlap_sequence_parser.hpp>
 
 namespace {
@@ -21,15 +22,20 @@ struct opened_streams {
     return res;
   }
 };
-typedef jellyfish::mer_overlap_sequence_parser<opened_streams<jflib::tmpstream**> > parser_type;
+typedef jellyfish::mer_overlap_sequence_parser<opened_streams<std::ifstream**> > parser_type;
 
 
 TEST(MerOverlapSequenceParser, OneSmallSequence) {
   static const char* seq = "ATTACCTTGTACCTTCAGAGC";
-  jflib::tmpstream* sequence = new jflib::tmpstream;
-  *sequence << ">header\n" << seq;
-  sequence->seekg(0);
-  opened_streams<jflib::tmpstream**> streams(&sequence, &sequence + 1);
+  const char* file_name = "OneSmallSequence.fa";
+  file_unlink fu(file_name);
+
+  {
+    std::ofstream sequence(file_name);
+    sequence << ">header\n" << seq;
+  }
+  auto sequence = new std::ifstream(file_name);
+  opened_streams<std::ifstream**> streams(&sequence, &sequence + 1);
 
   parser_type parser(10, 1, 10, 100, streams);
 
@@ -73,13 +79,17 @@ string generate_sequences(std::ostream& os, int a, int b, int nb, bool fastq = f
 }
 
 TEST(MerOverlapSequenceParser, ManySmallSequences) {
-  jflib::tmpstream* sequence = new jflib::tmpstream;
-
+  const char* file_name = "ManySmallSequences.fa";
+  file_unlink fu(file_name);
   static const int nb_reads = 20;
   static const int mer_len = 10;
-  string res = generate_sequences(*sequence, 20, 64, nb_reads);
-  sequence->seekg(0);
-  opened_streams<jflib::tmpstream**> streams(&sequence, &sequence + 1);
+
+  std::ofstream o_sequence(file_name);
+  string res = generate_sequences(o_sequence, 20, 64, nb_reads);
+  o_sequence.close();
+
+  auto sequence = new std::ifstream(file_name);
+  opened_streams<std::ifstream**> streams(&sequence, &sequence + 1);
 
   parser_type parser(mer_len, 1, 10, 100, streams);
   size_t offset = 0;
@@ -95,14 +105,22 @@ TEST(MerOverlapSequenceParser, ManySmallSequences) {
 }
 
 TEST(MerOverlapSequenceParser, BigSequences) {
-  jflib::tmpstream* tmps[2];
-  tmps[0] = new jflib::tmpstream;
-  string res0 = generate_sequences(*tmps[0], 200, 100, 3);
-  tmps[0]->seekg(0);
-  tmps[1] = new jflib::tmpstream;
-  string res1 = generate_sequences(*tmps[1], 200, 100, 3);
-  tmps[1]->seekg(0);
-  opened_streams<jflib::tmpstream**> streams(tmps, tmps + 2);
+  const char* file_name1 = "BigSequences1.fa";
+  const char* file_name2 = "BigSequences2.fa";
+  file_unlink fu1(file_name1);
+  file_unlink fu2(file_name2);
+
+  std::ofstream o_sequence(file_name1);
+  const string res0 = generate_sequences(o_sequence, 200, 100, 3);
+  o_sequence.close();
+  o_sequence.open(file_name2);
+  const string res1 = generate_sequences(o_sequence, 200, 100, 3);
+  o_sequence.close();
+
+  std::ifstream* tmps[2];
+  tmps[0] = new std::ifstream(file_name1);
+  tmps[1] = new std::ifstream(file_name2);
+  opened_streams<std::ifstream**> streams(tmps, tmps + 2);
 
   static const int mer_len = 10;
   parser_type parser(mer_len, 1, 10, 100, streams);
@@ -132,12 +150,17 @@ TEST(MerOverlapSequenceParser, BigSequences) {
 }
 
 TEST(MerOverlapSequenceParser, Fastq) {
-  jflib::tmpstream* sequence = new jflib::tmpstream;
+  const char* file_name = "Fastq.fa";
+  file_unlink fu(file_name);
   static const int nb_reads = 100;
   static const int mer_len = 20;
-  string res = generate_sequences(*sequence, 10, 50, nb_reads, true);
-  sequence->seekg(0);
-  opened_streams<jflib::tmpstream**> streams(&sequence, &sequence + 1);
+
+  std::ofstream o_sequence(file_name);
+  string res = generate_sequences(o_sequence, 10, 50, nb_reads, true);
+  o_sequence.close();
+
+  auto sequence = new std::ifstream(file_name);
+  opened_streams<std::ifstream**> streams(&sequence, &sequence + 1);
   parser_type parser(mer_len, 1, 10, 100, streams);
 
   size_t offset = 0;

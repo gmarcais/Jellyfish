@@ -54,7 +54,7 @@ int histo_main(int argc, char *argv[])
   jellyfish::mer_dna::k(header.key_len() / 2);
 
   if(args.high_arg < args.low_arg)
-    args.error("High count value must be >= to low count value");
+    histo_main_cmdline::error("High count value must be >= to low count value");
   ofstream_default out(args.output_given ? args.output_arg : 0, std::cout);
   if(!out.good())
     die << "Error opening output file '" << args.output_arg << "'" << jellyfish::err::no;

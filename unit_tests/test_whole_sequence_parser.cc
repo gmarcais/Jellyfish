@@ -1,5 +1,6 @@
+#include <fstream>
+
 #include <gtest/gtest.h>
-#include <jflib/tmpstream.hpp>
 #include <jellyfish/whole_sequence_parser.hpp>
 #include <unit_tests/test_main.hpp>
 
@@ -20,20 +21,25 @@ struct opened_streams {
     return res;
   }
 };
-typedef jellyfish::whole_sequence_parser<opened_streams<jflib::tmpstream**> > parser_type;
+typedef jellyfish::whole_sequence_parser<opened_streams<std::ifstream**> > parser_type;
 
 TEST(SequenceParser, Fasta) {
   static const char* seq1 = "ATTACCTTGTACCTTCAGAGC";
   static const char* seq2 = "TTCGATCCCTTGATAATTAGTCACGTTAGCT";
-  jflib::tmpstream* sequence = new jflib::tmpstream;
-  *sequence << ">header1\n"
-            << seq1 << "\n\n"
-            << ">header2\n"
-            << seq2 << "\n\n\n"
-            << seq1;
-  sequence->seekg(0);
+  const char* file_name = "Fasta.fa";
+  file_unlink fu(file_name);
 
-  opened_streams<jflib::tmpstream**> streams(&sequence, &sequence + 1);
+  {
+    std::ofstream sequence(file_name);
+    sequence << ">header1\n"
+             << seq1 << "\n\n"
+             << ">header2\n"
+             << seq2 << "\n\n\n"
+             << seq1;
+  }
+
+  auto sequence = new std::ifstream(file_name);
+  opened_streams<std::ifstream**> streams(&sequence, &sequence + 1);
   parser_type parser(10, 1, 1, streams);
 
   {
@@ -63,20 +69,25 @@ TEST(SequenceParser, Fasta) {
 TEST(SequenceParser, Fastq) {
   static const char* seq1 = "ATTACCTTGTACCTTCAGAGC";
   static const char* seq2 = "TTCGATCCCTTGATAATTAGTCACGTTAGCT";
-  jflib::tmpstream* sequence = new jflib::tmpstream;
-  *sequence << "@header1\n"
-           << seq1 << "\n\n"
-           << "+and some stuff\n"
-           << seq1 << "\n"
-           << "@header2\n"
-           << seq2 << "\n\n\n"
-           << seq1 << "\n"
-           << "+\n"
-           << seq1 << "\n"
-           << seq2 << "\n";
-  sequence->seekg(0);
+  const char* file_name = "Fasta.fq";
+  file_unlink fu(file_name);
 
-  opened_streams<jflib::tmpstream**> streams(&sequence, &sequence + 1);
+  {
+    std::ofstream sequence(file_name);
+    sequence << "@header1\n"
+             << seq1 << "\n\n"
+             << "+and some stuff\n"
+             << seq1 << "\n"
+             << "@header2\n"
+             << seq2 << "\n\n\n"
+             << seq1 << "\n"
+             << "+\n"
+             << seq1 << "\n"
+             << seq2 << "\n";
+  }
+
+  auto sequence = new std::ifstream(file_name);
+  opened_streams<std::ifstream**> streams(&sequence, &sequence + 1);
   parser_type parser(10, 1, 1, streams);
 
   {
@@ -108,22 +119,27 @@ TEST(SequenceParser, Fastq) {
 }
 
 TEST(SequenceParser, FastaMany) {
-  auto sequence = new jflib::tmpstream;
+  const char* file_name = "FastaMany.fa";
+  file_unlink fu(file_name);
   static const int nb_sequences = 1000;
-  ASSERT_TRUE(sequence->good());
-  for(int i = 0; i < nb_sequences; ++i) {
-    const int seq_len = random_bits(8) + 10;
-    *sequence << ">" << i << " " << seq_len << "\n";
-    for(int j = 0; j < seq_len; ++j) {
-      *sequence << (char)('A' + j % 26);
-      if(random_bits(6) == 0)
-        *sequence << '\n';
-    }
-    *sequence << '\n';
-  }
-  sequence->seekg(0);
 
-  opened_streams<jflib::tmpstream**> streams(&sequence, &sequence + 1);
+  {
+    std::ofstream sequence(file_name);
+    ASSERT_TRUE(sequence.good());
+    for(int i = 0; i < nb_sequences; ++i) {
+      const int seq_len = random_bits(8) + 10;
+      sequence << ">" << i << " " << seq_len << "\n";
+      for(int j = 0; j < seq_len; ++j) {
+        sequence << (char)('A' + j % 26);
+        if(random_bits(6) == 0)
+          sequence << '\n';
+      }
+      sequence << '\n';
+    }
+  }
+
+  auto sequence = new std::ifstream(file_name);
+  opened_streams<std::ifstream**> streams(&sequence, &sequence + 1);
   parser_type parser(10, 13, 1, streams);
   int got_sequences = 0;
   while(true) {
