@@ -151,6 +151,7 @@ tests/multi_file.log: tests/generate_sequence.log
 tests/merge.log: tests/generate_sequence.log
 tests/min_qual.log: tests/generate_fastq_sequence.log
 tests/large_key.log: tests/generate_sequence.log
+tests/quality_filter.log: tests/generate_sequence.log
 
 ##############
 # Unit tests #
@@ -193,9 +194,3 @@ noinst_HEADERS += unit_tests/test_main.hpp
 
 include gtest.mk
 -include $(top_srcdir)/development.mk
-
-########
-# info #
-########
-print-%:
-	@echo -n $($*)
