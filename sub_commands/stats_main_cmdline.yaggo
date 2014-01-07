@@ -1,0 +1,28 @@
+purpose "Statistics"
+package "jellyfish stats"
+description "Display some statistics about the k-mers in the hash:
+
+Unique:    Number of k-mers which occur only once.
+Distinct:  Number of k-mers, not counting multiplicity.
+Total:     Number of k-mers, including multiplicity.
+Max_count: Maximum number of occurrence of a k-mer.
+"
+
+option("recompute", "r") {
+  description "Recompute"
+  flag; off; hidden }
+option("lower-count", "L") {
+  description "Don't consider k-mer with count < lower-count"
+  uint64; default 0 }
+option("upper-count", "U") {
+  description "Don't consider k-mer with count > upper-count (2^64)"
+  uint64 }
+option("verbose", "v") {
+  description "Verbose"
+  flag; off }
+option("output", "o") {
+  description "Output file"
+  c_string }
+arg("db") {
+  description "Jellyfish database"
+  c_string; typestr "path" }

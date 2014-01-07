@@ -40,6 +40,7 @@ bin_jellyfish_SOURCES = sub_commands/jellyfish.cc	\
                         sub_commands/info_main.cc	\
                         sub_commands/dump_main.cc	\
                         sub_commands/histo_main.cc	\
+                        sub_commands/stats_main.cc	\
                         sub_commands/merge_main.cc	\
                         sub_commands/bc_main.cc		\
                         sub_commands/query_main.cc	\
@@ -52,6 +53,7 @@ YAGGO_SOURCES += sub_commands/count_main_cmdline.hpp	\
                  sub_commands/info_main_cmdline.hpp	\
                  sub_commands/dump_main_cmdline.hpp	\
                  sub_commands/histo_main_cmdline.hpp	\
+                 sub_commands/stats_main_cmdline.hpp	\
                  sub_commands/merge_main_cmdline.hpp	\
                  sub_commands/bc_main_cmdline.hpp	\
                  sub_commands/query_main_cmdline.hpp	\
