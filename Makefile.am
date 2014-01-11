@@ -112,7 +112,8 @@ library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
                           $(JFI)/cpp_array.hpp				\
                           $(JFI)/mer_iterator.hpp			\
                           $(JFI)/atomic_bits_array.hpp			\
-                          $(JFI)/stdio_filebuf.hpp
+                          $(JFI)/stdio_filebuf.hpp			\
+                          $(JFI)/mer_qual_iterator.hpp
 
 
 noinst_HEADERS += jellyfish/fstream_default.hpp jellyfish/dbg.hpp	\
@@ -196,3 +197,7 @@ noinst_HEADERS += unit_tests/test_main.hpp
 
 include gtest.mk
 -include $(top_srcdir)/development.mk
+
+# Print the value of a variable
+print-%:
+	@echo -n $($*)
