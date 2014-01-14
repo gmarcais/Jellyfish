@@ -3,6 +3,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <fstream>
+
 #include <gtest/gtest.h>
 #include <unit_tests/test_main.hpp>
 #include <jellyfish/generator_manager.hpp>

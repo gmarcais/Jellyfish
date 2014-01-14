@@ -20,31 +20,32 @@
 #include <string.h>
 #include <iostream>
 #include <fstream>
-#include <vector>
 
 #include <jellyfish/err.hpp>
 #include <jellyfish/misc.hpp>
 #include <jellyfish/fstream_default.hpp>
 #include <jellyfish/jellyfish.hpp>
-#include <sub_commands/histo_main_cmdline.hpp>
+#include <sub_commands/stats_main_cmdline.hpp>
 
 template<typename reader_type>
-void compute_histo(reader_type& reader, const uint64_t base, const uint64_t ceil,
-                   uint64_t* histo, const uint64_t nb_buckets, const uint64_t inc) {
+void compute_stats(reader_type& reader, uint64_t low, uint64_t high,
+                   uint64_t& uniq, uint64_t& distinct, uint64_t& total,
+                   uint64_t& max) {
+  uniq = distinct = total = max = 0;
+
   while(reader.next()) {
-    if(reader.val() < base)
-      ++histo[0];
-    else if(reader.val() > ceil)
-      ++histo[nb_buckets - 1];
-    else
-      ++histo[(reader.val() - base) / inc];
+    if(reader.val() < low || reader.val() > high) continue;
+    uniq  += reader.val() == 1;
+    total += reader.val();
+    max    = std::max(max, reader.val());
+    ++distinct;
   }
 }
 
 
-int histo_main(int argc, char *argv[])
+int stats_main(int argc, char *argv[])
 {
-  histo_main_cmdline args(argc, argv);
+  stats_main_cmdline args(argc, argv);
 
   std::ifstream is(args.db_arg);
   if(!is.good())
@@ -53,35 +54,27 @@ int histo_main(int argc, char *argv[])
   header.read(is);
   jellyfish::mer_dna::k(header.key_len() / 2);
 
-  if(args.high_arg < args.low_arg)
-    histo_main_cmdline::error("High count value must be >= to low count value");
   ofstream_default out(args.output_given ? args.output_arg : 0, std::cout);
   if(!out.good())
     die << "Error opening output file '" << args.output_arg << "'" << jellyfish::err::no;
 
-  const uint64_t base = args.increment_arg >= args.low_arg ? 0 : args.low_arg - args.increment_arg;
-  const uint64_t ceil = args.high_arg + args.increment_arg;
-  const uint64_t inc  = args.increment_arg;
-
-  const uint64_t nb_buckets  = (ceil + inc - base) / inc;
-  uint64_t*      histo       = new uint64_t[nb_buckets];
-  memset(histo, '\0', sizeof(uint64_t) * nb_buckets);
-
+  if(!args.upper_count_given)
+    args.upper_count_arg = std::numeric_limits<uint64_t>::max();
+  uint64_t uniq = 0, distinct = 0, total = 0, max = 0;
   if(!header.format().compare(binary_dumper::format)) {
     binary_reader reader(is, &header);
-    compute_histo(reader, base, ceil, histo, nb_buckets, inc);
+    compute_stats(reader, args.lower_count_arg, args.upper_count_arg, uniq, distinct, total, max);
   } else if(!header.format().compare(text_dumper::format)) {
     text_reader reader(is, &header);
-    compute_histo(reader, base, ceil, histo, nb_buckets, inc);
+    compute_stats(reader, args.lower_count_arg, args.upper_count_arg, uniq, distinct, total, max);
   } else {
     die << "Unknown format '" << header.format() << "'";
   }
 
-  for(uint64_t i = 0, col = base; i < nb_buckets; ++i, col += inc)
-    if(histo[i] > 0 || args.full_flag)
-      out << col << " " << histo[i] << "\n";
-
-  delete [] histo;
+  out << "Unique:    " << uniq << "\n"
+      << "Distinct:  " << distinct << "\n"
+      << "Total:     " << total << "\n"
+      << "Max_count: " << max << "\n";
   out.close();
 
   return 0;

@@ -6,10 +6,13 @@ cd tests
 sort -k2,2 > ${pref}.md5sum <<EOF 
 864c0b0826854bdc72a85d170549b64b ${pref}_m15_s2M.histo
 864c0b0826854bdc72a85d170549b64b ${pref}_m15_s16M.histo
+41fd8408dde0ea14bec7425b1a877140 ${pref}_m15.stats
 376761a6e273b57b3428c14e3b536edf ${pref}_binary.dump
 376761a6e273b57b3428c14e3b536edf ${pref}_text.dump
 9251799dd5dbd3f617124aa2ff72112a ${pref}_binary.histo
+c30cba4fe2886cea4abb27f5c30ea35e ${pref}_binary.stats
 9251799dd5dbd3f617124aa2ff72112a ${pref}_text.histo
+c30cba4fe2886cea4abb27f5c30ea35e ${pref}_text.stats
 94625cd2d59e278f08421a673eb0926a ${pref}_m15_s2M_L2_U3.histo
 94625cd2d59e278f08421a673eb0926a ${pref}_m15_s2M_L2_U3_automerge.histo
 45fb383344e0fb0b7540718339be4c03 ${pref}_query_one_count
@@ -18,6 +21,7 @@ EOF
 # Count with in memory hash doubling
 $JF count -t $nCPUs -o ${pref}_m15_s2M.jf -s 2M -C -m 15 seq10m.fa
 $JF histo ${pref}_m15_s2M.jf > ${pref}_m15_s2M.histo
+$JF stats ${pref}_m15_s2M.jf > ${pref}_m15.stats
 
 # Count without size doubling
 $JF count -t $nCPUs -o ${pref}_m15_s16M.jf -s 16M -C -m 15 seq10m.fa
@@ -27,7 +31,9 @@ $JF histo ${pref}_m15_s16M.jf > ${pref}_m15_s16M.histo
 $JF count -m 40 -t $nCPUs -o ${pref}_text.jf -s 2M --text seq1m_0.fa
 $JF count -m 40 -t $nCPUs -o ${pref}_binary.jf -s 2M seq1m_0.fa
 $JF histo ${pref}_text.jf > ${pref}_text.histo
+$JF stats ${pref}_text.jf > ${pref}_text.stats
 $JF histo ${pref}_binary.jf > ${pref}_binary.histo
+$JF stats ${pref}_binary.jf > ${pref}_binary.stats
 $JF dump -c ${pref}_text.jf | sort > ${pref}_text.dump
 $JF dump -c ${pref}_binary.jf | sort > ${pref}_binary.dump
 

@@ -34,12 +34,16 @@
 #include <jellyfish/locks_pthread.hpp>
 #include <jellyfish/stream_manager.hpp>
 #include <jellyfish/mer_overlap_sequence_parser.hpp>
+#include <jellyfish/whole_sequence_parser.hpp>
 #include <jellyfish/mer_iterator.hpp>
+#include <jellyfish/mer_qual_iterator.hpp>
 #include <jellyfish/jellyfish.hpp>
 #include <jellyfish/merge_files.hpp>
 #include <jellyfish/mer_dna_bloom_counter.hpp>
 #include <jellyfish/generator_manager.hpp>
 #include <sub_commands/count_main_cmdline.hpp>
+
+static count_main_cmdline args; // Command line switches and arguments
 
 using std::chrono::system_clock;
 using std::chrono::duration;
@@ -52,10 +56,32 @@ using jellyfish::mer_dna;
 using jellyfish::mer_dna_bloom_counter;
 using jellyfish::mer_dna_bloom_filter;
 typedef std::vector<const char*> file_vector;
+
+// Types for parsing arbitrary sequence ignoring quality scores
 typedef jellyfish::mer_overlap_sequence_parser<jellyfish::stream_manager<file_vector::const_iterator> > sequence_parser;
 typedef jellyfish::mer_iterator<sequence_parser, mer_dna> mer_iterator;
 
-static count_main_cmdline args; // Command line switches and arguments
+// Types for parsing reads with quality score. Interface match type
+// above.
+class sequence_qual_parser :
+  public jellyfish::whole_sequence_parser<jellyfish::stream_manager<file_vector::const_iterator> >
+{
+  typedef jellyfish::stream_manager<file_vector::const_iterator> StreamIterator;
+  typedef jellyfish::whole_sequence_parser<StreamIterator> super;
+public:
+  sequence_qual_parser(uint16_t mer_len, uint32_t max_producers, uint32_t size, size_t buf_size,
+                       StreamIterator& streams) :
+    super(size, 100, max_producers, streams)
+  { }
+};
+
+class mer_qual_iterator : public jellyfish::mer_qual_iterator<sequence_qual_parser, mer_dna> {
+  typedef jellyfish::mer_qual_iterator<sequence_qual_parser, mer_dna> super;
+public:
+  mer_qual_iterator(sequence_qual_parser& parser, bool canonical = false) :
+    super(parser, args.min_qual_char_arg[0], canonical)
+  { }
+};
 
 // k-mer filters. Organized in a linked list, interpreted as a &&
 // (logical and). I.e. all filter must return true for the result to
@@ -95,21 +121,21 @@ struct filter_bf : public filter {
 };
 
 enum OPERATION { COUNT, PRIME, UPDATE };
-template<typename PathIterator>
-class mer_counter : public jellyfish::thread_exec {
+template<typename PathIterator, typename MerIteratorType, typename ParserType>
+class mer_counter_base : public jellyfish::thread_exec {
   int                                     nb_threads_;
   mer_hash&                               ary_;
   jellyfish::stream_manager<PathIterator> streams_;
-  sequence_parser                         parser_;
+  ParserType                              parser_;
   filter*                                 filter_;
   OPERATION                               op_;
 
 public:
-  mer_counter(int nb_threads, mer_hash& ary,
-              PathIterator file_begin, PathIterator file_end,
-              PathIterator pipe_begin, PathIterator pipe_end,
-              uint32_t concurent_files,
-              OPERATION op, filter* filter = new struct filter) :
+  mer_counter_base(int nb_threads, mer_hash& ary,
+                   PathIterator file_begin, PathIterator file_end,
+                   PathIterator pipe_begin, PathIterator pipe_end,
+                   uint32_t concurent_files,
+                   OPERATION op, filter* filter = new struct filter) :
     ary_(ary),
     streams_(file_begin, file_end, pipe_begin, pipe_end, concurent_files),
     parser_(mer_dna::k(), streams_.nb_streams(), 3 * nb_threads, 4096, streams_),
@@ -119,10 +145,11 @@ public:
 
   virtual void start(int thid) {
     size_t count = 0;
+    MerIteratorType mers(parser_, args.canonical_flag);
 
     switch(op_) {
-    case COUNT:
-      for(mer_iterator mers(parser_, args.canonical_flag) ; mers; ++mers) {
+     case COUNT:
+      for( ; mers; ++mers) {
         if((*filter_)(*mers))
           ary_.add(*mers, 1);
         ++count;
@@ -130,7 +157,7 @@ public:
       break;
 
     case PRIME:
-      for(mer_iterator mers(parser_, args.canonical_flag) ; mers; ++mers) {
+      for( ; mers; ++mers) {
         if((*filter_)(*mers))
           ary_.set(*mers);
         ++count;
@@ -139,7 +166,7 @@ public:
 
     case UPDATE:
       mer_dna tmp;
-      for(mer_iterator mers(parser_, args.canonical_flag) ; mers; ++mers) {
+      for( ; mers; ++mers) {
         if((*filter_)(*mers))
           ary_.update_add(*mers, 1, tmp);
         ++count;
@@ -149,15 +176,11 @@ public:
 
     ary_.done();
   }
-
-private:
-  // int                          nb_threads_;
-  // mer_hash&                    ary_;
-  // stream_manager<PathIterator> streams_;
-  // sequence_parser              parser_;
-  // FilterType                   filter_;
-  // OPERATION                    op_;
 };
+
+// Counter with and without quality value
+typedef mer_counter_base<file_vector::const_iterator, mer_iterator, sequence_parser> mer_counter;
+typedef mer_counter_base<file_vector::const_iterator, mer_qual_iterator, sequence_qual_parser> mer_qual_counter;
 
 mer_dna_bloom_counter* load_bloom_filter(const char* path) {
   std::ifstream in(path, std::ios::in|std::ios::binary);
@@ -195,6 +218,10 @@ int count_main(int argc, char *argv[])
   header.set_cmdline(argc, argv);
 
   args.parse(argc, argv);
+
+  if(args.min_qual_char_given && args.min_qual_char_arg.size() != 1)
+    count_main_cmdline::error("[-Q, --min-qual-char] must be one character.");
+
   mer_dna::k(args.mer_len_arg);
 
   std::unique_ptr<jellyfish::generator_manager> generator_manager;
@@ -227,10 +254,10 @@ int count_main(int argc, char *argv[])
 
   OPERATION do_op = COUNT;
   if(args.if_given) {
-    mer_counter<file_vector::const_iterator> counter(args.threads_arg, ary,
-                                                     args.if_arg.begin(), args.if_arg.end(),
-                                                     args.if_arg.end(), args.if_arg.end(), // no multi pipes
-                                                     args.Files_arg, PRIME);
+    mer_counter counter(args.threads_arg, ary,
+                        args.if_arg.begin(), args.if_arg.end(),
+                        args.if_arg.end(), args.if_arg.end(), // no multi pipes
+                        args.Files_arg, PRIME);
     counter.exec_join(args.threads_arg);
     do_op = UPDATE;
   }
@@ -257,12 +284,21 @@ int count_main(int argc, char *argv[])
     mer_filter.reset(new filter_bf(*bf));
   }
 
-  mer_counter<file_vector::const_iterator>  counter(args.threads_arg, ary,
-                                                    args.file_arg.begin(), args.file_arg.end(),
-                                                    pipes_begin, pipes_end,
-                                                    args.Files_arg,
-                                                    do_op, mer_filter.get());
-  counter.exec_join(args.threads_arg);
+  if(args.min_qual_char_given) {
+    mer_qual_counter counter(args.threads_arg, ary,
+                             args.file_arg.begin(), args.file_arg.end(),
+                             pipes_begin, pipes_end,
+                             args.Files_arg,
+                             do_op, mer_filter.get());
+    counter.exec_join(args.threads_arg);
+  } else {
+    mer_counter counter(args.threads_arg, ary,
+                        args.file_arg.begin(), args.file_arg.end(),
+                        pipes_begin, pipes_end,
+                        args.Files_arg,
+                        do_op, mer_filter.get());
+    counter.exec_join(args.threads_arg);
+  }
 
   // If we have a manager, wait for it
   if(generator_manager) {

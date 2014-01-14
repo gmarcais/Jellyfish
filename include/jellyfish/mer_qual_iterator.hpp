@@ -15,86 +15,104 @@
 */
 
 
-#ifndef __MER_ITERATOR_HPP__
-#define __MER_ITERATOR_HPP__
+#ifndef __MER_QUAL_ITERATOR_HPP__
+#define __MER_QUAL_ITERATOR_HPP__
 
 #include <iterator>
 #include <jellyfish/mer_dna.hpp>
 
 namespace jellyfish {
 template<typename SequencePool, typename MerType>
-class mer_iterator : public std::iterator<std::input_iterator_tag,MerType> {
+class mer_qual_iterator : public std::iterator<std::input_iterator_tag, MerType> {
   typename SequencePool::job* job_;
-  const char*                 cseq_;
+  std::string::const_iterator cseq_, eseq_;
+  std::string::const_iterator cqual_, equal_;
   MerType                     m_; // mer
   MerType                     rcm_; // reverse complement mer
   unsigned int                filled_;
+  const char                  min_qual_;
   const bool                  canonical_;
+  size_t                      index_;
 
 public:
   typedef MerType      mer_type;
   typedef SequencePool sequence_parser_type;
 
-  mer_iterator(SequencePool& seq, bool canonical = false) :
-    job_(new typename SequencePool::job(seq)), cseq_(0), filled_(0), canonical_(canonical)
+  mer_qual_iterator(SequencePool& seq, char min_qual, bool canonical = false) :
+    job_(new typename SequencePool::job(seq)),
+    filled_(0), min_qual_(min_qual), canonical_(canonical), index_(0)
   {
     if(job_->is_empty()) {
       delete job_;
       job_ = 0;
     } else {
-      cseq_ = (*job_)->start;
+      init_from_job();
       this->operator++();
     }
   }
-  mer_iterator() : job_(0), cseq_(0), filled_(0), canonical_(false) { }
+  mer_qual_iterator() : job_(0), filled_(0), canonical_(false), index_(0) { }
   //  mer_iterator(const mer_iterator& rhs) : job_(rhs.job_), cseq_(rhs.cseq_), m_(rhs.m_), filled_(rhs.filled_) { }
-  ~mer_iterator() {
+  ~mer_qual_iterator() {
     delete job_;
   }
 
-  bool operator==(const mer_iterator& rhs) const { return job_ == rhs.job_; }
-  bool operator!=(const mer_iterator& rhs) const { return job_ != rhs.job_; }
+  bool operator==(const mer_qual_iterator& rhs) const { return job_ == rhs.job_; }
+  bool operator!=(const mer_qual_iterator& rhs) const { return job_ != rhs.job_; }
 
   operator void*() const { return (void*)job_; }
   const mer_type& operator*() const { return !canonical_ || m_ < rcm_ ? m_ : rcm_; }
   const mer_type* operator->() const { return &this->operator*(); }
-  mer_iterator& operator++() {
+  mer_qual_iterator& operator++() {
     while(true) {
-      while(cseq_ == (*job_)->end) {
-        job_->next();
-        if(job_->is_empty()) {
-          delete job_;
-          job_  = 0;
-          cseq_ = 0;
-          return *this;
+      while(cseq_ == eseq_) {
+        ++index_;
+        while(index_ >= (*job_)->nb_filled) {
+          index_ = 0;
+          job_->next();
+          if(job_->is_empty()) {
+            delete job_;
+            job_  = 0;
+            return *this;
+          }
         }
-        cseq_   = (*job_)->start;
+        init_from_job();
         filled_ = 0;
-      }
+        }
 
       do {
-        int code = m_.code(*cseq_++);
-        if(code >= 0) {
+        const int  code = m_.code(*cseq_++);
+        const char qual = cqual_ < equal_ ? *cqual_++ : std::numeric_limits<char>::min();
+        if(code >= 0 && qual >= min_qual_) {
           m_.shift_left(code);
           if(canonical_)
             rcm_.shift_right(rcm_.complement(code));
           filled_ = std::min(filled_ + 1, mer_dna::k());
         } else
           filled_ = 0;
-      } while(filled_ < m_.k() && cseq_ < (*job_)->end);
+      } while(filled_ < m_.k() && cseq_ < eseq_);
       if(filled_ >= m_.k())
         break;
     }
     return *this;
   }
 
-  mer_iterator operator++(int) {
-    mer_iterator res(*this);
+  mer_qual_iterator operator++(int) {
+    mer_qual_iterator res(*this);
     ++*this;
     return res;
+  }
+
+private:
+  void init_from_job() {
+    std::string& seq = (*job_)->data[index_].seq;
+    cseq_  = seq.cbegin();
+    eseq_  = seq.cend();
+    std::string& quals = (*job_)->data[index_].qual;
+    cqual_ = quals.cbegin();
+    equal_ = quals.cend();
   }
 };
 
 } // namespace jellyfish {
 
-#endif /* __MER_ITERATOR_HPP__ */
+#endif /* __MER_QUAL_ITERATOR_HPP__ */

@@ -16,3 +16,7 @@ cloc_library:
 
 # Make a dependency on yaggo the software
 $(YAGGO_SOURCES): $(YAGGO)
+
+# Launch unit tests
+unittests:
+	@$(MAKE) check TESTS=unit_tests/unit_tests.sh

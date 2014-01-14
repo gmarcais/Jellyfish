@@ -40,6 +40,7 @@ bin_jellyfish_SOURCES = sub_commands/jellyfish.cc	\
                         sub_commands/info_main.cc	\
                         sub_commands/dump_main.cc	\
                         sub_commands/histo_main.cc	\
+                        sub_commands/stats_main.cc	\
                         sub_commands/merge_main.cc	\
                         sub_commands/bc_main.cc		\
                         sub_commands/query_main.cc	\
@@ -52,6 +53,7 @@ YAGGO_SOURCES += sub_commands/count_main_cmdline.hpp	\
                  sub_commands/info_main_cmdline.hpp	\
                  sub_commands/dump_main_cmdline.hpp	\
                  sub_commands/histo_main_cmdline.hpp	\
+                 sub_commands/stats_main_cmdline.hpp	\
                  sub_commands/merge_main_cmdline.hpp	\
                  sub_commands/bc_main_cmdline.hpp	\
                  sub_commands/query_main_cmdline.hpp	\
@@ -109,11 +111,12 @@ library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
                           $(JFI)/generator_manager.hpp			\
                           $(JFI)/cpp_array.hpp				\
                           $(JFI)/mer_iterator.hpp			\
-                          $(JFI)/atomic_bits_array.hpp
+                          $(JFI)/atomic_bits_array.hpp			\
+                          $(JFI)/stdio_filebuf.hpp			\
+                          $(JFI)/mer_qual_iterator.hpp
 
 
-noinst_HEADERS += jellyfish/fstream_default.hpp			\
-                  include/jflib/tmpstream.hpp jellyfish/dbg.hpp	\
+noinst_HEADERS += jellyfish/fstream_default.hpp jellyfish/dbg.hpp	\
                   jellyfish/randomc.h jellyfish/merge_files.hpp
 
 ###############
@@ -151,6 +154,7 @@ tests/multi_file.log: tests/generate_sequence.log
 tests/merge.log: tests/generate_sequence.log
 tests/min_qual.log: tests/generate_fastq_sequence.log
 tests/large_key.log: tests/generate_sequence.log
+tests/quality_filter.log: tests/generate_sequence.log
 
 ##############
 # Unit tests #
@@ -181,7 +185,8 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_allocators_mmap.cc		\
 	               unit_tests/test_cooperative_pool2.cc		\
 	               unit_tests/test_generator_manager.cc		\
-	               unit_tests/test_atomic_bits_array.cc
+	               unit_tests/test_atomic_bits_array.cc		\
+	               unit_tests/test_stdio_filebuf.cc
 bin_test_all_SOURCES += jellyfish/backtrace.cc
 
 bin_test_all_CPPFLAGS = -Dprotected=public -Dprivate=public -DJSON_IS_AMALGAMATION=1
@@ -193,8 +198,6 @@ noinst_HEADERS += unit_tests/test_main.hpp
 include gtest.mk
 -include $(top_srcdir)/development.mk
 
-########
-# info #
-########
+# Print the value of a variable
 print-%:
 	@echo -n $($*)

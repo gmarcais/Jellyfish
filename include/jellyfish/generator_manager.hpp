@@ -18,6 +18,10 @@
 #ifndef __JELLYFISH_SPAWN_EXTERNAL_HPP_
 #define __JELLYFISH_SPAWN_EXTERNAL_HPP_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -28,7 +32,13 @@
 #include <map>
 #include <stdexcept>
 
+#ifdef HAVE_EXT_STDIO_FILEBUF_H
 #include <ext/stdio_filebuf.h>
+#define STDIO_FILEBUF_TYPE __gnu_cxx::stdio_filebuf<std::istream::char_type>
+#else
+#include <jellyfish/stdio_filebuf.hpp>
+#define STDIO_FILEBUF_TYPE jellyfish::stdio_filebuf<std::istream::char_type>
+#endif
 
 #include <jellyfish/err.hpp>
 
@@ -42,7 +52,7 @@ class cloexec_istream : public std::istream
 {
   static std::streambuf* open_file(const char* path) {
     int fd = open_cloexec(path, O_RDONLY);
-    return new __gnu_cxx::stdio_filebuf<std::istream::char_type>(fd, std::ios::in);
+    return new STDIO_FILEBUF_TYPE(fd, std::ios::in);
   }
 
 public:

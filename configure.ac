@@ -1,4 +1,4 @@
-AC_INIT([jellyfish], [2.0.0], [gmarcais@umd.edu])
+AC_INIT([jellyfish], [2.1.0], [gmarcais@umd.edu])
 AC_CANONICAL_HOST
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([subdir-objects foreign parallel-tests color-tests])
@@ -82,8 +82,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <mach-o/dyld.h>]],
                   [AC_MSG_RESULT([no])])
 
 # Check the version of strerror_r
-AC_FUNC_STRERROR_R      
-AC_CHECK_HEADERS([execinfo.h])
+AC_CHECK_HEADERS_ONCE([execinfo.h ext/stdio_filebuf.h])
 AC_CHECK_MEMBER([siginfo_t.si_int],
                 [AC_DEFINE([HAVE_SI_INT], [1], [Define if siginfo_t.si_int exists])],
                 [], [[#include <signal.h>]])
