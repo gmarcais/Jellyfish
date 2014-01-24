@@ -63,8 +63,8 @@ TEST(BinarySearchFirst, Int) {
 
 TEST(Slices, NonOverlapAll) {
   for(int iteration = 0; iteration < 100; ++iteration) {
-    unsigned int size      = random_bits(20);
     unsigned int nb_slices = random_bits(4) + 1;
+    unsigned int size      = std::max(nb_slices, (unsigned int)random_bits(20));
     SCOPED_TRACE(::testing::Message() << "iteration:" << iteration
                  << " size:" << size << " nb_slices:" << nb_slices);
 
