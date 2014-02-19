@@ -38,8 +38,8 @@ TEST(MappedFile, CreateMove) {
   ASSERT_EQ((char*)0, mf.base());
 }
 
-// Clang does not
-#ifndef __clang__
+// Gtest and newer compilers seem to have a problem with EXPECT_THROW
+#if !defined(__clang__) && (!defined(GTEST_GCC_VER_) || GTEST_GCC_VER_ < 40800)
 TEST(MappedFile, Fail) {
   const char* bad_file = "/doesntexistsforsure/thatwouldbecrazy!";
   EXPECT_THROW(mapped_file mf(bad_file), jellyfish::mapped_file::ErrorMMap);
