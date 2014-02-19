@@ -105,11 +105,11 @@ public:
 private:
   void init_from_job() {
     std::string& seq = (*job_)->data[index_].seq;
-    cseq_  = seq.cbegin();
-    eseq_  = seq.cend();
+    cseq_  = seq.begin();
+    eseq_  = seq.end();
     std::string& quals = (*job_)->data[index_].qual;
-    cqual_ = quals.cbegin();
-    equal_ = quals.cend();
+    cqual_ = quals.begin();
+    equal_ = quals.end();
   }
 };
 

@@ -75,7 +75,7 @@ class atomic_bits_array_base {
     const int off_;
     T         prev_word_;
 
-    constexpr Value get_val(T v) {
+    Value get_val(T v) const {
       return static_cast<Value>((v & mask_) >> off_);
     }
 
