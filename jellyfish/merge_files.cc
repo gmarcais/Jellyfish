@@ -49,7 +49,9 @@ typedef std::auto_ptr<RectangularBinaryMatrix> matrix_ptr;
 
 template<typename reader_type, typename writer_type>
 void do_merge(cpp_array<file_info>& files, std::ostream& out, writer_type& writer,
-              uint64_t min, uint64_t max) {
+              uint64_t min, uint64_t max,
+              uint64_vec min_pos, uint64_vec max_pos
+) {
   cpp_array<reader_type> readers(files.size());
   typedef jellyfish::mer_heap::heap<mer_dna, reader_type> heap_type;
   typedef typename heap_type::const_item_t heap_item;
@@ -57,32 +59,61 @@ void do_merge(cpp_array<file_info>& files, std::ostream& out, writer_type& write
 
   for(size_t i = 0; i < files.size(); ++i) {
     readers.init(i, files[i].is, &files[i].header);
+    readers[i].min_max_pos(min_pos[i], max_pos[i]);
     if(readers[i].next())
       heap.push(readers[i]);
   }
 
+  
   heap_item head = heap.head();
   mer_dna   key;
   while(heap.is_not_empty()) {
-    key = head->key_;
-    uint64_t sum = 0;
-    do {
-      sum += head->val_;
-      heap.pop();
-      if(head->it_->next())
-        heap.push(*head->it_);
-      head = heap.head();
-    } while(head->key_ == key && heap.is_not_empty());
-    if(sum >= min && sum <= max)
-      writer.write(out, key, sum);
+      key = head->key_;
+      uint64_t sum = 0;
+      do {
+          sum += head->val_;
+          heap.pop();
+          if(head->it_->next())
+              heap.push(*head->it_);
+          head = heap.head();
+      } while(head->key_ == key && heap.is_not_empty());
+      
+      if(sum >= min && sum <= max)
+          writer.write(out, key, sum);
   }
 }
 
 // Merge files. Throws an error if unsuccessful.
+
 void merge_files(std::vector<const char*> input_files,
                  const char* out_file,
                  file_header& out_header,
                  uint64_t min, uint64_t max) {
+
+  uint64_t min_pos = 0;
+  uint64_t max_pos = std::numeric_limits<uint64_t>::max();
+  
+  uint64_vec min_pos_l;
+  uint64_vec max_pos_l;
+
+  for ( uint64_t i = 0; i < input_files.size(); ++i ) {
+    min_pos_l.push_back( min_pos );
+    max_pos_l.push_back( max_pos );
+  }
+  
+  merge_files2(input_files,
+              out_file,
+              out_header,
+              min, max,
+              min_pos_l, max_pos_l
+              );
+}
+
+void merge_files2(std::vector<const char*> input_files,
+                 const char* out_file,
+                 file_header& out_header,
+                 uint64_t min, uint64_t max,
+                 uint64_vec min_pos, uint64_vec max_pos) {
   unsigned int key_len            = 0;
   size_t       max_reprobe_offset = 0;
   size_t       size               = 0;
@@ -137,11 +168,11 @@ void merge_files(std::vector<const char*> input_files,
     out_header.counter_len(out_counter_len);
     out_header.write(out);
     binary_writer writer(out_counter_len, key_len);
-    do_merge<binary_reader, binary_writer>(files, out, writer, min, max);
+    do_merge<binary_reader, binary_writer>(files, out, writer, min, max, min_pos, max_pos);
   } else if(!format.compare(text_dumper::format)) {
     out_header.write(out);
     text_writer writer;
-    do_merge<text_reader, text_writer>(files, out, writer, min, max);
+    do_merge<text_reader, text_writer>(files, out, writer, min, max, min_pos, max_pos);
   } else {
     eraise(MergeError) << "Unknown format '" << format << "'";
   }
