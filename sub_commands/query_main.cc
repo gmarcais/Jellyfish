@@ -64,6 +64,23 @@ void query_from_cmdline(std::vector<const char*> mers, const Database& db, std::
   }
 }
 
+template<typename Database>
+void query_from_stdin(const Database& db, std::ostream& out, bool canonical) {
+  char buffer[4096];
+  mer_dna m;
+
+  while (std::cin.getline (buffer, 4096)) {
+    try {
+      m = buffer;
+      if(canonical)
+        m.canonicalize();
+      out << db.check (m) << std::endl;  // a flush is need for interactive use
+    } catch(std::length_error e) {
+      std::cerr << "Invalid mer '" << buffer << "'" << std::endl;
+    }
+  }
+}
+
 int query_main(int argc, char *argv[])
 {
   args.parse(argc, argv);
@@ -85,12 +102,14 @@ int query_main(int argc, char *argv[])
     in.close();
     query_from_sequence(args.sequence_arg.begin(), args.sequence_arg.end(), filter, out, header.canonical());
     query_from_cmdline(args.mers_arg, filter, out, header.canonical());
+    if (args.interactive_flag)  query_from_stdin(filter, out, header.canonical());
   } else if(header.format() == binary_dumper::format) {
     jellyfish::mapped_file binary_map(args.file_arg);
     binary_query bq(binary_map.base() + header.offset(), header.key_len(), header.counter_len(), header.matrix(),
                                header.size() - 1, binary_map.length() - header.offset());
     query_from_sequence(args.sequence_arg.begin(), args.sequence_arg.end(), bq, out, header.canonical());
     query_from_cmdline(args.mers_arg, bq, out, header.canonical());
+    if (args.interactive_flag)  query_from_stdin(bq, out, header.canonical());
   } else {
     die << "Unsupported format '" << header.format() << "'. Must be a bloom counter or binary list.";
   }
