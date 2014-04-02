@@ -7,6 +7,9 @@ option("s", "sequence") {
 option("o", "output") {
   description "Output file (stdout)"
   c_string; typestr "path" }
+option("i", "interactive") {
+  description "Interactive, queries from stdin"
+  flag; off }
 arg("file") {
   description "Jellyfish database"
   c_string; typestr "path" }

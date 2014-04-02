@@ -155,6 +155,68 @@ TEST(MerDNASimple, SetBits) {
   }
 }
 
+TEST(MerDNASimple, Shifts) {
+  for(int i = 1; i < 100; ++i) {
+    mer_dna::k(i);
+    mer_dna m;
+
+    m.randomize();
+    const int c = ::random_bits(2);
+    mer_dna rm(m);
+    rm.shift_right(c);
+    mer_dna lm(m);
+    lm.shift_left(c);
+
+    EXPECT_EQ(c, rm.base(mer_dna::k() - 1).code());
+    EXPECT_EQ(c, lm.base(0).code());
+    for(unsigned int j = 0; j < mer_dna::k() - 1; ++j) {
+      EXPECT_EQ(m.base(j + 1).code(), rm.base(j).code());
+      EXPECT_EQ(m.base(j).code(), lm.base(j + 1).code());
+    }
+  }
+} // MerDNASimple.Shifts
+
+
+bool simple_homolymer_test(const mer_dna& m) {
+  mer_dna cm(m);
+  cm.shift_right(m.base(0).code());
+  return cm == m;
+}
+
+TEST(MerDNASimple, Homopolymer) {
+  for(int i = 1; i < 256; ++i) {
+    SCOPED_TRACE(::testing::Message() << "i:" << i);
+    mer_dna::k(i);
+    mer_dna m;
+
+    for(int j = 0; j < 10; ++j) {
+      m.randomize();
+      EXPECT_EQ(simple_homolymer_test(m), m.is_homopolymer());
+    }
+
+    m.polyA();
+    EXPECT_TRUE(simple_homolymer_test(m));
+    EXPECT_TRUE(m.is_homopolymer());
+    if(i > 1) { // i == 1 all mers are homopolymers by definition
+      m.base(::random_bits(5) % i) = 'T';
+      if(simple_homolymer_test(m) || m.is_homopolymer())
+        std::cerr << m << "\n";
+      EXPECT_FALSE(simple_homolymer_test(m));
+      EXPECT_FALSE(m.is_homopolymer());
+    }
+
+    m.polyC();
+    EXPECT_TRUE(simple_homolymer_test(m));
+    EXPECT_TRUE(m.is_homopolymer());
+    m.polyG();
+    EXPECT_TRUE(simple_homolymer_test(m));
+    EXPECT_TRUE(m.is_homopolymer());
+    m.polyT();
+    EXPECT_TRUE(simple_homolymer_test(m));
+    EXPECT_TRUE(m.is_homopolymer());
+  }
+} // MerDNASimple.Homopolymer
+
 TEST(MerDNASimple, Comparators) {
   mer_dna::k(151);
   mer_dna ma, mc, mg, mt;

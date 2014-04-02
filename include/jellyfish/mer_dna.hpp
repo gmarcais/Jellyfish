@@ -280,6 +280,29 @@ public:
     clean_msw();
   }
 
+  bool is_homopolymer() const {
+    const base_type    base    = _data[0] & c3;
+    const unsigned int barrier = nb_words();
+    unsigned int       i       = 0;
+
+    for( ; i + 5 < barrier; i += 4) {
+      if(_data[i    ] != ((_data[i    ] << 2) | base)) return false;
+      if(_data[i + 1] != ((_data[i + 1] << 2) | base)) return false;
+      if(_data[i + 2] != ((_data[i + 2] << 2) | base)) return false;
+      if(_data[i + 3] != ((_data[i + 3] << 2) | base)) return false;
+    }
+
+    switch(nb_words() - i) {
+    case 5: if(_data[i] !=  ((_data[i] << 2) | base)         ) return false; ++i;
+    case 4: if(_data[i] !=  ((_data[i] << 2) | base)         ) return false; ++i;
+    case 3: if(_data[i] !=  ((_data[i] << 2) | base)         ) return false; ++i;
+    case 2: if(_data[i] !=  ((_data[i] << 2) | base)         ) return false; ++i;
+    case 1: if(_data[i] != (((_data[i] << 2) | base) & msw())) return false;
+    }
+
+    return true;
+  }
+
   derived& operator=(const mer_base& rhs) {
     memcpy(_data, rhs._data, nb_words() * sizeof(base_type));
     return *static_cast<derived*>(this);

@@ -153,36 +153,46 @@ public:
   }
 
   bool val_id(const Key& key,  Val* res, uint64_t* id) const {
-    if(last_id_ == 0)
-      return false;
-    if(key == first_key_) {
-      val_at(0, res);
-      *id = 0;
-      return true;
-    }
-    if(key == last_key_) {
-      val_at(last_id_ - 1, res);
-      *id = last_id_ - 1;
-      return true;
-    }
+    if(last_id_ == 0) return false;
+    uint64_t first     = 0;
+    uint64_t last      = last_id_;
+    uint64_t first_pos = first_pos_;
+    uint64_t last_pos  = last_pos_;
     const uint64_t pos = key_pos(key);
-    if(pos < first_pos_ || pos > last_pos_)
-      return false;
-    uint64_t first = 0, last = last_id_;
-    while(first + 1 < last) {
-      *id = (first + last) / 2;
-      key_at(*id, mid_key_);
-      if(key == mid_key_) {
-        val_at(*id, res);
-        return true;
-      }
+    uint64_t cid       = 0;
+    if(key == first_key_) goto found;
+    cid = last_id_ - 1;
+    if(key == last_key_) goto found;
+    if(pos < first_pos_ || pos > last_pos_) return false;
+
+    // First a guided binary search
+    for(uint64_t diff = last - first; diff >= 8; diff = last - first) {
+      cid = first + lrint(diff * ((double)(pos - first_pos) / (double)(last_pos - first_pos)));
+      cid = std::max(first + 1, cid);
+      cid = std::min(cid, last - 1);
+      key_at(cid, mid_key_);
+      if(key == mid_key_) goto found;
       uint64_t mid_pos = key_pos(mid_key_);
-      if(mid_pos > pos || (mid_pos == pos && mid_key_ > key))
-        last = *id;
-      else
-        first = *id;
+      if(mid_pos > pos || (mid_pos == pos && mid_key_ > key)) {
+        last     = cid;
+        last_pos = mid_pos;
+      } else {
+        first     = cid;
+        first_pos = mid_pos;
+      }
+    }
+
+    // Then a linear search (avoids matrix computation)
+    for(cid = first + 1; cid < last; ++cid) {
+      key_at(cid, mid_key_);
+      if(key == mid_key_) goto found;
     }
     return false;
+
+  found:
+    val_at(cid, res);
+    *id = cid;
+    return true;
   }
 
   Val operator[](const Key& key) const {
