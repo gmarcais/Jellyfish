@@ -18,6 +18,7 @@
 #define __JELLYFISH_BINARY_DUMPER_HPP__
 
 #include <iostream>
+#include <cmath>
 
 #include <jellyfish/sorted_dumper.hpp>
 
