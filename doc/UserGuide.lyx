@@ -1299,6 +1299,82 @@ count
 \end_layout
 
 \begin_layout Section
+stats 
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:stats"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The stats subcommand computes some statistics about the mers.
+ Although these statistics could be computed from the histogram, it provides
+ quick summary information.
+ The fields are:
+\end_layout
+
+\begin_layout Description
+Unique The number of 
+\begin_inset Formula $k$
+\end_inset
+
+-mer occuring exactly once
+\end_layout
+
+\begin_layout Description
+Distinct The number of 
+\begin_inset Formula $k$
+\end_inset
+
+-mers, ignoring their multiplicity (i.e.
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+@
+\end_layout
+
+\end_inset
+
+ the cardinality of the set of 
+\begin_inset Formula $k$
+\end_inset
+
+-mers)
+\end_layout
+
+\begin_layout Description
+Total The number of 
+\begin_inset Formula $k$
+\end_inset
+
+-mers with multiplicity (i.e.
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+@
+\end_layout
+
+\end_inset
+
+ the sum of the number of occurence of all the mers)
+\end_layout
+
+\begin_layout Description
+Max_count The maximum of the number of occurences
+\end_layout
+
+\begin_layout Section
 cite
 \begin_inset CommandInset label
 LatexCommand label
