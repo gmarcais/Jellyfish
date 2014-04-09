@@ -26,3 +26,7 @@ make
 sudo make install
 ```
 
+Extra / Examples
+----------------
+
+In the examples directory are potentially useful extra programs to query/manipulates output files from Jellyfish. The examples are not compiled by default. Each subdirectory of examples is independent and is compiled with a simple invocation of 'make'.
