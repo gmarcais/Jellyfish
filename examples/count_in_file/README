@@ -1,0 +1,17 @@
+What is it?
+===========
+
+Given a number of jellyfish databases, it outputs for all the k-mers
+(in the union of the database) the number of occurrences in each of
+the database. The output is a column format where the first column is
+the k-mer and the remaining columns are the counts in each of the
+databases, in the same order as given on the command line.
+
+For example:
+
+$ ./count_in_file db1.jf db2.jf
+GCCACGACTCGTGCA 1 0
+CAAGCTGTGTGGCCG 0 2
+CATAGAAATCGATAA 3 5
+TACTATATAAGCAAA 2 0
+...
