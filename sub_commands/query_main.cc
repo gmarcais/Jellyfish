@@ -105,6 +105,9 @@ int query_main(int argc, char *argv[])
     if(args.interactive_flag)  query_from_stdin(filter, out, header.canonical());
   } else if(header.format() == binary_dumper::format) {
     jellyfish::mapped_file binary_map(args.file_arg);
+    if(!args.no_load_flag &&
+       (args.load_flag || (args.sequence_arg.begin() != args.sequence_arg.end()) || (args.mers_arg.size() > 100)))
+      binary_map.load();
     binary_query bq(binary_map.base() + header.offset(), header.key_len(), header.counter_len(), header.matrix(),
                                header.size() - 1, binary_map.length() - header.offset());
     query_from_sequence(args.sequence_arg.begin(), args.sequence_arg.end(), bq, out, header.canonical());

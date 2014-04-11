@@ -10,6 +10,12 @@ option("o", "output") {
 option("i", "interactive") {
   description "Interactive, queries from stdin"
   flag; off }
+option("l", "load") {
+  description "Force pre-loading of database file into memory"
+  off }
+option("L", "no-load") {
+  description "Disable pre-loading of database file into memory"
+  off }
 arg("file") {
   description "Jellyfish database"
   c_string; typestr "path" }
