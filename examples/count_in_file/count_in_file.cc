@@ -37,7 +37,6 @@ using jellyfish::mer_dna;
 using jellyfish::cpp_array;
 typedef std::unique_ptr<binary_reader>           binary_reader_ptr;
 typedef std::unique_ptr<text_reader>             text_reader_ptr;
-typedef std::unique_ptr<RectangularBinaryMatrix> matrix_ptr;
 
 struct file_info {
   std::ifstream is;
@@ -51,27 +50,28 @@ struct file_info {
 
 
 struct common_info {
-  unsigned int key_len;
-  size_t       max_reprobe_offset;
-  size_t       size;
-  unsigned int out_counter_len;
-  std::string  format;
-  matrix_ptr   matrix;
+  unsigned int            key_len;
+  size_t                  max_reprobe_offset;
+  size_t                  size;
+  unsigned int            out_counter_len;
+  std::string             format;
+  RectangularBinaryMatrix matrix;
+
+  common_info(RectangularBinaryMatrix&& m) : matrix(std::move(m))
+  { }
 };
 
 common_info read_headers(int argc, char* input_files[], cpp_array<file_info>& files) {
-  common_info res;
-
   // Read first file
   files.init(0, input_files[0]);
   if(!files[0].is.good())
     die << "Failed to open input file '" << input_files[0] << "'";
 
   file_header& h = files[0].header;
+  common_info res(h.matrix());
   res.key_len            = h.key_len();
   res.max_reprobe_offset = h.max_reprobe_offset();
   res.size               = h.size();
-  res.matrix.reset(new RectangularBinaryMatrix(h.matrix()));
   res.format = h.format();
   size_t reprobes[h.max_reprobe() + 1];
   h.get_reprobes(reprobes);
@@ -90,7 +90,7 @@ common_info read_headers(int argc, char* input_files[], cpp_array<file_info>& fi
       die << "Can't compare hashes with different reprobing strategies";
     if(res.size != h.size())
       die << "Can't compare hash with different size (" << res.size << ", " << h.size() << ")";
-    if(*res.matrix != h.matrix())
+    if(res.matrix != h.matrix())
       die << "Can't compare hash with different hash function";
   }
 
@@ -153,39 +153,3 @@ int main(int argc, char *argv[])
 
   return 0;
 }
-
-  // // populate the initial heap
-  // typedef jellyfish::heap_t<hash_index> hheap_t;
-  // hheap_t heap(num_hashes);
-
-  // for(int h = 0; h < num_hashes; ++h) {
-  //   if(iters[h].next())
-  //     heap.push(iters[h]);
-  // }
-
-  // // output counts in each files
-  // hheap_t::const_item_t head = heap.head();
-  // uint64_t* counts = new uint64_t[num_hashes];
-  // const uint_t mer_len = rklen / 2;
-  // char mer_str[mer_len + 1];
-
-  // while(heap.is_not_empty()) {
-  //   uint64_t key = head->key;
-  //   memset(counts, '\0', sizeof(uint64_t) * num_hashes);
-  //   do {
-  //     counts[head->it->index] = head->val;
-
-  //     heap.pop();
-  //     if(head->it->next())
-  //       heap.push(*head->it);
-  //     head = heap.head();
-  //   } while(heap.is_not_empty() && head->key == key);
-
-  //   // Print counts
-  //   jellyfish::parse_dna::mer_binary_to_string(key, mer_len, mer_str);
-  //   std::cout << mer_str;
-  //   for(int i = 0; i < num_hashes; ++i)
-  //     std::cout << " " << counts[i];
-  //   std::cout << "\n";
-  // }
-  // std::cout << std::flush;

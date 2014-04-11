@@ -40,7 +40,7 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
   while(true) {
     sequence_parser::job j(parser);
     if(j.is_empty()) break;
-    for(int i = 0; i < j->nb_filled; ++i) {
+    for(size_t i = 0; i < j->nb_filled; ++i) {
       std::cout << ">" << j->data[i].header << "\n";
       mers = j->data[i].seq;
       if(mers != mers_end) {
