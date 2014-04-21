@@ -80,17 +80,18 @@ common_info read_headers(int argc, char* input_files[], cpp_array<file_info>& fi
   // Other files must match
   for(int i = 1; i < argc; i++) {
     files.init(i, input_files[i]);
+    file_header& nh = files[i].header;
     if(!files[i].is.good())
       die << "Failed to open input file '" << input_files[i] << "'";
-    if(res.format != h.format())
-      die << "Can't compare files with different formats (" << res.format << ", " << h.format() << ")";
-    if(res.key_len != h.key_len())
-      die << "Can't compare hashes of different key lengths (" << res.key_len << ", " << h.key_len() << ")";
-    if(res.max_reprobe_offset != h.max_reprobe_offset())
+    if(res.format != nh.format())
+      die << "Can't compare files with different formats (" << res.format << ", " << nh.format() << ")";
+    if(res.key_len != nh.key_len())
+      die << "Can't compare hashes of different key lengths (" << res.key_len << ", " << nh.key_len() << ")";
+    if(res.max_reprobe_offset != nh.max_reprobe_offset())
       die << "Can't compare hashes with different reprobing strategies";
-    if(res.size != h.size())
-      die << "Can't compare hash with different size (" << res.size << ", " << h.size() << ")";
-    if(res.matrix != h.matrix())
+    if(res.size != nh.size())
+      die << "Can't compare hash with different size (" << res.size << ", " << nh.size() << ")";
+    if(res.matrix != nh.matrix())
       die << "Can't compare hash with different hash function";
   }
 
