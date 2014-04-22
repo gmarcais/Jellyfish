@@ -7,4 +7,4 @@ LDFLAGS += -shared $(JELLYFISH_LIBS) $(JELLYFISH_RPATH) $(RUBY_LIBS)
 
 : ../jellyfish.i |> !swigxx |> jellyfish_wrap.cxx
 : jellyfish_wrap.cxx |> !cxx |>
-: jellyfish_wrap.o |> !lxxd |> jellyfish.so
+: jellyfish_wrap.o |> !lxxd |> jellyfish.so <jf>

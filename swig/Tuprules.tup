@@ -40,6 +40,12 @@ else
   SWIG = swig
 endif
 
+ifdef JELLYFISH
+  JELLYFISH = @(JELLYFISH)
+else
+  JELLYFISH = jellyfish
+endif
+
 CXXFLAGS = -Wall -std=c++0x
 ifdef JELLYFISH_CFLAGS
   JELLYFISH_CFLAGS = @(JELLYFISH_CFLAGS)
