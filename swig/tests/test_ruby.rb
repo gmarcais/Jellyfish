@@ -23,4 +23,16 @@ class TestMerFile < MiniTest::Unit::TestCase
     
     assert_equal jf_histo, histo
   end
+
+  def test_dump
+    open("sequence.dump") { |f|
+      f.lines.each { |l|
+        mer, count = l.split
+        assert @mf.next2
+        assert_equal(mer, @mf.key.to_s)
+        assert_equal(count.to_i, @mf.val)
+      }
+    }
+    assert !@mf.next2
+  end
 end
