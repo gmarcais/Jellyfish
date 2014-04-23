@@ -5,14 +5,15 @@ use warnings;
 use Test::More;
 
 require_ok('jellyfish');
+my $data = shift(@ARGV);
 
 # Compare histo
 {
-  my $rf = jellyfish::ReadMerFile->new("sequence.jf");
+  my $rf = jellyfish::ReadMerFile->new($data . "/sequence.jf");
   my @histo;
   $histo[$rf->val]++ while($rf->next2);
 
-  open(my $io, "<", "sequence.histo");
+  open(my $io, "<", $data . "/sequence.histo");
   my @jf_histo;
   while(<$io>) {
     my ($freq, $count) = split;
@@ -24,8 +25,8 @@ require_ok('jellyfish');
 
 # Compare dump
 {
-  my $rf = jellyfish::ReadMerFile->new("sequence.jf");
-  my $equal = open(my $io, "<", "sequence.dump");
+  my $rf = jellyfish::ReadMerFile->new($data . "/sequence.jf");
+  my $equal = open(my $io, "<", $data . "/sequence.dump");
   while(<$io>) {
     my ($mer, $count) = split;
     $equal &&= $rf->next2;

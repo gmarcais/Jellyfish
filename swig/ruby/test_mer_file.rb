@@ -1,12 +1,11 @@
-#! /usr/bin/env ruby
-
 require 'minitest/autorun'
 require 'jellyfish'
 
+$data = ARGV.shift
 
 class TestMerFile < MiniTest::Unit::TestCase
   def setup
-    @mf = Jellyfish::ReadMerFile.new("sequence.jf")
+    @mf = Jellyfish::ReadMerFile.new(File.join($data, "sequence.jf"))
   end
 
   def test_histo
@@ -14,7 +13,7 @@ class TestMerFile < MiniTest::Unit::TestCase
     histo[@mf.val] = (histo[@mf.val] || 0) + 1 while @mf.next2
 
     jf_histo = []
-    open("sequence.histo") { |f|
+    open(File.join($data, "sequence.histo")) { |f|
       f.lines.each { |l|
         freq, count = l.split.map {|x| x.to_i }
         jf_histo[freq] = count
@@ -25,7 +24,7 @@ class TestMerFile < MiniTest::Unit::TestCase
   end
 
   def test_dump
-    open("sequence.dump") { |f|
+    open(File.join($data, "sequence.dump")) { |f|
       f.lines.each { |l|
         mer, count = l.split
         assert @mf.next2

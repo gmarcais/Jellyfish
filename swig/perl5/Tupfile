@@ -8,3 +8,7 @@ LDFLAGS += -shared $(JELLYFISH_LIBS) $(JELLYFISH_RPATH) $(PERL_LIBS)
 : ../jellyfish.i |> !swigxx |> jellyfish_wrap.cxx | jellyfish.pm <jf>
 : jellyfish_wrap.cxx |> !cxx |>
 : jellyfish_wrap.o |> !lxxd |> jellyfish.so <jf>
+
+TESTS = test_mer_file.pl
+
+: foreach $(TESTS) | <jf> ../tests/<seq> |> perl -I. %f ../tests > %o |> %B
