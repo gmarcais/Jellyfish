@@ -5,6 +5,10 @@ SWIGFLAGS = -python -DSWIG_FILE_WITH_INIT
 CXXFLAGS += $(JELLYFISH_CFLAGS) $(PYTHON_CFLAGS) -fPIC
 LDFLAGS += -shared $(JELLYFISH_LIBS) $(JELLYFISH_RPATH) $(PYTHON_LIBS)
 
-: ../jellyfish.i |> !swigxx |> jellyfish_wrap.cxx | jellyfish.py
+: ../jellyfish.i |> !swigxx |> jellyfish_wrap.cxx | jellyfish.py <jf>
 : jellyfish_wrap.cxx |> !cxx |>
-: jellyfish_wrap.o |> !lxxd |> _jellyfish.so
+: jellyfish_wrap.o |> !lxxd |> _jellyfish.so <jf>
+
+TESTS = test_mer_file.py
+
+: foreach $(TESTS) | <jf> ../tests/<seq> |> PYTHONPATH=.:$PYTHONPATH python -B %f ../tests > %o |> %B
