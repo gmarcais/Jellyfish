@@ -11,7 +11,7 @@ my $data = shift(@ARGV);
 {
   my $rf = jellyfish::ReadMerFile->new($data . "/sequence.jf");
   my @histo;
-  $histo[$rf->val]++ while($rf->next2);
+  $histo[$rf->val]++ while($rf->next_mer);
 
   open(my $io, "<", $data . "/sequence.histo");
   my @jf_histo;
@@ -29,12 +29,12 @@ my $data = shift(@ARGV);
   my $equal = open(my $io, "<", $data . "/sequence.dump");
   while(<$io>) {
     my ($mer, $count) = split;
-    $equal &&= $rf->next2;
+    $equal &&= $rf->next_mer;
     $equal &&= ($mer eq $rf->key);
     $equal &&= ($count == $rf->val);
     last unless $equal;
   }
-  $equal &&= !$rf->next2;
+  $equal &&= !$rf->next_mer;
   ok($equal, "Dump");
 }
 

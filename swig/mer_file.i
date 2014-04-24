@@ -61,7 +61,7 @@
         throw std::runtime_error(std::string("Unsupported format '") + header.format() + "'");
     }
 
-    bool next2() {
+    bool next_mer() {
       if(binary) {
         if(binary->next()) return true;
         binary.reset();
