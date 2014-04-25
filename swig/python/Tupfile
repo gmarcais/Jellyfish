@@ -9,6 +9,6 @@ LDFLAGS += -shared $(JELLYFISH_LIBS) $(JELLYFISH_RPATH) $(PYTHON_LIBS)
 : jellyfish_wrap.cxx |> !cxx |>
 : jellyfish_wrap.o |> !lxxd |> _jellyfish.so <jf>
 
-TESTS = test_mer_file.py
+TESTS = test_mer_file.py test_hash_counter.py
 
 : foreach $(TESTS) | <jf> ../tests/<seq> |> PYTHONPATH=.:$PYTHONPATH python3 -B %f ../tests > %o 2>&1 |> %B

@@ -11,6 +11,7 @@
   };
 %}
 
+#ifdef SWIGRUBY
 %bang MerDNA::randomize();
 %bang MerDNA::canonicalize();
 %bang MerDNA::reverse_complement();
@@ -19,6 +20,7 @@
 %bang MerDNA::polyG();
 %bang MerDNA::polyT();
 %predicate MerDNA::is_homopolymer(); // Does not work???
+#endif
 
 class MerDNA {
 public:
