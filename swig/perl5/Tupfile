@@ -9,6 +9,6 @@ LDFLAGS += -shared $(JELLYFISH_LIBS) $(JELLYFISH_RPATH) $(PERL_LIBS)
 : jellyfish_wrap.cxx |> !cxx |>
 : jellyfish_wrap.o |> !lxxd |> jellyfish.so <jf>
 
-TESTS = test_mer_file.pl
+TESTS = test_mer_file.pl test_hash_counter.pl
 
 : foreach $(TESTS) | <jf> ../tests/<seq> |> perl -I. %f ../tests > %o |> %B
