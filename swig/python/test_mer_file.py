@@ -16,8 +16,8 @@ class TestMerFile(unittest.TestCase):
         jf_histo = Counter()
         with open(os.path.join(data, "sequence.histo")) as f:
             for line in f:
-                a = [int(n) for n in line.split()]
-                self.assertEqual(a[1], histo[a[0]])
+                num, count = [int(n) for n in line.split()]
+                self.assertEqual(count, histo[num])
 
     def test_dump(self):
         good = True
@@ -33,12 +33,12 @@ class TestMerFile(unittest.TestCase):
     def test_iter(self):
         good = True
         with open(os.path.join(data, "sequence.dump")) as f:
-            for x in self.mf:
+            for mer, count in self.mf:
                 line = f.readline()
                 good = good and line
                 if not good: break
-                a = line.split()
-                good = good and a[0] == str(x[0]) and int(a[1]) == x[1]
+                fmer, fcount = line.split()
+                good = good and fmer == str(mer) and int(fcount) == count
                 if not good: break
             self.assertTrue(good)
             line = f.readline()
@@ -47,8 +47,8 @@ class TestMerFile(unittest.TestCase):
     def test_query(self):
         good = True
         qf   = jellyfish.QueryMerFile(os.path.join(data, "sequence.jf"))
-        for x in self.mf:
-            good = good and x[1] == qf[x[0]]
+        for mer, count in self.mf:
+            good = good and count == qf[mer]
             if not good: break
         self.assertTrue(good)
 
