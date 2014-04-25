@@ -6,6 +6,10 @@
 %include "typemaps.i"
 
 %{
+#ifdef SWIGPYTHON
+#define SWIG_FILE_WITH_INIT
+#endif
+
 #include <fstream>
 #include <stdexcept>
 #undef die
