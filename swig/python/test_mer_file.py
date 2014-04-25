@@ -43,7 +43,14 @@ class TestMerFile(unittest.TestCase):
             self.assertTrue(good)
             line = f.readline()
             self.assertTrue(not line)
-                
+
+    def test_query(self):
+        good = True
+        qf   = jellyfish.QueryMerFile(os.path.join(data, "sequence.jf"))
+        for x in self.mf:
+            good = good and x[1] == qf[x[0]]
+            if not good: break
+        self.assertTrue(good)
 
 if __name__ == '__main__':
     data = sys.argv.pop(1)

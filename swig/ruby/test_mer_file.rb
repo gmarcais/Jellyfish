@@ -47,4 +47,11 @@ class TestMerFile < MiniTest::Unit::TestCase
     }
     assert !@mf.next_mer
   end
+
+  def test_query
+    query = Jellyfish::QueryMerFile.new(File.join($data, "sequence.jf"))
+    @mf.each { |m, c|
+      assert_equal c, query[m]
+    }
+  end
 end

@@ -36,4 +36,16 @@ my $data = shift(@ARGV);
   ok($equal, "Dump");
 }
 
+# Query
+{
+  my $rf   = jellyfish::ReadMerFile->new($data . "/sequence.jf");
+  my $qf   = jellyfish::QueryMerFile->new($data . "/sequence.jf");
+  my $good = 1;
+  while($rf->next_mer) {
+    $good &&= $rf->val == $qf->get($rf->key) or
+        (ok($good, "Query mer") || last);
+  }
+  ok($good, "Query identical to read");
+}
+
 done_testing;
