@@ -23,6 +23,19 @@ class TestMerFile < MiniTest::Unit::TestCase
     assert_equal jf_histo, histo
   end
 
+  def test_each
+    open(File.join($data, "sequence.dump")) { |f|
+      @mf.each { |m, c|
+        l = f.readline
+        assert l
+        fm, fc = l.split
+        assert_equal fm, m.to_s
+        assert_equal fc.to_i, c
+      }
+      assert_raises(EOFError) { f.readline }
+    }
+  end
+
   def test_dump
     open(File.join($data, "sequence.dump")) { |f|
       f.lines.each { |l|

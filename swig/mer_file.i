@@ -39,6 +39,9 @@
 /****************************/
 /* Read output of jellyfish */
 /****************************/
+#ifdef SWIGRUBY
+%mixin ReadMerFile "Enumerable";
+#endif
 %inline %{
   class ReadMerFile {
     std::ifstream                  in;
@@ -74,5 +77,16 @@
 
     const MerDNA* key() const { return static_cast<const MerDNA*>(binary ? &binary->key() : &text->key()); }
     unsigned long val() const { return binary ? binary->val() : text->val(); }
+
+#ifdef SWIGRUBY
+    void each() {
+      if(!rb_block_given_p()) return;
+      while(next_mer()) {
+        auto m = SWIG_NewPointerObj(const_cast<MerDNA*>(key()), SWIGTYPE_p_MerDNA, 0);
+        auto c = SWIG_From_unsigned_SS_long(val());
+        rb_yield(rb_ary_new3(2, m, c));
+      }
+    }
+#endif
   };
 %}
