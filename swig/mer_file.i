@@ -93,15 +93,15 @@
       return false;
     }
 
-    const MerDNA* key() const { return static_cast<const MerDNA*>(binary ? &binary->key() : &text->key()); }
-    unsigned long val() const { return binary ? binary->val() : text->val(); }
+    const MerDNA* mer() const { return static_cast<const MerDNA*>(binary ? &binary->key() : &text->key()); }
+    unsigned long count() const { return binary ? binary->val() : text->val(); }
 
 #ifdef SWIGRUBY
     void each() {
       if(!rb_block_given_p()) return;
       while(next_mer()) {
-        auto m = SWIG_NewPointerObj(const_cast<MerDNA*>(key()), SWIGTYPE_p_MerDNA, 0);
-        auto c = SWIG_From_unsigned_SS_long(val());
+        auto m = SWIG_NewPointerObj(const_cast<MerDNA*>(mer()), SWIGTYPE_p_MerDNA, 0);
+        auto c = SWIG_From_unsigned_SS_long(count());
         rb_yield(rb_ary_new3(2, m, c));
       }
     }
@@ -112,8 +112,8 @@
     std::pair<const MerDNA*, uint64_t> __next__() {
       std::pair<const MerDNA*, uint64_t> res((const MerDNA*)0, 0);
       if(next_mer()) {
-        res.first  = key();
-        res.second = val();
+        res.first  = mer();
+        res.second = count();
       }
       return res;
     }

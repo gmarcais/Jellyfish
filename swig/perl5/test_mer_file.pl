@@ -9,7 +9,7 @@ my $data = shift(@ARGV);
 {
   my $rf = jellyfish::ReadMerFile->new($data . "/sequence.jf");
   my @histo;
-  $histo[$rf->val]++ while($rf->next_mer);
+  $histo[$rf->count]++ while($rf->next_mer);
 
   open(my $io, "<", $data . "/sequence.histo");
   my @jf_histo;
@@ -28,8 +28,8 @@ my $data = shift(@ARGV);
   while(<$io>) {
     my ($mer, $count) = split;
     $equal &&= $rf->next_mer;
-    $equal &&= ($mer eq $rf->key);
-    $equal &&= ($count == $rf->val);
+    $equal &&= ($mer eq $rf->mer);
+    $equal &&= ($count == $rf->count);
     last unless $equal;
   }
   $equal &&= !$rf->next_mer;
@@ -42,7 +42,7 @@ my $data = shift(@ARGV);
   my $qf   = jellyfish::QueryMerFile->new($data . "/sequence.jf");
   my $good = 1;
   while($rf->next_mer) {
-    $good &&= $rf->val == $qf->get($rf->key) or
+    $good &&= $rf->count == $qf->get($rf->mer) or
         (ok($good, "Query mer") || last);
   }
   ok($good, "Query identical to read");

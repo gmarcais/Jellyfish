@@ -10,7 +10,7 @@ class TestMerFile < MiniTest::Unit::TestCase
 
   def test_histo
     histo = []
-    histo[@mf.val] = (histo[@mf.val] || 0) + 1 while @mf.next_mer
+    histo[@mf.count] = (histo[@mf.count] || 0) + 1 while @mf.next_mer
 
     jf_histo = []
     open(File.join($data, "sequence.histo")) { |f|
@@ -41,8 +41,8 @@ class TestMerFile < MiniTest::Unit::TestCase
       f.lines.each { |l|
         mer, count = l.split
         assert @mf.next_mer
-        assert_equal(mer, @mf.key.to_s)
-        assert_equal(count.to_i, @mf.val)
+        assert_equal(mer, @mf.mer.to_s)
+        assert_equal(count.to_i, @mf.count)
       }
     }
     assert !@mf.next_mer

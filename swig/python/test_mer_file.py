@@ -11,7 +11,7 @@ class TestMerFile(unittest.TestCase):
     def test_histo(self):
         histo = Counter()
         while self.mf.next_mer():
-            histo[self.mf.val()] += 1
+            histo[self.mf.count()] += 1
 
         jf_histo = Counter()
         with open(os.path.join(data, "sequence.histo")) as f:
@@ -26,7 +26,7 @@ class TestMerFile(unittest.TestCase):
                 good = good and self.mf.next_mer()
                 if not good: break
                 a = line.split()
-                good = good and a[0] == str(self.mf.key()) and int(a[1]) == self.mf.val()
+                good = good and a[0] == str(self.mf.mer()) and int(a[1]) == self.mf.count()
                 if not good: break
         self.assertTrue(good)
 
