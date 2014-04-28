@@ -1,9 +1,10 @@
-%module jellyfish
+%module(docstring="Jellyfish binding") jellyfish
 %naturalvar; // Use const reference instead of pointers
 %include "std_string.i"
 %include "exception.i"
 %include "std_except.i"
 %include "typemaps.i"
+%feature("autodoc", "2");
 
 %{
 #ifdef SWIGPYTHON
@@ -24,3 +25,4 @@
 %include "mer_dna.i"
 %include "mer_file.i"
 %include "hash_counter.i"
+%include "hash_set.i"

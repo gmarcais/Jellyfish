@@ -1,7 +1,7 @@
 /******************************/
 /* Query output of jellyfish. */
 /******************************/
-%inline %{
+%{
   class QueryMerFile {
     std::unique_ptr<jellyfish::mer_dna_bloom_filter> bf;
     jellyfish::mapped_file                           binary_map;
@@ -36,6 +36,21 @@
   };
 %}
 
+%feature("autodoc", "Give random access to a Jellyfish database. Given a mer, it returns the count associated with that mer");
+class QueryMerFile {
+ public:
+  %feature("autodoc", "Open the jellyfish database");
+  QueryMerFile(const char* path) throw(std::runtime_error);
+
+  %feature("autodoc", "Get the count for the mer m");
+#ifdef SWIGPERL
+  unsigned int get(const MerDNA& m);
+#else
+  unsigned int __getitem__(const MerDNA& m);
+#endif
+};
+
+
 /****************************/
 /* Read output of jellyfish */
 /****************************/
@@ -44,7 +59,7 @@
 #endif
 
 #ifdef SWIGPYTHON
-// Convert output of __next__() or next()
+// For python iteratable, throw StopIteration if at end of iterator
 %exception __next__ {
   $action;
   if(!result.first) {
@@ -60,7 +75,7 @@
  }
 #endif
 
-%inline %{
+%{
   class ReadMerFile {
     std::ifstream                  in;
     std::unique_ptr<binary_reader> binary;
@@ -121,3 +136,28 @@
 #endif
   };
 %}
+
+%feature("autodoc", "Read a Jellyfish database sequentially");
+class ReadMerFile {
+ public:
+  %feature("autodoc", "Open the jellyfish database");
+  ReadMerFile(const char* path) throw(std::runtime_error);
+  %feature("autodoc", "Move to the next mer in the file. Returns false if no mers left, true otherwise");
+  bool next_mer();
+  %feature("autodoc", "Returns current mer");
+  const MerDNA* mer() const;
+  %feature("autodoc", "Returns the count of the current mer");
+  unsigned long count() const;
+
+#ifdef SWIGRUBY
+  %feature("autodoc", "Iterate through all the mers in the file, passing two values: the mer and the count");
+  void each();
+#endif
+
+#ifdef SWIGPYTHON
+  ReadMerFile* __iter__();
+  %feature("autodoc", "Iterate through all the mers in the file, passing two values: the mer and the count");
+  std::pair<const MerDNA*, uint64_t> __next__();
+  std::pair<const MerDNA*, uint64_t> next() { return __next__(); }
+#endif
+  };
