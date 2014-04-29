@@ -67,6 +67,13 @@ class QueryMerFile {
     SWIG_fail;
   }
  }
+%exception next {
+  $action;
+  if(!result.first) {
+    PyErr_SetString(PyExc_StopIteration, "Done");
+    SWIG_fail;
+  }
+ }
 %typemap(out) std::pair<const MerDNA*, uint64_t> {
   SWIG_Object m = SWIG_NewPointerObj(const_cast<MerDNA*>(($1).first), SWIGTYPE_p_MerDNA, 0);
   SWIG_Object c = SWIG_From(unsigned long)(($1).second);
