@@ -89,7 +89,7 @@ for mer, count in mf:
 ```Ruby
 require 'jellyfish'
 
-mf = Jellyfish::ReadMerFile(ARGV[0])
+mf = Jellyfish::ReadMerFile.new ARGV[0]
 mf.each { |mer, count|
     puts("#{mer} #{count}")
 }
