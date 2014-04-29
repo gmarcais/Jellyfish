@@ -11,4 +11,4 @@ LDFLAGS += -shared $(JELLYFISH_LIBS) $(JELLYFISH_RPATH) $(PYTHON_LIBS)
 
 TESTS = test_mer_file.py test_hash_counter.py
 
-: foreach $(TESTS) | <jf> ../tests/<seq> |> PYTHONPATH=.:$PYTHONPATH python3 -B %f ../tests > %o 2>&1 |> %B
+: foreach $(TESTS) | <jf> ../tests/<seq> |> PYTHONPATH=.:$PYTHONPATH $(PYTHON) -B %f ../tests > %o 2>&1 |> %B

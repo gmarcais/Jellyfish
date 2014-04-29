@@ -11,4 +11,4 @@ LDFLAGS += -shared $(JELLYFISH_LIBS) $(JELLYFISH_RPATH) $(RUBY_LIBS)
 
 TESTS = test_mer_file.rb test_hash_counter.rb
 
-: foreach $(TESTS) | <jf> ../tests/<seq> |> ruby -I. %f ../tests > %o |> %B
+: foreach $(TESTS) | <jf> ../tests/<seq> |> $(RUBY) -I. %f ../tests > %o |> %B

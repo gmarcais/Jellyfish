@@ -40,6 +40,24 @@ else
   SWIG = swig
 endif
 
+ifdef PYTHON
+  PYTHON = @(PYTHON)
+else
+  PYTHON = python
+endif
+
+ifdef RUBY
+  RUBY = @(RUBY)
+else
+  RUBY = ruby
+endif
+
+ifdef PERL
+  PERL = @(PERL)
+else
+  PERL = perl
+endif
+
 ifdef JELLYFISH
   JELLYFISH = @(JELLYFISH)
 else
