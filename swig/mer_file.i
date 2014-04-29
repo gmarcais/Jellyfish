@@ -82,11 +82,32 @@ class QueryMerFile {
  }
 #endif
 
+#ifdef SWIGPERL
+// For perl, return an empty array at end of iterator
+%typemap(out) std::pair<const MerDNA*, uint64_t> {
+  if(($1).first) {
+    SWIG_Object m = SWIG_NewPointerObj(const_cast<MerDNA*>(($1).first), SWIGTYPE_p_MerDNA, 0);
+    SWIG_Object c = SWIG_From(unsigned long)(($1).second);
+    %append_output(m);
+    %append_output(c);
+  }
+ }
+#endif
+
 %{
   class ReadMerFile {
     std::ifstream                  in;
     std::unique_ptr<binary_reader> binary;
     std::unique_ptr<text_reader>   text;
+
+    std::pair<const MerDNA*, uint64_t> next_mer__() {
+      std::pair<const MerDNA*, uint64_t> res((const MerDNA*)0, 0);
+      if(next_mer()) {
+        res.first  = mer();
+        res.second = count();
+      }
+      return res;
+    }
 
   public:
     ReadMerFile(const char* path) throw(std::runtime_error) :
@@ -129,17 +150,14 @@ class QueryMerFile {
     }
 #endif
 
+#ifdef SWIGPERL
+    std::pair<const MerDNA*, uint64_t> each() { return next_mer__(); }
+#endif
+
 #ifdef SWIGPYTHON
     ReadMerFile* __iter__() { return this; }
-    std::pair<const MerDNA*, uint64_t> __next__() {
-      std::pair<const MerDNA*, uint64_t> res((const MerDNA*)0, 0);
-      if(next_mer()) {
-        res.first  = mer();
-        res.second = count();
-      }
-      return res;
-    }
-    std::pair<const MerDNA*, uint64_t> next() { return __next__(); }
+    std::pair<const MerDNA*, uint64_t> __next__() { return next_mer__(); }
+    std::pair<const MerDNA*, uint64_t> next() { return next_mer__(); }
 #endif
   };
 %}
@@ -156,14 +174,17 @@ class ReadMerFile {
   %feature("autodoc", "Returns the count of the current mer");
   unsigned long count() const;
 
+  %feature("autodoc", "Iterate through all the mers in the file, passing two values: a mer and its count");
 #ifdef SWIGRUBY
-  %feature("autodoc", "Iterate through all the mers in the file, passing two values: the mer and the count");
   void each();
+#endif
+
+#ifdef SWIGPERL
+  std::pair<const MerDNA*, uint64_t> each();
 #endif
 
 #ifdef SWIGPYTHON
   ReadMerFile* __iter__();
-  %feature("autodoc", "Iterate through all the mers in the file, passing two values: the mer and the count");
   std::pair<const MerDNA*, uint64_t> __next__();
   std::pair<const MerDNA*, uint64_t> next() { return __next__(); }
 #endif

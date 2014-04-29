@@ -41,8 +41,8 @@ my $data = shift(@ARGV);
   my $rf   = jellyfish::ReadMerFile->new($data . "/sequence.jf");
   my $qf   = jellyfish::QueryMerFile->new($data . "/sequence.jf");
   my $good = 1;
-  while($rf->next_mer) {
-    $good &&= $rf->count == $qf->get($rf->mer) or
+  while(my ($mer, $count) = $rf->each) {
+    $good &&= $count == $qf->get($mer) or
         (ok($good, "Query mer") || last);
   }
   ok($good, "Query identical to read");

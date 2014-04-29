@@ -11,4 +11,4 @@ LDFLAGS += -shared $(JELLYFISH_LIBS) $(JELLYFISH_RPATH) $(PERL_LIBS)
 
 TESTS = t/test_mer_file.t t/test_hash_counter.t
 
-: foreach $(TESTS) | <jf> ../tests/<seq> |> $(PERL) -I. %f ../tests > %o |> %B
+: foreach $(TESTS) | <jf> ../tests/<seq> |> $(PERL) -I. %f ../tests > %o 2>&1 |> %B
