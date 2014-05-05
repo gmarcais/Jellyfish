@@ -109,7 +109,8 @@ class generator_manager {
   tmp_pipes       pipes_;
   pid_t           manager_pid_;
   const char*     shell_;
-  int             kill_signal_; // if >0, process has received that signal
+  volatile int    kill_signal_; // if >0, process has received that signal and need to die
+  int             alive_pipe_[2]; // pipe to parent. If closed, parent died -> kill myself
 
   struct cmd_info_type {
     std::string command;
@@ -124,7 +125,8 @@ public:
     pipes_(nb_pipes),
     manager_pid_(-1),
     shell_(shell),
-    kill_signal_(0)
+    kill_signal_(0),
+    alive_pipe({0, 0})
   {
     if(!cmds_.good())
       eraise(std::runtime_error) << "Failed to open cmds file '" << cmds << "'";

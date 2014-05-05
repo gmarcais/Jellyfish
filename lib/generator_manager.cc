@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <sys/select.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <assert.h>
@@ -112,15 +113,23 @@ void tmp_pipes::cleanup() {
 void generator_manager::start()  {
   if(manager_pid_ != -1)
     return;
+
+  // Alive pipes between parent process and generator manager process
+  if(pipe(alive_pipe_) == -1)
+    eraise(std::runtime_error) << "Failed to create alive pipe to manager process";
+
   manager_pid_ = fork();
   switch(manager_pid_) {
   case -1:
     eraise(std::runtime_error) << "Failed to start manager process";
     break;
   case 0:
+    close(alive_pipe_[0]);
     manager_pid_ = -1;
     break;
   default:
+    close(alive_pipe_[1]);
+    fcntl(alive_pipe_[0], F_SETFD, FD_CLOEXEC);
     cmds_.close();
     return;
   }
@@ -128,34 +137,45 @@ void generator_manager::start()  {
 
   // In child
   setup_signal_handlers();
-  start_commands(); // child start commands
+  bool success = start_commands(); // child start commands
   int signal = kill_signal_;
-  if(signal == 0)
+  if(signal == 0 && success)
     exit(EXIT_SUCCESS);
 
-  // Got killed. Kill all children, cleanup and kill myself with the
-  // same signal (and die from it this time :). We do not wait on the
-  // dead children as we are going to die soon as well, and we don't
-  // care about the return value at that point. Let init take care of
-  // that for us...
+  // Got killed or some failure. Kill all children, cleanup and quit
+  // or kill myself with the same signal (and die from it this time
+  // :). We do not wait on the dead children as we are going to die
+  // soon as well, and we don't care about the return value at that
+  // point. Let init take care of that for us...
   cleanup();
-  unset_signal_handlers();
-  kill(getpid(), signal); // kill myself
+  if(signal) {
+    unset_signal_handlers();
+    kill(getpid(), signal); // kill myself
+  }
   exit(EXIT_FAILURE); // Should not be reached
 }
 
 static generator_manager* manager = 0;
-void generator_manager::signal_handler(int signal) {
+void generator_manager::kill_signal_handler(int signal) {
   manager->kill_signal_ = signal;
 }
+void generator_manager::chld_signal_handler(int signal) {
+  // Do nothing, just interrupt syscalls
+}
+
 void generator_manager::setup_signal_handlers() {
   int res;
   struct sigaction act;
   memset(&act, '\0', sizeof(act));
-  act.sa_handler = signal_handler;
-  res = sigaction(SIGTERM, &act, 0);
+  act.sa_handler = kill_signal_handler;
+  res            = sigaction(SIGTERM, &act, 0);
   assert(res == 0);
   // Should we redefine other signals as well? Like SIGINT, SIGQUIT?
+
+  memset(&act, '\0', sizeof(act));
+  act.sa_handler = chld_signal_handler;
+  res            = sigaction(SIGTERM, &act, 0);
+  assert(res == 0);
 }
 
 void generator_manager::unset_signal_handlers() {
@@ -229,7 +249,7 @@ std::string generator_manager::get_cmd() {
   return command;
 }
 
-void generator_manager::start_commands()
+bool generator_manager::start_commands()
 {
   std::string command;
   size_t i;
@@ -244,22 +264,31 @@ void generator_manager::start_commands()
 
   while(!pid2pipe_.empty()) {
     int status;
-    int res = ::wait(&status);
-    if(res == -1) {
-      if(errno == EINTR) continue;
-      break;
-    }
-    cmd_info_type info = pid2pipe_[res];
-    pid2pipe_.erase(info.pipe);
-    command = get_cmd();
-    if(!command.empty()) {
-      start_one_command(command, info.pipe);
-    } else {
-      pipes_.discard(info.pipe);
-    }
-    if(!display_status(status, info.command)) {
-      cleanup();
-      exit(EXIT_FAILURE);
+
+    // Wait on alive pipe to be closed or child to return
+    fd_set read_fds;
+    FD_ZERO(&read_fds);
+    FD_SET(&read_fds, alive_pipe_[0]);
+    int res = select(alive_pipe_[0] + 1, &read_fds, 0, 0, 0);
+    if(kill_signal_) return false; // Got a killing signal -> stop
+    if(res == -1 && errno == EAGAIN) continue; // Error again -> try again
+    if(FD_ISSET(alive_pipe_[0], &read_fds)) return false; // alive_pipe_ readable (or closed) -> stop
+
+    while(true) {
+      int cpid = waitpid(-1, &status, WNOHANG);  // Try to reap a child
+      if(kill_signal_) return false; // Got a killing signal -> stop
+      if(cpid == 0) break; // No children terminated -> go back to waiting
+
+      // cpid is now the pid of a child that terminated
+      cmd_info_type info = pid2pipe_[cpid];
+      pid2pipe_.erase(info.pipe);
+      command = get_cmd();
+      if(!command.empty()) {
+        start_one_command(command, info.pipe);
+      } else {
+        pipes_.discard(info.pipe);
+      }
+      if(!display_status(status, info.command)) return false;
     }
   }
 }
