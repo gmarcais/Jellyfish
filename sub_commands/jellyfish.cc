@@ -31,6 +31,7 @@ main_func_t histo_main;
 main_func_t query_main;
 main_func_t dump_main;
 main_func_t cite_main;
+main_func_t mem_main;
 // main_func_t dump_fastq_main;
 // main_func_t histo_fastq_main;
 // main_func_t hash_fastq_merge_main;
@@ -53,6 +54,7 @@ cmd_func cmd_list[] = {
   {"merge",             &merge_main},
   {"query",             &query_main},
   {"cite",              &cite_main},
+  {"mem",               &mem_main},
   // {"qhisto",            &histo_fastq_main},
   // {"qdump",             &dump_fastq_main},
   // {"qmerge",            &hash_fastq_merge_main},

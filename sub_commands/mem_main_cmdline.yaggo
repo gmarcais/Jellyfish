@@ -1,0 +1,123 @@
+purpose "Give memory usage information"
+package "jellyfish mem"
+
+description <<EOS
+The mem subcommand gives some information about the memory usage of
+Jellyfish when counting mers. If one replace 'count' by 'mem' in the
+command line, it displays the amount of memory needed. All the
+switches of the count subcommand are supported, although only the
+meaningful one for computing the memory usage are used.
+
+If the '--size' (-s) switch is omitted and the --mem switch is passed
+with an amount of memory in bytes, then the largest size that fit in
+that amount of memory is returned.
+
+The memory usage information only takes into account the hash to store
+the k-mers, not various buffers (e.g. in parsing the input files). But
+typically those will be small in comparison to the hash.
+EOS
+
+option("mer-len", "m") {
+  description "Length of mer"
+  uint32; required }
+option("size", "s") {
+  description "Initial hash size"
+  uint64; suffix }
+option("counter-len", "c") {
+  description "Length bits of counting field"
+  uint32; default "7"; typestr "Length in bits" }
+option("reprobes", "p") {
+  description "Maximum number of reprobes"
+  uint32; default "126" }
+option("mem") {
+  description "Return maximum size to fit within that memory"
+  uint64; suffix; conflict "size" }
+
+
+option("threads", "t") {
+  description "Ignored switch"
+  uint32; hidden }
+option("F", "Files") {
+  description "Ignored switch"
+  uint32; hidden }
+option("g", "generator") {
+  description "Ignored switch"
+  c_string; typestr "path"; hidden }
+option("G", "Generators") {
+  description "Ignored switch"
+  uint32; hidden }
+option("S", "shell") {
+  description "Ignored switch"
+  c_string; hidden }
+option("output", "o") {
+  description "Ignored switch"
+  c_string; hidden }
+option("out-counter-len") {
+  description "Ignored switch"
+  uint32; hidden }
+option("C", "canonical") {
+  description "Ignored switch"
+  flag; off; hidden }
+option("bc") {
+  description "Ignored switch"
+  c_string; typestr "peath";  }
+option("bf-size") {
+  description "Ignored switch"
+  uint64; suffix; conflict "bc"; hidden }
+option("bf-fp") {
+  description "Ignored switch"
+  double; default 0.01; hidden }
+option("if") {
+  description "Ignored switch"
+  c_string; typestr "path"; multiple; hidden }
+option("Q", "min-qual-char") {
+  description "Ignored switch"
+  string; hidden }
+option("text") {
+  description "Ignored switch"
+  off; hidden }
+option("disk") {
+  description "Ignored switch"
+  off; hidden }
+option("no-merge") {
+  description "Ignored switch"
+  off; hidden; hidden }
+option("no-unlink") {
+  description "Ignored switch"
+  off; hidden }
+# option("raw", "r") {
+#   description "Ignored switch" "Write raw database"
+#   flag; off }
+# option("both") {
+#   description "Ignored switch" "Write sorted list and raw database"
+#   flag; off; hidden }
+# option("quality-start") {
+#   description "Ignored switch" "Starting ASCII for quality values"
+#   uint32; default "64" }
+# option("min-quality") {
+#   description "Ignored switch" "Minimum quality. A base with lesser quality becomes an N"
+#   uint32; default "0" }
+option("lower-count", "L") {
+  description "Ignored switch"
+  uint64; hidden }
+option("upper-count", "U") {
+  description "Ignored switch"
+  uint64; hidden }
+# option("invalid-char") {
+#   description "Ignored switch" "How to treat invalid characters. The char is changed to a N."
+#   enum "warn", "ignore", "error" }
+# option("matrix") {
+#   description "Ignored switch" "Hash function binary matrix"
+#   string; typestr "Matrix file" }
+option("timing") {
+  description "Ignored switch"
+  c_string; typestr "Timing file"; hidden }
+# option("stats") {
+#   description "Ignored switch" "Print stats"
+#   c_string; typestr "Stats file" }
+option("no-write") {
+  description "Ignored switch"
+  flag; off; hidden }
+arg("file") {
+  description "Ignored switch"
+  c_string; multiple; typestr "path" }

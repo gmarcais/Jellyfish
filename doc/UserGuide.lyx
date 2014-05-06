@@ -737,18 +737,6 @@ FAQ
 
 \begin_layout Section
 How to read compressed files (or other format)?
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-newmacroname
 \end_layout
 
 \begin_layout Standard
@@ -979,6 +967,106 @@ reference "sec:Counting-high-frequency--mers"
 \end_inset
 
 .
+\end_layout
+
+\begin_layout Section
+How much memory is needed?
+\end_layout
+
+\begin_layout Standard
+The memory needed to count 
+\begin_inset Formula $k$
+\end_inset
+
+-mers, given the various parameters of the 
+\family sans
+count 
+\family default
+subcommand is obtained by using the 
+\family sans
+mem
+\family default
+ subcommand.
+ It understand all the same switches, but only the 
+\begin_inset Formula $\switch{mer-len}$
+\end_inset
+
+ (
+\begin_inset Formula $\opt m$
+\end_inset
+
+), 
+\begin_inset Formula $\switch{size}$
+\end_inset
+
+ (
+\begin_inset Formula $\opt s$
+\end_inset
+
+), 
+\begin_inset Formula $\switch{counter-len}$
+\end_inset
+
+ (
+\begin_inset Formula $\opt c$
+\end_inset
+
+) and 
+\begin_inset Formula $\switch{reprobes}$
+\end_inset
+
+ (
+\begin_inset Formula $\opt p$
+\end_inset
+
+) switches are taken into account.
+\end_layout
+
+\begin_layout Standard
+For example, for 
+\begin_inset Formula $24$
+\end_inset
+
+-mers, with an initial hash size of 1 billion, and default parameters otherwise,
+ the memory usage is:
+\end_layout
+
+\begin_layout LyX-Code
+$ jellyfish mem -m 24 -s 1G
+\end_layout
+
+\begin_layout LyX-Code
+4521043056 (4G)
+\end_layout
+
+\begin_layout Standard
+Conversely, if the 
+\begin_inset Formula $\switch{size}$
+\end_inset
+
+ switch is not given by the 
+\begin_inset Formula $\switch{mem}$
+\end_inset
+
+ switch is, then the maximum initial hash size that would fit in the given
+ memory is returned.
+ For example, this is the maximum hash size for 
+\begin_inset Formula $31$
+\end_inset
+
+-mers in 
+\begin_inset Formula $\unit[8]{Gb}$
+\end_inset
+
+ of RAM:
+\end_layout
+
+\begin_layout LyX-Code
+$ jellyfish mem -m 31 --mem 8g
+\end_layout
+
+\begin_layout LyX-Code
+1073741824 (1G)
 \end_layout
 
 \begin_layout Chapter
@@ -1310,7 +1398,11 @@ name "sec:stats"
 \end_layout
 
 \begin_layout Standard
-The stats subcommand computes some statistics about the mers.
+The 
+\family sans
+stats
+\family default
+ subcommand computes some statistics about the mers.
  Although these statistics could be computed from the histogram, it provides
  quick summary information.
  The fields are:
@@ -1372,6 +1464,26 @@ status open
 
 \begin_layout Description
 Max_count The maximum of the number of occurences
+\end_layout
+
+\begin_layout Section
+mem 
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:mem"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The 
+\family sans
+mem
+\family default
+ subcommand shows how much memory a count subcommand will need or conversely
+ how large of a hash size will fit in a given amount of memory.
 \end_layout
 
 \begin_layout Section
