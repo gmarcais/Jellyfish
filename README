@@ -67,7 +67,7 @@ to create the data, 10 to run jellyfish).
 Notes
 =====
 
-* Jellyfish has been devellopped and tested on x86-64 GNU/Linux. It
+* Jellyfish has been developed and tested on x86-64 GNU/Linux. It
   compiles and runs correctly the tests on MacOS X (Intel) and
   FreeBSD. It should be fairly easy to port on other *NIX platform
   with the gcc compiler, but no guarantee is made. Support for 32-bits
