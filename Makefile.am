@@ -69,7 +69,7 @@ libjellyfish_2_0_la_SOURCES = lib/rectangular_binary_matrix.cc		\
                               lib/mer_dna.cc lib/storage.cc		\
                               lib/allocators_mmap.cc lib/misc.cc	\
                               lib/int128.cc lib/thread_exec.cc		\
-                              lib/err.cc lib/jsoncpp.cpp lib/time.cc	\
+                              lib/jsoncpp.cpp lib/time.cc	\
                               lib/generator_manager.cc
 
 

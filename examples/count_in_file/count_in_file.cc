@@ -31,6 +31,8 @@
 // times it occurs in each db. It is very similar to merging (and the
 // code is copied/adapted from jellyfish/merge_files.cc).
 
+namespace err = jellyfish::err;
+
 using jellyfish::file_header;
 using jellyfish::RectangularBinaryMatrix;
 using jellyfish::mer_dna;
@@ -65,7 +67,7 @@ common_info read_headers(int argc, char* input_files[], cpp_array<file_info>& fi
   // Read first file
   files.init(0, input_files[0]);
   if(!files[0].is.good())
-    die << "Failed to open input file '" << input_files[0] << "'";
+    err::die(err::msg() << "Failed to open input file '" << input_files[0] << "'");
 
   file_header& h = files[0].header;
   common_info res(h.matrix());
@@ -82,17 +84,17 @@ common_info read_headers(int argc, char* input_files[], cpp_array<file_info>& fi
     files.init(i, input_files[i]);
     file_header& nh = files[i].header;
     if(!files[i].is.good())
-      die << "Failed to open input file '" << input_files[i] << "'";
+      err::die(err::msg() << "Failed to open input file '" << input_files[i] << "'");
     if(res.format != nh.format())
-      die << "Can't compare files with different formats (" << res.format << ", " << nh.format() << ")";
+      err::die(err::msg() << "Can't compare files with different formats (" << res.format << ", " << nh.format() << ")");
     if(res.key_len != nh.key_len())
-      die << "Can't compare hashes of different key lengths (" << res.key_len << ", " << nh.key_len() << ")";
+      err::die(err::msg() << "Can't compare hashes of different key lengths (" << res.key_len << ", " << nh.key_len() << ")");
     if(res.max_reprobe_offset != nh.max_reprobe_offset())
-      die << "Can't compare hashes with different reprobing strategies";
+      err::die("Can't compare hashes with different reprobing strategies");
     if(res.size != nh.size())
-      die << "Can't compare hash with different size (" << res.size << ", " << nh.size() << ")";
+      err::die(err::msg() << "Can't compare hash with different size (" << res.size << ", " << nh.size() << ")");
     if(res.matrix != nh.matrix())
-      die << "Can't compare hash with different hash function";
+      err::die("Can't compare hash with different hash function");
   }
 
   return res;
@@ -138,7 +140,7 @@ int main(int argc, char *argv[])
 {
   // Check number of input files
   if(argc < 3)
-    die << "Usage: " << argv[0] << " file1 file2 ...";
+    err::die(err::msg() << "Usage: " << argv[0] << " file1 file2 ...");
 
   // Read the header of each input files and do sanity checks.
   cpp_array<file_info> files(argc - 1);
@@ -150,7 +152,7 @@ int main(int argc, char *argv[])
   else if(cinfo.format == text_dumper::format)
     output_counts<text_reader>(files);
   else
-    die << "Format '" << cinfo.format << "' not supported\n";
+    err::die(err::msg() << "Format '" << cinfo.format << "' not supported\n");
 
   return 0;
 }

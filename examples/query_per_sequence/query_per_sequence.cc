@@ -25,6 +25,8 @@
 #include <jellyfish/jellyfish.hpp>
 #include "sequence_mers.hpp"
 
+namespace err = jellyfish::err;
+
 using jellyfish::mer_dna;
 using jellyfish::mer_dna_bloom_counter;
 typedef jellyfish::whole_sequence_parser<jellyfish::stream_manager<char**> > sequence_parser;
@@ -57,18 +59,18 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
 int main(int argc, char *argv[])
 {
   if(argc < 3)
-    die << "Usage: " << argv[0] << "db.jf file.fa [...]";
+    err::die(err::msg() << "Usage: " << argv[0] << "db.jf file.fa [...]");
 
   std::ifstream in(argv[1], std::ios::in|std::ios::binary);
   jellyfish::file_header header(in);
   if(!in.good())
-    die << "Failed to parse header of file '" << argv[1] << "'";
+    err::die(err::msg() << "Failed to parse header of file '" << argv[1] << "'");
   mer_dna::k(header.key_len() / 2);
   if(header.format() == "bloomcounter") {
     jellyfish::hash_pair<mer_dna> fns(header.matrix(1), header.matrix(2));
     mer_dna_bloom_counter filter(header.size(), header.nb_hashes(), in, fns);
     if(!in.good())
-      die << "Bloom filter file is truncated";
+      err::die("Bloom filter file is truncated");
     in.close();
     query_from_sequence(argv + 2, argv + argc, filter, header.canonical());
   } else if(header.format() == binary_dumper::format) {
@@ -77,7 +79,7 @@ int main(int argc, char *argv[])
                     header.size() - 1, binary_map.length() - header.offset());
     query_from_sequence(argv + 2, argv + argc, bq, header.canonical());
   } else {
-    die << "Unsupported format '" << header.format() << "'. Must be a bloom counter or binary list.";
+    err::die(err::msg() << "Unsupported format '" << header.format() << "'. Must be a bloom counter or binary list.");
   }
 
   return 0;

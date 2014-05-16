@@ -29,6 +29,8 @@
 #include <jellyfish/rectangular_binary_matrix.hpp>
 #include <jellyfish/cpp_array.hpp>
 
+namespace err = jellyfish::err;
+
 using jellyfish::file_header;
 using jellyfish::RectangularBinaryMatrix;
 using jellyfish::mer_dna;
@@ -96,7 +98,7 @@ void merge_files(std::vector<const char*> input_files,
   for(size_t i = 0; i < files.size(); i++) {
     files.init(i, input_files[i]);
     if(!files[i].is.good())
-      eraise(MergeError) << "Failed to open input file '" << input_files[i] << "'";
+      throw MergeError(err::msg() << "Failed to open input file '" << input_files[i] << "'");
 
     file_header& h = files[i].header;
     if(i == 0) {
@@ -115,22 +117,22 @@ void merge_files(std::vector<const char*> input_files,
       out_counter_len = std::min(out_counter_len, h.counter_len());
     } else {
       if(format != h.format())
-        eraise(MergeError) << "Can't merge files with different formats (" << format << ", " << h.format() << ")";
+        throw MergeError(err::msg() << "Can't merge files with different formats (" << format << ", " << h.format() << ")");
       if(h.key_len() != key_len)
-        eraise(MergeError) << "Can't merge hashes of different key lengths (" << key_len << ", " << h.key_len() << ")";
+        throw MergeError(err::msg() << "Can't merge hashes of different key lengths (" << key_len << ", " << h.key_len() << ")");
       if(h.max_reprobe_offset() != max_reprobe_offset)
-        eraise(MergeError) << "Can't merge hashes with different reprobing strategies";
+        throw MergeError("Can't merge hashes with different reprobing strategies");
       if(h.size() != size)
-        eraise(MergeError) << "Can't merge hash with different size (" << size << ", " << h.size() << ")";
+        throw MergeError(err::msg() << "Can't merge hash with different size (" << size << ", " << h.size() << ")");
       if(h.matrix() != *matrix)
-        eraise(MergeError) << "Can't merge hash with different hash function";
+        throw MergeError("Can't merge hash with different hash function");
     }
   }
   mer_dna::k(key_len / 2);
 
   std::ofstream out(out_file);
   if(!out.good())
-    eraise(MergeError) << "Can't open out file '" << out_file << "'";
+    throw MergeError(err::msg() << "Can't open out file '" << out_file << "'");
   out_header.format(format);
 
   if(!format.compare(binary_dumper::format)) {
@@ -143,7 +145,7 @@ void merge_files(std::vector<const char*> input_files,
     text_writer writer;
     do_merge<text_reader, text_writer>(files, out, writer, min, max);
   } else {
-    eraise(MergeError) << "Unknown format '" << format << "'";
+    throw MergeError(err::msg() << "Unknown format '" << format << "'");
   }
   out.close();
 }

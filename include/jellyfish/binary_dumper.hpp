@@ -145,8 +145,8 @@ public:
     mid_key_(key_len / 2)
   {
     if(size % record_len_ != 0)
-      eraise(std::length_error) << "Size of database (" << size << ") must be a multiple of the length of a record ("
-                                << record_len_ << ")";
+      throw std::length_error(err::msg() << "Size of database (" << size << ") must be a multiple of the length of a record ("
+                              << record_len_ << ")");
     key_at(0, first_key_);
     first_pos_ = key_pos(first_key_);
     key_at(last_id_ - 1, last_key_);

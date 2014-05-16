@@ -22,109 +22,75 @@
 #include <sstream>
 #include <exception>
 #include <stdexcept>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
+#include <cstdlib>
+#include <cstring>
+#include <cerrno>
 
 namespace jellyfish {
 namespace err {
-class code {
-  int _code;
-public:
-  explicit code(int c) : _code(c) {}
-  int get_code() const { return _code; }
-};
+struct msg {
+  std::ostringstream msg_;
 
-class no_t {
-  // Select the correct version (GNU or XSI) version of
-  // strerror_r. strerror_ behaves like the GNU version of strerror_r,
-  // regardless of which version is provided by the system.
-  static const char* strerror__(char* buf, int res) {
-    return res != -1 ? buf : "error";
-  }
-  static const char* strerror__(char* buf, char* res) {
-    return res;
-  }
-  static const char* strerror_(int err, char* buf, size_t buflen) {
-    return strerror__(buf, strerror_r(err, buf, buflen));
-  }
-
-public:
-  no_t() {}
-  static void write(std::ostream &os, int e) {
-    char buf[1024];
-    os << ": " << strerror_(e, buf, sizeof(buf));
-  }
-};
-static const no_t no;
-std::ostream &operator<<(std::ostream &os, const err::no_t &x);
-
-class substr {
-  const char  *_s;
-  const size_t _l;
-public:
-  substr(const char *s, size_t len) : _s(s), _l(len) {}
-  friend std::ostream &operator<<(std::ostream &os, const substr &ss);
-};
-
-class die_t {
-  int _code;
-  int _errno;
-public:
-  die_t() : _code(1), _errno(errno) {}
-  explicit die_t(int c) : _code(c), _errno(errno) {}
-  ~die_t() {
-    std::cerr << std::endl;
-    exit(_code);
-  }
-
-  die_t & operator<<(const code &x) {
-    _code = x.get_code();
-    return *this;
-  }
-  die_t & operator<<(const no_t &x) {
-    x.write(std::cerr, _errno);
-    return *this;
-  }
-  die_t & operator<<(const char *a[]) {
-    for(int i = 0; a[i]; i++)
-      std::cerr << (i ? "\n" : "") << a[i];
-    return *this;
-  }
-  die_t & operator<<(const std::exception &e) {
-    std::cerr << e.what();
-    return *this;
-  }
+  msg() { }
+  explicit msg(const std::exception& e) { *this << e; }
   template<typename T>
-  die_t & operator<<(const T &x) {
-    std::cerr << x;
-    return *this;
-  }
-};
+  explicit msg(const T& x) { *this << x; }
 
-template<typename err_t>
-class raise_t {
-  int                _errno;
-  std::ostringstream oss;
-public:
-  raise_t() : _errno(errno) {}
-  ~raise_t() { throw err_t(oss.str()); }
+  operator std::string() const { return msg_.str(); }
 
-  raise_t & operator<<(const no_t &x) {
-    x.write(oss, _errno);
-    return *this;
-  }
   template<typename T>
-  raise_t & operator<<(const T &x) {
-    oss << x;
+  msg& operator<<(const T& x) {
+    msg_ << x;
     return *this;
   }
+
+  msg& operator<<(const std::exception& e) {
+    msg_ << e.what();
+    // try {
+    //   std::rethrow_if_nested(e);
+    // } catch (const std::exception& nested) {
+    //   msg_ << '\n';
+    //   return *this << nested;
+    // }
+    return *this;
+  }
+
+  msg& operator<<(msg& (*pf)(msg&)) { return pf(*this); }
+
 };
-} } // namespace jellyfish { namespace err {
 
+// Select the correct version (GNU or XSI) version of
+// ::strerror_r. err::strerror_ behaves like the GNU version of strerror_r,
+// regardless of which version is provided by the system.
+inline const char* strerror__(char* buf, int res) {
+  return res != -1 ? buf : "error";
+}
+inline const char* strerror__(char* buf, char* res) {
+  return res;
+}
+inline const char* strerror_r(int err, char* buf, size_t buflen) {
+  return strerror__(buf, ::strerror_r(err, buf, buflen));
+}
 
-#define die if(1) jellyfish::err::die_t()
-#define eraise(e) if(1) jellyfish::err::raise_t<e>()
+inline std::ostream& no(std::ostream& os) {
+  char buf[128];
+  return os << strerror_r(errno, buf, sizeof(buf));
+}
+
+inline msg& no(msg& m) {
+  char buf[128];
+  return m << strerror_r(errno, buf, sizeof(buf));
+}
+
+inline void die(int code, std::string msg) {
+  std::cerr << msg << '\n';
+  exit(code);
+}
+
+inline void die(std::string msg) { die(1, msg); }
+} // namespace err
+} // namespace jellyfish
+
 #define define_error_class(name)                                        \
   class name : public std::runtime_error {                              \
   public: explicit name(const std::string &txt) : std::runtime_error(txt) {} \

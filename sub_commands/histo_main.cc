@@ -28,6 +28,8 @@
 #include <jellyfish/jellyfish.hpp>
 #include <sub_commands/histo_main_cmdline.hpp>
 
+namespace err = jellyfish::err;
+
 template<typename reader_type>
 void compute_histo(reader_type& reader, const uint64_t base, const uint64_t ceil,
                    uint64_t* histo, const uint64_t nb_buckets, const uint64_t inc) {
@@ -48,7 +50,7 @@ int histo_main(int argc, char *argv[])
 
   std::ifstream is(args.db_arg);
   if(!is.good())
-    die << "Failed to open input file '" << args.db_arg << "'" << jellyfish::err::no;
+    err::die(err::msg() << "Failed to open input file '" << args.db_arg << "'");
   jellyfish::file_header header;
   header.read(is);
   jellyfish::mer_dna::k(header.key_len() / 2);
@@ -57,7 +59,7 @@ int histo_main(int argc, char *argv[])
     histo_main_cmdline::error("High count value must be >= to low count value");
   ofstream_default out(args.output_given ? args.output_arg : 0, std::cout);
   if(!out.good())
-    die << "Error opening output file '" << args.output_arg << "'" << jellyfish::err::no;
+    err::die(err::msg() << "Error opening output file '" << args.output_arg << "'");
 
   const uint64_t base = args.increment_arg >= args.low_arg ? 0 : args.low_arg - args.increment_arg;
   const uint64_t ceil = args.high_arg + args.increment_arg;
@@ -74,7 +76,7 @@ int histo_main(int argc, char *argv[])
     text_reader reader(is, &header);
     compute_histo(reader, base, ceil, histo, nb_buckets, inc);
   } else {
-    die << "Unknown format '" << header.format() << "'";
+    err::die(err::msg() << "Unknown format '" << header.format() << "'");
   }
 
   for(uint64_t i = 0, col = base; i < nb_buckets; ++i, col += inc)

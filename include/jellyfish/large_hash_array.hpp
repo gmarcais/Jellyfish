@@ -175,9 +175,9 @@ public:
     hash_inverse_matrix_(hash_matrix_.pseudo_inverse())
   {
     if(!data_)
-      eraise(ErrorAllocation) << "Failed to allocate "
-                              << (div_ceil(size, (size_t)offsets_.block_len()) * offsets_.block_word_len() * sizeof(word))
-                              << " bytes of memory";
+      throw ErrorAllocation(err::msg() << "Failed to allocate "
+                            << (div_ceil(size, (size_t)offsets_.block_len()) * offsets_.block_word_len() * sizeof(word))
+                            << " bytes of memory");
   }
 
   array_base(array_base&& ary) :

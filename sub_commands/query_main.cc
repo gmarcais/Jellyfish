@@ -27,6 +27,8 @@
 #include <jellyfish/jellyfish.hpp>
 #include <sub_commands/query_main_cmdline.hpp>
 
+namespace err = jellyfish::err;
+
 using jellyfish::mer_dna;
 using jellyfish::mer_dna_bloom_counter;
 typedef std::vector<const char*> file_vector;
@@ -87,18 +89,18 @@ int query_main(int argc, char *argv[])
 
   ofstream_default out(args.output_given ? args.output_arg : 0, std::cout);
   if(!out.good())
-    die << "Error opening output file '" << args.output_arg << "'";
+    err::die(err::msg() << "Error opening output file '" << args.output_arg << "'");
 
   std::ifstream in(args.file_arg, std::ios::in|std::ios::binary);
   jellyfish::file_header header(in);
   if(!in.good())
-    die << "Failed to parse header of file '" << args.file_arg << "'";
+    err::die(err::msg() << "Failed to parse header of file '" << args.file_arg << "'");
   mer_dna::k(header.key_len() / 2);
   if(header.format() == "bloomcounter") {
     jellyfish::hash_pair<mer_dna> fns(header.matrix(1), header.matrix(2));
     mer_dna_bloom_counter filter(header.size(), header.nb_hashes(), in, fns);
     if(!in.good())
-      die << "Bloom filter file is truncated";
+      err::die("Bloom filter file is truncated");
     in.close();
     query_from_sequence(args.sequence_arg.begin(), args.sequence_arg.end(), filter, out, header.canonical());
     query_from_cmdline(args.mers_arg, filter, out, header.canonical());
@@ -114,7 +116,7 @@ int query_main(int argc, char *argv[])
     query_from_cmdline(args.mers_arg, bq, out, header.canonical());
     if(args.interactive_flag)  query_from_stdin(bq, out, header.canonical());
   } else {
-    die << "Unsupported format '" << header.format() << "'. Must be a bloom counter or binary list.";
+    err::die(err::msg() << "Unsupported format '" << header.format() << "'. Must be a bloom counter or binary list.");
   }
 
   return 0;

@@ -31,6 +31,8 @@
 #include <jellyfish/file_header.hpp>
 #include <sub_commands/bc_main_cmdline.hpp>
 
+namespace err = jellyfish::err;
+
 using std::chrono::system_clock;
 using std::chrono::duration;
 using std::chrono::duration_cast;
@@ -107,7 +109,7 @@ int bc_main(int argc, char *argv[])
   header.canonical(args.canonical_flag);
   std::ofstream output(args.output_arg);
   if(!output.good())
-    die << "Can't open output file '" << args.output_arg << "'";
+    err::die(err::msg() << "Can't open output file '" << args.output_arg << "'");
 
   header.format("bloomcounter");
   header.key_len(args.mer_len_arg * 2);
@@ -137,7 +139,7 @@ int bc_main(int argc, char *argv[])
     signal(SIGTERM, SIG_DFL);
     manager_pid = 0;
     if(!generator_manager->wait())
-      die << "Some generator commands failed";
+      err::die("Some generator commands failed");
     generator_manager.reset();
   }
 

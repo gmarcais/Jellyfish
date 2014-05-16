@@ -14,6 +14,8 @@
 #include <jellyfish/stream_iterator.hpp>
 
 namespace {
+namespace err = jellyfish::err;
+
 typedef std::vector<const char*>                  path_vector;
 typedef path_vector::const_iterator               path_iterator;
 typedef jellyfish::stream_iterator<path_iterator> stream_iterator;
@@ -27,7 +29,7 @@ protected:
   static void SetUpTestCase() {
     tmpdir = strdup("/tmp/stream_iterator_XXXXXX");
     if(!mkdtemp(tmpdir))
-      eraise(std::runtime_error) << "Failed to create tmp directory" << jellyfish::err::no;
+      throw std::runtime_error(err::msg() << "Failed to create tmp directory: " << err::no);
 
     int nb_files = jellyfish::random_bits(5);
     for(int i = 0; i < nb_files; ++i) {
@@ -36,7 +38,7 @@ protected:
       paths.push_back(strdup(path.str().c_str()));
       std::ofstream tmp_file(path.str().c_str());
       if(tmp_file.fail())
-        eraise(std::runtime_error) << "Failed to open file '" << path.str() << "' for writing";
+        throw std::runtime_error(err::msg() << "Failed to open file '" << path.str() << "' for writing");
       int nb_lines = jellyfish::random_bits(6);
       total_lines += nb_lines;
       for(int j = 0; j < nb_lines; ++j)
@@ -47,11 +49,11 @@ protected:
   static void TearDownTestCase() {
     for(path_iterator it = paths.begin(); it != paths.end(); ++it) {
       if(unlink(*it) == -1)
-        eraise(std::runtime_error) << "Failed to unlink file '" << *it << jellyfish::err::no;
+        throw std::runtime_error(err::msg() << "Failed to unlink file '" << *it << ": " << err::no);
       free((void*)*it);
     }
     if(rmdir(tmpdir) == -1)
-      eraise(std::runtime_error) << "Failed to rmdir '" << tmpdir << jellyfish::err::no;
+      throw std::runtime_error(err::msg() << "Failed to rmdir '" << tmpdir << ": " << err::no);
     free(tmpdir);
   }
 };

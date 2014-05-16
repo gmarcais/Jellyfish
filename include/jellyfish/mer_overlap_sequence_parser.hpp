@@ -138,7 +138,7 @@ protected:
       ignore_line(*st.stream); // Pass header
       break;
     default:
-      eraise(std::runtime_error) << "Unsupported format"; // Better error management
+      throw std::runtime_error("Unsupported format"); // Better error management
     }
     return true;
   }
@@ -231,7 +231,7 @@ protected:
     if(quals == read_len && (is.peek() == '@' || is.peek() == EOF))
       return;
 
-    eraise(std::runtime_error) << "Invalid fastq sequence";
+    throw std::runtime_error("Invalid fastq sequence");
   }
 
   char peek(std::istream& is) { return is.peek(); }

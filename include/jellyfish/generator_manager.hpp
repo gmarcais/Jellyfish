@@ -127,7 +127,7 @@ public:
     kill_signal_(0)
   {
     if(!cmds_.good())
-      eraise(std::runtime_error) << "Failed to open cmds file '" << cmds << "'";
+      throw std::runtime_error(err::msg() << "Failed to open cmds file '" << cmds << "'");
     if(!shell_)
       shell_ = getenv("SHELL");
     if(!shell_)

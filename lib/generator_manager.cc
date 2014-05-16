@@ -64,7 +64,7 @@ std::string tmp_pipes::create_tmp_dir() {
     if(res)
       return std::string(res);
   }
-  eraise(std::runtime_error) << "Failed to create a temporary directory for the pipes. Set the variable TMPDIR properly";
+  throw std::runtime_error(err::msg() << "Failed to create a temporary directory for the pipes. Set the variable TMPDIR properly: " << err::no);
   return "";
 }
 
@@ -75,7 +75,7 @@ std::vector<std::string> tmp_pipes::create_pipes(const std::string& tmpdir, int 
     std::ostringstream path;
     path << tmpdir << "/fifo" << i;
     if(mkfifo(path.str().c_str(), S_IRUSR|S_IWUSR) == -1)
-      eraise(std::runtime_error) << "Failed to create named fifos";
+      throw std::runtime_error(err::msg() << "Failed to create named fifos: " << err::no);
     pipes.push_back(path.str());
   }
   return pipes;
@@ -115,7 +115,7 @@ void generator_manager::start()  {
   manager_pid_ = fork();
   switch(manager_pid_) {
   case -1:
-    eraise(std::runtime_error) << "Failed to start manager process";
+    throw std::runtime_error(err::msg() << "Failed to start manager process: " << err::no);
     break;
   case 0:
     manager_pid_ = -1;

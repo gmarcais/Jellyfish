@@ -45,6 +45,8 @@
 
 static count_main_cmdline args; // Command line switches and arguments
 
+namespace err = jellyfish::err;
+
 using std::chrono::system_clock;
 using std::chrono::duration;
 using std::chrono::duration_cast;
@@ -186,15 +188,15 @@ mer_dna_bloom_counter* load_bloom_filter(const char* path) {
   std::ifstream in(path, std::ios::in|std::ios::binary);
   jellyfish::file_header header(in);
   if(!in.good())
-    die << "Failed to parse bloom filter file '" << path << "'";
+    err::die(err::msg() << "Failed to parse bloom filter file '" << path << "'");
   if(header.format() != "bloomcounter")
-    die << "Invalid format '" << header.format() << "'. Expected 'bloomcounter'";
+    err::die(err::msg() << "Invalid format '" << header.format() << "'. Expected 'bloomcounter'");
   if(header.key_len() != mer_dna::k() * 2)
-    die << "Invalid mer length in bloom filter";
+    err::die("Invalid mer length in bloom filter");
   jellyfish::hash_pair<mer_dna> fns(header.matrix(1), header.matrix(2));
   auto res = new mer_dna_bloom_counter(header.size(), header.nb_hashes(), in, fns);
   if(!in.good())
-    die << "Bloom filter file is truncated";
+    err::die("Bloom filter file is truncated");
   in.close();
   return res;
 }
@@ -305,7 +307,7 @@ int count_main(int argc, char *argv[])
     signal(SIGTERM, SIG_DFL);
     manager_pid = 0;
     if(!generator_manager->wait())
-      die << "Some generator commands failed";
+      err::die("Some generator commands failed");
     generator_manager.reset();
   }
 
@@ -329,7 +331,7 @@ int count_main(int argc, char *argv[])
         try {
           merge_files(files, args.output_arg, header, min, max);
         } catch(MergeError e) {
-          die << e.what();
+          err::die(err::msg() << e.what());
         }
         if(!args.no_unlink_flag) {
           for(int i =0; i < dumper->nb_files(); ++i)

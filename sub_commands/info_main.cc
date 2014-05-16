@@ -7,6 +7,8 @@
 #include <jellyfish/misc.hpp>
 #include <sub_commands/info_main_cmdline.hpp>
 
+namespace err = jellyfish::err;
+
 static info_main_cmdline args;
 
 std::string get_command(const jellyfish::generic_file_header& h) {
@@ -31,7 +33,7 @@ int info_main(int argc, char *argv[]) {
 
   std::ifstream file(args.file_arg);
   if(!file.good())
-    die << "Can't open '" << args.file_arg << "'" << jellyfish::err::no;
+    err::die(err::msg() << "Can't open '" << args.file_arg << "'");
 
   jellyfish::file_header header;
   header.read(file);
