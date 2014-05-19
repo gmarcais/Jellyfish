@@ -174,10 +174,10 @@ struct mem_info {
 template<typename Value, typename T = uint64_t>
 class atomic_bits_array_raw :
     protected mem_info,
-    public atomic_bits_array_base<Value, T, atomic_bits_array<Value, T> >
+    public atomic_bits_array_base<Value, T, atomic_bits_array_raw<Value, T> >
 {
-  typedef atomic_bits_array_base<Value, T, atomic_bits_array<Value, T> > super;
-  friend class atomic_bits_array_base<Value, T, atomic_bits_array<Value, T> >;
+  typedef atomic_bits_array_base<Value, T, atomic_bits_array_raw<Value, T> > super;
+  friend class atomic_bits_array_base<Value, T, atomic_bits_array_raw<Value, T> >;
 public:
   atomic_bits_array_raw(void* ptr, size_t bytes, int bits, size_t size) :
     mem_info(ptr, bytes),

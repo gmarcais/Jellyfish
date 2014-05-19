@@ -964,10 +964,10 @@ struct ptr_info {
 template<typename Key, typename word = uint64_t, typename atomic_t = ::atomic::gcc>
 class array_raw :
     protected ptr_info,
-    public array_base<Key, word, atomic_t, array<Key, word, atomic_t> >
+    public array_base<Key, word, atomic_t, array_raw<Key, word, atomic_t> >
 {
-  typedef array_base<Key, word, atomic_t, array<Key, word, atomic_t> > super;
-  friend class array_base<Key, word, atomic_t, array<Key, word, atomic_t> >;
+  typedef array_base<Key, word, atomic_t, array_raw<Key, word, atomic_t> > super;
+  friend class array_base<Key, word, atomic_t, array_raw<Key, word, atomic_t> >;
 
 public:
   array_raw(void* ptr,
