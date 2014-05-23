@@ -31,10 +31,11 @@ std::string add_suffix(uint64_t x) {
     x /= U;
     ++i;
   }
-  std::string res = std::to_string(x);
+  std::ostringstream res;
+  res << x;
   if(i > 0)
-    res += suffixes[i - 1];
-  return res;
+    res << suffixes[i - 1];
+  return res.str();
 }
 
 int mem_main(int argc, char *argv[]) {
