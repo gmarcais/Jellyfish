@@ -224,7 +224,7 @@ protected:
 
 public:
   explicit stl_iterator_base(const array* ary, size_t start_id = 0) :
-    lit(ary, start_id, ary->size), val_(lit::key_, (mapped_type)0)
+    lit(ary, start_id, ary->size()), val_(lit::key_, (mapped_type)0)
   { ++*this; }
   stl_iterator_base(const array* ary, size_t start_id, size_t end_id) :
     lit(ary, start_id, end_id), val_(lit::key_, (mapped_type)0)
