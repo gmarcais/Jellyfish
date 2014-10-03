@@ -97,7 +97,7 @@ protected:
       st.type = FASTQ_TYPE;
       break;
     default:
-      eraise(std::runtime_error) << "Unsupported format"; // Better error management
+      throw std::runtime_error("Unsupported format"); // Better error management
     }
   }
 
@@ -131,7 +131,7 @@ protected:
         fill_buff.seq.append(st.buffer);             // two lines avoiding copying
       }
       if(!st.stream->good())
-        eraise(std::runtime_error) << "Truncated fastq file";
+        throw std::runtime_error("Truncated fastq file");
       st.stream->ignore(std::numeric_limits<std::streamsize>::max(), '\n');
       fill_buff.qual.clear();
       while(fill_buff.qual.size() < fill_buff.seq.size() && st.stream->good()) {
@@ -139,9 +139,9 @@ protected:
         fill_buff.qual.append(st.buffer);
       }
       if(fill_buff.qual.size() != fill_buff.seq.size())
-        eraise(std::runtime_error) << "Invalid fastq file: wrong number of quals";
+        throw std::runtime_error("Invalid fastq file: wrong number of quals");
       if(st.stream->peek() != EOF && st.stream->peek() != '@')
-        eraise(std::runtime_error) << "Invalid fastq file: header missing";
+        throw std::runtime_error("Invalid fastq file: header missing");
     }
   }
 };

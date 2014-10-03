@@ -1,0 +1,18 @@
+What is it?
+===========
+
+Given a jellyfish database and one or more input fast[aq] files, it
+output for each sequence in the fast[aq] files the count in the
+database of each of the k-mers. The output format is fasta, where the
+header is copied from the input files and the content is a number for
+each of the k-mers. If the sequence has length n, there will be n-k+1
+numbers, corresponding in order to the n-k+1 k-mers in the sequence.
+
+For example:
+
+$ ./query_per_sequence db.jf sequence.fa
+>read1
+0 0 0 1 1 2 3 3 3 4 2
+>read2
+15 16 17 13 12 11 12 12 10 7 6
+...

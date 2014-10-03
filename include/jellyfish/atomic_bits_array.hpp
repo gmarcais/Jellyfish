@@ -91,12 +91,18 @@ class atomic_bits_array_base {
     }
 
     bool set(Value& nval) {
-      const T new_word    = (prev_word_ & ~mask_) | ((static_cast<T>(nval) << off_) & mask_);
-      const T actual_word = atomic_.cas(word_, prev_word_, new_word);
-      if(__builtin_expect(actual_word == prev_word_, 1))
-        return true;
-      prev_word_ = actual_word;
-      nval       = get_val(prev_word_);
+      Value pval;
+      Value cval = get_val(prev_word_);
+      do {
+        pval = cval;
+        const T new_word    = (prev_word_ & ~mask_) | ((static_cast<T>(nval) << off_) & mask_);
+        const T actual_word = atomic_.cas(word_, prev_word_, new_word);
+        if(__builtin_expect(actual_word == prev_word_, 1))
+          return true;
+        prev_word_ = actual_word;
+        cval = get_val(prev_word_);
+      } while(pval == cval);
+      nval = cval;
       return false;
     }
   };
@@ -174,10 +180,10 @@ struct mem_info {
 template<typename Value, typename T = uint64_t>
 class atomic_bits_array_raw :
     protected mem_info,
-    public atomic_bits_array_base<Value, T, atomic_bits_array<Value, T> >
+    public atomic_bits_array_base<Value, T, atomic_bits_array_raw<Value, T> >
 {
-  typedef atomic_bits_array_base<Value, T, atomic_bits_array<Value, T> > super;
-  friend class atomic_bits_array_base<Value, T, atomic_bits_array<Value, T> >;
+  typedef atomic_bits_array_base<Value, T, atomic_bits_array_raw<Value, T> > super;
+  friend class atomic_bits_array_base<Value, T, atomic_bits_array_raw<Value, T> >;
 public:
   atomic_bits_array_raw(void* ptr, size_t bytes, int bits, size_t size) :
     mem_info(ptr, bytes),

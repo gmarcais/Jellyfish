@@ -1,0 +1,14 @@
+include_rules
+
+export PKG_CONFIG_PATH
+SWIGFLAGS = -python
+CXXFLAGS += $(JELLYFISH_CFLAGS) $(PYTHON_CFLAGS) -fPIC
+LDFLAGS += -shared $(JELLYFISH_LIBS) $(JELLYFISH_RPATH) $(PYTHON_LIBS)
+
+: ../jellyfish.i |> !swigxx |> jellyfish_wrap.cxx | jellyfish.py <jf>
+: jellyfish_wrap.cxx |> !cxx |>
+: jellyfish_wrap.o |> !lxxd |> _jellyfish.so <jf>
+
+TESTS = test_mer_file.py test_hash_counter.py
+
+: foreach $(TESTS) | <jf> ../tests/<seq> |> PYTHONPATH=.:$PYTHONPATH $(PYTHON) -B %f ../tests > %o 2>&1 |> %B

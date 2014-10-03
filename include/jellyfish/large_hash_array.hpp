@@ -175,9 +175,9 @@ public:
     hash_inverse_matrix_(hash_matrix_.pseudo_inverse())
   {
     if(!data_)
-      eraise(ErrorAllocation) << "Failed to allocate "
-                              << (div_ceil(size, (size_t)offsets_.block_len()) * offsets_.block_word_len() * sizeof(word))
-                              << " bytes of memory";
+      throw ErrorAllocation(err::msg() << "Failed to allocate "
+                            << (div_ceil(size, (size_t)offsets_.block_len()) * offsets_.block_word_len() * sizeof(word))
+                            << " bytes of memory");
   }
 
   array_base(array_base&& ary) :
@@ -964,10 +964,10 @@ struct ptr_info {
 template<typename Key, typename word = uint64_t, typename atomic_t = ::atomic::gcc>
 class array_raw :
     protected ptr_info,
-    public array_base<Key, word, atomic_t, array<Key, word, atomic_t> >
+    public array_base<Key, word, atomic_t, array_raw<Key, word, atomic_t> >
 {
-  typedef array_base<Key, word, atomic_t, array<Key, word, atomic_t> > super;
-  friend class array_base<Key, word, atomic_t, array<Key, word, atomic_t> >;
+  typedef array_base<Key, word, atomic_t, array_raw<Key, word, atomic_t> > super;
+  friend class array_base<Key, word, atomic_t, array_raw<Key, word, atomic_t> >;
 
 public:
   array_raw(void* ptr,

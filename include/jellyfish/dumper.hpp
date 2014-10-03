@@ -64,8 +64,8 @@ protected:
 
     out.open(name.str().c_str());
     if(out.fail())
-      eraise(ErrorWriting) << "'" << name.str() << "': "
-                           << "Can't open file for writing" << err::no;
+      throw ErrorWriting(err::msg() << "'" << name.str() << "': "
+                         << "Can't open file for writing" << err::no);
   }
 
 public:

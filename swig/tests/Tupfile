@@ -1,0 +1,6 @@
+include_rules
+
+: |> (echo ">read"; head -c 1000000 /dev/urandom | ruby -e 'b="ACGT"; STDIN.bytes.each { |x| 4.times { |i| print(b[(x >> (2*i)) & 3]) } }') > %o |> sequence.fasta
+: sequence.fasta |> $(JELLYFISH) count -m 10 -s 10M -t 10 -C -o %o %f |> sequence.jf <seq>
+: sequence.jf |> $(JELLYFISH) histo %f > %o |> sequence.histo <seq>
+: sequence.jf |> $(JELLYFISH) dump -c %f > %o |> sequence.dump <seq>

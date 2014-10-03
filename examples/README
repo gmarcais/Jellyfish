@@ -1,0 +1,15 @@
+What is it?
+===========
+
+Here are some examples on how to use the Jellyfish library and
+potentially useful programs to compute data from Jellyfish
+output. Each directory is an independent project which relies on
+Jellyfish between installed and is available with pkg-config. Meaning
+'pkg-config --print-provides jellyfish-2.0' returns something like
+'jellyfish-2.0 = 2.1.1'.
+
+Disclaimer
+==========
+
+Notice that the code in these directory is not as well tested as the
+rest of the Jellyfish code. It should work but no guaranteed is made.

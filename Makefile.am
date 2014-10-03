@@ -45,6 +45,7 @@ bin_jellyfish_SOURCES = sub_commands/jellyfish.cc	\
                         sub_commands/bc_main.cc		\
                         sub_commands/query_main.cc	\
                         sub_commands/cite_main.cc	\
+                        sub_commands/mem_main.cc	\
                         jellyfish/merge_files.cc
 bin_jellyfish_LDFLAGS = $(AM_LDFLAGS) $(STATIC_FLAGS)
 
@@ -57,7 +58,8 @@ YAGGO_SOURCES += sub_commands/count_main_cmdline.hpp	\
                  sub_commands/merge_main_cmdline.hpp	\
                  sub_commands/bc_main_cmdline.hpp	\
                  sub_commands/query_main_cmdline.hpp	\
-                 sub_commands/cite_main_cmdline.hpp
+                 sub_commands/cite_main_cmdline.hpp	\
+                 sub_commands/mem_main_cmdline.hpp
 
 ######################################
 # Build Jellyfish the shared library #
@@ -67,7 +69,7 @@ libjellyfish_2_0_la_SOURCES = lib/rectangular_binary_matrix.cc		\
                               lib/mer_dna.cc lib/storage.cc		\
                               lib/allocators_mmap.cc lib/misc.cc	\
                               lib/int128.cc lib/thread_exec.cc		\
-                              lib/err.cc lib/jsoncpp.cpp lib/time.cc	\
+                              lib/jsoncpp.cpp lib/time.cc	\
                               lib/generator_manager.cc
 
 

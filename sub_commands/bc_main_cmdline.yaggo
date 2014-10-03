@@ -1,6 +1,5 @@
 purpose "Create a bloom filter from the input k-mers"
-package "jellyfish bf"
-
+package "jellyfish bc"
 description "Here, a bloom filter is a data structure than can tell if
 a k-mer has been since 0 times, once, or at least twice. The data
 structure is very memory efficient but has some probability of error.

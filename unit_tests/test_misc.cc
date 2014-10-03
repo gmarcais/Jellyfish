@@ -39,17 +39,30 @@ TEST(BitSize, Small) {
   }
 }
 
+template<typename T>
+int generic_popcount(T x) {
+  static int counts[16] = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 };
+  int res = 0;
+  for( ; x; x >>= 4)
+    res += counts[x & 0xf];
+  return res;
+}
+
 TEST(Random, Bits) {
-  uint64_t m = 0;
-  uint64_t m2 = 0;
-  int not_zero = 0;
+  uint64_t m        = 0;
+  uint64_t m2       = 0;
+  int      not_zero = 0;
+  int      bits     = 0;
   for(int i = 0; i < 1024; ++i) {
     m        += jellyfish::random_bits(41);
     m2       += random_bits(41);
     not_zero += random_bits() > 0;
+    bits     += generic_popcount(m);
   }
+  std::cout << bits << "\n";
   EXPECT_LT((uint64_t)1 << 49, m); // Should be false with very low probability
   EXPECT_LT((uint64_t)1 << 49, m2); // Should be false with very low probability
+  EXPECT_LT((int)(20.5 * 1024) / 2, bits);
   EXPECT_LT(512, not_zero);
 }
 

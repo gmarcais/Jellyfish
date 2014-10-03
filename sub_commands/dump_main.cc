@@ -28,6 +28,8 @@
 #include <jellyfish/jellyfish.hpp>
 #include <sub_commands/dump_main_cmdline.hpp>
 
+namespace err = jellyfish::err;
+
 static dump_main_cmdline args; // Command line switches and arguments
 
 template<typename iterator>
@@ -56,11 +58,11 @@ int dump_main(int argc, char *argv[])
 
   ofstream_default out(args.output_given ? args.output_arg : 0, std::cout);
   if(!out.good())
-    die << "Error opening output file '" << args.output_arg << "'";
+    err::die(err::msg() << "Error opening output file '" << args.output_arg << "'");
 
   std::ifstream is(args.db_arg);
   if(!is.good())
-    die << "Failed to open input file '" << args.db_arg << "'" << jellyfish::err::no;
+    err::die(err::msg() << "Failed to open input file '" << args.db_arg << "'");
   jellyfish::file_header header;
   header.read(is);
   jellyfish::mer_dna::k(header.key_len() / 2);
@@ -77,7 +79,7 @@ int dump_main(int argc, char *argv[])
     text_reader reader(is, &header);
     dump(reader, out, args.lower_count_arg, args.upper_count_arg);
   } else {
-    die << "Unknown format '" << header.format() << "'";
+    err::die(err::msg() << "Unknown format '" << header.format() << "'");
   }
 
   out.close();

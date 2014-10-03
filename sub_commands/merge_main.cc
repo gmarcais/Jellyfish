@@ -19,6 +19,7 @@
 
 #include <sub_commands/merge_main_cmdline.hpp>
 
+namespace err = jellyfish::err;
 
 int merge_main(int argc, char *argv[])
 {
@@ -33,7 +34,7 @@ int merge_main(int argc, char *argv[])
   try {
     merge_files(args.input_arg, args.output_arg, out_header, min, max);
   } catch(MergeError e) {
-    die << e.what();
+    err::die(err::msg() << e.what());
   }
 
   return 0;

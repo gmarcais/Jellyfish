@@ -115,7 +115,7 @@ protected:
       if(res->good())
         return;
       res.reset();
-      eraise(std::runtime_error) << "Can't open file '" << path << "'";
+      throw std::runtime_error(err::msg() << "Can't open file '" << path << "'");
     }
   }
 

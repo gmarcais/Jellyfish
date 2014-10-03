@@ -1,0 +1,120 @@
+# Default rules
+!cc     = |> ^ CC    %f^ $(CC) $(CPPFLAGS) $(CPPFLAGS_%B) @(CPPFLAGS) $(CFLAGS) $(CFLAGS_%B) @(CFLAGS) -c -o %o %f |> %B.o
+!cxx    = |> ^ CXX   %f^ $(CXX) $(CPPFLAGS) $(CPPFLAGS_%B) @(CPPFLAGS) $(CXXFLAGS) $(CXXFLAGS_%B) @(CXXFLAGS) -c -o %o %f |> %B.o
+!ld     = |> ^ LD    %o^ $(CC) $(T_LDFLAGS) $(LDFLAGS) $(LDFLAGS_%O) $(LOADLIBES) $(LDLIBS) %f -o %o |>
+!lxxd   = |> ^ LXX   %o^ $(CXX) $(T_LDFLAGS) $(LDFLAGS) $(LDFLAGS_%o) @(LDFLAGS) %f $(LOADLIBES) $(LDLIBS) $(LDLIBS_%o) -o %o |>
+!cld    = |> ^ CLD   %o^ $(CC) $(CPPFLAGS) $(CPPFLAGS_%B) @(CPPFLAGS) $(CFLAGS) $(CFLAGS_%B) @(CFLAGS) %f -o %o |>
+!cxxld  = |> ^ CXXLD %o^ $(CXX) $(CPPFLAGS) $(CPPFLAGS_%B) @(CPPFLAGS) $(CXXFLAGS) $(CXXFLAGS_%B) @(CXXFLAGS) $(LDFLAGS) $(LDFLAGS_%o) @(LDFLAGS) %f $(LOADLIBES) $(LDLIBS) $(LDLIBS_%o) -o %o |> %B
+!ar     = |> ^ AR    %o^ $(AR) sruv $(ARFLAGS) $(ARFLAGS_%O) @(ARFLAGS) %o %f |>
+!yaggo  = |> ^ YAGGO %f^ $(YAGGO) %f |> %B.hpp
+!swigxx = |> ^ SWIG  %f^ $(SWIG) -c++ $(SWIGFLAGS) $(SWIGFLAGS_%B) -o %o %f |> %B.cxx
+
+# Default variables
+ifdef CC
+  CC = @(CC)
+else
+  CC = gcc
+endif
+
+ifdef CXX
+  CXX = @(CXX)
+else
+  CXX = g++
+endif
+
+ifdef AR
+  AR = @(AR)
+else
+  AR = ar
+endif
+
+ifdef YAGGO
+  YAGGO = @(YAGGO)
+else
+  YAGGO = yaggo
+endif
+
+ifdef SWIG
+  SWIG = @(SWIG)
+else
+  SWIG = swig
+endif
+
+ifdef PYTHON
+  PYTHON = @(PYTHON)
+else
+  PYTHON = python
+endif
+
+ifdef RUBY
+  RUBY = @(RUBY)
+else
+  RUBY = ruby
+endif
+
+ifdef PERL
+  PERL = @(PERL)
+else
+  PERL = perl
+endif
+
+ifdef JELLYFISH
+  JELLYFISH = @(JELLYFISH)
+else
+  JELLYFISH = jellyfish
+endif
+
+CXXFLAGS = -Wall -std=c++0x
+ifdef JELLYFISH_CFLAGS
+  JELLYFISH_CFLAGS = @(JELLYFISH_CFLAGS)
+else
+  JELLYFISH_CFLAGS = `pkg-config --cflags jellyfish-2.0`
+endif
+
+ifdef JELLYFISH_LIBS
+  JELLYFISH_LIBS = @(JELLYFISH_LIBS)
+else
+  JELLYFISH_LIBS = `pkg-config --libs jellyfish-2.0` 
+endif
+
+ifdef JELLYFISH_RPATH
+  JELLYFISH_RPATH = @(JELLYFISH_RPATH)
+else
+  JELLYFISH_RPATH = `pkg-config --libs-only-L jellyfish-2.0 | sed -e 's/-L/-Wl,-rpath,/g'`
+endif
+
+ifdef RUBY_CFLAGS
+  RUBY_CFLAGS = @(RUBY_CFLAGS)
+else
+  RUBY_CFLAGS = `pkg-config --cflags ruby-1.9`
+endif
+
+ifdef RUBY_LIBS
+  RUBY_LIBS = @(RUBY_LIBS)
+else
+  RUBY_LIBS = `pkg-config --libs ruby-1.9`
+endif
+
+ifdef PYTHON_CFLAGS
+  PYTHON_CFLAGS = @(PYTHON_CFLAGS)
+else
+  PYTHON_CFLAGS = `pkg-config --cflags python3`
+endif
+
+ifdef PYTHON_LIBS
+  PYTHON_LIBS = @(PYTHON_LIBS)
+else
+  PYTHON_LIBS = `pkg-config --libs python3`
+endif
+
+ifdef PERL_CFLAGS
+  PERL_CFLAGS = @(PERL_CFLAGS)
+else
+  PERL_CFLAGS = `perl -MConfig -e 'print("-I$Config{archlibexp}/CORE")'`
+endif
+
+ifdef PERL_LIBS
+  PERL_LIBS = @(PERL_LIBS)
+else
+  PERL_LIBS = `perl -MConfig -e 'print($Config{ccdlflags})'`
+endif

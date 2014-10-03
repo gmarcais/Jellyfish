@@ -110,8 +110,8 @@ public:
     super(super::opt_m(fp, n), super::opt_k(fp), (unsigned char*)mem_block_t::get_ptr(), fns)
   {
     if(!mem_block_t::get_ptr())
-      eraise(std::runtime_error) << "Failed to allocate " << super::nb_bytes__(super::opt_m(fp, n))
-                                 << " bytes of memory for bloom_filter";
+      throw std::runtime_error(err::msg() << "Failed to allocate " << super::nb_bytes__(super::opt_m(fp, n))
+                               << " bytes of memory for bloom_filter");
   }
 
   bloom_filter(size_t m, unsigned long k, const HashPair& fns = HashPair()) :
@@ -119,7 +119,7 @@ public:
     super(m, k, (unsigned char*)mem_block_t::get_ptr(), fns)
   {
     if(!mem_block_t::get_ptr())
-      eraise(std::runtime_error) << "Failed to allocate " << super::nb_bytes__(m) << " bytes of memory for bloom_filter";
+      throw std::runtime_error(err::msg() << "Failed to allocate " << super::nb_bytes__(m) << " bytes of memory for bloom_filter");
   }
 
   bloom_filter(size_t m, unsigned long k, std::istream& is, const HashPair& fns = HashPair()) :
@@ -127,7 +127,7 @@ public:
     super(m, k, (unsigned char*)mem_block_t::get_ptr(), fns)
   {
     if(!mem_block_t::get_ptr())
-      eraise(std::runtime_error) << "Failed to allocate " << super::nb_bytes__(m) << " bytes of memory for bloom_filter";
+      throw std::runtime_error(err::msg() << "Failed to allocate " << super::nb_bytes__(m) << " bytes of memory for bloom_filter");
 
     is.read((char*)mem_block_t::get_ptr(), mem_block_t::get_size());
   }

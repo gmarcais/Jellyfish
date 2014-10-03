@@ -27,6 +27,8 @@
 #include <jellyfish/jellyfish.hpp>
 #include <sub_commands/stats_main_cmdline.hpp>
 
+namespace err = jellyfish::err;
+
 template<typename reader_type>
 void compute_stats(reader_type& reader, uint64_t low, uint64_t high,
                    uint64_t& uniq, uint64_t& distinct, uint64_t& total,
@@ -49,14 +51,14 @@ int stats_main(int argc, char *argv[])
 
   std::ifstream is(args.db_arg);
   if(!is.good())
-    die << "Failed to open input file '" << args.db_arg << "'" << jellyfish::err::no;
+    err::die(err::msg() << "Failed to open input file '" << args.db_arg << "'");
   jellyfish::file_header header;
   header.read(is);
   jellyfish::mer_dna::k(header.key_len() / 2);
 
   ofstream_default out(args.output_given ? args.output_arg : 0, std::cout);
   if(!out.good())
-    die << "Error opening output file '" << args.output_arg << "'" << jellyfish::err::no;
+    err::die(err::msg() << "Error opening output file '" << args.output_arg << "'");
 
   if(!args.upper_count_given)
     args.upper_count_arg = std::numeric_limits<uint64_t>::max();
@@ -68,7 +70,7 @@ int stats_main(int argc, char *argv[])
     text_reader reader(is, &header);
     compute_stats(reader, args.lower_count_arg, args.upper_count_arg, uniq, distinct, total, max);
   } else {
-    die << "Unknown format '" << header.format() << "'";
+    err::die(err::msg() << "Unknown format '" << header.format() << "'");
   }
 
   out << "Unique:    " << uniq << "\n"

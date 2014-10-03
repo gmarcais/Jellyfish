@@ -81,7 +81,7 @@ protected:
   void open_file() {
     stream_->open(*begin_);
     if(stream_->fail())
-      eraise(std::runtime_error) << "Failed to open file '" << *begin_ << "'";
+      throw std::runtime_error(err::msg() << "Failed to open file '" << *begin_ << "'");
   }
 };
 

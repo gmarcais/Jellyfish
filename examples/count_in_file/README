@@ -1,0 +1,40 @@
+What is it?
+===========
+
+Given a number of jellyfish databases, it outputs for all the k-mers
+(in the union of the database) the number of occurrences in each of
+the database.
+
+LIMITATION: all the database must have been created with the same size
+parameter to Jellyfish. It is adivsed to use the --disk switch of
+'jellyfish count' to ensure that all the database are created with the
+same size. For example: jellyfish count -s 100M --disk ...
+
+The output is a column format where the first column is
+the k-mer and the remaining columns are the counts in each of the
+databases, in the same order as given on the command line.
+
+For example:
+
+$ ./count_in_file db1.jf db2.jf
+GCCACGACTCGTGCA 1 0
+CAAGCTGTGTGGCCG 0 2
+CATAGAAATCGATAA 3 5
+TACTATATAAGCAAA 2 0
+...
+
+Some details
+============
+
+The Jellyfish database are sorted list of k-mers. The sorting order is
+based on the hash function (a random binary matrix). The program works
+similarly to how merging sorted lists is done, but instead of summing
+the count of each k-mers, it displays the count in each of the sorted
+list.
+
+Because all the files must be sorted according to the same criteria,
+the size of the hash (and therefore the hash function) must be the
+same for all the input files. See the LIMITATION paragraph above to
+run Jellyfish properly. Note that the size passed to 'jellyfish count'
+is NOT a limit on the number k-mers in the file (only a limit on the
+number of mers in memory).

@@ -1,0 +1,14 @@
+include_rules
+
+export PKG_CONFIG_PATH
+SWIGFLAGS = -perl5
+CXXFLAGS += $(JELLYFISH_CFLAGS) $(PERL_CFLAGS) -fPIC
+LDFLAGS += -shared $(JELLYFISH_LIBS) $(JELLYFISH_RPATH) $(PERL_LIBS)
+
+: ../jellyfish.i |> !swigxx |> jellyfish_wrap.cxx | jellyfish.pm <jf>
+: jellyfish_wrap.cxx |> !cxx |>
+: jellyfish_wrap.o |> !lxxd |> jellyfish.so <jf>
+
+TESTS = t/test_mer_file.t t/test_hash_counter.t
+
+: foreach $(TESTS) | <jf> ../tests/<seq> |> $(PERL) -I. %f ../tests > %o 2>&1 |> %B

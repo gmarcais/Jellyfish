@@ -45,13 +45,15 @@ const char *bibtex =
 #include <jellyfish/fstream_default.hpp>
 #include <sub_commands/cite_main_cmdline.hpp>
 
+namespace err = jellyfish::err;
+
 int cite_main(int argc, char *argv[])
 {
   cite_main_cmdline args(argc, argv);
 
   ofstream_default out(args.output_given ? args.output_arg : 0, std::cout);
   if(!out.good())
-    die << "Can't open output file '" << args.output_arg << "'" << jellyfish::err::no;
+    err::die(err::msg() << "Can't open output file '" << args.output_arg << "'");
 
   if(args.bibtex_flag) {
     out << bibtex << std::endl;
