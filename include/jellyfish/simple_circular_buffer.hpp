@@ -106,6 +106,7 @@ namespace jellyfish {
     class pre_alloc : public base<T, pre_alloc<T, capa> > {
       typedef base<T, pre_alloc<T, capa> > super;
     public:
+      static const int capacityConstant = capa;
       explicit pre_alloc(T* data) : super(data) { }
       static int capacity() { return capa; }
     };
