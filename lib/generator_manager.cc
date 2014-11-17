@@ -127,7 +127,8 @@ void generator_manager::start()  {
 
 
   // In child
-  setup_signal_handlers();
+  if(setup_signal_handlers() == -1)
+    exit(EXIT_FAILURE);
   start_commands(); // child start commands
   int signal = kill_signal_;
   if(signal == 0)
@@ -148,13 +149,11 @@ static generator_manager* manager = 0;
 void generator_manager::signal_handler(int signal) {
   manager->kill_signal_ = signal;
 }
-void generator_manager::setup_signal_handlers() {
-  int res;
+int generator_manager::setup_signal_handlers() {
   struct sigaction act;
   memset(&act, '\0', sizeof(act));
   act.sa_handler = signal_handler;
-  res = sigaction(SIGTERM, &act, 0);
-  assert(res == 0);
+  return sigaction(SIGTERM, &act, 0);
   // Should we redefine other signals as well? Like SIGINT, SIGQUIT?
 }
 
