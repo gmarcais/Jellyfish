@@ -161,7 +161,7 @@ void generator_manager::unset_signal_handlers() {
   struct sigaction act;
   memset(&act, '\0', sizeof(act));
   act.sa_handler = SIG_DFL;
-  assert(sigaction(SIGTERM, &act, 0) == 0);
+  sigaction(SIGTERM, &act, 0);
 }
 
 bool generator_manager::wait() {
