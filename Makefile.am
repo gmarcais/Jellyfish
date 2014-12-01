@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS = -I m4
-EXTRA_DIST = doc/jellyfish.pdf doc/jellyfish.man README LICENSE HalfLICENSE
+EXTRA_DIST = doc/jellyfish.pdf doc/jellyfish.man README LICENSE jellyfish.spec
 man1_MANS = doc/jellyfish.man
 
 pkgconfigdir = $(libdir)/pkgconfig

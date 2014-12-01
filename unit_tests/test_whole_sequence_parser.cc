@@ -64,6 +64,8 @@ TEST(SequenceParser, Fasta) {
     parser_type::job j(parser);
     EXPECT_TRUE(j.is_empty());
   }
+  EXPECT_EQ((size_t)1, parser.nb_files());
+  EXPECT_EQ((size_t)2, parser.nb_reads());
 }
 
 TEST(SequenceParser, Fastq) {
@@ -116,6 +118,9 @@ TEST(SequenceParser, Fastq) {
     parser_type::job j(parser);
     EXPECT_TRUE(j.is_empty());
   }
+
+  EXPECT_EQ((size_t)1, parser.nb_files());
+  EXPECT_EQ((size_t)2, parser.nb_reads());
 }
 
 TEST(SequenceParser, FastaMany) {
@@ -156,6 +161,8 @@ TEST(SequenceParser, FastaMany) {
     }
   }
   EXPECT_EQ(nb_sequences, got_sequences);
+  EXPECT_EQ((size_t)1, parser.nb_files());
+  EXPECT_EQ((size_t)nb_sequences, parser.nb_reads());
 }
 
 }

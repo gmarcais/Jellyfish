@@ -31,6 +31,7 @@ define([PC_FILE], jellyfish-2.0.pc)
 AC_CONFIG_FILES([
     Makefile
     tests/compat.sh
+    jellyfish.spec
 ]
     PC_FILE
 )

@@ -48,14 +48,16 @@ class mer_overlap_sequence_parser : public jellyfish::cooperative_pool2<mer_over
     stream_status() : seam(0), seq_len(0), have_seam(false), type(DONE_TYPE) { }
   };
 
-  uint16_t                       mer_len_;
-  size_t                         buf_size_;
-  char*                          buffer;
-  char*                          seam_buffer;
-  locks::pthread::mutex          streams_mutex;
-  char*                          data;
-  cpp_array<stream_status>       streams_;
-  StreamIterator&                streams_iterator_;
+  uint16_t                 mer_len_;
+  size_t                   buf_size_;
+  char*                    buffer;
+  char*                    seam_buffer;
+  locks::pthread::mutex    streams_mutex;
+  char*                    data;
+  cpp_array<stream_status> streams_;
+  StreamIterator&          streams_iterator_;
+  size_t                   files_read_; // nb of files read
+  size_t                   reads_read_; // nb of reads read
 
 public:
   /// Max_producers is the maximum number of concurrent threads than
@@ -73,7 +75,8 @@ public:
     buffer(new char[size * buf_size]),
     seam_buffer(new char[max_producers * (mer_len - 1)]),
     streams_(max_producers),
-    streams_iterator_(streams)
+    streams_iterator_(streams),
+    files_read_(0), reads_read_(0)
   {
     for(sequence_ptr* it = super::element_begin(); it != super::element_end(); ++it)
       it->start = it->end = buffer + (it - super::element_begin()) * buf_size;
@@ -114,6 +117,9 @@ public:
     return false;
   }
 
+  size_t nb_files() const { return files_read_; }
+  size_t nb_reads() const { return reads_read_; }
+
 protected:
   bool open_next_file(stream_status& st) {
     // The stream must be released, with .reset(), before calling
@@ -127,15 +133,18 @@ protected:
       return false;
     }
 
+    ++files_read_;
     switch(st.stream->peek()) {
     case EOF: return open_next_file(st);
     case '>':
       st.type = FASTA_TYPE;
       ignore_line(*st.stream); // Pass header
+      ++reads_read_;
       break;
     case '@':
       st.type = FASTQ_TYPE;
       ignore_line(*st.stream); // Pass header
+      ++reads_read_;
       break;
     default:
       throw std::runtime_error("Unsupported format"); // Better error management
@@ -157,6 +166,7 @@ protected:
       if(st.stream->peek() == '>') {
         *(buff.start + read++) = 'N'; // Add N between reads
         ignore_line(*st.stream); // Skip to next sequence (skip headers, quals, ...)
+        ++reads_read_;
       }
     }
     buff.end = buff.start + read;
@@ -184,6 +194,7 @@ protected:
         if(st.stream->good()) {
           *(buff.start + read++) = 'N'; // Add N between reads
           ignore_line(*st.stream); // Skip sequence header
+          ++reads_read_;
         }
         st.seq_len = 0;
       }
