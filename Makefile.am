@@ -1,4 +1,5 @@
 ACLOCAL_AMFLAGS = -I m4
+
 EXTRA_DIST = doc/jellyfish.pdf doc/jellyfish.man README LICENSE jellyfish.spec
 man1_MANS = doc/jellyfish.man
 
@@ -203,3 +204,47 @@ include gtest.mk
 # Print the value of a variable
 print-%:
 	@echo -n $($*)
+
+
+# SWIG
+SWIG_SRC = swig/jellyfish.i swig/hash_counter.i swig/hash_set.i swig/mer_dna.i swig/mer_file.i swig/string_mers.i
+
+if HAVE_SWIG
+SWIG_V_GEN = $(swig_v_GEN_$(V))
+swig_v_GEN_ = $(swig_v_GEN_$(AM_DEFAULT_VERBOSITY))
+swig_v_GEN_0 = @echo "  SWIG    " $@;
+swig/%/swig_wrap.cpp: $(SWIG_SRC)
+	$(SWIG_V_GEN)$(SWIG) -$* -I$(top_srcdir)/include -o $@ $<
+else
+swig/%/swig_wrap.cc:
+	@echo >&2 SWIG >= 3.x.x not found. Make sure it is install and rerun configure
+	@false
+endif
+
+# Python support
+if PYTHON_BINDING
+PYTHON_BUILT = swig/python/swig_wrap.cpp
+BUILT_SOURCES += $(PYTHON_BUILT)
+
+pkgpython_PYTHON = swig/python/jellyfish.py swig/python/__init__.py
+pyexec_LTLIBRARIES = swig/python/_jellyfish.la
+swig_python__jellyfish_la_SOURCES = swig/python/swig_wrap.cpp $(SWIG_SRC)
+swig_python__jellyfish_la_CPPFLAGS = $(SWIG_PYTHON_CPPFLAGS) $(PYTHON_CPPFLAGS) -I$(top_srcdir)/include
+swig_python__jellyfish_la_LDFLAGS = -module $(PYTHON_LDFLAGS)
+swig_python__jellyfish_la_LIBADD = libjellyfish-2.0.la
+CLEANFILES += $(PYTHON_BUILT) $(pkgpython_PYTHON)
+endif
+
+# Ruby support
+# if RUBY_BINDING
+# RUBY_BUILT = swig/ruby/swig_wrap.cpp
+# BUILT_SOURCES += $(RUBY_BUILT)
+# rubyextdir = $(RUBY_EXT_LIB)
+# # rubyext_LTLIBRARIES = swig/ruby/jellyfish.la
+# rubyext_LTLIBRARIES = swig/ruby/jellyfish.la
+# swig_ruby_jellyfish_la_SOURCES = swig/ruby/swig_wrap.cpp $(SWIG_SRC)
+# swig_ruby_jellyfish_la_CPPFLAGS = $(RUBY_EXT_CPPFLAGS) -I$(top_srcdir)/include
+# swig_ruby_jellyfish_la_LDFLAGS = $(RUBY_EXT_LDFLAGS)
+# swig_ruby_jellyfish_la_LIBADD = libjellyfish-2.0.la
+# CLEANFILES += $(RUBY_BUILT)
+# endif

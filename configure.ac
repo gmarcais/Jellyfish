@@ -44,13 +44,6 @@ AS_IF([test "x$with_sse" != xno],
       [AC_DEFINE([HAVE_SSE], [1], [Define if you have SSE])],
       [])
 
-AC_ARG_WITH([half],
-            [AS_HELP_STRING([--with-half], [enable half float (16 bits)])],
-            [], [with_half=no])
-AS_IF([test "x$with_half" = "xyes"],
-      [AC_DEFINE([HALF_FLOATS], [1], [Define if you use half floats for qmer counting])],
-      [])
-
 # Use valgrind to check memory allocation with mmap
 AC_ARG_ENABLE([valgrind],
               [AS_HELP_STRING([--enable-valgrind], [Instrument mmap memory allocation with valgrind])])
@@ -95,6 +88,35 @@ AC_ARG_ENABLE([all-static],
 STATIC_FLAGS=
 AS_IF([test x$enable_all_static = xyes],
       [AC_SUBST([STATIC_FLAGS], [-all-static])])
+
+#
+# SWIG and bindings
+#
+
+#AC_ARG_ENABLE([swig],
+#              [AC_HELP_STRING([--enable-swig], [enable swig for script bindings])])
+AX_PKG_SWIG(3.0.0)
+AS_IF([test -n "$SWIG"], [SWIG_ENABLE_CXX])
+AM_CONDITIONAL([HAVE_SWIG], [test -n "$SWIG"])
+
+# --with-python-binding
+AC_ARG_WITH([python-binding],
+            [AC_HELP_STRING([--with-python-binding@<:@=PATH@:>@], [create SWIG python module and install in PATH])],
+            [AM_PATH_PYTHON]
+            [SWIG_PYTHON])
+AM_CONDITIONAL(PYTHON_BINDING, [test x$with_python_binding = xyes])
+AS_IF([test x$with_python_binding != xyes -a x$with_python_binding != xno],
+      [AC_SUBST([pythondir], [$with_python_binding])]
+      [AC_SUBST([pkgpythondir], [\${pythondir}/$PACKAGE])]
+      [AC_SUBST([pyexecdir], [\${pythondir}])]
+      [AC_SUBST([pkgpyexecdir], [\${pkgpythondir}])])
+
+# --enable-ruby-binding
+#AC_ARG_ENABLE([ruby-binding],
+#              [AC_HELP_STRING([--enable-ruby-binding], [create SWIG ruby module])])
+#AM_CONDITIONAL([RUBY_BINDING], [test x$enable_ruby_binding = xyes])
+#AS_IF([test x$enable_ruby_binding = xyes],
+#      [AX_RUBY_DEVEL 1.9])
 
 AC_OUTPUT
 
