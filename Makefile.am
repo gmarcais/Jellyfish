@@ -21,7 +21,7 @@ DISTCLEANFILES = $(BUILT_SOURCES)
 # Yaggo automatic rules with silencing
 V_YAGGO = $(V_YAGGO_$(V))
 V_YAGGO_ = $(V_YAGGO_$(AM_DEFAULT_VERBOSITY))
-V_YAGGO_0 = @echo "  YAGGO " $@;
+V_YAGGO_0 = @echo "  YAGGO   " $@;
 .yaggo.hpp:
 	$(V_YAGGO)$(YAGGO) --license $(srcdir)/header-license -o $@ $<
 
@@ -236,15 +236,15 @@ CLEANFILES += $(PYTHON_BUILT) $(pkgpython_PYTHON)
 endif
 
 # Ruby support
-# if RUBY_BINDING
-# RUBY_BUILT = swig/ruby/swig_wrap.cpp
-# BUILT_SOURCES += $(RUBY_BUILT)
-# rubyextdir = $(RUBY_EXT_LIB)
-# # rubyext_LTLIBRARIES = swig/ruby/jellyfish.la
+if RUBY_BINDING
+RUBY_BUILT = swig/ruby/swig_wrap.cpp
+BUILT_SOURCES += $(RUBY_BUILT)
+rubyextdir = $(RUBY_EXT_LIB)
 # rubyext_LTLIBRARIES = swig/ruby/jellyfish.la
-# swig_ruby_jellyfish_la_SOURCES = swig/ruby/swig_wrap.cpp $(SWIG_SRC)
-# swig_ruby_jellyfish_la_CPPFLAGS = $(RUBY_EXT_CPPFLAGS) -I$(top_srcdir)/include
-# swig_ruby_jellyfish_la_LDFLAGS = $(RUBY_EXT_LDFLAGS)
-# swig_ruby_jellyfish_la_LIBADD = libjellyfish-2.0.la
-# CLEANFILES += $(RUBY_BUILT)
-# endif
+rubyext_LTLIBRARIES = swig/ruby/jellyfish.la
+swig_ruby_jellyfish_la_SOURCES = swig/ruby/swig_wrap.cpp $(SWIG_SRC)
+swig_ruby_jellyfish_la_CPPFLAGS = $(RUBY_EXT_CFLAGS) -I$(top_srcdir)/include
+swig_ruby_jellyfish_la_LDFLAGS = -module $(RUBY_EXT_LIBS)
+swig_ruby_jellyfish_la_LIBADD = libjellyfish-2.0.la
+CLEANFILES += $(RUBY_BUILT)
+endif
