@@ -123,6 +123,17 @@ AS_IF([test -n "$enable_ruby_binding" -a x$enable_ruby_binding != xyes],
 AS_IF([test -n "$enable_ruby_binding"],
       [AX_RUBY_EXT])
 
+# --enable-perl-binding
+AC_ARG_ENABLE([perl-binding],
+              [AC_HELP_STRING([--enable-perl-binding@<:@=PATH@:>@], [create SWIG perl module and install in PATH])])
+AC_MSG_NOTICE([enable_perl x$enable_perl_binding])
+AM_CONDITIONAL([PERL_BINDING], [test -n "$enable_perl_binding"])
+AS_IF([test -n "$enable_perl_binding" -a x$enable_perl_binding != xyes],
+      [PERL_EXT_LIB=$enable_perl_binding])
+AS_IF([test -n "$enable_perl_binding"],
+      [AX_PERL_EXT])
+
+
 AC_OUTPUT
 
 

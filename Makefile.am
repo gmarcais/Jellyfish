@@ -240,11 +240,24 @@ if RUBY_BINDING
 RUBY_BUILT = swig/ruby/swig_wrap.cpp
 BUILT_SOURCES += $(RUBY_BUILT)
 rubyextdir = $(RUBY_EXT_LIB)
-# rubyext_LTLIBRARIES = swig/ruby/jellyfish.la
 rubyext_LTLIBRARIES = swig/ruby/jellyfish.la
 swig_ruby_jellyfish_la_SOURCES = swig/ruby/swig_wrap.cpp $(SWIG_SRC)
 swig_ruby_jellyfish_la_CPPFLAGS = $(RUBY_EXT_CFLAGS) -I$(top_srcdir)/include
 swig_ruby_jellyfish_la_LDFLAGS = -module $(RUBY_EXT_LIBS)
 swig_ruby_jellyfish_la_LIBADD = libjellyfish-2.0.la
 CLEANFILES += $(RUBY_BUILT)
+endif
+
+# Perl5 support
+if PERL_BINDING
+PERL_BUILT = swig/perl5/swig_wrap.cpp
+BUILT_SOURCES += $(PERL_BUILT)
+perlextdir = $(PERL_EXT_LIB)
+dist_perlext_DATA = swig/perl5/jellyfish.pm
+perlext_LTLIBRARIES = swig/perl5/jellyfish.la
+swig_perl5_jellyfish_la_SOURCES = swig/perl5/swig_wrap.cpp $(SWIG_SRC)
+swig_perl5_jellyfish_la_CPPFLAGS = $(PERL_EXT_CPPFLAGS) -I$(PERL_EXT_INC) -I$(top_srcdir)/include
+swig_perl5_jellyfish_la_LDFLAGS = -module $(PERL5_EXT_LDFLAGS)
+swig_perl5_jellyfish_la_LIBADD = libjellyfish-2.0.la
+CLEANFILES += $(PERL5_BUILT)
 endif
