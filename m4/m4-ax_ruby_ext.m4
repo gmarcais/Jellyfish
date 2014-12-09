@@ -84,7 +84,7 @@ AC_DEFUN([AX_RUBY_EXT],[
                 #
                 AC_MSG_CHECKING([for Ruby extensions target directory])
                 AS_IF([test -z "$RUBY_EXT_LIB"],
-                      [RUBY_EXT_LIB=\${prefix}`$RUBY -rrbconfig -e 'puts RbConfig::CONFIG["sitearchdir"]'`])
+                      [RUBY_EXT_LIB=\${prefix}`$RUBY -rrbconfig -e 'puts RbConfig::CONFIG.values_at("sitearchdir")'`])
                 AC_MSG_RESULT([$RUBY_EXT_LIB])
                 AC_SUBST(RUBY_EXT_LIB)
 

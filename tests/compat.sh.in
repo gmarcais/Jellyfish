@@ -10,6 +10,12 @@ check () {
     cut -d\  -f 2 $1 | xargs @MD5@ | sort -k2,2 | diff -w $DIFFFLAGS $1 -
 }
 
+ENABLE_RUBY_BINDING="@RUBY_EXT_LIB@"
+RUBY="@RUBY@"
+ENABLE_PYTHON_BINDING="@pythondir@"
+PYTHON="@PYTHON@"
+ENABLE_PERL_BINDING="@PERL_EXT_LIB@"
+PERL="@PERL@"
 
 if [ -n "$DEBUG" ]; then
     set -x;

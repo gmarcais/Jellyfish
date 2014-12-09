@@ -111,7 +111,8 @@ AS_IF([test -n "$enable_python_binding" -a x$enable_python_binding != xyes],
       [AC_SUBST([pythondir], [$enable_python_binding])]
       [AC_SUBST([pkgpythondir], [\${pythondir}/$PACKAGE])]
       [AC_SUBST([pyexecdir], [\${pythondir}])]
-      [AC_SUBST([pkgpyexecdir], [\${pkgpythondir}])])
+      [AC_SUBST([pkgpyexecdir], [\${pkgpythondir}])]
+      [AC_SUBST([ENABLE_PYTHON_BINDING], 1)])
 
 # --enable-ruby-binding
 AC_ARG_ENABLE([ruby-binding],
@@ -131,7 +132,8 @@ AM_CONDITIONAL([PERL_BINDING], [test -n "$enable_perl_binding"])
 AS_IF([test -n "$enable_perl_binding" -a x$enable_perl_binding != xyes],
       [PERL_EXT_LIB=$enable_perl_binding])
 AS_IF([test -n "$enable_perl_binding"],
-      [AX_PERL_EXT])
+      [AX_PERL_EXT]
+      [AC_SUBST([ENABLE_PERL_BINDING], 1)])
 
 
 AC_OUTPUT

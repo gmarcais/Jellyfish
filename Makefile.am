@@ -233,6 +233,8 @@ swig_python__jellyfish_la_CPPFLAGS = $(SWIG_PYTHON_CPPFLAGS) $(PYTHON_CPPFLAGS) 
 swig_python__jellyfish_la_LDFLAGS = -module $(PYTHON_LDFLAGS)
 swig_python__jellyfish_la_LIBADD = libjellyfish-2.0.la
 CLEANFILES += $(PYTHON_BUILT) $(pkgpython_PYTHON)
+TESTS += tests/swig_python.sh
+tests/swig_python.log: tests/generate_sequence.log
 endif
 
 # Ruby support
@@ -246,6 +248,8 @@ swig_ruby_jellyfish_la_CPPFLAGS = $(RUBY_EXT_CFLAGS) -I$(top_srcdir)/include
 swig_ruby_jellyfish_la_LDFLAGS = -module $(RUBY_EXT_LIBS)
 swig_ruby_jellyfish_la_LIBADD = libjellyfish-2.0.la
 CLEANFILES += $(RUBY_BUILT)
+TESTS += tests/swig_ruby.sh
+tests/swig_ruby.log: tests/generate_sequence.log
 endif
 
 # Perl5 support
@@ -260,4 +264,6 @@ swig_perl5_jellyfish_la_CPPFLAGS = $(PERL_EXT_CPPFLAGS) -I$(PERL_EXT_INC) -I$(to
 swig_perl5_jellyfish_la_LDFLAGS = -module $(PERL5_EXT_LDFLAGS)
 swig_perl5_jellyfish_la_LIBADD = libjellyfish-2.0.la
 CLEANFILES += $(PERL5_BUILT)
+TESTS += tests/swig_perl.sh
+tests/swig_perl.log: tests/generate_sequence.log
 endif
