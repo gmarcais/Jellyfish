@@ -5,6 +5,8 @@ pref=$(basename $0 .sh)
 DIR=../bin
 JF="$DIR/jellyfish"
 [ -n "$VALGRIND" ] && JF="valgrind $JF"
+SRCDIR=@abs_top_srcdir@
+BUILDDIR=@abs_top_builddir@
 
 check () {
     cut -d\  -f 2 $1 | xargs @MD5@ | sort -k2,2 | diff -w $DIFFFLAGS $1 -
