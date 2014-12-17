@@ -226,15 +226,23 @@ if PYTHON_BINDING
 PYTHON_BUILT = swig/python/swig_wrap.cpp
 BUILT_SOURCES += $(PYTHON_BUILT)
 
-pkgpython_PYTHON = swig/python/jellyfish.py swig/python/__init__.py
-pyexec_LTLIBRARIES = swig/python/_jellyfish.la
+pythonextdir = $(PYTHON_SITE_PKG)/jellyfish
+dist_pythonext_DATA = swig/python/jellyfish.pyc swig/python/__init__.pyc
+pythonext_LTLIBRARIES = swig/python/_jellyfish.la
 swig_python__jellyfish_la_SOURCES = swig/python/swig_wrap.cpp $(SWIG_SRC)
-swig_python__jellyfish_la_CPPFLAGS = $(SWIG_PYTHON_CPPFLAGS) $(PYTHON_CPPFLAGS) -I$(top_srcdir)/include
+swig_python__jellyfish_la_CPPFLAGS = $(PYTHON_CPPFLAGS) -I$(top_srcdir)/include
 swig_python__jellyfish_la_LDFLAGS = -module $(PYTHON_LDFLAGS)
 swig_python__jellyfish_la_LIBADD = libjellyfish-2.0.la
-CLEANFILES += $(PYTHON_BUILT) $(pkgpython_PYTHON)
+CLEANFILES += $(PYTHON_BUILT) $(dist_pythonext_DATA) swig/python/jellyfish.py
 TESTS += tests/swig_python.sh
+
 tests/swig_python.log: tests/generate_sequence.log
+
+PYTHONC_V_GEN = $(pythonc_v_GEN_$(V))
+pythonc_v_GEN_ = $(pythonc_v_GEN_$(AM_DEFAULT_VERBOSITY))
+pythonc_v_GEN_0 = @echo "  PYTHONC " $@;
+%.pyc: %.py
+	$(PYTHONC_V_GEN)$(PYTHON) -c 'import py_compile, sys; py_compile.compile(sys.argv[1], sys.argv[2])' $< $@
 endif
 
 # Ruby support
@@ -263,7 +271,7 @@ swig_perl5_jellyfish_la_SOURCES = swig/perl5/swig_wrap.cpp $(SWIG_SRC)
 swig_perl5_jellyfish_la_CPPFLAGS = $(PERL_EXT_CPPFLAGS) -I$(PERL_EXT_INC) -I$(top_srcdir)/include
 swig_perl5_jellyfish_la_LDFLAGS = -module $(PERL5_EXT_LDFLAGS)
 swig_perl5_jellyfish_la_LIBADD = libjellyfish-2.0.la
-CLEANFILES += $(PERL5_BUILT)
+CLEANFILES += $(PERL5_BUILT) swig/perl5/jellyfish.pm
 TESTS += tests/swig_perl.sh
 tests/swig_perl.log: tests/generate_sequence.log
 endif

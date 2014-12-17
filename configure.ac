@@ -92,41 +92,39 @@ AS_IF([test x$enable_all_static = xyes],
 # SWIG and bindings
 #
 
-#AC_ARG_ENABLE([swig],
-#              [AC_HELP_STRING([--enable-swig], [enable swig for script bindings])])
-AX_PKG_SWIG(3.0.0)
-AS_IF([test -n "$SWIG"], [SWIG_ENABLE_CXX])
-AM_CONDITIONAL([HAVE_SWIG], [test -n "$SWIG"])
-
 # --enable-python-binding
 AC_ARG_ENABLE([python-binding],
               [AC_HELP_STRING([--enable-python-binding@<:@=PATH@:>@], [create SWIG python module and install in PATH])])
-AC_MSG_NOTICE([enable_python x$enable_python_binding])
-AS_IF([test -n "$enable_python_binding"],
-      [AM_PATH_PYTHON]
-      [SWIG_PYTHON])
-AM_CONDITIONAL(PYTHON_BINDING, [test -n "$enable_python_binding"])
-AS_IF([test -n "$enable_python_binding" -a x$enable_python_binding != xyes],
-      [AC_SUBST([pythondir], [$enable_python_binding])]
-      [AC_SUBST([pkgpythondir], [\${pythondir}/$PACKAGE])]
-      [AC_SUBST([pyexecdir], [\${pythondir}])]
-      [AC_SUBST([pkgpyexecdir], [\${pkgpythondir}])]
-      [AC_SUBST([ENABLE_PYTHON_BINDING], 1)])
-
 # --enable-ruby-binding
 AC_ARG_ENABLE([ruby-binding],
               [AC_HELP_STRING([--enable-ruby-binding@<:@=PATH@:>@], [create SWIG ruby module and install in PATH])])
-AC_MSG_NOTICE([enable_ruby x$enable_ruby_binding])
+# --enable-perl-binding
+AC_ARG_ENABLE([perl-binding],
+              [AC_HELP_STRING([--enable-perl-binding@<:@=PATH@:>@], [create SWIG perl module and install in PATH])])
+
+# --enable-swig
+AC_ARG_ENABLE([swig],
+              [AC_HELP_STRING([--enable-swig], [enable development of swig binding])])
+AS_IF([test x$enable_swig = xyes],
+      [AX_PKG_SWIG([3.0.0], [], [AC_MSG_ERROR([SWIG version 3 is required])])])
+AS_IF([test -n "$SWIG"], [SWIG_ENABLE_CXX])
+AM_CONDITIONAL([HAVE_SWIG], [test -n "$SWIG"])
+
+# Python binding setup
+AM_CONDITIONAL(PYTHON_BINDING, [test -n "$enable_python_binding"])
+AS_IF([test -n "$enable_python_binding" -a x$enable_python_binding != xyes],
+      [PYTHON_SITE_PKG=$enable_python_binding])
+AS_IF([test -n "$enable_python_binding"],
+      [AX_PYTHON_DEVEL])
+
+# Ruby binding setup
 AM_CONDITIONAL([RUBY_BINDING], [test -n "$enable_ruby_binding"])
 AS_IF([test -n "$enable_ruby_binding" -a x$enable_ruby_binding != xyes],
       [RUBY_EXT_LIB=$enable_ruby_binding])
 AS_IF([test -n "$enable_ruby_binding"],
       [AX_RUBY_EXT])
 
-# --enable-perl-binding
-AC_ARG_ENABLE([perl-binding],
-              [AC_HELP_STRING([--enable-perl-binding@<:@=PATH@:>@], [create SWIG perl module and install in PATH])])
-AC_MSG_NOTICE([enable_perl x$enable_perl_binding])
+# Perl binding setup
 AM_CONDITIONAL([PERL_BINDING], [test -n "$enable_perl_binding"])
 AS_IF([test -n "$enable_perl_binding" -a x$enable_perl_binding != xyes],
       [PERL_EXT_LIB=$enable_perl_binding])
