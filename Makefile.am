@@ -223,11 +223,11 @@ endif
 
 # Python support
 if PYTHON_BINDING
-PYTHON_BUILT = swig/python/swig_wrap.cpp
+PYTHON_BUILT = swig/python/swig_wrap.cpp swig/python/jellyfish.py
 BUILT_SOURCES += $(PYTHON_BUILT)
 
 pythonextdir = $(PYTHON_SITE_PKG)/jellyfish
-dist_pythonext_DATA = swig/python/jellyfish.pyc swig/python/__init__.pyc
+pythonext_SCRIPTS = swig/python/jellyfish.pyc swig/python/__init__.pyc
 pythonext_LTLIBRARIES = swig/python/_jellyfish.la
 swig_python__jellyfish_la_SOURCES = swig/python/swig_wrap.cpp $(SWIG_SRC)
 swig_python__jellyfish_la_CPPFLAGS = $(PYTHON_CPPFLAGS) -I$(top_srcdir)/include
@@ -243,6 +243,7 @@ pythonc_v_GEN_ = $(pythonc_v_GEN_$(AM_DEFAULT_VERBOSITY))
 pythonc_v_GEN_0 = @echo "  PYTHONC " $@;
 %.pyc: %.py
 	$(PYTHONC_V_GEN)$(PYTHON) -c 'import py_compile, sys; py_compile.compile(sys.argv[1], sys.argv[2])' $< $@
+swig/python/jellyfish.py: swig/python/swig_wrap.cpp
 endif
 
 # Ruby support
@@ -262,10 +263,10 @@ endif
 
 # Perl5 support
 if PERL_BINDING
-PERL_BUILT = swig/perl5/swig_wrap.cpp
+PERL_BUILT = swig/perl5/swig_wrap.cpp swig/perl5/jellyfish.pm
 BUILT_SOURCES += $(PERL_BUILT)
 perlextdir = $(PERL_EXT_LIB)
-dist_perlext_DATA = swig/perl5/jellyfish.pm
+perlext_SCRIPTS = swig/perl5/jellyfish.pm
 perlext_LTLIBRARIES = swig/perl5/jellyfish.la
 swig_perl5_jellyfish_la_SOURCES = swig/perl5/swig_wrap.cpp $(SWIG_SRC)
 swig_perl5_jellyfish_la_CPPFLAGS = $(PERL_EXT_CPPFLAGS) -I$(PERL_EXT_INC) -I$(top_srcdir)/include
@@ -274,4 +275,5 @@ swig_perl5_jellyfish_la_LIBADD = libjellyfish-2.0.la
 CLEANFILES += $(PERL5_BUILT) swig/perl5/jellyfish.pm
 TESTS += tests/swig_perl.sh
 tests/swig_perl.log: tests/generate_sequence.log
+swig/perl5/jellyfish.pm: swig/perl5/swig_wrap.cpp
 endif
