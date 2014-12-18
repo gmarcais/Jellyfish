@@ -6,8 +6,9 @@ cd tests
 
 LOADPATH="$BUILDDIR/swig/perl5"
 K=$($PERL -e 'print(int(rand(16)) + 6)')
-$JF count -m $K -s 10M -t $nCPUs -C -o ${pref}.jf
-$JF dump ${pref}.jf > ${pref}.dump
+I=$($PERL -e 'print(int(rand(5)))')
+$JF count -m $K -s 10M -t $nCPUs -C -o ${pref}.jf seq1m_$I.fa
+$JF dump -c ${pref}.jf > ${pref}.dump
 $JF histo ${pref}.jf > ${pref}.histo
 
 for i in test_mer_file.t test_hash_counter.t; do
