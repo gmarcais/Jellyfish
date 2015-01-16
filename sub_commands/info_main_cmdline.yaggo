@@ -1,11 +1,9 @@
 purpose "Display information about a jellyfish file"
 package "jellyfish info"
 
-description <<EOS
-This command shows some information about how this jellyfish output
+description "This command shows some information about how this jellyfish output
 file was created. Without any argument, it displays the command line
-used, when and where it was run.
-EOS
+used, when and where it was run."
 
 option("s", "skip") {
   description "Skip header and dump remainder of file"
