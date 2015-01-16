@@ -87,6 +87,16 @@ struct cmask<U, len, 0> {
   static const U v = 0;
 };
 
+// Duplicate mask. Make every 16 bits of value a copy of m.
+template<typename U, uint16_t m, int l = sizeof(U) * 8>
+struct dmask {
+  static const U value = (dmask<U, m, l - 16>::value << 16) | (U)m;
+};
+template<typename U, uint16_t m>
+struct dmask<U, m, 0> {
+  static const U value = (U)m;
+};
+
 // Fast reverse complement of one word through bit tweedling.
 inline uint32_t word_reverse_complement(uint32_t w) {
   typedef uint64_t U;
@@ -119,6 +129,20 @@ inline unsigned __int128 word_reverse_complement(unsigned __int128 w) {
   return ((U)-1) - w;
 }
 #endif
+
+inline char* print_8_bases(uint64_t word, char* to) {
+  word  = ((word &                 0x00ff        ) << 32) | ((word &                 0xff00        ) >> 8);
+  word  = ((word & dmask<uint64_t, 0x0f0f>::value) << 16) | ((word & dmask<uint64_t, 0xf0f0>::value) >> 4);
+  word  = ((word & dmask<uint64_t, 0x3333>::value) <<  8) | ((word & dmask<uint64_t, 0xcccc>::value) >> 2);
+  word ^= (word >> 1) & dmask<uint64_t, 0x0101>::value;
+
+  const uint64_t m = ((~word >> 1) | word) & dmask<uint64_t, 0x0101>::value;
+  const uint64_t nm = m ^ dmask<uint64_t, 0x0101>::value;
+  word = (word << 1) | m | (nm << 4) | dmask<uint64_t, 0x4040>::value;
+  memcpy(to, &word, sizeof(word));
+  return to + sizeof(word);
+}
+
 
 template<typename T>
 class base_proxy {
@@ -469,6 +493,64 @@ public:
     return it;
   }
 
+  char* to_chars(char* it) const {
+    unsigned int words = nb_words() - 1;
+    base_type    w     = _data[words];
+    switch(nb_msb() / 2) {
+    case 32: ++words; break;
+    case 31: *it++ = rev_code(w >> 60     );
+    case 30: *it++ = rev_code(w >> 58 & c3);
+    case 29: *it++ = rev_code(w >> 56 & c3);
+    case 28: *it++ = rev_code(w >> 54 & c3);
+    case 27: *it++ = rev_code(w >> 52 & c3);
+    case 26: *it++ = rev_code(w >> 50 & c3);
+    case 25: *it++ = rev_code(w >> 48 & c3);
+    case 24:
+      it = print_8_bases(w >> 32, it);
+      it = print_8_bases(w >> 16, it);
+      it = print_8_bases(w,       it);
+      break;
+    case 23: *it++ = rev_code(w >> 44     );
+    case 22: *it++ = rev_code(w >> 42 & c3);
+    case 21: *it++ = rev_code(w >> 40 & c3);
+    case 20: *it++ = rev_code(w >> 38 & c3);
+    case 19: *it++ = rev_code(w >> 36 & c3);
+    case 18: *it++ = rev_code(w >> 34 & c3);
+    case 17: *it++ = rev_code(w >> 32 & c3);
+    case 16:
+      it = print_8_bases(w >> 16, it);
+      it = print_8_bases(w,       it);
+      break;
+    case 15: *it++ = rev_code(w >> 28     );
+    case 14: *it++ = rev_code(w >> 26 & c3);
+    case 13: *it++ = rev_code(w >> 24 & c3);
+    case 12: *it++ = rev_code(w >> 22 & c3);
+    case 11: *it++ = rev_code(w >> 20 & c3);
+    case 10: *it++ = rev_code(w >> 18 & c3);
+    case  9: *it++ = rev_code(w >> 16 & c3);
+    case  8:
+      it = print_8_bases(w,       it);
+      break;
+    case  7: *it++ = rev_code(w >> 12     );
+    case  6: *it++ = rev_code(w >> 10 & c3);
+    case  5: *it++ = rev_code(w >>  8 & c3);
+    case  4: *it++ = rev_code(w >>  6 & c3);
+    case  3: *it++ = rev_code(w >>  4 & c3);
+    case  2: *it++ = rev_code(w >>  2 & c3);
+    case  1: *it++ = rev_code(w       & c3);
+    }
+
+    for( ; words > 0; --words) {
+      const uint64_t w = _data[words - 1];
+      it = print_8_bases(w >> 48, it);
+      it = print_8_bases(w >> 32, it);
+      it = print_8_bases(w >> 16, it);
+      it = print_8_bases(w,       it);
+    }
+
+    return it;
+  }
+
   // Get bits [start, start+len). start must be < 2k, len <=
   // sizeof(base_type) and start+len < 2k. No checks
   // performed. start and len are in bits, not bases.
@@ -686,10 +768,10 @@ struct mer_dna_traits<mer_base_static<T, CI> > {
 typedef std::ostream_iterator<char> ostream_char_iterator;
 template<typename derived>
 inline std::ostream& operator<<(std::ostream& os, const mer_base<derived>& mer) {
-  //  char s[static_cast<const derived>(mer).k() + 1];
-  char s[mer.k() + 1];
-  mer.to_str(s);
-  return os << s;
+  char s[mer.k()];
+  mer.to_chars(s);
+  os.write(s, mer.k());
+  return os;
 }
 
 typedef std::istream_iterator<char> istream_char_iterator;

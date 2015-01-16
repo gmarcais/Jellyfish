@@ -312,6 +312,21 @@ TEST(MerDNASimple, MultipleSize) {
   EXPECT_EQ(2, mer_dna2::class_index);
 }
 
+TEST(MerDNASimple, Print8) {
+  char res[9];
+  res[8] = '\0';
+
+  const char* bases = "ACGT";
+  mer_dna::k(8);
+  mer_dna m;
+
+  for(int i = 0; i < 100; ++i) {
+    m.randomize();
+    jellyfish::mer_dna_ns::print_8_bases(m[0], res);
+    EXPECT_EQ(m.to_str(), res);
+  }
+}
+
 // Value Type Container class
 template <typename T, int N>
 class VTC {
