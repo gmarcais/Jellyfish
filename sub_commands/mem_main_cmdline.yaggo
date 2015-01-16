@@ -1,8 +1,7 @@
 purpose "Give memory usage information"
 package "jellyfish mem"
 
-description <<EOS
-The mem subcommand gives some information about the memory usage of
+description "The mem subcommand gives some information about the memory usage of
 Jellyfish when counting mers. If one replace 'count' by 'mem' in the
 command line, it displays the amount of memory needed. All the
 switches of the count subcommand are supported, although only the
@@ -14,8 +13,7 @@ that amount of memory is returned.
 
 The memory usage information only takes into account the hash to store
 the k-mers, not various buffers (e.g. in parsing the input files). But
-typically those will be small in comparison to the hash.
-EOS
+typically those will be small in comparison to the hash."
 
 option("mer-len", "m") {
   description "Length of mer"
