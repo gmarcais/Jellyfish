@@ -6,7 +6,7 @@ Overview
 
 Jellyfish is a tool for fast, memory-efficient counting of k-mers in DNA. A k-mer is a substring of length k, and counting the occurrences of all such substrings is a central step in many analyses of DNA sequence. Jellyfish can count k-mers using an order of magnitude less memory and an order of magnitude faster than other k-mer counting packages by using an efficient encoding of a hash table and by exploiting the "compare-and-swap" CPU instruction to increase parallelism.
 
-JELLYFISH is a command-line program that reads FASTA and multi-FASTA files containing DNA sequences. It outputs its k-mer counts in an binary format, which can be translated into a human-readable text format using the "jellyfish dump" command. See the documentation below for more details.
+JELLYFISH is a command-line program that reads FASTA and multi-FASTA files containing DNA sequences. It outputs its k-mer counts in a binary format, which can be translated into a human-readable text format using the "jellyfish dump" command, or queried for specific k-mers with "jellyfish query". See the UserGuide provided on [Jellyfish's home page][1] for more details.
 
 If you use Jellyfish in your research, please cite:
 
@@ -15,7 +15,7 @@ If you use Jellyfish in your research, please cite:
 Installation
 ------------
 
-To get packaged tar ball of the source code, see the [home page of Jellyfish at the University of Maryland](http://www.genome.umd.edu/jellyfish.html "University of Maryland website").
+To get an easier to compiled packaged tar ball of the source code, see the [home page of Jellyfish at the University of Maryland][1].
 
 To compile from the git tree, you will need autoconf/automake, make, g++ 4.4 or newer and [yaggo](https://github.com/gmarcais/yaggo "Yaggo on github"). Then compile with:
 
@@ -29,4 +29,29 @@ sudo make install
 Extra / Examples
 ----------------
 
-In the examples directory are potentially useful extra programs to query/manipulates output files from Jellyfish. The examples are not compiled by default. Each subdirectory of examples is independent and is compiled with a simple invocation of 'make'.
+In the examples directory are potentially useful extra programs to query/manipulates output files of Jellyfish, using the shared library of Jellyfish in C++ or with scripting languages. The examples are not compiled by default. Each subdirectory of examples is independent and is compiled with a simple invocation of 'make'.
+
+
+Binding to script languages
+---------------------------
+
+Bindings to Ruby, Python and Perl are provided. This binding allows to read the output file of Jellyfish directly in a scripting language. Compilation of the bindings is easier from the tarball provided on [Jellyfish's home page][1].
+
+Compilation of the bindings from the git tree requires [SWIG](http://swig.org) version 3, and the development files of the scripting languages. To compile all three bindings, configure with:
+
+```Shell
+./configure --enable-swig --enable-ruby-binding --enable-python-binding --enable-perl-binding
+```
+
+Note that the headers of older version of Perl 5 do not compile with recent compilers (g++ > 4.4, clang++) and C++11 mode enable. One may have to specify in addition `CXX=g++4.4` to compile the perl binding.
+
+The binding can installed in a different location than the default (which may require root privileges for example) by passing a path to the `--enable` switches. Then, for Python, Ruby or Perl to find the binding, an environment variable may need to be adjusted (`PYTHONPATH`, `RUBYLIB` and `PERL5LIB` respectively). For example:
+
+```Shell
+./configure --prefix=$HOME --enable-swig --enable-python-binding=$HOME/lib/python
+export PYTHONPATH=$HOME/lib/python
+```
+
+See the `swig` directory for examples on how to use the bindings.
+
+[1]: http://www.genome.umd.edu/jellyfish.html "Genome group at University of Maryland"

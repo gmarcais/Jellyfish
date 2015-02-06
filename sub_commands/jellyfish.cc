@@ -127,7 +127,11 @@ int sos(int argc, char *argv[])
 
 int version(int argc, char *argv[])
 {
+#ifdef PACKAGE_STRING
   std::cout << PACKAGE_STRING << std::endl;
+#else
+  std::cout << "no version" << std::endl;
+#endif
   return 0;
 }
 

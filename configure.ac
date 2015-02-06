@@ -1,4 +1,4 @@
-AC_INIT([jellyfish], [2.1.5], [gmarcais@umd.edu])
+AC_INIT([jellyfish], [2.2.0], [gmarcais@umd.edu])
 AC_CANONICAL_HOST
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([subdir-objects foreign parallel-tests color-tests])
@@ -41,13 +41,6 @@ AC_ARG_WITH([sse],
             [], [with_sse=yes])
 AS_IF([test "x$with_sse" != xno],
       [AC_DEFINE([HAVE_SSE], [1], [Define if you have SSE])],
-      [])
-
-AC_ARG_WITH([half],
-            [AS_HELP_STRING([--with-half], [enable half float (16 bits)])],
-            [], [with_half=no])
-AS_IF([test "x$with_half" = "xyes"],
-      [AC_DEFINE([HALF_FLOATS], [1], [Define if you use half floats for qmer counting])],
       [])
 
 # Use valgrind to check memory allocation with mmap
@@ -94,6 +87,56 @@ AC_ARG_ENABLE([all-static],
 STATIC_FLAGS=
 AS_IF([test x$enable_all_static = xyes],
       [AC_SUBST([STATIC_FLAGS], [-all-static])])
+
+#
+# SWIG and bindings
+#
+maybe_swig=
+# --enable-python-binding
+AC_ARG_ENABLE([python-binding],
+              [AC_HELP_STRING([--enable-python-binding@<:@=PATH@:>@], [create SWIG python module and install in PATH])])
+# --enable-ruby-binding
+AC_ARG_ENABLE([ruby-binding],
+              [AC_HELP_STRING([--enable-ruby-binding@<:@=PATH@:>@], [create SWIG ruby module and install in PATH])])
+# --enable-perl-binding
+AC_ARG_ENABLE([perl-binding],
+              [AC_HELP_STRING([--enable-perl-binding@<:@=PATH@:>@], [create SWIG perl module and install in PATH])])
+
+# --enable-swig
+AC_ARG_ENABLE([swig],
+              [AC_HELP_STRING([--enable-swig], [enable development of swig binding])])
+AS_IF([test x$enable_swig = xyes],
+      [AX_PKG_SWIG([3.0.0], [], [AC_MSG_ERROR([SWIG version 3 is required])])])
+AS_IF([test -n "$SWIG"],
+      [SWIG_ENABLE_CXX]
+      [maybe_swig=swig])
+AM_CONDITIONAL([HAVE_SWIG], [test -n "$SWIG"])
+
+# Python binding setup
+AM_CONDITIONAL(PYTHON_BINDING, [test -n "$enable_python_binding" -a x$enable_python_binding != xno])
+AM_COND_IF([PYTHON_BINDING],
+           [AS_IF([test x$enable_python_binding != xyes], [PYTHON_SITE_PKG=$enable_python_binding])]
+           [AX_PYTHON_DEVEL]
+           [maybe_swig=swig])
+
+# Ruby binding setup
+AM_CONDITIONAL([RUBY_BINDING], [test -n "$enable_ruby_binding" -a x$enable_ruby_binding != xno])
+AM_COND_IF([RUBY_BINDING],
+           [AS_IF([test x$enable_ruby_binding != xyes], [RUBY_EXT_LIB=$enable_ruby_binding])]
+           [AX_RUBY_EXT]
+           [maybe_swig=swig])
+
+# Perl binding setup
+AM_CONDITIONAL([PERL_BINDING], [test -n "$enable_perl_binding" -a x$enable_perl_binding != xno])
+AM_COND_IF([PERL_BINDING],
+           [AS_IF([test x$enable_perl_binding != xyes], [PERL_EXT_LIB=$enable_perl_binding])]
+           [AX_PERL_EXT]
+           [maybe_swig=swig])
+
+# Enable compilation of SWIG and bindings
+AC_SUBST([MAYBE_SWIG], [$maybe_swig])
+AS_IF([test -n "$maybe_swig"],
+      [AC_CONFIG_FILES([swig/Makefile])])
 
 AC_OUTPUT
 

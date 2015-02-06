@@ -153,7 +153,7 @@ private:
   void start_commands();
   void start_one_command(const std::string& command, int pipe);
   bool display_status(int status, const std::string& command);
-  void setup_signal_handlers();
+  int  setup_signal_handlers();
   void unset_signal_handlers();
   static void signal_handler(int signal);
   void cleanup();

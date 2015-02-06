@@ -33,6 +33,9 @@ class whole_sequence_parser : public jellyfish::cooperative_pool2<whole_sequence
   };
   cpp_array<stream_status> streams_;
   StreamIterator&          streams_iterator_;
+  size_t                   files_read_; // nb of files read
+  size_t                   reads_read_; // nb of reads read
+
 
 public:
   /// Size is the number of buffers to keep around. It should be
@@ -43,7 +46,9 @@ public:
                         uint32_t max_producers, StreamIterator& streams) :
     super(max_producers, size),
     streams_(max_producers),
-    streams_iterator_(streams)
+    streams_iterator_(streams),
+    files_read_(0),
+    reads_read_(0)
   {
     for(auto it = super::element_begin(); it != super::element_end(); ++it) {
       it->nb_filled = 0;
@@ -77,6 +82,9 @@ public:
     return false;
   }
 
+  size_t nb_files() const { return files_read_; }
+  size_t nb_reads() const { return reads_read_; }
+
 protected:
   void open_next_file(stream_status& st) {
     st.stream.reset();
@@ -86,6 +94,7 @@ protected:
       return;
     }
 
+    ++files_read_;
     // Update the type of the current file and move past first header
     // to beginning of sequence.
     switch(st.stream->peek()) {
@@ -106,11 +115,12 @@ protected:
     const size_t data_size = buff.data.size();
 
     for(nb_filled = 0; nb_filled < data_size && st.stream->peek() != EOF; ++nb_filled) {
+      ++reads_read_;
       header_sequence_qual& fill_buff = buff.data[nb_filled];
       st.stream->get(); // Skip '>'
       std::getline(*st.stream, fill_buff.header);
       fill_buff.seq.clear();
-      while(st.stream->peek() != '>' && st.stream->peek() != EOF) {
+      for(int c = st.stream->peek(); c != '>' && c != EOF; c = st.stream->peek()) {
         std::getline(*st.stream, st.buffer); // Wish there was an easy way to combine the
         fill_buff.seq.append(st.buffer);             // two lines avoiding copying
       }
@@ -122,6 +132,7 @@ protected:
     const size_t data_size = buff.data.size();
 
     for(nb_filled = 0; nb_filled < data_size && st.stream->peek() != EOF; ++nb_filled) {
+      ++reads_read_;
       header_sequence_qual& fill_buff = buff.data[nb_filled];
       st.stream->get(); // Skip '@'
       std::getline(*st.stream, fill_buff.header);

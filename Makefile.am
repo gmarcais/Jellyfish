@@ -1,5 +1,7 @@
+SUBDIRS = . $(MAYBE_SWIG)
 ACLOCAL_AMFLAGS = -I m4
-EXTRA_DIST = doc/jellyfish.pdf doc/jellyfish.man README LICENSE HalfLICENSE
+
+EXTRA_DIST = doc/jellyfish.pdf doc/jellyfish.man README LICENSE # jellyfish.spec
 man1_MANS = doc/jellyfish.man
 
 pkgconfigdir = $(libdir)/pkgconfig
@@ -20,7 +22,7 @@ DISTCLEANFILES = $(BUILT_SOURCES)
 # Yaggo automatic rules with silencing
 V_YAGGO = $(V_YAGGO_$(V))
 V_YAGGO_ = $(V_YAGGO_$(AM_DEFAULT_VERBOSITY))
-V_YAGGO_0 = @echo "  YAGGO " $@;
+V_YAGGO_0 = @echo "  YAGGO   " $@;
 .yaggo.hpp:
 	$(V_YAGGO)$(YAGGO) --license $(srcdir)/header-license -o $@ $<
 
@@ -157,6 +159,16 @@ tests/merge.log: tests/generate_sequence.log
 tests/min_qual.log: tests/generate_fastq_sequence.log
 tests/large_key.log: tests/generate_sequence.log
 tests/quality_filter.log: tests/generate_sequence.log
+
+# SWIG tests
+TESTS += tests/swig_python.sh tests/swig_ruby.sh tests/swig_perl.sh
+tests/swig_python.log: tests/generate_sequence.log
+tests/swig_ruby.log: tests/generate_sequence.log
+tests/swig_perl.log: tests/generate_sequence.log
+EXTRA_DIST += swig/python/test_mer_file.py swig/python/test_hash_counter.py
+EXTRA_DIST += swig/ruby/test_mer_file.rb swig/ruby/test_hash_counter.rb
+EXTRA_DIST += swig/perl5/t/test_mer_file.t swig/perl5/t/test_hash_counter.t
+
 
 ##############
 # Unit tests #

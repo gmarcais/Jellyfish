@@ -1,0 +1,83 @@
+Name:           jellyfish
+Version:        @PACKAGE_VERSION@
+Release:        1%{?dist}
+Summary:        A fast multi-threaded k-mer counter
+
+Group:          Applications/Engineering
+License:        GNU GPL
+URL:            http://www.genome.umd.edu/jellyfish
+Source0:        %{name}-%{version}.tar.gz
+BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+
+#BuildRequires:  
+Requires:       %{name}-lib = %{version}-%{release}
+
+%description
+Jellyfish is a tool for fast, memory-efficient counting of k-mers in
+DNA. A k-mer is a substring of length k, and counting the occurrences
+of all such substrings is a central step in many analyses of DNA
+sequence. JELLYFISH can count k-mers quickly by using an efficient
+encoding of a hash table and by exploiting the "compare-and-swap" CPU
+instruction to increase parallelism.
+
+%package        lib
+Summary:        Library for %{name}
+Group:          System Environment/Libraries
+# Requires:       %{name}%{?_isa} = %{version}-%{release}
+
+%description    lib
+The %{name}-lib package contains libraries required to run %{name} or
+software using the %{name} library.
+
+%package        devel
+Summary:        Development files for %{name}
+Group:          Development/Libraries
+Requires:       %{name}-lib%{?_isa} = %{version}-%{release}
+
+%description    devel
+The %{name}-devel package contains libraries and header files for
+developing applications that use %{name}.
+
+
+%prep
+%setup -q
+
+
+%build
+%configure --disable-static
+make %{?_smp_mflags}
+
+
+%install
+rm -rf $RPM_BUILD_ROOT
+make install DESTDIR=$RPM_BUILD_ROOT
+find $RPM_BUILD_ROOT -name '*.la' -exec rm -f {} ';'
+
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+
+%post -p /sbin/ldconfig
+
+%postun -p /sbin/ldconfig
+
+
+%files
+%defattr(-,root,root,-)
+%{_bindir}/*
+
+%files lib
+%defattr(-,root,root,-)
+%doc
+%{_libdir}/*.so.*
+
+%files devel
+%defattr(-,root,root,-)
+%doc
+%{_includedir}/*
+%{_libdir}/*.so
+
+
+%changelog
+* Initial version

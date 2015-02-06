@@ -79,6 +79,7 @@ public:
 
   unsigned int check__(const uint64_t *hashes) const {
     // Prefetch memory locations
+    static_assert(std::is_pod<typename super::prefetch_info>::value, "prefetch_info must be a POD");
     typename super::prefetch_info pinfo[super::k_];
     const size_t base    = super::d_.remainder(hashes[0]);
     const size_t inc     = super::d_.remainder(hashes[1]);

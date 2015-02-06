@@ -28,39 +28,29 @@ The [swig](http://www.swig.org/) software package must be
 installed. All the testing is done with version 3.x. Version 2.x MAY
 work, but is not tested.
 
-Python
-------
+Configure
+---------
 
-The following was tested with Python version 3.3.3. To install:
+To compile the bindings, use, according to taste, some of the the following switches with configure:
 
 ```Shell
-python setup.py build
-sudo python setup.py install
+./configure --enable-swig --enable-python-binding --enable-ruby-binding --enable-perl-binding
 ```
 
-Ruby
-----
-
-The following was tested with Ruby version 1.9.3. To install:
+In addition, each of the `--enable-*-binding` switch can take a path where to install the binding. This allows to install without root privilegies. For example:
 
 ```Shell
-ruby extconf.rb
+./configure --prefix=`pwd`/inst --enable-swig --enable-python-binding=`pwd`/inst/python
 make
-sudo make install
+make install
 ```
 
-Perl
-----
+will install `jellyfish` in `./inst/bin` and the python files in `./inst/python`. Then, one needs to add `$(pwd)/inst/python` to `PYTHONPATH` to use the binding. Similarly with ruby and `RUBYLIB`, perl and `PERL5LIB`.
 
-The following was tested with Perl version 5.18.1. The Perl headers
-may not compile properly with recent version of g++. It compiles
-properly with g++ version 4.4. Hence, you may need to pass something
-like 'CC=g++-4.4' to the 'make' command for it to compile.
+The swig bindings were tested with Python 3.3.3, Ruby 1.9.3 and Perl 5.18.1. The Perl headers may not compile properly with recent version of g++. It compiles properly with g++ version 4.4. Hence, you may need to pass the path to `g++` version 4.4 to the configure command line. For example:
 
 ```Shell
-perl Makefile.PL
-make
-sudo make install
+./configure --enable-swig --enable-perl-binding CXX=g++-4.4
 ```
 
 Examples

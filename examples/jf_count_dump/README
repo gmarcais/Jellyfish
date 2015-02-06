@@ -1,0 +1,52 @@
+What is it?
+===========
+
+This program is an example on how to count k-mers with Jellyfish and
+then use the resulting hash of mers. The program counts all the k-mers
+in the files passed on the command line. Then it generate some random
+k-mer and displays its count in the hash (by default, k=25 and with
+good likely hood this value will be zero). Then, it dumps the content
+of the entire database on stdout.
+
+It is equivalent to using 'jellyfish count', 'jellyfish query' and
+'jellyfish dump'.
+
+Some details
+============
+
+Many of the parameters that are switches to 'jellyfish count' are hard
+coded constant in this program. They are:
+
+  jellyfish::mer_dna::k(25);
+
+The length k of the mers. Here set to 25.
+
+  const uint64_t hash_size    = 10000000;
+
+The initial size of the hash. Here set to 10 million. Ideally, this
+will be set close to the actual number of mers that will be inserted
+in the hash, so as to limit the number of size doubling of the hash.
+
+  const uint32_t num_reprobes = 126;
+
+The maximum number of reprobes in the hash. The larger this number,
+the higher the load of the hash table before a size doubling is
+necessary, at the expense of some computation time.
+
+  const uint32_t num_threads  = 16;
+
+Number of threads used for parsing the input files and counting the mers.
+
+  const uint32_t counter_len  = 7;
+
+Minimum length of the counting field. Mers that have a count that does
+not fit in this field will take up the space of 2 mers in the hash
+table.
+
+  const bool     canonical    = true;
+
+A mer and its reverse complement are considered to be one and the same
+mer. The canonical representation is whichever of a mer or its reverse
+complement that comes first in lexicographic order. This is usually
+set when counting mers in sequencing reads.
+

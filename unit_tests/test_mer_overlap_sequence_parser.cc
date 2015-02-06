@@ -47,6 +47,9 @@ TEST(MerOverlapSequenceParser, OneSmallSequence) {
 
   parser_type::job j2(parser);
   EXPECT_TRUE(j2.is_empty());
+
+  EXPECT_EQ((size_t)1, parser.nb_files());
+  EXPECT_EQ((size_t)1, parser.nb_reads());
 }
 
 string generate_sequences(std::ostream& os, int a, int b, int nb, bool fastq = false) {
@@ -102,6 +105,9 @@ TEST(MerOverlapSequenceParser, ManySmallSequences) {
     offset += j->end - j->start - (mer_len - 1);
   }
   EXPECT_EQ(res.size(), offset + mer_len - 1);
+
+  EXPECT_EQ((size_t)1, parser.nb_files());
+  EXPECT_EQ((size_t)nb_reads, parser.nb_reads());
 }
 
 TEST(MerOverlapSequenceParser, BigSequences) {
@@ -147,6 +153,9 @@ TEST(MerOverlapSequenceParser, BigSequences) {
 
   parser_type::job j2(parser);
   EXPECT_TRUE(j2.is_empty());
+
+  EXPECT_EQ((size_t)2, parser.nb_files());
+  EXPECT_EQ((size_t)6, parser.nb_reads());
 }
 
 TEST(MerOverlapSequenceParser, Fastq) {
@@ -173,5 +182,8 @@ TEST(MerOverlapSequenceParser, Fastq) {
     offset += j->end - j->start - (mer_len - 1);
   }
   EXPECT_EQ(res.size(), offset + mer_len - 1);
+
+  EXPECT_EQ((size_t)1, parser.nb_files());
+  EXPECT_EQ((size_t)nb_reads, parser.nb_reads());
 }
 } // namespace {

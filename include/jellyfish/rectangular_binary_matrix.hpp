@@ -261,8 +261,8 @@ namespace jellyfish {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wuninitialized"
 #endif
-    register xmm_t acc  = acc ^ acc; // Set acc to 0
-    register xmm_t load = load ^ load;
+    xmm_t acc  = acc ^ acc; // Set acc to 0
+    xmm_t load = load ^ load;
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif

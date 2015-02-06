@@ -444,7 +444,7 @@ public:
   bool get_key_id(const key_type& key, size_t* id, key_type& tmp_key, const word** w, const offset_t** o, const size_t oid) const {
     // This static_assert makes clang++ happy
     static_assert(std::is_pod<prefetch_info>::value, "prefetch_info must be a POD");
-    prefetch_info info_ary[prefetch_buffer::capacity()];
+    prefetch_info info_ary[prefetch_buffer::capacityConstant];
     prefetch_buffer buffer(info_ary);
     warm_up_cache(buffer, oid);
 

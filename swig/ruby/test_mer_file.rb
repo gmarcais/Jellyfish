@@ -5,7 +5,7 @@ $data = ARGV.shift
 
 class TestMerFile < MiniTest::Unit::TestCase
   def setup
-    @mf = Jellyfish::ReadMerFile.new(File.join($data, "sequence.jf"))
+    @mf = Jellyfish::ReadMerFile.new(File.join($data, "swig_ruby.jf"))
   end
 
   def test_histo
@@ -13,7 +13,7 @@ class TestMerFile < MiniTest::Unit::TestCase
     histo[@mf.count] = (histo[@mf.count] || 0) + 1 while @mf.next_mer
 
     jf_histo = []
-    open(File.join($data, "sequence.histo")) { |f|
+    open(File.join($data, "swig_ruby.histo")) { |f|
       f.lines.each { |l|
         freq, count = l.split.map {|x| x.to_i }
         jf_histo[freq] = count
@@ -24,7 +24,7 @@ class TestMerFile < MiniTest::Unit::TestCase
   end
 
   def test_each
-    open(File.join($data, "sequence.dump")) { |f|
+    open(File.join($data, "swig_ruby.dump")) { |f|
       @mf.each { |m, c|
         l = f.readline
         assert l
@@ -37,7 +37,7 @@ class TestMerFile < MiniTest::Unit::TestCase
   end
 
   def test_dump
-    open(File.join($data, "sequence.dump")) { |f|
+    open(File.join($data, "swig_ruby.dump")) { |f|
       f.lines.each { |l|
         mer, count = l.split
         assert @mf.next_mer
@@ -49,7 +49,7 @@ class TestMerFile < MiniTest::Unit::TestCase
   end
 
   def test_query
-    query = Jellyfish::QueryMerFile.new(File.join($data, "sequence.jf"))
+    query = Jellyfish::QueryMerFile.new(File.join($data, "swig_ruby.jf"))
     @mf.each { |m, c|
       assert_equal c, query[m]
     }
