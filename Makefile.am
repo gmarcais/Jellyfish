@@ -1,3 +1,4 @@
+SUBDIRS = . $(MAYBE_SWIG)
 ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST = doc/jellyfish.pdf doc/jellyfish.man README LICENSE jellyfish.spec
@@ -159,6 +160,16 @@ tests/min_qual.log: tests/generate_fastq_sequence.log
 tests/large_key.log: tests/generate_sequence.log
 tests/quality_filter.log: tests/generate_sequence.log
 
+# SWIG tests
+TESTS += tests/swig_python.sh tests/swig_ruby.sh tests/swig_perl.sh
+tests/swig_python.log: tests/generate_sequence.log
+tests/swig_ruby.log: tests/generate_sequence.log
+tests/swig_perl.log: tests/generate_sequence.log
+EXTRA_DIST += swig/python/test_mer_file.py swig/python/test_hash_counter.py
+EXTRA_DIST += swig/ruby/test_mer_file.rb swig/ruby/test_hash_counter.rb
+EXTRA_DIST += swig/perl5/t/test_mer_file.t swig/perl5/t/test_hash_counter.t
+
+
 ##############
 # Unit tests #
 ##############
@@ -204,76 +215,3 @@ include gtest.mk
 # Print the value of a variable
 print-%:
 	@echo -n $($*)
-
-
-# SWIG
-SWIG_SRC = swig/jellyfish.i swig/hash_counter.i swig/hash_set.i swig/mer_dna.i swig/mer_file.i swig/string_mers.i
-
-if HAVE_SWIG
-SWIG_V_GEN = $(swig_v_GEN_$(V))
-swig_v_GEN_ = $(swig_v_GEN_$(AM_DEFAULT_VERBOSITY))
-swig_v_GEN_0 = @echo "  SWIG    " $@;
-swig/%/swig_wrap.cpp: $(SWIG_SRC)
-	$(SWIG_V_GEN)$(SWIG) -$* -I$(top_srcdir)/include -o $@ $<
-else
-swig/%/swig_wrap.cc:
-	@echo >&2 SWIG >= 3.x.x not found. Make sure it is install and rerun configure
-	@false
-endif
-
-# Python support
-if PYTHON_BINDING
-PYTHON_BUILT = swig/python/swig_wrap.cpp swig/python/jellyfish.py
-BUILT_SOURCES += $(PYTHON_BUILT)
-
-pythonextdir = $(PYTHON_SITE_PKG)/jellyfish
-pythonext_SCRIPTS = swig/python/jellyfish.pyc swig/python/__init__.pyc
-pythonext_LTLIBRARIES = swig/python/_jellyfish.la
-swig_python__jellyfish_la_SOURCES = swig/python/swig_wrap.cpp $(SWIG_SRC)
-swig_python__jellyfish_la_CPPFLAGS = $(PYTHON_CPPFLAGS) -I$(top_srcdir)/include
-swig_python__jellyfish_la_LDFLAGS = -module $(PYTHON_LDFLAGS)
-swig_python__jellyfish_la_LIBADD = libjellyfish-2.0.la
-CLEANFILES += $(PYTHON_BUILT) $(dist_pythonext_DATA) swig/python/jellyfish.py
-TESTS += tests/swig_python.sh
-
-tests/swig_python.log: tests/generate_sequence.log
-
-PYTHONC_V_GEN = $(pythonc_v_GEN_$(V))
-pythonc_v_GEN_ = $(pythonc_v_GEN_$(AM_DEFAULT_VERBOSITY))
-pythonc_v_GEN_0 = @echo "  PYTHONC " $@;
-%.pyc: %.py
-	$(PYTHONC_V_GEN)$(PYTHON) -c 'import py_compile, sys; py_compile.compile(sys.argv[1], sys.argv[2])' $< $@
-swig/python/jellyfish.py: swig/python/swig_wrap.cpp
-endif
-
-# Ruby support
-if RUBY_BINDING
-RUBY_BUILT = swig/ruby/swig_wrap.cpp
-BUILT_SOURCES += $(RUBY_BUILT)
-rubyextdir = $(RUBY_EXT_LIB)
-rubyext_LTLIBRARIES = swig/ruby/jellyfish.la
-swig_ruby_jellyfish_la_SOURCES = swig/ruby/swig_wrap.cpp $(SWIG_SRC)
-swig_ruby_jellyfish_la_CPPFLAGS = $(RUBY_EXT_CFLAGS) -I$(top_srcdir)/include
-swig_ruby_jellyfish_la_LDFLAGS = -module $(RUBY_EXT_LIBS)
-swig_ruby_jellyfish_la_LIBADD = libjellyfish-2.0.la
-CLEANFILES += $(RUBY_BUILT)
-TESTS += tests/swig_ruby.sh
-tests/swig_ruby.log: tests/generate_sequence.log
-endif
-
-# Perl5 support
-if PERL_BINDING
-PERL_BUILT = swig/perl5/swig_wrap.cpp swig/perl5/jellyfish.pm
-BUILT_SOURCES += $(PERL_BUILT)
-perlextdir = $(PERL_EXT_LIB)
-perlext_SCRIPTS = swig/perl5/jellyfish.pm
-perlext_LTLIBRARIES = swig/perl5/jellyfish.la
-swig_perl5_jellyfish_la_SOURCES = swig/perl5/swig_wrap.cpp $(SWIG_SRC)
-swig_perl5_jellyfish_la_CPPFLAGS = $(PERL_EXT_CPPFLAGS) -I$(PERL_EXT_INC) -I$(top_srcdir)/include
-swig_perl5_jellyfish_la_LDFLAGS = -module $(PERL5_EXT_LDFLAGS)
-swig_perl5_jellyfish_la_LIBADD = libjellyfish-2.0.la
-CLEANFILES += $(PERL5_BUILT) swig/perl5/jellyfish.pm
-TESTS += tests/swig_perl.sh
-tests/swig_perl.log: tests/generate_sequence.log
-swig/perl5/jellyfish.pm: swig/perl5/swig_wrap.cpp
-endif
