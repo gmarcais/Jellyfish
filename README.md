@@ -52,4 +52,6 @@ The binding can installed in a different location than the default (which may re
 export PYTHONPATH=$HOME/lib/python
 ```
 
+See the `swig` directory for examples on how to use the bindings.
+
 [1]: http://www.genome.umd.edu/jellyfish.html "Genome group at University of Maryland"
