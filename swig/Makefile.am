@@ -22,7 +22,7 @@ PYTHON_BUILT = python/swig_wrap.cpp python/jellyfish.py
 BUILT_SOURCES += $(PYTHON_BUILT)
 
 pythonextdir = $(PYTHON_SITE_PKG)/jellyfish
-pythonext_SCRIPTS = python/jellyfish.pyc python/__init__.pyc
+pythonext_SCRIPTS = python/__init__.pyc
 pythonext_LTLIBRARIES = python/_jellyfish.la
 python__jellyfish_la_SOURCES = python/swig_wrap.cpp $(SWIG_SRC)
 python__jellyfish_la_CPPFLAGS = $(PYTHON_CPPFLAGS) -I$(top_srcdir)/include
@@ -32,10 +32,10 @@ CLEANFILES += $(PYTHON_BUILT) $(dist_pythonext_DATA) python/jellyfish.py
 PYTHONC_V_GEN = $(pythonc_v_GEN_$(V))
 pythonc_v_GEN_ = $(pythonc_v_GEN_$(AM_DEFAULT_VERBOSITY))
 pythonc_v_GEN_0 = @echo "  PYTHONC " $@;
-%.pyc: %.py
+%/__init__.pyc: %/jellyfish.py
 	$(PYTHONC_V_GEN)$(PYTHON) -c 'import py_compile, sys; py_compile.compile(sys.argv[1], sys.argv[2])' $< $@
 python/jellyfish.py: python/swig_wrap.cpp
-EXTRA_DIST += python/jellyfish.py python/__init__.py
+EXTRA_DIST += python/jellyfish.py
 endif
 
 # Ruby support
