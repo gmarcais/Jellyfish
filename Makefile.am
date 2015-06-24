@@ -136,7 +136,7 @@ YAGGO_SOURCES += jellyfish/generate_sequence_cmdline.hpp
 # Tests #
 #########
 TEST_EXTENSIONS = .sh
-SH_LOG_COMPILER = /bin/sh
+SH_LOG_COMPILER = $(SHELL)
 AM_SH_LOG_FLAGS =
 
 TESTS = tests/generate_sequence.sh tests/parallel_hashing.sh	\
