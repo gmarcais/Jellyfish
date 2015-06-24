@@ -15,7 +15,7 @@ If you use Jellyfish in your research, please cite:
 Installation
 ------------
 
-To get an easier to compiled packaged tar ball of the source code, see the [home page of Jellyfish at the University of Maryland][1].
+To get an easier to compiled packaged tar ball of the source code, download a release from [home page of Jellyfish at the University of Maryland][1] or from the [github release][3].
 
 To compile from the git tree, you will need autoconf/automake, make, g++ 4.4 or newer and [yaggo](https://github.com/gmarcais/yaggo "Yaggo on github"). Then compile with:
 
@@ -35,15 +35,15 @@ In the examples directory are potentially useful extra programs to query/manipul
 Binding to script languages
 ---------------------------
 
-Bindings to Ruby, Python and Perl are provided. This binding allows to read the output file of Jellyfish directly in a scripting language. Compilation of the bindings is easier from the tarball provided on [Jellyfish's home page][1].
+Bindings to Ruby, Python and Perl are provided. This binding allows to read the output file of Jellyfish directly in a scripting language. Compilation of the bindings is easier from the [release tarball][3]: [SWIG][2] is not required and in the command lines shown below, remove the `--enable-swig` switch. Only the development files of the scripting languages are required.
 
-Compilation of the bindings from the git tree requires [SWIG](http://swig.org) version 3, and the development files of the scripting languages. To compile all three bindings, configure with:
+Compilation of the bindings from the git tree requires [SWIG][2] version 3, and the development files of the scripting languages. To compile all three bindings, configure with:
 
 ```Shell
 ./configure --enable-swig --enable-ruby-binding --enable-python-binding --enable-perl-binding
 ```
 
-Note that the headers of older version of Perl 5 do not compile with recent compilers (g++ > 4.4, clang++) and C++11 mode enable. One may have to specify in addition `CXX=g++4.4` to compile the perl binding.
+Note that the headers of older version of Perl 5 do not compile with recent compilers (g++ > 4.4, clang++) and C++11 mode enable. One may have to specify the path to version 4.4 of gcc by adding, for example, `CXX=g++4.4` to the configure commande line.
 
 The binding can installed in a different location than the default (which may require root privileges for example) by passing a path to the `--enable` switches. Then, for Python, Ruby or Perl to find the binding, an environment variable may need to be adjusted (`PYTHONPATH`, `RUBYLIB` and `PERL5LIB` respectively). For example:
 
@@ -55,3 +55,5 @@ export PYTHONPATH=$HOME/lib/python
 See the `swig` directory for examples on how to use the bindings.
 
 [1]: http://www.genome.umd.edu/jellyfish.html "Genome group at University of Maryland"
+[2]: http://www.swig.org/
+[3]: https://github.com/gmarcais/Jellyfish/releases "Jellyfish release"
