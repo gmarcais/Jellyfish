@@ -8,7 +8,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = jellyfish-2.0.pc
 
 AM_LDFLAGS = -lpthread # $(VALGRIND_LIBS)
-AM_CPPFLAGS = -Wall -Wnon-virtual-dtor -I$(top_srcdir) -I$(top_srcdir)/include -g -O3 $(VALGRIND_CFLAGS)
+AM_CPPFLAGS = -Wall -Wnon-virtual-dtor -I$(srcdir) -I$(srcdir)/include -g -O3 $(VALGRIND_CFLAGS)
 AM_CXXFLAGS = $(ALL_CXXFLAGS) -g -O3
 
 noinst_HEADERS = $(YAGGO_SOURCES)
@@ -204,13 +204,13 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 bin_test_all_SOURCES += jellyfish/backtrace.cc
 
 bin_test_all_CPPFLAGS = -Dprotected=public -Dprivate=public -DJSON_IS_AMALGAMATION=1
-bin_test_all_CXXFLAGS = $(AM_CXXFLAGS) -I$(top_srcdir)/unit_tests/gtest/include -I$(top_srcdir)/unit_tests -I$(top_srcdir)/include
+bin_test_all_CXXFLAGS = $(AM_CXXFLAGS) -I$(srcdir)/unit_tests/gtest/include -I$(srcdir)/unit_tests -I$(srcdir)/include
 bin_test_all_LDADD = libgtest.la $(LDADD)
 YAGGO_SOURCES += unit_tests/test_main_cmdline.hpp
 noinst_HEADERS += unit_tests/test_main.hpp
 
 include gtest.mk
--include $(top_srcdir)/development.mk
+-include $(srcdir)/development.mk
 
 # Print the value of a variable
 print-%:
