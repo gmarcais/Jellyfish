@@ -81,7 +81,7 @@ public:
 
       do {
         const int  code = m_.code(*cseq_++);
-        const char qual = cqual_ < equal_ ? *cqual_++ : std::numeric_limits<char>::min();
+         const char qual = cqual_ < equal_ ? *cqual_++ : std::numeric_limits<char>::max();
         if(code >= 0 && qual >= min_qual_) {
           m_.shift_left(code);
           if(canonical_)
