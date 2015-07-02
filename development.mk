@@ -5,14 +5,14 @@ AM_CXXFLAGS += -Werror
 cloc:
 	cloc --force-lang="Ruby,yaggo" --force-lang="make,am" --force-lang="make,mk" \
 	  --exclude-dir="gtest" --ignored=cloc_ignored_src_files \
-	  $(top_srcdir)/jellyfish $(top_srcdir)/include $(top_srcdir)/lib $(top_srcdir)/sub_commands $(top_srcdir)/tests $(top_srcdir)/unit_tests \
-	  $(top_srcdir)/Makefile.am $(top_srcdir)/*.mk
+	  $(srcdir)/jellyfish $(srcdir)/include $(srcdir)/lib $(srcdir)/sub_commands $(srcdir)/tests $(srcdir)/unit_tests \
+	  $(srcdir)/Makefile.am $(srcdir)/*.mk
 
 cloc_jellyfish:
-	cloc $(top_srcdir)/jellyfish $(top_srcdir)/include $(top_srcdir)/lib $(top_srcdir)/sub_commands
+	cloc $(srcdir)/jellyfish $(srcdir)/include $(srcdir)/lib $(srcdir)/sub_commands
 
 cloc_library:
-	cloc $(top_srcdir)/include $(top_srcdir)/lib
+	cloc $(srcdir)/include $(srcdir)/lib
 
 # Make a dependency on yaggo the software
 $(YAGGO_SOURCES): $(YAGGO)
