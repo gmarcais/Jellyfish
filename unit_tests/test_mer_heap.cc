@@ -16,7 +16,7 @@ static const uint16_t mer_len  = 50;
 static const size_t   nb_mers  = ary_size / 2;
 
 class MerHeapTest : public ::testing::TestWithParam<size_t> {
-protected:
+public:
   static void SetUpTestCase() {
     mer_dna::k(mer_len);
     shared_ary = new large_array(ary_size, mer_len * 2, 0, 63);
