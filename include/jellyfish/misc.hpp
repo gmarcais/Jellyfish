@@ -17,6 +17,10 @@
 #ifndef __JELLYFISH_MISC_HPP__
 #define __JELLYFISH_MISC_HPP__
 
+// Work around a PERL bug, which defines a seed macro, which conflicts
+// with recent g++ random header.
+#undef seed
+
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
