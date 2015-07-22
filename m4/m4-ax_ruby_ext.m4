@@ -75,18 +75,32 @@ AC_DEFUN([AX_RUBY_EXT],[
                 AC_SUBST(RUBY_VERSION)
 
                 #
-                # Get CFLAGS and LIBS from pkg-config
-                #
-                PKG_CHECK_MODULES([RUBY_EXT], [ruby-1.9 >= 1.9.1])
-
-                #
                 # Check for the extensions target directory.
                 #
                 AC_MSG_CHECKING([for Ruby extensions target directory])
                 AS_IF([test -z "$RUBY_EXT_LIB"],
-                      [RUBY_EXT_LIB=`$RUBY -rrbconfig -e 'puts RbConfig::CONFIG.values_at("sitearchdir")'`])
+                      [RUBY_EXT_LIB=`$RUBY -rrbconfig -e 'print RbConfig::expand(RbConfig::CONFIG.fetch("sitearchdir"))'`])
                 AC_MSG_RESULT([$RUBY_EXT_LIB])
                 AC_SUBST(RUBY_EXT_LIB)
+
+                #
+                # Check for include flags
+                #
+                AC_MSG_CHECKING([for Ruby include directory])
+                AS_IF([test -z "$RUBY_EXT_CFLAGS"],
+                      [RUBY_EXT_CFLAGS="-I`$RUBY -rrbconfig -e 'print RbConfig::expand(RbConfig::CONFIG.fetch("rubyhdrdir"))'` -I`$RUBY -rrbconfig -e 'print RbConfig::expand(RbConfig::CONFIG.fetch("rubyarchhdrdir"))'`"])
+                AC_MSG_RESULT([$RUBY_EXT_CFLAGS])
+                AC_SUBST(RUBY_EXT_CFLAGS)
+
+                #
+                # Check for lib flags
+                #
+                AC_MSG_CHECKING([for Ruby libs])
+                AS_IF([test -z "$RUBY_EXT_LIBS"],
+                      [RUBY_EXT_LIBS="`$RUBY -rrbconfig -e 'print RbConfig::expand(RbConfig::CONFIG.fetch("LIBRUBYARG_SHARED"))'` `$RUBY -rrbconfig -e 'print RbConfig::expand(RbConfig::CONFIG.fetch("LIBS"))'`"])
+                AC_MSG_RESULT([$RUBY_EXT_LIBS])
+                AC_SUBST(RUBY_EXT_LIBS)
+
 
                 # Fix LDFLAGS for OS X.  We don't want any -arch flags here, otherwise
                 # linking might fail.  We also including the proper flags to create a bundle.

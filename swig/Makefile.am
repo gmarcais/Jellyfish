@@ -9,7 +9,7 @@ SWIG_V_GEN = $(swig_v_GEN_$(V))
 swig_v_GEN_ = $(swig_v_GEN_$(AM_DEFAULT_VERBOSITY))
 swig_v_GEN_0 = @echo "  SWIG    " $@;
 %/swig_wrap.cpp: $(SWIG_SRC)
-	$(SWIG_V_GEN)$(SWIG) -$* -I$(top_srcdir)/include -o $@ $<
+	$(SWIG_V_GEN)$(SWIG) -$* -I$(srcdir)/../include -o $@ $<
 else
 %/swig_wrap.cc:
 	@echo >&2 SWIG >= 3.x.x not found. Make sure it is install and rerun configure
@@ -25,7 +25,7 @@ pythonextdir = $(PYTHON_SITE_PKG)/jellyfish
 pythonext_SCRIPTS = python/__init__.pyc
 pythonext_LTLIBRARIES = python/_jellyfish.la
 python__jellyfish_la_SOURCES = python/swig_wrap.cpp $(SWIG_SRC)
-python__jellyfish_la_CPPFLAGS = $(PYTHON_CPPFLAGS) -I$(top_srcdir)/include
+python__jellyfish_la_CPPFLAGS = $(PYTHON_CPPFLAGS) -I$(srcdir)/../include
 python__jellyfish_la_LDFLAGS = -module $(PYTHON_LDFLAGS)
 python__jellyfish_la_LIBADD = ../libjellyfish-2.0.la
 CLEANFILES += $(PYTHON_BUILT) $(dist_pythonext_DATA) python/jellyfish.py
@@ -45,7 +45,7 @@ BUILT_SOURCES += $(RUBY_BUILT)
 rubyextdir = $(RUBY_EXT_LIB)
 rubyext_LTLIBRARIES = ruby/jellyfish.la
 ruby_jellyfish_la_SOURCES = ruby/swig_wrap.cpp $(SWIG_SRC)
-ruby_jellyfish_la_CPPFLAGS = $(RUBY_EXT_CFLAGS) -I$(top_srcdir)/include
+ruby_jellyfish_la_CPPFLAGS = $(RUBY_EXT_CFLAGS) -I$(srcdir)/../include
 ruby_jellyfish_la_LDFLAGS = -module $(RUBY_EXT_LIBS)
 ruby_jellyfish_la_LIBADD = ../libjellyfish-2.0.la
 CLEANFILES += $(RUBY_BUILT)
@@ -59,7 +59,7 @@ perlextdir = $(PERL_EXT_LIB)
 perlext_SCRIPTS = perl5/jellyfish.pm
 perlext_LTLIBRARIES = perl5/jellyfish.la
 perl5_jellyfish_la_SOURCES = perl5/swig_wrap.cpp $(SWIG_SRC)
-perl5_jellyfish_la_CPPFLAGS = $(PERL_EXT_CPPFLAGS) -I$(PERL_EXT_INC) -I$(top_srcdir)/include
+perl5_jellyfish_la_CPPFLAGS = $(PERL_EXT_CPPFLAGS) -I$(PERL_EXT_INC) -I$(srcdir)/../include
 perl5_jellyfish_la_LDFLAGS = -module $(PERL5_EXT_LDFLAGS)
 perl5_jellyfish_la_LIBADD = ../libjellyfish-2.0.la
 CLEANFILES += $(PERL5_BUILT) perl5/jellyfish.pm
