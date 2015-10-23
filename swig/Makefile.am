@@ -60,7 +60,7 @@ swig_perl5_jellyfish_la_SOURCES = swig/perl5/swig_wrap.cpp $(SWIG_SRC)
 swig_perl5_jellyfish_la_CPPFLAGS = $(PERL_EXT_CPPFLAGS) -I$(PERL_EXT_INC) -I$(srcdir)/include
 swig_perl5_jellyfish_la_LDFLAGS = -module
 swig_perl5_jellyfish_la_LIBADD = libjellyfish-2.0.la
-CLEANFILES += $(PERL5_BUILT)
+CLEANFILES += $(PERL_BUILT)
 swig/perl5/jellyfish.pm: swig/perl5/swig_wrap.cpp
 EXTRA_DIST += $(PERL_BUILT)
 endif
