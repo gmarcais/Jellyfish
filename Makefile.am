@@ -1,4 +1,3 @@
-SUBDIRS = . $(MAYBE_SWIG)
 ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST = doc/jellyfish.pdf doc/jellyfish.man README LICENSE # jellyfish.spec
@@ -208,6 +207,11 @@ bin_test_all_CXXFLAGS = $(AM_CXXFLAGS) -I$(srcdir)/unit_tests/gtest/include -I$(
 bin_test_all_LDADD = libgtest.la $(LDADD)
 YAGGO_SOURCES += unit_tests/test_main_cmdline.hpp
 noinst_HEADERS += unit_tests/test_main.hpp
+
+#################
+# SWIG bindings #
+#################
+include swig/Makefile.am
 
 include gtest.mk
 -include $(srcdir)/development.mk
