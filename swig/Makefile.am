@@ -26,16 +26,16 @@ pythonext_SCRIPTS = python/__init__.pyc
 pythonext_LTLIBRARIES = python/_jellyfish.la
 python__jellyfish_la_SOURCES = python/swig_wrap.cpp $(SWIG_SRC)
 python__jellyfish_la_CPPFLAGS = $(PYTHON_CPPFLAGS) -I$(srcdir)/../include
-python__jellyfish_la_LDFLAGS = -module $(PYTHON_LDFLAGS)
+python__jellyfish_la_LDFLAGS = -module
 python__jellyfish_la_LIBADD = ../libjellyfish-2.0.la
-CLEANFILES += $(PYTHON_BUILT) $(dist_pythonext_DATA) python/jellyfish.py
+CLEANFILES += $(PYTHON_BUILT) $(pythonext_SCRIPTS)
 PYTHONC_V_GEN = $(pythonc_v_GEN_$(V))
 pythonc_v_GEN_ = $(pythonc_v_GEN_$(AM_DEFAULT_VERBOSITY))
 pythonc_v_GEN_0 = @echo "  PYTHONC " $@;
 %/__init__.pyc: %/jellyfish.py
 	$(PYTHONC_V_GEN)$(PYTHON) -c 'import py_compile, sys; py_compile.compile(sys.argv[1], sys.argv[2])' $< $@
 python/jellyfish.py: python/swig_wrap.cpp
-EXTRA_DIST += python/jellyfish.py
+EXTRA_DIST += $(PYTHON_BUILT)
 endif
 
 # Ruby support
@@ -46,7 +46,7 @@ rubyextdir = $(RUBY_EXT_LIB)
 rubyext_LTLIBRARIES = ruby/jellyfish.la
 ruby_jellyfish_la_SOURCES = ruby/swig_wrap.cpp $(SWIG_SRC)
 ruby_jellyfish_la_CPPFLAGS = $(RUBY_EXT_CFLAGS) -I$(srcdir)/../include
-ruby_jellyfish_la_LDFLAGS = -module $(RUBY_EXT_LIBS)
+ruby_jellyfish_la_LDFLAGS = -module
 ruby_jellyfish_la_LIBADD = ../libjellyfish-2.0.la
 CLEANFILES += $(RUBY_BUILT)
 endif
@@ -60,9 +60,9 @@ perlext_SCRIPTS = perl5/jellyfish.pm
 perlext_LTLIBRARIES = perl5/jellyfish.la
 perl5_jellyfish_la_SOURCES = perl5/swig_wrap.cpp $(SWIG_SRC)
 perl5_jellyfish_la_CPPFLAGS = $(PERL_EXT_CPPFLAGS) -I$(PERL_EXT_INC) -I$(srcdir)/../include
-perl5_jellyfish_la_LDFLAGS = -module $(PERL5_EXT_LDFLAGS)
+perl5_jellyfish_la_LDFLAGS = -module
 perl5_jellyfish_la_LIBADD = ../libjellyfish-2.0.la
-CLEANFILES += $(PERL5_BUILT) perl5/jellyfish.pm
+CLEANFILES += $(PERL5_BUILT)
 perl5/jellyfish.pm: perl5/swig_wrap.cpp
-EXTRA_DIST += perl5/jellyfish.pm
+EXTRA_DIST += $(PERL_BUILT)
 endif
