@@ -13,6 +13,7 @@
 
 #ifdef SWIGPERL
 #undef seed
+#undef random
 #endif
 
 #include <fstream>
