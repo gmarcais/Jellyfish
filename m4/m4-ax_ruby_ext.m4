@@ -89,7 +89,8 @@ AC_DEFUN([AX_RUBY_EXT],[
                 #
                 AC_MSG_CHECKING([for Ruby include directory])
                 AS_IF([test -z "$RUBY_EXT_CFLAGS"],
-                      [RUBY_EXT_CFLAGS="-I`$RUBY -rrbconfig -e 'print RbConfig::expand(RbConfig::CONFIG.fetch("rubyhdrdir"))'` -I`$RUBY -rrbconfig -e 'print RbConfig::expand(RbConfig::CONFIG.fetch("rubyarchhdrdir"))'`"])
+                      [RUBY_EXT_CFLAGS="-I`$RUBY -rrbconfig -e 'print RbConfig::expand(RbConfig::CONFIG.fetch("rubyhdrdir"))'`"]
+                      [RUBY_EXT_CFLAGS="$RUBY_EXT_CFLAGS -I`$RUBY -rrbconfig -e 'print RbConfig::CONFIG.has_key?("rubyarchhdrdir") ? RbConfig::expand(RbConfig::CONFIG.fetch("rubyarchhdrdir")) : File.join(RbConfig::expand(RbConfig::CONFIG.fetch("rubyhdrdir")), RbConfig::CONFIG.fetch("arch"))'`"])
                 AC_MSG_RESULT([$RUBY_EXT_CFLAGS])
                 AC_SUBST(RUBY_EXT_CFLAGS)
 
