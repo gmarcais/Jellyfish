@@ -14,7 +14,7 @@ class TestMerFile < MiniTest::Unit::TestCase
 
     jf_histo = []
     open(File.join($data, "swig_ruby.histo")) { |f|
-      f.lines.each { |l|
+      f.each_line.each { |l|
         freq, count = l.split.map {|x| x.to_i }
         jf_histo[freq] = count
       }
@@ -38,7 +38,7 @@ class TestMerFile < MiniTest::Unit::TestCase
 
   def test_dump
     open(File.join($data, "swig_ruby.dump")) { |f|
-      f.lines.each { |l|
+      f.each_line.each { |l|
         mer, count = l.split
         assert @mf.next_mer
         assert_equal(mer, @mf.mer.to_s)

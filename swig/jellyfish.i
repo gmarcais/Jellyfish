@@ -11,6 +11,11 @@
 #define SWIG_FILE_WITH_INIT
 #endif
 
+#ifdef SWIGPERL
+#undef seed
+#undef random
+#endif
+
 #include <fstream>
 #include <stdexcept>
 #undef die

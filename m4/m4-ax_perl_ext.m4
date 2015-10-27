@@ -4,7 +4,7 @@
 #
 # SYNOPSIS
 #
-#   AX_PERL_EXT
+#   AX_PERL_EXT([prefix])
 #
 # DESCRIPTION
 #
@@ -96,7 +96,11 @@ AC_DEFUN([AX_PERL_EXT],[
                 AC_ARG_VAR(PERL_EXT_LIB, [Directory to install perl files into])
                 AC_MSG_CHECKING([for Perl extension target directory])
                 if test -z "$PERL_EXT_LIB" ; then
+                   if test -z "$1" -o "x$1" = xNONE ; then
                         [PERL_EXT_LIB=`$PERL -MConfig -e 'print $Config{sitearch};'`];
+                   else
+                        [PERL_EXT_LIB=`$PERL -MConfig -e 'print $ARGV.shift, "/lib/perl/", $Config{api_versionstring};' $1`]
+                   fi
                 fi
                 AC_MSG_RESULT([$PERL_EXT_LIB])
                 AC_SUBST(PERL_EXT_LIB)

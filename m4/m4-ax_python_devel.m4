@@ -4,7 +4,7 @@
 #
 # SYNOPSIS
 #
-#   AX_PYTHON_DEVEL([version])
+#   AX_PYTHON_DEVEL([version], [prefix])
 #
 # DESCRIPTION
 #
@@ -132,6 +132,12 @@ variable to configure. See ``configure --help'' for reference.
 		fi
 	fi
 
+        if test -n "$2" -a "x$2" != xNONE; then
+           prefix=$2
+        else
+           prefix=
+        fi
+
 	#
 	# Check if you have distutils, else fail
 	#
@@ -253,7 +259,10 @@ EOD`
 	AC_MSG_CHECKING([for Python site-packages path])
 	if test -z "$PYTHON_SITE_PKG"; then
 		PYTHON_SITE_PKG=`$PYTHON -c "import distutils.sysconfig; \
-			print (distutils.sysconfig.get_python_lib(0,0));"`
+                        import sys; \
+                        pref=sys.argv.pop(); \
+                        pref=pref if len(pref) > 0 and pref != '-c' else None; \
+                        print(distutils.sysconfig.get_python_lib(0,0,pref));" $prefix`
 	fi
 	AC_MSG_RESULT([$PYTHON_SITE_PKG])
 	AC_SUBST([PYTHON_SITE_PKG])
