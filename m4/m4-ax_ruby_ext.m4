@@ -4,7 +4,7 @@
 #
 # SYNOPSIS
 #
-#   AX_RUBY_EXT
+#   AX_RUBY_EXT([prefix])
 #
 # DESCRIPTION
 #
@@ -70,7 +70,7 @@ AC_DEFUN([AX_RUBY_EXT],[
                 # Check Ruby version.
                 #
                 AC_MSG_CHECKING([for Ruby version])
-                [RUBY_VERSION=`$RUBY -e 'puts RUBY_VERSION'`];
+                [RUBY_VERSION=`$RUBY -e 'print RUBY_VERSION'`];
                 AC_MSG_RESULT([$RUBY_VERSION])
                 AC_SUBST(RUBY_VERSION)
 
@@ -79,7 +79,8 @@ AC_DEFUN([AX_RUBY_EXT],[
                 #
                 AC_MSG_CHECKING([for Ruby extensions target directory])
                 AS_IF([test -z "$RUBY_EXT_LIB"],
-                      [RUBY_EXT_LIB=`$RUBY -rrbconfig -e 'print RbConfig::expand(RbConfig::CONFIG.fetch("sitearchdir"))'`])
+                      AS_IF([test -z "$1" -o "x$1" = xNONE], [RUBY_EXT_LIB=`$RUBY -rrbconfig -e 'print RbConfig::expand(RbConfig::CONFIG.fetch("sitearchdir"))'`],
+                            [RUBY_EXT_LIB=`$RUBY -rrbconfig -e 'print(ARGV.fetch(0), "/lib/ruby/", RbConfig::CONFIG.fetch("ruby_version"))' $1`]))
                 AC_MSG_RESULT([$RUBY_EXT_LIB])
                 AC_SUBST(RUBY_EXT_LIB)
 
@@ -88,7 +89,8 @@ AC_DEFUN([AX_RUBY_EXT],[
                 #
                 AC_MSG_CHECKING([for Ruby include directory])
                 AS_IF([test -z "$RUBY_EXT_CFLAGS"],
-                      [RUBY_EXT_CFLAGS="-I`$RUBY -rrbconfig -e 'print RbConfig::expand(RbConfig::CONFIG.fetch("rubyhdrdir"))'` -I`$RUBY -rrbconfig -e 'print RbConfig::expand(RbConfig::CONFIG.fetch("rubyarchhdrdir"))'`"])
+                      [RUBY_EXT_CFLAGS="-I`$RUBY -rrbconfig -e 'print RbConfig::expand(RbConfig::CONFIG.fetch("rubyhdrdir"))'`"]
+                      [RUBY_EXT_CFLAGS="$RUBY_EXT_CFLAGS -I`$RUBY -rrbconfig -e 'print RbConfig::CONFIG.has_key?("rubyarchhdrdir") ? RbConfig::expand(RbConfig::CONFIG.fetch("rubyarchhdrdir")) : File.join(RbConfig::expand(RbConfig::CONFIG.fetch("rubyhdrdir")), RbConfig::CONFIG.fetch("arch"))'`"])
                 AC_MSG_RESULT([$RUBY_EXT_CFLAGS])
                 AC_SUBST(RUBY_EXT_CFLAGS)
 
@@ -104,6 +106,7 @@ AC_DEFUN([AX_RUBY_EXT],[
 
                 # Fix LDFLAGS for OS X.  We don't want any -arch flags here, otherwise
                 # linking might fail.  We also including the proper flags to create a bundle.
+                AC_MSG_CHECKING([for Ruby extra LDFLAGS])
                 case "$host" in
                 *darwin*)
                         RUBY_EXT_LDFLAGS=`echo ${RUBY_EXT_LDFLAGS} | sed -e "s,-arch [[^ ]]*,,g"`
