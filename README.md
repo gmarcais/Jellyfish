@@ -15,14 +15,20 @@ If you use Jellyfish in your research, please cite:
 Installation
 ------------
 
-To get an easier to compiled packaged tar ball of the source code, download a release from [home page of Jellyfish at the University of Maryland][1] or from the [github release][3].
+To get an easier to compiled packaged tar ball of the source code, download a release from the [github release][3]. You need make and g++ version 4.4 or higher. To install in your home directory, do:
 
-To compile from the git tree, you will need autoconf/automake, make, g++ 4.4 or newer and [yaggo](https://github.com/gmarcais/yaggo "Yaggo on github"). Then compile with:
+```Shell
+./configure --prefix=$HOME
+make -j 4
+make install
+```
+
+To compile from the git tree, you will also need autoconf/automake, and [yaggo](https://github.com/gmarcais/yaggo/releases "Yaggo release on github"). Then to compile and install (in `/usr/local` in that example) with:
 
 ```Shell
 autoreconf -i
 ./configure
-make
+make -j 4
 sudo make install
 ```
 
@@ -35,24 +41,35 @@ In the examples directory are potentially useful extra programs to query/manipul
 Binding to script languages
 ---------------------------
 
-Bindings to Ruby, Python and Perl are provided. This binding allows to read the output file of Jellyfish directly in a scripting language. Compilation of the bindings is easier from the [release tarball][3]: [SWIG][2] is not required and in the command lines shown below, remove the `--enable-swig` switch. Only the development files of the scripting languages are required.
+Bindings to Ruby, Python and Perl are provided. This binding allows to read the output file of Jellyfish directly in a scripting language. Compilation of the bindings is easier from the [release tarball][3]. The development files of the target scripting language are required.
 
-Compilation of the bindings from the git tree requires [SWIG][2] version 3, and the development files of the scripting languages. To compile all three bindings, configure with:
+Compilation of the bindings from the git tree requires [SWIG][2] version 3 and adding the switch `--enable-swig` to the configure command lines show below.
 
-```Shell
-./configure --enable-swig --enable-ruby-binding --enable-python-binding --enable-perl-binding
-```
-
-Note that the headers of older version of Perl 5 do not compile with recent compilers (g++ > 4.4, clang++) and C++11 mode enable. One may have to specify the path to version 4.4 of gcc by adding, for example, `CXX=g++4.4` to the configure commande line.
-
-The binding can installed in a different location than the default (which may require root privileges for example) by passing a path to the `--enable` switches. Then, for Python, Ruby or Perl to find the binding, an environment variable may need to be adjusted (`PYTHONPATH`, `RUBYLIB` and `PERL5LIB` respectively). For example:
+To compile all three bindings, configure and compile with:
 
 ```Shell
-./configure --prefix=$HOME --enable-swig --enable-python-binding=$HOME/lib/python
-export PYTHONPATH=$HOME/lib/python
+./configure --enable-ruby-binding --enable-python-binding --enable-perl-binding
+make -j 4
+sudo make install
 ```
 
-See the `swig` directory for examples on how to use the bindings.
+By default, Jellyfish is installed in `/usr/local` and the bindings are installed in the proper system location. When the `--prefix` switch is passed, the bindings are installed in the given directory. For example:
+
+```Shell
+./configure --prefix=$HOME --enable-python-binding
+make -j 4
+make install
+```
+
+This will install the python binding in `$HOME/lib/python2.7/site-packages` (adjust based on your Python version).
+
+Then, for Python, Ruby or Perl to find the binding, an environment variable may need to be adjusted (`PYTHONPATH`, `RUBYLIB` and `PERL5LIB` respectively). For example:
+
+```Shell
+export PYTHONPATH=$HOME/lib/python2.7/site-packages
+```
+
+See the [swig directory](../../tree/master/swig) for examples on how to use the bindings.
 
 [1]: http://www.genome.umd.edu/jellyfish.html "Genome group at University of Maryland"
 [2]: http://www.swig.org/
