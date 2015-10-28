@@ -1,3 +1,5 @@
 language: cpp
-before_install: curl -o ~/bin/yaggo https://github.com/gmarcais/yaggo/releases/download/v1.5.9/yaggo-1.5.9.gem
-script: autoreconf -i && ./configure && make && make check
+before_install:
+  - mkdir -p ~/bin
+  - curl -o ~/bin/yaggo https://github.com/gmarcais/yaggo/releases/download/v1.5.9/yaggo-1.5.9.gem
+script: autoreconf -i && ./configure YAGGO=~/bin/yaggo && make && make check
