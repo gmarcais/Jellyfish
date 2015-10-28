@@ -1,2 +1,3 @@
 language: cpp
+before_install: curl -o ~/bin/yaggo https://github.com/gmarcais/yaggo/releases/download/v1.5.9/yaggo-1.5.9.gem
 script: autoreconf -i && ./configure && make && make check
