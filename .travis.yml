@@ -5,5 +5,7 @@ before_install:
   - chmod a+rx ~/bin/yaggo
 script: autoreconf -i && ./configure YAGGO=~/bin/yaggo && make && make check
 addons:
-  artifacts: true
+  artifacts:
+    paths:
+      - $(git ls-files -o | grep '\.log$' | tr "\n" ":")
   s3_region: "us-east-1"
