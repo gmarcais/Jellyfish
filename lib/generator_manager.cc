@@ -109,7 +109,7 @@ void tmp_pipes::cleanup() {
   rmdir(tmpdir_.c_str());
 }
 
-void generator_manager::start()  {
+void generator_manager_base::start()  {
   if(manager_pid_ != -1)
     return;
   manager_pid_ = fork();
@@ -121,7 +121,7 @@ void generator_manager::start()  {
     manager_pid_ = -1;
     break;
   default:
-    cmds_.close();
+    parent_cleanup();
     return;
   }
 
@@ -145,11 +145,11 @@ void generator_manager::start()  {
   exit(EXIT_FAILURE); // Should not be reached
 }
 
-static generator_manager* manager = 0;
-void generator_manager::signal_handler(int signal) {
+static generator_manager_base* manager = 0;
+void generator_manager_base::signal_handler(int signal) {
   manager->kill_signal_ = signal;
 }
-int generator_manager::setup_signal_handlers() {
+int generator_manager_base::setup_signal_handlers() {
   struct sigaction act;
   memset(&act, '\0', sizeof(act));
   act.sa_handler = signal_handler;
@@ -157,14 +157,14 @@ int generator_manager::setup_signal_handlers() {
   // Should we redefine other signals as well? Like SIGINT, SIGQUIT?
 }
 
-void generator_manager::unset_signal_handlers() {
+void generator_manager_base::unset_signal_handlers() {
   struct sigaction act;
   memset(&act, '\0', sizeof(act));
   act.sa_handler = SIG_DFL;
   sigaction(SIGTERM, &act, 0);
 }
 
-bool generator_manager::wait() {
+bool generator_manager_base::wait() {
   if(manager_pid_ == -1) return false;
   pid_t pid = manager_pid_;
   manager_pid_ = -1;
@@ -174,7 +174,7 @@ bool generator_manager::wait() {
   return WIFEXITED(status) && (WEXITSTATUS(status) == 0);
 }
 
-void generator_manager::cleanup() {
+void generator_manager_base::cleanup() {
   for(auto it = pid2pipe_.begin(); it != pid2pipe_.end(); ++it) {
     kill(it->first, SIGTERM);
     pipes_.discard(it->second.pipe);
@@ -182,7 +182,7 @@ void generator_manager::cleanup() {
   pipes_.cleanup();
 }
 
-void generator_manager::start_one_command(const std::string& command, int pipe)
+void generator_manager_base::start_one_command(const std::string& command, int pipe)
 {
   cmd_info_type info = { command, pipe };
   pid_t child = fork();
@@ -228,7 +228,7 @@ std::string generator_manager::get_cmd() {
   return command;
 }
 
-void generator_manager::start_commands()
+void generator_manager_base::start_commands()
 {
   std::string command;
   size_t i;
@@ -263,7 +263,7 @@ void generator_manager::start_commands()
   }
 }
 
-bool generator_manager::display_status(int status, const std::string& command)
+bool generator_manager_base::display_status(int status, const std::string& command)
 {
   if(WIFEXITED(status) && WEXITSTATUS(status) != 0) {
     std::cerr << "Command '" << command
