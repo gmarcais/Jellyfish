@@ -44,6 +44,7 @@ public:
   typedef typename array::const_pointer                                const_pointer;
   typedef typename array::eager_iterator                               eager_iterator;
   typedef typename array::lazy_iterator                                lazy_iterator;
+  typedef typename array::const_iterator                               const_iterator;
 
 protected:
   array*                  ary_;
@@ -174,6 +175,9 @@ public:
     atomic_t::fetch_add(&done_threads_, (uint16_t)1);
     while(!handle_full_ary()) ;
   }
+
+  const_iterator begin() const { return ary_->begin(); }
+  const_iterator end() const { return ary_->end(); }
 
 protected:
   // Double the size of the hash and return false. Unless all the

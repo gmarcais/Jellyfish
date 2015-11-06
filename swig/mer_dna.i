@@ -7,6 +7,7 @@
     MerDNA() = default;
     MerDNA(const char* s) : jellyfish::mer_dna(s) { }
     MerDNA(const MerDNA& m) : jellyfish::mer_dna(m) { }
+    MerDNA(const jellyfish::mer_dna& m) : jellyfish::mer_dna(m) { }
     MerDNA& operator=(const jellyfish::mer_dna& m) { *static_cast<jellyfish::mer_dna*>(this) = m; return *this; }
   };
 %}

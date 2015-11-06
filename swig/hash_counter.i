@@ -5,6 +5,7 @@
   class HashCounter : public jellyfish::cooperative::hash_counter<jellyfish::mer_dna> {
     typedef jellyfish::cooperative::hash_counter<jellyfish::mer_dna> super;
   public:
+    typedef super::const_iterator const_iterator;
     HashCounter(size_t size, unsigned int val_len, unsigned int nb_threads = 1) : \
     super(size, jellyfish::mer_dna::k() * 2, val_len, nb_threads)
       { }
@@ -15,7 +16,6 @@
       super::add(m, x, &res, &id);
       return res;
     }
-
   };
 %}
 
@@ -32,6 +32,18 @@
     %append_output(VOID_Object);
   }
  }
+
+// Typemaps for hash_counter iterator
+%typemap(out) HashCounter::value_type* {
+  if($1) {
+    SWIG_Object m = SWIG_NewPointerObj(new MerDNA(($1)->first), SWIGTYPE_p_MerDNA, SWIG_POINTER_OWN);
+    SWIG_Object c = SWIG_From(unsigned long)(($1)->second);
+    %append_output(m);
+    %append_output(c);
+  } else {
+    %append_output(VOID_Object);
+  }
+}
 
 class HashCounter {
 public:
@@ -52,5 +64,15 @@ public:
       COUNT->first = $self->ary()->get_val_for_key(m, &COUNT->second);
     }
 #endif
+
+#ifdef SWIGRUBY
+    swig::ConstIterator* each() const {
+      return new swig::ConstIteratorClosed_T<jellyfish::HashCounter::const_iterator>($self->begin(), $self->begin(), $self->end());
+    }
+#endif
   }
 };
+
+#ifdef SWIGPYTHON
+ADD_CONTAINER_ITERATOR(HashCounter);
+#endif

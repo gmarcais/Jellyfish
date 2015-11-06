@@ -4,6 +4,12 @@
 %include "exception.i"
 %include "std_except.i"
 %include "typemaps.i"
+#ifdef SWIGPYTHON
+%include "python/generators.i"
+#endif
+#ifdef SWIGRUBY
+%include "rubyiterators.swg"
+#endif
 %feature("autodoc", "2");
 
 %{

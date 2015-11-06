@@ -220,7 +220,7 @@ public:
 protected:
   typedef typename array::lazy_iterator           lit;
   typedef std::pair<key_type&, mapped_type> pair;
-  pair val_;
+  mutable pair val_;
 
 public:
   explicit stl_iterator_base(const array* ary, size_t start_id = 0) :
@@ -235,15 +235,14 @@ public:
   bool operator==(const stl_iterator_base& rhs) const { return lit::ary_ == rhs.ary_ && lit::id_ == rhs.id_; }
   bool operator!=(const stl_iterator_base& rhs) const { return !(*this == rhs); }
 
-  const value_type& operator*() {
-    lit::key();
-    val_.second = lit::val();
-    return val_;
-  }
-  const value_type* operator->() { return &this->operator*(); }
+  const value_type& operator*() const { return val_; }
+  const value_type* operator->() const { return &this->operator*(); }
 
   stl_iterator_base& operator++() {
-    if(!lit::next()) {
+    if(lit::next()) {
+      lit::key();
+      val_.second = lit::val();
+    } else {
       lit::ary_ = 0;
       lit::id_  = 0;
     }

@@ -33,6 +33,12 @@ class TestHashCounter(unittest.TestCase):
             if not good: break
         self.assertTrue(good)
 
+        # Now loop over all the mers
+        for m, c in self.hash:
+            print m, c, self.hash[m]
+            good = good and self.hash[m] == c
+        self.assertTrue(good)
+
 
 if __name__ == '__main__':
     data = sys.argv.pop(1)
