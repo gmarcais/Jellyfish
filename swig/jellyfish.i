@@ -31,3 +31,4 @@
 %include "mer_file.i"
 %include "hash_counter.i"
 %include "hash_set.i"
+%include "string_mers.i"
