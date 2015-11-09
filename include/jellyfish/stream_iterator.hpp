@@ -33,42 +33,39 @@ namespace jellyfish {
 /// iterator of std::ifstream. Every file is opened and closed in
 /// turn. The object instantiated with no argument is the end marker.
 template<typename PathIterator>
-class stream_iterator : public std::iterator<std::forward_iterator_tag, std::ifstream> {
-  PathIterator                 begin_, end_;
-  std::ifstream*               stream_;
+class stream_iterator : public std::iterator<std::input_iterator_tag, std::ifstream> {
+  PathIterator begin_, end_;
+  std::filebuf stream_;
+
 public:
   stream_iterator(PathIterator begin, PathIterator end) :
-    begin_(begin), end_(end), stream_(0)
+    begin_(begin), end_(end)
   {
-    if(begin_ != end_) {
-      stream_ = new std::ifstream;
       open_file();
-    }
   }
-  stream_iterator(const stream_iterator& rhs) :
-  begin_(rhs.begin_), end_(rhs.end_), stream_(rhs.stream_)
+  stream_iterator(PathIterator begin)
+    : begin_(begin), end_(begin)
   { }
-  stream_iterator() : begin_(), end_(), stream_() { }
+  // stream_iterator(const stream_iterator& rhs)
+  //   : begin_(rhs.begin_), end_(rhs.end_), stream_(rhs.stream_)
+  // { }
+  stream_iterator(stream_iterator&& rhs) = default;
+  stream_iterator() : begin_(PathIterator()), end_(begin_) { }
 
   bool operator==(const stream_iterator& rhs) const {
-    return stream_ == rhs.stream_;
+    return begin_ == rhs.begin_;
   }
   bool operator!=(const stream_iterator& rhs) const {
-    return stream_ != rhs.stream_;
+    return begin_ != rhs.begin_;
   }
 
-  std::ifstream& operator*() { return *stream_; }
-  std::ifstream* operator->() { return stream_; }
+  std::filebuf* operator*() { return &stream_; }
+  std::filebuf** operator->() { return &this->operator*(); }
 
   stream_iterator& operator++() {
-    stream_->close();
-    if(++begin_ != end_) {
-      open_file();
-    } else {
-      delete stream_;
-      stream_ = 0;
-    }
-
+    stream_.close();
+    ++begin_;
+    open_file();
     return *this;
   }
   stream_iterator operator++(int) {
@@ -79,8 +76,9 @@ public:
 
 protected:
   void open_file() {
-    stream_->open(*begin_);
-    if(stream_->fail())
+    if(begin_ == end_) return;
+    stream_.open(*begin_, std::ios::in);
+    if(!stream_.is_open())
       throw std::runtime_error(err::msg() << "Failed to open file '" << *begin_ << "'");
   }
 };

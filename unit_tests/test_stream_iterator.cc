@@ -63,12 +63,14 @@ char*       StreamIterator::tmpdir;
 
 TEST_F(StreamIterator, Empty) {
   stream_iterator sit(paths.begin(), paths.begin());
-  stream_iterator send;
+  stream_iterator send(paths.begin());
 
   int nb_files = 0;
   int nb_lines = 0;
-  for( ; sit != send; ++sit, ++nb_files)
-    for(std::string line; std::getline(*sit, line); ++nb_lines) ;
+  for( ; sit != send; ++sit, ++nb_files) {
+    std::istream is(*sit);
+    for(std::string line; std::getline(is, line); ++nb_lines) ;
+  }
 
   EXPECT_EQ(0, nb_files);
   EXPECT_EQ(0, nb_lines);
@@ -79,13 +81,14 @@ TEST_F(StreamIterator, RandomFiles) {
   SCOPED_TRACE(::testing::Message() << "nb_files:" << paths.size() << " nb_lines:" << total_lines);
 
   stream_iterator sit(paths.begin(), paths.end());
-  stream_iterator send;
+  stream_iterator send(paths.end());
 
   int nb_files = 0;
   int nb_lines = 0;
   for( ; sit != send; ++sit, ++nb_files) {
-    for(std::string line; std::getline(*sit, line); ++nb_lines) ;
-    EXPECT_TRUE(sit->eof());
+    std::istream is(*sit);
+    for(std::string line; std::getline(is, line); ++nb_lines) ;
+    EXPECT_TRUE(is.eof());
   }
 
   EXPECT_EQ(paths.size(), (size_t)nb_files);

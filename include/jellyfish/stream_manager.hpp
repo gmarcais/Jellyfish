@@ -62,9 +62,23 @@ class stream_manager {
   };
   friend class pipe_stream;
 
+  class buf_stream : public std::istream {
+    stream_manager& manager_;
+  public:
+    buf_stream(std::streambuf* buf, stream_manager& manager)
+      : std::istream(buf)
+      , manager_(manager)
+    {
+      manager_.take_file();
+    }
+
+    virtual ~buf_stream() { manager_.release_file(); }
+  };
+
   typedef std::unique_ptr<std::istream> stream_type;
 
   PathIterator           paths_cur_, paths_end_;
+  BufIterator            buf_cur_, buf_end_;
   int                    files_open_;
   const int              concurrent_files_;
   std::list<const char*> free_pipes_;
@@ -84,9 +98,19 @@ public:
                  PathIterator pipe_begin, PathIterator pipe_end,
                  int concurrent_files = 1) :
     paths_cur_(paths_begin), paths_end_(paths_end),
+    buf_cur_(BufIterator()), buf_end_(buf_cur_),
     files_open_(0),
     concurrent_files_(concurrent_files),
     free_pipes_(pipe_begin, pipe_end)
+  { }
+
+  stream_manager(BufIterator buf_begin, BufIterator buf_end,
+                 PathIterator pipe_begin, PathIterator pipe_end,
+                 int concurrent_files = 1)
+    : paths_cur_(PathIterator()), paths_end_(paths_cur_)
+    , files_open_(0)
+    , concurrent_files_(concurrent_files)
+    , free_pipes_(pipe_begin, pipe_end)
   { }
 
   stream_type next() {
@@ -95,6 +119,8 @@ public:
     open_next_file(res);
     if(!res)
       open_next_pipe(res);
+    if(!res)
+      open_next_buf(res);
     return res;
   }
 
@@ -131,6 +157,20 @@ protected:
       // The pipe failed to open, so it is not marked as busy. This
       // reset will make us forget about this path.
       res.reset();
+    }
+  }
+
+  void open_next_buf(stream_type& res) {
+    if(files_open_ >= concurrent_files_)
+      return;
+    while(buf_cur_ != buf_end_) {
+      std::streambuf* buf = *buf_cur_;
+      ++buf_cur_;
+      res.reset(new buf_stream(buf, *this));
+      if(res->good())
+        return;
+      res.reset();
+      throw std::runtime_error(err::msg() << "Can't use streambuf");
     }
   }
 
