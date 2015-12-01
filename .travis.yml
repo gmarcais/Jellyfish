@@ -3,4 +3,7 @@ before_install:
   - mkdir -p ~/bin
   - curl -L -o ~/bin/yaggo https://github.com/gmarcais/yaggo/releases/download/v1.5.9/yaggo
   - chmod a+rx ~/bin/yaggo
-script: autoreconf -i && ./configure YAGGO=~/bin/yaggo && make && make check
+script: autoreconf -i && ./configure YAGGO=~/bin/yaggo && make && make check; cat test-suite.log
+branches:
+  only:
+    - travis
