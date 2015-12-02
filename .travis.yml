@@ -1,4 +1,8 @@
 language: cpp
+addons:
+  apt:
+    packages:
+      - bc
 before_install:
   - mkdir -p ~/bin
   - curl -L -o ~/bin/yaggo https://github.com/gmarcais/yaggo/releases/download/v1.5.9/yaggo
