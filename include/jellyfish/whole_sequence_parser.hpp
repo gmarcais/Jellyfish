@@ -136,7 +136,11 @@ protected:
       header_sequence_qual& fill_buff = buff.data[nb_filled];
       st.stream->get(); // Skip '@'
       std::getline(*st.stream, fill_buff.header);
-      fill_buff.seq.clear();
+
+      if(st.stream->peek() != '+')
+        std::getline(*st.stream, fill_buff.seq);
+      else
+        fill_buff.seq.clear();
       while(st.stream->peek() != '+' && st.stream->peek() != EOF) {
         std::getline(*st.stream, st.buffer); // Wish there was an easy way to combine the
         fill_buff.seq.append(st.buffer);             // two lines avoiding copying
@@ -144,7 +148,10 @@ protected:
       if(!st.stream->good())
         throw std::runtime_error("Truncated fastq file");
       st.stream->ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-      fill_buff.qual.clear();
+      if(st.stream->peek() != '+')
+        std::getline(*st.stream, fill_buff.qual);
+      else
+        fill_buff.qual.clear();
       while(fill_buff.qual.size() < fill_buff.seq.size() && st.stream->good()) {
         std::getline(*st.stream, st.buffer);
         fill_buff.qual.append(st.buffer);

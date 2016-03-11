@@ -208,9 +208,9 @@ protected:
 
   size_t read_sequence(std::istream& is, const size_t read, char* const start, const char stop) {
     size_t nread = read;
+
+    skip_newlines(is); // Skip new lines -> get below doesn't like them
     while(is && nread < buf_size_ - 1 && is.peek() != stop) {
-      // Skip new lines -> get below does like them
-      skip_newlines(is);
       is.get(start + nread, buf_size_ - nread);
       nread += is.gcount();
       skip_newlines(is);
@@ -231,12 +231,14 @@ protected:
   void skip_quals(std::istream& is, size_t read_len) {
     ignore_line(is);
     size_t quals = 0;
+
+    skip_newlines(is);
     while(is.good() && quals < read_len) {
-      skip_newlines(is);
       is.ignore(read_len - quals + 1, '\n');
       quals += is.gcount();
       if(is)
         ++read_len;
+      skip_newlines(is);
     }
     skip_newlines(is);
     if(quals == read_len && (is.peek() == '@' || is.peek() == EOF))
