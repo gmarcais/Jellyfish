@@ -14,9 +14,8 @@
     along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
-#ifndef __JELLYFISH_SPAWN_EXTERNAL_HPP_
-#define __JELLYFISH_SPAWN_EXTERNAL_HPP_
+#ifndef __JELLYFISH_GENERATOR_MANAGER_H__
+#define __JELLYFISH_GENERATOR_MANAGER_H__
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -104,8 +103,7 @@ public:
 // This class creates a new process which manages a bunch of
 // "generators", sub-processes that writes into a fifo (named pipe)
 // and generate sequence.
-class generator_manager {
-  cloexec_istream cmds_;
+class generator_manager_base {
   tmp_pipes       pipes_;
   pid_t           manager_pid_;
   const char*     shell_;
@@ -119,21 +117,18 @@ class generator_manager {
   pid2pipe_type pid2pipe_;
 
 public:
-  generator_manager(const char* cmds, int nb_pipes, const char* shell = 0) :
-    cmds_(cmds),
+  generator_manager_base(int nb_pipes, const char* shell = 0) :
     pipes_(nb_pipes),
     manager_pid_(-1),
     shell_(shell),
     kill_signal_(0)
   {
-    if(!cmds_.good())
-      throw std::runtime_error(err::msg() << "Failed to open cmds file '" << cmds << "'");
     if(!shell_)
       shell_ = getenv("SHELL");
     if(!shell_)
       shell_ = "/bin/sh";
   }
-  ~generator_manager() { wait(); }
+  virtual ~generator_manager_base() { wait(); }
 
   const tmp_pipes& pipes() const { return pipes_; }
   pid_t pid() const { return manager_pid_; }
@@ -144,12 +139,9 @@ public:
   // with no error, false otherwise.
   bool wait();
 
-private:
-  /// Read commands from the cmds stream. There is one command per
-  /// line. Empty lines or lines whose first non-white space character
-  /// is a # are ignored. Return an empty string when no more commands
-  /// are available.
-  std::string get_cmd();
+protected:
+  virtual std::string get_cmd() = 0;
+  virtual void parent_cleanup() { }
   void start_commands();
   void start_one_command(const std::string& command, int pipe);
   bool display_status(int status, const std::string& command);
@@ -158,6 +150,25 @@ private:
   static void signal_handler(int signal);
   void cleanup();
 };
+
+class generator_manager : public generator_manager_base {
+  cloexec_istream cmds_;
+public:
+  generator_manager(const char* cmds, int nb_pipes, const char* shell = 0)
+    : generator_manager_base(nb_pipes, shell)
+    , cmds_(cmds)
+  {
+    if(!cmds_.good())
+      throw std::runtime_error(err::msg() << "Failed to open cmds file '" << cmds << "'");
+  }
+
+  void parent_cleanup() {
+    cmds_.close();
+  }
+
+  std::string get_cmd();
+};
 }
 
-#endif /* __JELLYFISH_SPAWN_EXTERNAL_HPP_ */
+#endif /* __JELLYFISH_GENERATOR_MANAGER_H__ */
+

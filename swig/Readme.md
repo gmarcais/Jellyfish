@@ -26,7 +26,7 @@ import jellyfish
 
 mf = jellyfish.ReadMerFile(sys.argv[1])
 for mer, count in mf:
-    print(mer, " ", count)
+    print mer, count
 ```
 
 ----
@@ -68,7 +68,7 @@ qf = jellyfish.QueryMerFile(sys.argv.[1])
 for m in sys.argv[2:]:
     mer = jellyfish.MerDNA(m)
     mer.canonicalize()
-    print(mer, " ", qf[mer])
+    print mer, qf[mer])
 ```
 
 ----
@@ -91,9 +91,53 @@ use jellyfish;
 
 my $qf = jellyfish::QueryMerFile->new(shift(@ARGV));
 foreach my $m (@ARGV) {
-  my $mer = Jellyfish::MerDNA->new($m);
+  my $mer = jellyfish::MerDNA->new($m);
   $mer->canonicalize;
   print($mer, " ", $qf->get($mer), "\n");
 }
 ```
 ----
+
+jellyfish count
+===============
+
+The following will parse all the 30-mers in a string (`str` in the examples) and store them in a hash counter. In the following code, by replacing `string_mers` by `string_canonicals`, one gets only the canonical mers.
+
+----
+##### Ruby
+```Ruby
+require 'jellyfish'
+
+Jellyfish::MerDNA::k(30)
+h = Jellyfish::HashCounter.new(1024, 5)
+str.mers { |m|
+  h.add(m, 1)
+}
+```
+
+----
+##### Python
+```Python
+import jellyfish
+
+jellyfish.MerDNA.k(30)
+h = jellyfish.HashCounter(1024, 5)
+mers = jellyfish.string_mers(str)
+for m in mers:
+    h.add(m, 1)
+```
+
+---
+##### Perl
+```Perl
+use jellyfish;
+
+jellyfish::MerDNA::k(30);
+my $h = jellyfish::HashCounter->new(1024, 5);
+my $mers = jellyfish::string_mers($str);
+while($mers->next_mer) {
+  $h->add($mers->mer, 1);
+}
+```
+
+The argument to the `HashCounter` constructor are the initial size of the hash and the number of bits in the value field (call it `b`). Note that the number `b` of bits in the value field does not create an upper limit on the value of the count. For best performance, `b` should be chosen so that most k-mers in the hash have a count less than 2^b (2 to the power of b).

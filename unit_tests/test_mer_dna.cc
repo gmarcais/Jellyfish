@@ -461,7 +461,8 @@ TYPED_TEST(MerDNA, GetBits) {
   for(unsigned int i = 0; i < 20; ++i) {
     long int start   = random() % (this->GetParam().size() - 1);
     long int max_len =
-      std::min(this->GetParam().size() - start, 8 * sizeof(typename TypeParam::Type::base_type));
+      std::min((long int)(this->GetParam().size() - start),
+               (long int)(8 * sizeof(typename TypeParam::Type::base_type)));
     long int len     = (random() % (max_len - 1)) + 1;
 
     // Get bits by right-shifting

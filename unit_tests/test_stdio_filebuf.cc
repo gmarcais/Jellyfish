@@ -50,6 +50,7 @@ TEST(StdioFileBuf, Read) {
 
     have_read += expect_read;
   }
-  EXPECT_TRUE(fd_stream.eof());
+  EXPECT_TRUE(fd_stream.eof() || fd_stream.peek() == EOF);
+  EXPECT_TRUE(file_stream.eof() || file_stream.peek() == EOF);
 }
 }
