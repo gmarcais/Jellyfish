@@ -11,8 +11,7 @@ $JF count -m $K -s 10M -t $nCPUs -C -o ${pref}.jf seq1m_$I.fa
 $JF dump -c ${pref}.jf > ${pref}.dump
 $JF histo ${pref}.jf > ${pref}.histo
 
-#for i in test_mer_file.py test_hash_counter.py; do
-for i in test_string_mers.py; do
+for i in test_mer_file.py test_hash_counter.py test_string_mers.py; do
     echo Test $i
     $PYTHON "$SRCDIR/swig/python/$i" .
 done
