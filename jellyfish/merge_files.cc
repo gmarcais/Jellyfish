@@ -35,8 +35,8 @@ using jellyfish::file_header;
 using jellyfish::RectangularBinaryMatrix;
 using jellyfish::mer_dna;
 using jellyfish::cpp_array;
-typedef std::auto_ptr<binary_reader> binary_reader_ptr;
-typedef std::auto_ptr<text_reader> text_reader_ptr;
+typedef std::unique_ptr<binary_reader> binary_reader_ptr;
+typedef std::unique_ptr<text_reader> text_reader_ptr;
 
 struct file_info {
   std::ifstream is;
@@ -47,7 +47,7 @@ struct file_info {
   header(is)
   { }
 };
-typedef std::auto_ptr<RectangularBinaryMatrix> matrix_ptr;
+typedef std::unique_ptr<RectangularBinaryMatrix> matrix_ptr;
 
 template<typename reader_type, typename writer_type>
 void do_merge(cpp_array<file_info>& files, std::ostream& out, writer_type& writer,

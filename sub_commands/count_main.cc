@@ -245,7 +245,7 @@ int count_main(int argc, char *argv[])
   if(args.disk_flag)
     ary.do_size_doubling(false);
 
-  std::auto_ptr<jellyfish::dumper_t<mer_array> > dumper;
+  std::unique_ptr<jellyfish::dumper_t<mer_array> > dumper;
   if(args.text_flag)
     dumper.reset(new text_dumper(args.threads_arg, args.output_arg, &header));
   else
