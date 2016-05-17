@@ -9,7 +9,7 @@ swig_v_GEN_0 = @echo "  SWIG    " $@;
 %/swig_wrap.cpp: $(SWIG_SRC)
 	$(SWIG_V_GEN)$(SWIG) -$(notdir $*) -I$(srcdir)/../include -o $@ $<
 else
-%/swig_wrap.cc:
+%/swig_wrap.cpp:
 	@echo >&2 SWIG >= 3.x.x not found. Make sure it is install and rerun configure
 	@false
 endif

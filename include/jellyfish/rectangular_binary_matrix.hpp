@@ -344,9 +344,10 @@ namespace jellyfish {
         (((u128)1 << 64) - 1) << 64,
         ((u128)1 << 64) - 1,
         (u128)-1
-      };\
-    u128  res = res ^ res;
+      };
     u128* p   = (u128*)(_columns + _c - 2);
+    u128 res = 0;
+    //    u128  res = res ^ res;
 
     uint64_t j = 0, x = 0;
     for(unsigned int w = 0; w < nb_words(); ++w) {
