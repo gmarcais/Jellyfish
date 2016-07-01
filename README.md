@@ -32,6 +32,12 @@ make -j 4
 sudo make install
 ```
 
+If the software is installed in system directories (hint: you needed to use `sudo` to install), like the example above, then the system library cache must be updated like such:
+
+```Shell
+sudo ldconfig
+```
+
 Extra / Examples
 ----------------
 
