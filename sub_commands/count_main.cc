@@ -19,6 +19,7 @@
 #include <assert.h>
 #include <signal.h>
 
+#include <cctype>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -80,10 +81,12 @@ public:
 class mer_qual_iterator : public jellyfish::mer_qual_iterator<sequence_qual_parser, mer_dna> {
   typedef jellyfish::mer_qual_iterator<sequence_qual_parser, mer_dna> super;
 public:
+  static char min_qual;
   mer_qual_iterator(sequence_qual_parser& parser, bool canonical = false) :
-    super(parser, args.min_qual_char_arg[0], canonical)
+    super(parser, min_qual, canonical)
   { }
 };
+char mer_qual_iterator::min_qual = '!'; // Phred+33
 
 // k-mer filters. Organized in a linked list, interpreted as a &&
 // (logical and). I.e. all filter must return true for the result to
@@ -221,8 +224,29 @@ int count_main(int argc, char *argv[])
 
   args.parse(argc, argv);
 
-  if(args.min_qual_char_given && args.min_qual_char_arg.size() != 1)
-    count_main_cmdline::error("[-Q, --min-qual-char] must be one character.");
+  if(args.min_qual_char_given) {
+    if(args.min_qual_char_arg.size() != 1)
+      count_main_cmdline::error("[-Q, --min-qual-char] must be one character.");
+    const char min_qual = args.min_qual_char_arg[0];
+    if(!isprint(min_qual))
+      count_main_cmdline::error () << "Invalid non-printable quality character";
+    if(min_qual < '!' || min_qual > '~')
+      count_main_cmdline::error() << "Quality character '" << min_qual
+                                  << "' is outside of the range [!, ~]";
+    mer_qual_iterator::min_qual = min_qual;
+  }
+  if(args.min_quality_given) {
+    if(args.quality_start_arg < '!' || args.quality_start_arg > '~')
+      count_main_cmdline::error() << "Quality start " << args.quality_start_arg
+                                  << " is outside the range [" << (int)'!' << ", "
+                                  << (int)'~' << ']';
+    int min_qual = args.quality_start_arg + args.min_quality_arg;
+    if(min_qual < '!' || min_qual > '~')
+      count_main_cmdline::error() << "Min quality " << args.min_quality_arg
+                                  << " is outside the range [0, "
+                                  << ((int)'~' - args.quality_start_arg) << ']';
+    mer_qual_iterator::min_qual = min_qual;
+  }
 
   mer_dna::k(args.mer_len_arg);
 
@@ -286,7 +310,7 @@ int count_main(int argc, char *argv[])
     mer_filter.reset(new filter_bf(*bf));
   }
 
-  if(args.min_qual_char_given) {
+  if(args.min_qual_char_given || args.min_quality_given) {
     mer_qual_counter counter(args.threads_arg, ary,
                              args.file_arg.begin(), args.file_arg.end(),
                              pipes_begin, pipes_end,
