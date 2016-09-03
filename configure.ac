@@ -40,7 +40,7 @@ AC_ARG_WITH([sse],
             [AS_HELP_STRING([--with-sse], [enable SSE])],
             [], [with_sse=yes])
 AS_IF([test "x$with_sse" != xno],
-      [AC_DEFINE([HAVE_SSE], [1], [Define if you have SSE])],
+      [AX_EXT],
       [])
 
 # Use valgrind to check memory allocation with mmap
