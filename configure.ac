@@ -16,6 +16,25 @@ AC_PROG_CXX
 # Major version of the library
 AC_SUBST([PACKAGE_LIB], [2.0])
 
+# Try to find samtools.
+AC_ARG_VAR([SAMTOOLS_INCDIR], [C compiler flags for samtools])
+AC_ARG_VAR([SAMTOOLS_LIBDIR], [linker flags for samtools])
+save_libs="$LIBS"
+save_cxxflags="$CXXFLAGS"
+samtools_libs="-L$SAMTOOLS_LIBDIR -lbam -lhts -lz -pthread"
+samtools_cflags="-I$SAMTOOLS_INCDIR"
+LIBS="$LIBS $samtools_libs"
+CXXFLAGS="$CXXFLAGS $samtools_cflags"
+AC_MSG_CHECKING([for samtools])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <bam/bam.h>
+                                ]],
+                                [[tamFile f = sam_open("");]])],
+               [AC_DEFINE([HAVE_SAMTOOLS], [1], [Defined if samtools are available])]
+               [AC_MSG_RESULT([yes])],
+               [LIBS="$save_libs"] # Cleanup
+               [CXXFLAGS="$save_cxxflags"]
+               [AC_MSG_RESULT([no])])
+
 # Check for md5 or md5sum
 AC_ARG_VAR([MD5], [Path to md5 hashing program])
 AS_IF([test "x$MD5" = "x"], AC_CHECK_PROG([MD5], [md5sum], [md5sum]), [])
