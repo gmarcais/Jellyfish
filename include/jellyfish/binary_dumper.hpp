@@ -95,24 +95,43 @@ class binary_reader {
   Val                           val_;
   const RectangularBinaryMatrix m_;
   const size_t                  size_mask_;
+  uint64_t                      min_pos_;
+  uint64_t                      max_pos_;
 
 public:
   binary_reader(std::istream& is, // stream containing data (past any header)
                 file_header* header) :  // header which contains counter_len, matrix, size and key_len
     is_(is), val_len_(header->counter_len()), key_(header->key_len() / 2),
     m_(header->matrix()),
-    size_mask_(header->size() - 1)
+    size_mask_(header->size() - 1),
+    min_pos_(0),
+    max_pos_(std::numeric_limits<uint64_t>::max())
   { }
 
   const Key& key() const { return key_; }
   const Val& val() const { return val_; }
   size_t pos() const { return m_.times(key_) & size_mask_; }
+  uint64_t   min_pos()                                      const { return min_pos_; }
+  uint64_t   max_pos()                                      const { return max_pos_; }
+  void       min_pos(uint64_t min_pos)                            { min_pos_ = min_pos; }
+  void       max_pos(uint64_t max_pos)                            { max_pos_ = max_pos; }
+  void       min_max_pos(uint64_t min_pos, uint64_t max_pos)      { min_pos_ = min_pos; max_pos_ = max_pos; }
 
   bool next() {
-    key_.template read<1>(is_);
-    val_ = 0;
-    is_.read((char*)&val_, val_len_);
-    return is_.good();
+    if (( pos() < min_pos_ ) && (is_.good())) {
+      while ( pos() < min_pos_ ) {
+        key_.template read<1>(is_);
+        val_ = 0;
+        is_.read((char*)&val_, val_len_);
+      }
+      return is_.good() && pos() <= max_pos_;
+    
+    } else {
+      key_.template read<1>(is_);
+      val_ = 0;
+      is_.read((char*)&val_, val_len_);
+      return is_.good() && pos() <= max_pos_;
+    }
   }
 };
 

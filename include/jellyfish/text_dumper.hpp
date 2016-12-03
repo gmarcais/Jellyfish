@@ -77,6 +77,11 @@ public:
   const Key& key() const { return key_; }
   const Val& val() const { return val_; }
   size_t pos() const { return m_.times(key()) & size_mask_; }
+  uint64_t   min_pos()                                      const { return 0; }
+  uint64_t   max_pos()                                      const { return 0; }
+  void       min_pos(uint64_t min_pos)                            { }
+  void       max_pos(uint64_t max_pos)                            { }
+  void       min_max_pos(uint64_t min_pos, uint64_t max_pos)      { }
 
   bool next() {
     is_ >> key_ >> val_;
