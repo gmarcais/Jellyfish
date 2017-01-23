@@ -36,12 +36,26 @@ AC_CONFIG_FILES([
 )
 
 
+# Check for SSE and use as default for arg (or just define HAVE_SSE and no arg)
+
+AC_MSG_CHECKING(for SSE)
+AC_LINK_IFELSE([ AC_LANG_PROGRAM([[ 
+#include <xmmintrin.h>
+__m128 testfunc(float *a, float *b) {
+  return _mm_add_ps(_mm_loadu_ps(a), _mm_loadu_ps(b));
+}
+]])], [has_sse=yes], [has_sse=no])
+AC_MSG_RESULT($has_sse)
+
+
 AC_ARG_WITH([sse],
             [AS_HELP_STRING([--with-sse], [enable SSE])],
-            [], [with_sse=yes])
-AS_IF([test "x$with_sse" != xno],
+            [], [use_sse=$has_sse])
+AS_IF([test "x$use_sse" != xno],
       [AC_DEFINE([HAVE_SSE], [1], [Define if you have SSE])],
       [])
+
+
 
 # Use valgrind to check memory allocation with mmap
 AC_ARG_ENABLE([valgrind],
