@@ -64,7 +64,7 @@ class stream_manager {
 
   typedef std::unique_ptr<std::istream> stream_type;
 
-  PathIterator           paths_cur_, paths_end_;
+  PathIterator           paths_cur_, paths_end_, sams_cur_, sams_end_;
   int                    files_open_;
   const int              concurrent_files_;
   std::list<const char*> free_pipes_;
@@ -74,20 +74,42 @@ class stream_manager {
 public:
   define_error_class(Error);
 
-  stream_manager(PathIterator paths_begin, PathIterator paths_end, int concurrent_files = 1) :
-    paths_cur_(paths_begin), paths_end_(paths_end),
-    files_open_(0),
-    concurrent_files_(concurrent_files)
+  explicit stream_manager(int concurrent_files = 1)
+    : paths_cur_(PathIterator()), paths_end_(PathIterator())
+    , sams_cur_(PathIterator()), sams_end_(PathIterator())
+    , files_open_(0)
+    , concurrent_files_(concurrent_files)
+  { }
+  stream_manager(PathIterator paths_begin, PathIterator paths_end, int concurrent_files = 1)
+    : paths_cur_(paths_begin), paths_end_(paths_end)
+    , sams_cur_(PathIterator()), sams_end_(PathIterator())
+    , files_open_(0)
+    , concurrent_files_(concurrent_files)
   { }
 
   stream_manager(PathIterator paths_begin, PathIterator paths_end,
                  PathIterator pipe_begin, PathIterator pipe_end,
-                 int concurrent_files = 1) :
-    paths_cur_(paths_begin), paths_end_(paths_end),
-    files_open_(0),
-    concurrent_files_(concurrent_files),
-    free_pipes_(pipe_begin, pipe_end)
+                 int concurrent_files = 1)
+    : paths_cur_(paths_begin), paths_end_(paths_end)
+    , sams_cur_(PathIterator()), sams_end_(PathIterator())
+    , files_open_(0)
+    , concurrent_files_(concurrent_files)
+    , free_pipes_(pipe_begin, pipe_end)
   { }
+
+  void paths(PathIterator paths_begin, PathIterator paths_end) {
+    paths_cur_ = paths_begin;
+    paths_end_ = paths_end;
+  }
+
+  void pipes(PathIterator pipe_begin, PathIterator pipe_end) {
+    free_pipes_.assign(pipe_begin, pipe_end);
+  }
+
+  void sams(PathIterator sam_begin, PathIterator sam_end) {
+    sams_cur_ = sam_begin;
+    sams_end_ = sam_end;
+  }
 
   stream_type next() {
     locks::pthread::mutex_lock lock(mutex_);

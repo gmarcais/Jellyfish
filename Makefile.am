@@ -6,9 +6,10 @@ man1_MANS = doc/jellyfish.man
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = jellyfish-2.0.pc
 
-AM_LDFLAGS = -lpthread # $(VALGRIND_LIBS)
+AM_LDFLAGS = -lpthread $(HTSLIB_LIBS) $(HTSLIB_RPATH) # $(VALGRIND_LIBS)
 AM_CPPFLAGS = -Wall -Wnon-virtual-dtor -I$(srcdir) -I$(srcdir)/include -g -O3 $(VALGRIND_CFLAGS)
-AM_CXXFLAGS = $(ALL_CXXFLAGS) -g -O3
+AM_CXXFLAGS = $(ALL_CXXFLAGS) -g -O3 $(HTSLIB_CFLAGS)
+#AM_LDADD    = $(HTSLIB_LIBS) -lpthread
 
 noinst_HEADERS = $(YAGGO_SOURCES)
 bin_PROGRAMS =
@@ -28,7 +29,7 @@ V_YAGGO_0 = @echo "  YAGGO   " $@;
 YAGGO_SOURCES = # Append all file to be built by yaggo
 
 # What to build
-bin_PROGRAMS += bin/jellyfish
+bin_PROGRAMS += bin/jellyfish bin/test_htslib
 lib_LTLIBRARIES = libjellyfish-2.0.la
 LDADD = libjellyfish-2.0.la # $(VALGRIND_LIBS)
 check_PROGRAMS = bin/generate_sequence
@@ -50,6 +51,7 @@ bin_jellyfish_SOURCES = sub_commands/jellyfish.cc	\
                         jellyfish/merge_files.cc
 bin_jellyfish_LDFLAGS = $(AM_LDFLAGS) $(STATIC_FLAGS)
 
+bin_test_htslib_SOURCES = test_htslib.cc
 
 YAGGO_SOURCES += sub_commands/count_main_cmdline.hpp	\
                  sub_commands/info_main_cmdline.hpp	\

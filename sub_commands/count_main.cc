@@ -221,6 +221,11 @@ int count_main(int argc, char *argv[])
 
   args.parse(argc, argv);
 
+#ifndef HAVE_HTSLIB
+  if(args.sam_given)
+    count_main_cmdline::error() << "SAM/BAM/CRAM not supported (missing htslib).";
+#endif
+
   if(args.min_qual_char_given && args.min_qual_char_arg.size() != 1)
     count_main_cmdline::error("[-Q, --min-qual-char] must be one character.");
 
