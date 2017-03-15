@@ -180,7 +180,23 @@ protected:
 
 #ifdef HAVE_HTSLIB
   void read_sam(stream_status& st, sequence_list& buff) {
-    
+    size_t&      nb_filled = buff.nb_filled;
+    const size_t data_size = buff.data.size();
+    auto&        stream    = *st.stream.sam;
+
+    for(nb_filled = 0; nb_filled < data_size && stream.next(); ++nb_filled) {
+      ++reads_read_;
+      header_sequence_qual& fill_buff = buff.data[nb_filled];
+      fill_buff.header = stream.qname();
+      auto& seq  = fill_buff.seq;
+      auto& qual = fill_buff.qual;
+      seq.resize(stream.seq_len());
+      qual.resize(stream.seq_len());
+      for(size_t i = 0; i < stream.seq_len(); ++i) {
+        seq[i] = stream.base(i);
+        qual[i] = stream.qual(i);
+      }
+    }
   }
 #endif
 };

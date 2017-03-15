@@ -7,8 +7,8 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = jellyfish-2.0.pc
 
 AM_LDFLAGS = -lpthread $(HTSLIB_LIBS) $(HTSLIB_RPATH) # $(VALGRIND_LIBS)
-AM_CPPFLAGS = -Wall -Wnon-virtual-dtor -I$(srcdir) -I$(srcdir)/include -g -O3 $(VALGRIND_CFLAGS)
-AM_CXXFLAGS = $(ALL_CXXFLAGS) -g -O3 $(HTSLIB_CFLAGS)
+AM_CPPFLAGS = -Wall -Wnon-virtual-dtor -I$(srcdir) -I$(srcdir)/include $(VALGRIND_CFLAGS)
+AM_CXXFLAGS = $(ALL_CXXFLAGS) $(HTSLIB_CFLAGS)
 #AM_LDADD    = $(HTSLIB_LIBS) -lpthread
 
 noinst_HEADERS = $(YAGGO_SOURCES)
@@ -29,10 +29,10 @@ V_YAGGO_0 = @echo "  YAGGO   " $@;
 YAGGO_SOURCES = # Append all file to be built by yaggo
 
 # What to build
-bin_PROGRAMS += bin/jellyfish bin/test_htslib
+bin_PROGRAMS += bin/jellyfish
 lib_LTLIBRARIES = libjellyfish-2.0.la
 LDADD = libjellyfish-2.0.la # $(VALGRIND_LIBS)
-check_PROGRAMS = bin/generate_sequence
+check_PROGRAMS = bin/generate_sequence bin/fastq2sam
 
 ############################
 # Build Jellyfish the exec #
@@ -132,6 +132,9 @@ bin_generate_sequence_SOURCES = jellyfish/generate_sequence.cc		\
                                 jellyfish/backtrace.cc			\
                                 jellyfish/dbg.cc
 YAGGO_SOURCES += jellyfish/generate_sequence_cmdline.hpp
+
+bin_fastq2sam_SOURCES = jellyfish/fastq2sam.cc
+YAGGO_SOURCES += jellyfish/fastq2sam_cmdline.hpp
 
 #########
 # Tests #

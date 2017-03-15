@@ -20,7 +20,10 @@ AC_SUBST([PACKAGE_LIB], [2.0])
 # Try to find htslib to read SAM/BAM/CRAM files
 PKG_CHECK_MODULES([HTSLIB], [htslib], [AC_DEFINE([HAVE_HTSLIB], [1], [Defined if htslib is available])], [true])
 AC_LIB_LINKFLAGS_FROM_LIBS([HTSLIB_RPATH], [$HTSLIB_LIBS], [LIBTOOL])
-
+# Look for sammtools
+AC_ARG_VAR([SAMTOOLS], [Path to samtools program])
+AS_IF([test "x$SAMTOOLS" = "x"],
+      [AC_PATH_PROG([SAMTOOLS], [samtools])])
 
 # Check for md5 or md5sum
 AC_ARG_VAR([MD5], [Path to md5 hashing program])

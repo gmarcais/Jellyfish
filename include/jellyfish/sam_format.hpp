@@ -67,11 +67,20 @@ public:
   // next()
   const bam1_t* record() { return m_record; }
   ssize_t seq_len() const { return m_record->core.l_qseq; }
-  static constexpr char decode[16] = {'N', 'A', 'C', 'N', 'G', 'N', 'N', 'N', 'T',
-                                      'N', 'N', 'N', 'N', 'N', 'N', 'N' };
-  char base(ssize_t i) const { return decode[bam_seqi(m_seq, i)]; }
+  inline static char decode(int x) {
+    switch(x) {
+    case 1: return 'A';
+    case 2: return 'C';
+    case 4: return 'G';
+    case 8: return 'T';
+    default: return 'N';
+    }
+  }
+  char base(ssize_t i) const { return decode(bam_seqi(m_seq, i)); }
   char qual(ssize_t i) const { return m_qual[i]; }
-
+  char* qname_str() const { return bam_get_qname(m_record); }
+  size_t qname_length() const { return m_record->core.l_qname; }
+  std::string qname() const { return std::string(qname_str(), qname_length()); }
 
   ~sam_wrapper() {
     if(m_record) bam_destroy1(m_record);

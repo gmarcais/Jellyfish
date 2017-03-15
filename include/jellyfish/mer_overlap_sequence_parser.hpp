@@ -224,6 +224,7 @@ protected:
 
 #ifdef HAVE_HTSLIB
   void read_sam(stream_status& st, sequence_ptr& buff) {
+    
   }
 #endif
 
