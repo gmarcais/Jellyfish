@@ -63,7 +63,7 @@ class stream_manager {
   };
   friend class pipe_stream;
 
-#ifdef HTSLIB
+#ifdef HAVE_HTSLIB
   /// A wrapper around a SAM file wrapper.
   class sam_stream : public sam_wrapper {
     const char*     path_;
@@ -74,15 +74,15 @@ class stream_manager {
       , path_(path)
       , manager_(manager)
     {
-      manager_.take_file(path_);
+      manager_.take_file();
     }
-    virtual ~sam_stream() { manager_.release_file(path_); }
+    virtual ~sam_stream() { manager_.release_file(); }
   };
   friend class sam_stream;
 #endif
 
   PathIterator           paths_cur_, paths_end_;
-#ifdef HTSLIB
+#ifdef HAVE_HTSLIB
   PathIterator           sams_cur_, sams_end_;
 #endif
   int                    files_open_;
@@ -96,7 +96,7 @@ public:
 
   explicit stream_manager(int concurrent_files = 1)
     : paths_cur_(PathIterator()), paths_end_(PathIterator())
-#ifdef HTSLIB
+#ifdef HAVE_HTSLIB
     , sams_cur_(PathIterator()), sams_end_(PathIterator())
 #endif
     , files_open_(0)
@@ -104,7 +104,7 @@ public:
   { }
   stream_manager(PathIterator paths_begin, PathIterator paths_end, int concurrent_files = 1)
     : paths_cur_(paths_begin), paths_end_(paths_end)
-#ifdef HTSLIB
+#ifdef HAVE_HTSLIB
     , sams_cur_(PathIterator()), sams_end_(PathIterator())
 #endif
     , files_open_(0)
@@ -115,7 +115,7 @@ public:
                  PathIterator pipe_begin, PathIterator pipe_end,
                  int concurrent_files = 1)
     : paths_cur_(paths_begin), paths_end_(paths_end)
-#ifdef HTSLIB
+#ifdef HAVE_HTSLIB
     , sams_cur_(PathIterator()), sams_end_(PathIterator())
 #endif
     , files_open_(0)
@@ -132,7 +132,7 @@ public:
     free_pipes_.assign(pipe_begin, pipe_end);
   }
 
-#ifdef HTSLIB
+#ifdef HAVE_HTSLIB
   void sams(PathIterator sam_begin, PathIterator sam_end) {
     sams_cur_ = sam_begin;
     sams_end_ = sam_end;
@@ -146,7 +146,7 @@ public:
     if(res.standard) return res;
     open_next_pipe(res);
     if(res.standard) return res;
-#ifdef HTSLIB
+#ifdef HAVE_HTSLIB
     open_next_sam(res);
 #endif
     return res;
@@ -173,7 +173,7 @@ protected:
     }
   }
 
-#ifdef HTSLIB
+#ifdef HAVE_HTSLIB
   void open_next_sam(stream_type& res) {
     if(files_open_ >= concurrent_files_)
       return;

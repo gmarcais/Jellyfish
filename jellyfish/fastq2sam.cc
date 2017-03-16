@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
     if(!os.good())
       fastq2sam_cmdline::error() << "Failed to open '" << out_path << '\'';
 
-    os << "@PG\tID:fastq2sam\tPN:fastq2sam\n";
+    //    os << "@PG\tID:fastq2sam\tPN:fastq2sam\n";
 
     std::string name, seq, quals;
     char c = is.get();

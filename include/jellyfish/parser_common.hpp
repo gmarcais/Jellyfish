@@ -39,6 +39,7 @@ struct stream_type {
 #ifdef HAVE_HTSLIB
   std::unique_ptr<sam_wrapper> sam;
 #endif
+
   bool good() {
     return (standard && standard->good())
 #ifdef HAVE_HTSLIB

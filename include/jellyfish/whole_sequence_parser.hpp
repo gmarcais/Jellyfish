@@ -72,6 +72,7 @@ public:
 #ifdef HAVE_HTSLIB
     case SAM_TYPE:
       read_sam(st, buff);
+      break;
 #endif
     case DONE_TYPE:
       return true;
@@ -175,6 +176,8 @@ protected:
         throw std::runtime_error("Invalid fastq file: wrong number of quals");
       if(stream.peek() != EOF && stream.peek() != '@')
         throw std::runtime_error("Invalid fastq file: header missing");
+      // std::cerr << nb_filled << ": " << fill_buff.seq << '\n'
+      //           << nb_filled << ": " << fill_buff.qual << '\n';
     }
   }
 
@@ -184,7 +187,7 @@ protected:
     const size_t data_size = buff.data.size();
     auto&        stream    = *st.stream.sam;
 
-    for(nb_filled = 0; nb_filled < data_size && stream.next(); ++nb_filled) {
+    for(nb_filled = 0; nb_filled < data_size && stream.next() >= 0; ++nb_filled) {
       ++reads_read_;
       header_sequence_qual& fill_buff = buff.data[nb_filled];
       fill_buff.header = stream.qname();
@@ -194,7 +197,7 @@ protected:
       qual.resize(stream.seq_len());
       for(size_t i = 0; i < stream.seq_len(); ++i) {
         seq[i] = stream.base(i);
-        qual[i] = stream.qual(i);
+        qual[i] = stream.qual(i) + '!';
       }
     }
   }
