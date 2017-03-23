@@ -20,8 +20,8 @@ EOF
 comp_histo() {
     set -x
     suffix=$1
-    # $JF count -t $nCPUs -m 20 -s 10M -o ${pref}_${suffix}.jf -C --sam seq10m.${suffix}
-    # $JF histo ${pref}_${suffix}.jf > ${pref}_${suffix}.histo
+    $JF count -t $nCPUs -m 20 -s 10M -o ${pref}_${suffix}.jf -C --sam seq10m.${suffix}
+    $JF histo ${pref}_${suffix}.jf > ${pref}_${suffix}.histo
     $JF count -t $nCPUs -m 20 -s 10M -o ${pref}_${suffix}_qual.jf -C -Q D --sam seq10m.${suffix}
     $JF histo ${pref}_${suffix}_qual.jf > ${pref}_${suffix}_qual.histo
 }

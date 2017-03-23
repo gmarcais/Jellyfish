@@ -179,7 +179,8 @@ protected:
     while(stream.good() && read < buf_size_ - mer_len_ - 1) {
       read += read_sequence(stream, read, buff.start, '>');
       if(stream.peek() == '>') {
-        *(buff.start + read++) = 'N'; // Add N between reads
+        if(read > 0)
+          *(buff.start + read++) = 'N'; // Add N between reads
         ignore_line(stream); // Skip to next sequence (skip headers, quals, ...)
         ++reads_read_;
       }
@@ -224,7 +225,37 @@ protected:
 
 #ifdef HAVE_HTSLIB
   void read_sam(stream_status& st, sequence_ptr& buff) {
-    
+    auto&        stream    = *st.stream.sam;
+    size_t read = 0;
+    if(st.have_seam) {
+      memcpy(buff.start, st.seam, mer_len_ - 1);
+      read = mer_len_ - 1;
+    }
+
+    // std.seq_len is the amount of sequence left in the stream buffer
+    // to read. When st.seq_len==0, we need to get the next sequence
+    // from the stream.
+    auto seq = buff.start;
+    while(read < buf_size_ - mer_len_ - 1) {
+      if(st.seq_len == 0) {
+        if(stream.next() < 0)
+          break;
+        st.seq_len = stream.seq_len();
+        if(read > 0)
+          seq[read++] = 'N';
+        ++reads_read_;
+      }
+      const size_t start = stream.seq_len() - st.seq_len;
+      const size_t limit = std::min(st.seq_len, buf_size_ - 1 - read) + start;
+      for(size_t i = start; i < limit; ++i, ++read)
+        seq[read] = stream.base(i);
+      st.seq_len -= (limit - start);
+    }
+    buff.end = buff.start + read;
+
+    st.have_seam = read >= (size_t)(mer_len_ - 1);
+    if(st.have_seam)
+      memcpy(st.seam, buff.end - mer_len_ + 1, mer_len_ - 1);
   }
 #endif
 
