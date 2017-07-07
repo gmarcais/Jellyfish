@@ -343,7 +343,6 @@ typedef ::testing::Types<VTC<mer_dna_ns::mer_base_dynamic<uint64_t>, 0>,
                          VTC<mer_dna_ns::mer_base_dynamic<unsigned __int128>, 2>,
                          VTC<mer_dna_ns::mer_base_dynamic<unsigned __int128>, 3>,
 #endif
-                         VTC<mer_dna_ns::mer_base_static<uint32_t>, 3>,
                          VTC<mer_dna_ns::mer_base_static<uint64_t>, 0>,
                          VTC<mer_dna_ns::mer_base_static<uint64_t>, 1>,
                          VTC<mer_dna_ns::mer_base_static<uint64_t>, 2>,

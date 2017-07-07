@@ -195,7 +195,7 @@ protected:
       auto& qual = fill_buff.qual;
       seq.resize(stream.seq_len());
       qual.resize(stream.seq_len());
-      for(size_t i = 0; i < stream.seq_len(); ++i) {
+      for(ssize_t i = 0; i < stream.seq_len(); ++i) {
         seq[i] = stream.base(i);
         qual[i] = stream.qual(i) + '!';
       }

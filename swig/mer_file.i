@@ -8,7 +8,7 @@
     std::unique_ptr<binary_query>                    jf;
 
   public:
-    QueryMerFile(const char* path) throw(std::runtime_error) {
+    QueryMerFile(const char* path) {
       std::ifstream in(path);
       if(!in.good())
         throw std::runtime_error(std::string("Can't open file '") + path + "'");
@@ -110,7 +110,7 @@ class QueryMerFile {
     }
 
   public:
-    ReadMerFile(const char* path) throw(std::runtime_error) :
+    ReadMerFile(const char* path) :
       in(path)
     {
       if(!in.good())
