@@ -51,8 +51,6 @@ bin_jellyfish_SOURCES = sub_commands/jellyfish.cc	\
                         jellyfish/merge_files.cc
 bin_jellyfish_LDFLAGS = $(AM_LDFLAGS) $(STATIC_FLAGS)
 
-bin_test_htslib_SOURCES = test_htslib.cc
-
 YAGGO_SOURCES += sub_commands/count_main_cmdline.hpp	\
                  sub_commands/info_main_cmdline.hpp	\
                  sub_commands/dump_main_cmdline.hpp	\
@@ -96,6 +94,8 @@ library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
                           $(JFI)/stream_iterator.hpp			\
                           $(JFI)/mer_overlap_sequence_parser.hpp	\
                           $(JFI)/whole_sequence_parser.hpp		\
+                          $(JFI)/parser_common.hpp			\
+                          $(JFI)/sam_format.hpp				\
                           $(JFI)/binary_dumper.hpp			\
                           $(JFI)/sorted_dumper.hpp			\
                           $(JFI)/text_dumper.hpp $(JFI)/dumper.hpp	\
