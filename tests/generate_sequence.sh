@@ -14,6 +14,6 @@ ${DIR}/generate_sequence -v -q -o seq10m -s 1473540700 10000000
 ln -sf seq10m.fq seq10m.fastq
 ${DIR}/fastq2sam seq10m.fastq
 if [ -n "$SAMTOOLS" ]; then
-    $SAMTOOLS view -b -o seq10.bam seq10m.sam
-    $SAMTOOLS view -C -o seq10.cram seq10m.sam
+    $SAMTOOLS view -b -o seq10m.bam seq10m.sam
+    $SAMTOOLS view -C -o seq10m.cram seq10m.sam
 fi
