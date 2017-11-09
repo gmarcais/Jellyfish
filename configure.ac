@@ -7,6 +7,7 @@ AC_CONFIG_SRCDIR([jellyfish])
 AC_CONFIG_HEADERS([config.h])
 AC_PROG_LIBTOOL
 AC_LIB_RPATH
+PKG_PROG_PKG_CONFIG
 
 # Change default compilation flags
 AC_SUBST([ALL_CXXFLAGS], [-std=c++0x])
@@ -18,8 +19,12 @@ AC_PROG_CXX
 AC_SUBST([PACKAGE_LIB], [2.0])
 
 # Try to find htslib to read SAM/BAM/CRAM files
-PKG_CHECK_MODULES([HTSLIB], [htslib], [AC_DEFINE([HAVE_HTSLIB], [1], [Defined if htslib is available])], [true])
-AC_LIB_LINKFLAGS_FROM_LIBS([HTSLIB_RPATH], [$HTSLIB_LIBS], [LIBTOOL])
+AC_ARG_ENABLE([htslib],
+              [AS_HELP_STRING([--enable-htslib], [Look for the HTS library (default=yes)])])
+echo "enable_htslib $enable_htslib"
+AS_IF([test "x$enable_htslib" = "xyes" -o "x$enable_htslib" = "x"],
+      [PKG_CHECK_MODULES([HTSLIB], [htslib], [AC_DEFINE([HAVE_HTSLIB], [1], [Defined if htslib is available])], [true])]
+      [AC_LIB_LINKFLAGS_FROM_LIBS([HTSLIB_RPATH], [$HTSLIB_LIBS], [LIBTOOL])])
 # Look for sammtools
 AC_ARG_VAR([SAMTOOLS], [Path to samtools program])
 AS_IF([test "x$SAMTOOLS" = "x"],
