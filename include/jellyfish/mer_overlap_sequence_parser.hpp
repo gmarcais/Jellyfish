@@ -24,6 +24,7 @@
 #include <jellyfish/err.hpp>
 #include <jellyfish/cooperative_pool2.hpp>
 #include <jellyfish/cpp_array.hpp>
+#include <jellyfish/parser_common.hpp>
 
 namespace jellyfish {
 
@@ -35,8 +36,6 @@ struct sequence_ptr {
 template<typename StreamIterator>
 class mer_overlap_sequence_parser : public jellyfish::cooperative_pool2<mer_overlap_sequence_parser<StreamIterator>, sequence_ptr> {
   typedef jellyfish::cooperative_pool2<mer_overlap_sequence_parser<StreamIterator>, sequence_ptr> super;
-  enum file_type { DONE_TYPE, FASTA_TYPE, FASTQ_TYPE };
-  typedef std::unique_ptr<std::istream> stream_type;
 
   struct stream_status {
     char*       seam;
@@ -104,11 +103,16 @@ public:
     case FASTQ_TYPE:
       read_fastq(st, buff);
       break;
+#ifdef HAVE_HTSLIB
+    case SAM_TYPE:
+      read_sam(st, buff);
+      break;
+#endif
     case DONE_TYPE:
       return true;
     }
 
-    if(st.stream->good())
+    if(st.stream.good())
       return false;
 
     // Reach the end of file, close current and try to open the next one
@@ -128,31 +132,42 @@ protected:
     // requesting a new one.
     st.stream.reset();
     st.stream = streams_iterator_.next();
-    if(!st.stream) {
+    if(!st.stream.good()) {
       st.type = DONE_TYPE;
       return false;
     }
 
     ++files_read_;
-    switch(st.stream->peek()) {
-    case EOF: return open_next_file(st);
-    case '>':
-      st.type = FASTA_TYPE;
-      ignore_line(*st.stream); // Pass header
-      ++reads_read_;
-      break;
-    case '@':
-      st.type = FASTQ_TYPE;
-      ignore_line(*st.stream); // Pass header
-      ++reads_read_;
-      break;
-    default:
-      throw std::runtime_error("Unsupported format"); // Better error management
+    if(st.stream.standard) {
+      switch(st.stream.standard->peek()) {
+      case EOF: return open_next_file(st);
+      case '>':
+        st.type = FASTA_TYPE;
+        ignore_line(*st.stream.standard); // Pass header
+        ++reads_read_;
+        break;
+      case '@':
+        st.type = FASTQ_TYPE;
+        ignore_line(*st.stream.standard); // Pass header
+        ++reads_read_;
+        break;
+      default:
+        throw std::runtime_error("Unsupported format"); // Better error management
+      }
+    }
+#ifdef HAVE_HTSLIB
+    else if(st.stream.sam) {
+      st.type = SAM_TYPE;
+    }
+#endif
+    else {
+      st.type = DONE_TYPE;
     }
     return true;
   }
 
   void read_fasta(stream_status& st, sequence_ptr& buff) {
+    auto& stream = *st.stream.standard;
     size_t read = 0;
     if(st.have_seam) {
       memcpy(buff.start, st.seam, mer_len_ - 1);
@@ -161,11 +176,12 @@ protected:
 
     // Here, the current stream is assumed to always point to some
     // sequence (or EOF). Never at header.
-    while(st.stream->good() && read < buf_size_ - mer_len_ - 1) {
-      read += read_sequence(*st.stream, read, buff.start, '>');
-      if(st.stream->peek() == '>') {
-        *(buff.start + read++) = 'N'; // Add N between reads
-        ignore_line(*st.stream); // Skip to next sequence (skip headers, quals, ...)
+    while(stream.good() && read < buf_size_ - mer_len_ - 1) {
+      read += read_sequence(stream, read, buff.start, '>');
+      if(stream.peek() == '>') {
+        if(read > 0)
+          *(buff.start + read++) = 'N'; // Add N between reads
+        ignore_line(stream); // Skip to next sequence (skip headers, quals, ...)
         ++reads_read_;
       }
     }
@@ -177,6 +193,7 @@ protected:
   }
 
   void read_fastq(stream_status& st, sequence_ptr& buff) {
+    auto& stream = *st.stream.standard;
     size_t read = 0;
     if(st.have_seam) {
       memcpy(buff.start, st.seam, mer_len_ - 1);
@@ -185,15 +202,15 @@ protected:
 
     // Here, the st.stream is assumed to always point to some
     // sequence (or EOF). Never at header.
-    while(st.stream->good() && read < buf_size_ - mer_len_ - 1) {
-      size_t nread  = read_sequence(*st.stream, read, buff.start, '+');
+    while(stream.good() && read < buf_size_ - mer_len_ - 1) {
+      size_t nread  = read_sequence(stream, read, buff.start, '+');
       read         += nread;
       st.seq_len   += nread;
-      if(st.stream->peek() == '+') {
-        skip_quals(*st.stream, st.seq_len);
-        if(st.stream->good()) {
+      if(stream.peek() == '+') {
+        skip_quals(stream, st.seq_len);
+        if(stream.good()) {
           *(buff.start + read++) = 'N'; // Add N between reads
-          ignore_line(*st.stream); // Skip sequence header
+          ignore_line(stream); // Skip sequence header
           ++reads_read_;
         }
         st.seq_len = 0;
@@ -205,6 +222,42 @@ protected:
     if(st.have_seam)
       memcpy(st.seam, buff.end - mer_len_ + 1, mer_len_ - 1);
   }
+
+#ifdef HAVE_HTSLIB
+  void read_sam(stream_status& st, sequence_ptr& buff) {
+    auto&        stream    = *st.stream.sam;
+    size_t read = 0;
+    if(st.have_seam) {
+      memcpy(buff.start, st.seam, mer_len_ - 1);
+      read = mer_len_ - 1;
+    }
+
+    // std.seq_len is the amount of sequence left in the stream buffer
+    // to read. When st.seq_len==0, we need to get the next sequence
+    // from the stream.
+    auto seq = buff.start;
+    while(read < buf_size_ - mer_len_ - 1) {
+      if(st.seq_len == 0) {
+        if(stream.next() < 0)
+          break;
+        st.seq_len = stream.seq_len();
+        if(read > 0)
+          seq[read++] = 'N';
+        ++reads_read_;
+      }
+      const size_t start = stream.seq_len() - st.seq_len;
+      const size_t limit = std::min(st.seq_len, buf_size_ - 1 - read) + start;
+      for(size_t i = start; i < limit; ++i, ++read)
+        seq[read] = stream.base(i);
+      st.seq_len -= (limit - start);
+    }
+    buff.end = buff.start + read;
+
+    st.have_seam = read >= (size_t)(mer_len_ - 1);
+    if(st.have_seam)
+      memcpy(st.seam, buff.end - mer_len_ + 1, mer_len_ - 1);
+  }
+#endif
 
   size_t read_sequence(std::istream& is, const size_t read, char* const start, const char stop) {
     size_t nread = read;

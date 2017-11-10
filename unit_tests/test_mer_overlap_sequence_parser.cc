@@ -3,6 +3,7 @@
 
 #include <gtest/gtest.h>
 #include <unit_tests/test_main.hpp>
+#include <jellyfish/parser_common.hpp>
 #include <jellyfish/mer_overlap_sequence_parser.hpp>
 
 namespace {
@@ -13,10 +14,10 @@ struct opened_streams {
   Iterator begin_, end_;
 
   opened_streams(Iterator begin, Iterator end) : begin_(begin), end_(end) { }
-  std::unique_ptr<std::istream> next() {
-    std::unique_ptr<std::istream> res;
+  jellyfish::stream_type next() {
+    jellyfish::stream_type res;
     if(begin_ != end_) {
-      res.reset(*begin_);
+      res.standard.reset(*begin_);
       ++begin_;
     }
     return res;

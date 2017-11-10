@@ -10,6 +10,10 @@ option("size", "s") {
 option("threads", "t") {
   description "Number of threads"
   uint32; default "1" }
+option("sam") {
+  description "SAM/BAM/CRAM formatted input file"
+  multiple;
+  c_string; typestr "PATH" }
 option("F", "Files") {
   description "Number files open simultaneously"
   uint32; default "1" }

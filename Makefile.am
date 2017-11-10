@@ -6,9 +6,10 @@ man1_MANS = doc/jellyfish.man
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = jellyfish-2.0.pc
 
-AM_LDFLAGS = -lpthread # $(VALGRIND_LIBS)
-AM_CPPFLAGS = -Wall -Wnon-virtual-dtor -I$(srcdir) -I$(srcdir)/include -g -O3 $(VALGRIND_CFLAGS)
-AM_CXXFLAGS = $(ALL_CXXFLAGS) -g -O3
+AM_LDFLAGS = -pthread $(HTSLIB_LIBS) $(HTSLIB_RPATH) # $(VALGRIND_LIBS)
+AM_CPPFLAGS = -Wall -Wnon-virtual-dtor -I$(srcdir) -I$(srcdir)/include $(VALGRIND_CFLAGS)
+AM_CXXFLAGS = $(ALL_CXXFLAGS) $(HTSLIB_CFLAGS)
+#AM_LDADD    = $(HTSLIB_LIBS) -lpthread
 
 noinst_HEADERS = $(YAGGO_SOURCES)
 bin_PROGRAMS =
@@ -31,7 +32,7 @@ YAGGO_SOURCES = # Append all file to be built by yaggo
 bin_PROGRAMS += bin/jellyfish
 lib_LTLIBRARIES = libjellyfish-2.0.la
 LDADD = libjellyfish-2.0.la # $(VALGRIND_LIBS)
-check_PROGRAMS = bin/generate_sequence
+check_PROGRAMS = bin/generate_sequence bin/fastq2sam
 
 ############################
 # Build Jellyfish the exec #
@@ -49,7 +50,6 @@ bin_jellyfish_SOURCES = sub_commands/jellyfish.cc	\
                         sub_commands/mem_main.cc	\
                         jellyfish/merge_files.cc
 bin_jellyfish_LDFLAGS = $(AM_LDFLAGS) $(STATIC_FLAGS)
-
 
 YAGGO_SOURCES += sub_commands/count_main_cmdline.hpp	\
                  sub_commands/info_main_cmdline.hpp	\
@@ -94,6 +94,8 @@ library_include_HEADERS = $(JFI)/allocators_mmap.hpp			\
                           $(JFI)/stream_iterator.hpp			\
                           $(JFI)/mer_overlap_sequence_parser.hpp	\
                           $(JFI)/whole_sequence_parser.hpp		\
+                          $(JFI)/parser_common.hpp			\
+                          $(JFI)/sam_format.hpp				\
                           $(JFI)/binary_dumper.hpp			\
                           $(JFI)/sorted_dumper.hpp			\
                           $(JFI)/text_dumper.hpp $(JFI)/dumper.hpp	\
@@ -131,6 +133,9 @@ bin_generate_sequence_SOURCES = jellyfish/generate_sequence.cc		\
                                 jellyfish/dbg.cc
 YAGGO_SOURCES += jellyfish/generate_sequence_cmdline.hpp
 
+bin_fastq2sam_SOURCES = jellyfish/fastq2sam.cc
+YAGGO_SOURCES += jellyfish/fastq2sam_cmdline.hpp
+
 #########
 # Tests #
 #########
@@ -141,7 +146,7 @@ AM_SH_LOG_FLAGS =
 TESTS = tests/generate_sequence.sh tests/parallel_hashing.sh	\
         tests/merge.sh tests/bloom_filter.sh tests/big.sh	\
         tests/subset_hashing.sh tests/multi_file.sh		\
-        tests/bloom_counter.sh tests/large_key.sh
+        tests/bloom_counter.sh tests/large_key.sh tests/sam.sh
 
 EXTRA_DIST += $(TESTS)
 clean-local: clean-local-check
@@ -158,6 +163,7 @@ tests/merge.log: tests/generate_sequence.log
 tests/min_qual.log: tests/generate_fastq_sequence.log
 tests/large_key.log: tests/generate_sequence.log
 tests/quality_filter.log: tests/generate_sequence.log
+tests/sam.log: tests/generate_sequence.log
 
 # SWIG tests
 TESTS += tests/swig_python.sh tests/swig_ruby.sh tests/swig_perl.sh
