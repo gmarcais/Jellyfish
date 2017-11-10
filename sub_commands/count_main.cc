@@ -19,6 +19,7 @@
 #include <assert.h>
 #include <signal.h>
 
+#include <cctype>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -27,6 +28,10 @@
 #include <sstream>
 #include <memory>
 #include <chrono>
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <jellyfish/err.hpp>
 #include <jellyfish/thread_exec.hpp>
@@ -58,9 +63,10 @@ using jellyfish::mer_dna;
 using jellyfish::mer_dna_bloom_counter;
 using jellyfish::mer_dna_bloom_filter;
 typedef std::vector<const char*> file_vector;
+typedef jellyfish::stream_manager<file_vector::const_iterator> stream_manager_type;
 
 // Types for parsing arbitrary sequence ignoring quality scores
-typedef jellyfish::mer_overlap_sequence_parser<jellyfish::stream_manager<file_vector::const_iterator> > sequence_parser;
+typedef jellyfish::mer_overlap_sequence_parser<stream_manager_type> sequence_parser;
 typedef jellyfish::mer_iterator<sequence_parser, mer_dna> mer_iterator;
 
 // Types for parsing reads with quality score. Interface match type
@@ -80,10 +86,12 @@ public:
 class mer_qual_iterator : public jellyfish::mer_qual_iterator<sequence_qual_parser, mer_dna> {
   typedef jellyfish::mer_qual_iterator<sequence_qual_parser, mer_dna> super;
 public:
+  static char min_qual;
   mer_qual_iterator(sequence_qual_parser& parser, bool canonical = false) :
-    super(parser, args.min_qual_char_arg[0], canonical)
+    super(parser, min_qual, canonical)
   { }
 };
+char mer_qual_iterator::min_qual = '!'; // Phred+33
 
 // k-mer filters. Organized in a linked list, interpreted as a &&
 // (logical and). I.e. all filter must return true for the result to
@@ -123,26 +131,21 @@ struct filter_bf : public filter {
 };
 
 enum OPERATION { COUNT, PRIME, UPDATE };
-template<typename PathIterator, typename MerIteratorType, typename ParserType>
+template<typename MerIteratorType, typename ParserType>
 class mer_counter_base : public jellyfish::thread_exec {
-  int                                     nb_threads_;
-  mer_hash&                               ary_;
-  jellyfish::stream_manager<PathIterator> streams_;
-  ParserType                              parser_;
-  filter*                                 filter_;
-  OPERATION                               op_;
+  int                  nb_threads_;
+  mer_hash&            ary_;
+  ParserType           parser_;
+  filter*              filter_;
+  OPERATION            op_;
 
 public:
-  mer_counter_base(int nb_threads, mer_hash& ary,
-                   PathIterator file_begin, PathIterator file_end,
-                   PathIterator pipe_begin, PathIterator pipe_end,
-                   uint32_t concurent_files,
-                   OPERATION op, filter* filter = new struct filter) :
-    ary_(ary),
-    streams_(file_begin, file_end, pipe_begin, pipe_end, concurent_files),
-    parser_(mer_dna::k(), streams_.nb_streams(), 3 * nb_threads, 4096, streams_),
-    filter_(filter),
-    op_(op)
+  mer_counter_base(int nb_threads, mer_hash& ary, stream_manager_type& streams,
+                   OPERATION op, filter* filter = new struct filter)
+    : ary_(ary)
+    , parser_(mer_dna::k(), streams.nb_streams(), 3 * nb_threads, 4096, streams)
+    , filter_(filter)
+    , op_(op)
   { }
 
   virtual void start(int thid) {
@@ -181,8 +184,8 @@ public:
 };
 
 // Counter with and without quality value
-typedef mer_counter_base<file_vector::const_iterator, mer_iterator, sequence_parser> mer_counter;
-typedef mer_counter_base<file_vector::const_iterator, mer_qual_iterator, sequence_qual_parser> mer_qual_counter;
+typedef mer_counter_base<mer_iterator, sequence_parser> mer_counter;
+typedef mer_counter_base<mer_qual_iterator, sequence_qual_parser> mer_qual_counter;
 
 mer_dna_bloom_counter* load_bloom_filter(const char* path) {
   std::ifstream in(path, std::ios::in|std::ios::binary);
@@ -221,8 +224,35 @@ int count_main(int argc, char *argv[])
 
   args.parse(argc, argv);
 
-  if(args.min_qual_char_given && args.min_qual_char_arg.size() != 1)
-    count_main_cmdline::error("[-Q, --min-qual-char] must be one character.");
+#ifndef HAVE_HTSLIB
+  if(args.sam_given)
+    count_main_cmdline::error() << "SAM/BAM/CRAM not supported (missing htslib).";
+#endif
+
+
+  if(args.min_qual_char_given) {
+    if(args.min_qual_char_arg.size() != 1)
+      count_main_cmdline::error("[-Q, --min-qual-char] must be one character.");
+    const char min_qual = args.min_qual_char_arg[0];
+    if(!isprint(min_qual))
+      count_main_cmdline::error () << "Invalid non-printable quality character";
+    if(min_qual < '!' || min_qual > '~')
+      count_main_cmdline::error() << "Quality character '" << min_qual
+                                  << "' is outside of the range [!, ~]";
+    mer_qual_iterator::min_qual = min_qual;
+  }
+  if(args.min_quality_given) {
+    if(args.quality_start_arg < '!' || args.quality_start_arg > '~')
+      count_main_cmdline::error() << "Quality start " << args.quality_start_arg
+                                  << " is outside the range [" << (int)'!' << ", "
+                                  << (int)'~' << ']';
+    int min_qual = args.quality_start_arg + args.min_quality_arg;
+    if(min_qual < '!' || min_qual > '~')
+      count_main_cmdline::error() << "Min quality " << args.min_quality_arg
+                                  << " is outside the range [0, "
+                                  << ((int)'~' - args.quality_start_arg) << ']';
+    mer_qual_iterator::min_qual = min_qual;
+  }
 
   mer_dna::k(args.mer_len_arg);
 
@@ -256,10 +286,9 @@ int count_main(int argc, char *argv[])
 
   OPERATION do_op = COUNT;
   if(args.if_given) {
-    mer_counter counter(args.threads_arg, ary,
-                        args.if_arg.begin(), args.if_arg.end(),
-                        args.if_arg.end(), args.if_arg.end(), // no multi pipes
-                        args.Files_arg, PRIME);
+    stream_manager_type streams(args.Files_arg);
+    streams.paths(args.if_arg.begin(), args.if_arg.end());
+    mer_counter counter(args.threads_arg, ary, streams, PRIME);
     counter.exec_join(args.threads_arg);
     do_op = UPDATE;
   }
@@ -268,6 +297,13 @@ int count_main(int argc, char *argv[])
   // generate an empty range.
   auto pipes_begin = generator_manager.get() ? generator_manager->pipes().begin() : args.file_arg.end();
   auto pipes_end = (bool)generator_manager ? generator_manager->pipes().end() : args.file_arg.end();
+
+  stream_manager_type streams(args.Files_arg);
+  streams.paths(args.file_arg.begin(), args.file_arg.end());
+  streams.pipes(pipes_begin, pipes_end);
+#ifdef HAVE_HTSLIB
+  streams.sams(args.sam_arg.begin(), args.sam_arg.end());
+#endif
 
   // Bloom counter read from file to filter out low frequency
   // k-mers. Two pass algorithm.
@@ -286,18 +322,12 @@ int count_main(int argc, char *argv[])
     mer_filter.reset(new filter_bf(*bf));
   }
 
-  if(args.min_qual_char_given) {
-    mer_qual_counter counter(args.threads_arg, ary,
-                             args.file_arg.begin(), args.file_arg.end(),
-                             pipes_begin, pipes_end,
-                             args.Files_arg,
+  if(args.min_qual_char_given || args.min_quality_given) {
+    mer_qual_counter counter(args.threads_arg, ary, streams,
                              do_op, mer_filter.get());
     counter.exec_join(args.threads_arg);
   } else {
-    mer_counter counter(args.threads_arg, ary,
-                        args.file_arg.begin(), args.file_arg.end(),
-                        pipes_begin, pipes_end,
-                        args.Files_arg,
+    mer_counter counter(args.threads_arg, ary, streams,
                         do_op, mer_filter.get());
     counter.exec_join(args.threads_arg);
   }

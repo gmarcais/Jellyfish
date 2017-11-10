@@ -1,0 +1,8 @@
+purpose "Convert a fastq file to a bare SAM file"
+package "fastq2sam"
+
+
+
+arg("fastq") {
+  description "Fastq files"
+  string; multiple; at_least 1 }

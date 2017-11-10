@@ -1,4 +1,4 @@
-AC_INIT([jellyfish], [2.2.6], [gmarcais@umd.edu])
+AC_INIT([jellyfish], [2.2.7], [gmarcais@umd.edu])
 AC_CANONICAL_HOST
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([subdir-objects foreign parallel-tests color-tests])
@@ -6,6 +6,8 @@ AM_SILENT_RULES([yes])
 AC_CONFIG_SRCDIR([jellyfish])
 AC_CONFIG_HEADERS([config.h])
 AC_PROG_LIBTOOL
+AC_LIB_RPATH
+PKG_PROG_PKG_CONFIG
 
 # Change default compilation flags
 AC_SUBST([ALL_CXXFLAGS], [-std=c++0x])
@@ -15,6 +17,18 @@ AC_PROG_CXX
 
 # Major version of the library
 AC_SUBST([PACKAGE_LIB], [2.0])
+
+# Try to find htslib to read SAM/BAM/CRAM files
+AC_ARG_ENABLE([htslib],
+              [AS_HELP_STRING([--enable-htslib], [Look for the HTS library (default=yes)])])
+echo "enable_htslib $enable_htslib"
+AS_IF([test "x$enable_htslib" = "xyes" -o "x$enable_htslib" = "x"],
+      [PKG_CHECK_MODULES([HTSLIB], [htslib], [AC_DEFINE([HAVE_HTSLIB], [1], [Defined if htslib is available])], [true])]
+      [AC_LIB_LINKFLAGS_FROM_LIBS([HTSLIB_RPATH], [$HTSLIB_LIBS], [LIBTOOL])])
+# Look for sammtools
+AC_ARG_VAR([SAMTOOLS], [Path to samtools program])
+AS_IF([test "x$SAMTOOLS" = "x"],
+      [AC_PATH_PROG([SAMTOOLS], [samtools])])
 
 # Check for md5 or md5sum
 AC_ARG_VAR([MD5], [Path to md5 hashing program])
@@ -40,7 +54,7 @@ AC_ARG_WITH([sse],
             [AS_HELP_STRING([--with-sse], [enable SSE])],
             [], [with_sse=yes])
 AS_IF([test "x$with_sse" != xno],
-      [AC_DEFINE([HAVE_SSE], [1], [Define if you have SSE])],
+      [AX_EXT],
       [])
 
 # Use valgrind to check memory allocation with mmap
@@ -101,6 +115,9 @@ AC_ARG_ENABLE([ruby-binding],
 # --enable-perl-binding
 AC_ARG_ENABLE([perl-binding],
               [AC_HELP_STRING([--enable-perl-binding@<:@=PATH@:>@], [create SWIG perl module and install in PATH])])
+# --enable-all-binding
+AC_ARG_ENABLE([all-binding],
+              [AC_HELP_STRING([--enable-all-binding@<:@=PATH@:>@], [create SWIG module for all languages and install in PATH])])
 
 # --enable-swig
 AC_ARG_ENABLE([swig],
@@ -112,18 +129,21 @@ AS_IF([test -n "$SWIG"],
 AM_CONDITIONAL([HAVE_SWIG], [test -n "$SWIG"])
 
 # Python binding setup
+AS_IF([test -z "$enable_python_binding"], [enable_python_binding="$enable_all_binding"])
 AM_CONDITIONAL(PYTHON_BINDING, [test -n "$enable_python_binding" -a x$enable_python_binding != xno])
 AM_COND_IF([PYTHON_BINDING],
            [AS_IF([test x$enable_python_binding != xyes], [PYTHON_SITE_PKG=$enable_python_binding])]
            [AX_PYTHON_DEVEL([], [$prefix])])
 
 # Ruby binding setup
+AS_IF([test -z "$enable_ruby_binding"], [enable_ruby_binding="$enable_all_binding"])
 AM_CONDITIONAL([RUBY_BINDING], [test -n "$enable_ruby_binding" -a x$enable_ruby_binding != xno])
 AM_COND_IF([RUBY_BINDING],
            [AS_IF([test x$enable_ruby_binding != xyes], [RUBY_EXT_LIB=$enable_ruby_binding])]
            [AX_RUBY_EXT([$prefix])])
 
 # Perl binding setup
+AS_IF([test -z "$enable_perl_binding"], [enable_perl_binding="$enable_all_binding"])
 AM_CONDITIONAL([PERL_BINDING], [test -n "$enable_perl_binding" -a x$enable_perl_binding != xno])
 AM_COND_IF([PERL_BINDING],
            [AS_IF([test x$enable_perl_binding != xyes], [PERL_EXT_LIB=$enable_perl_binding])]

@@ -24,6 +24,7 @@
 
 #include <jellyfish/locks_pthread.hpp>
 #include <jellyfish/err.hpp>
+#include <jellyfish/parser_common.hpp>
 
 namespace jellyfish {
 template<typename PathIterator>
@@ -62,9 +63,28 @@ class stream_manager {
   };
   friend class pipe_stream;
 
-  typedef std::unique_ptr<std::istream> stream_type;
+#ifdef HAVE_HTSLIB
+  /// A wrapper around a SAM file wrapper.
+  class sam_stream : public sam_wrapper {
+    const char*     path_;
+    stream_manager& manager_;
+  public:
+    sam_stream(const char* path, stream_manager& manager)
+      : sam_wrapper(path)
+      , path_(path)
+      , manager_(manager)
+    {
+      manager_.take_file();
+    }
+    virtual ~sam_stream() { manager_.release_file(); }
+  };
+  friend class sam_stream;
+#endif
 
   PathIterator           paths_cur_, paths_end_;
+#ifdef HAVE_HTSLIB
+  PathIterator           sams_cur_, sams_end_;
+#endif
   int                    files_open_;
   const int              concurrent_files_;
   std::list<const char*> free_pipes_;
@@ -74,27 +94,61 @@ class stream_manager {
 public:
   define_error_class(Error);
 
-  stream_manager(PathIterator paths_begin, PathIterator paths_end, int concurrent_files = 1) :
-    paths_cur_(paths_begin), paths_end_(paths_end),
-    files_open_(0),
-    concurrent_files_(concurrent_files)
+  explicit stream_manager(int concurrent_files = 1)
+    : paths_cur_(PathIterator()), paths_end_(PathIterator())
+#ifdef HAVE_HTSLIB
+    , sams_cur_(PathIterator()), sams_end_(PathIterator())
+#endif
+    , files_open_(0)
+    , concurrent_files_(concurrent_files)
+  { }
+  stream_manager(PathIterator paths_begin, PathIterator paths_end, int concurrent_files = 1)
+    : paths_cur_(paths_begin), paths_end_(paths_end)
+#ifdef HAVE_HTSLIB
+    , sams_cur_(PathIterator()), sams_end_(PathIterator())
+#endif
+    , files_open_(0)
+    , concurrent_files_(concurrent_files)
   { }
 
   stream_manager(PathIterator paths_begin, PathIterator paths_end,
                  PathIterator pipe_begin, PathIterator pipe_end,
-                 int concurrent_files = 1) :
-    paths_cur_(paths_begin), paths_end_(paths_end),
-    files_open_(0),
-    concurrent_files_(concurrent_files),
-    free_pipes_(pipe_begin, pipe_end)
+                 int concurrent_files = 1)
+    : paths_cur_(paths_begin), paths_end_(paths_end)
+#ifdef HAVE_HTSLIB
+    , sams_cur_(PathIterator()), sams_end_(PathIterator())
+#endif
+    , files_open_(0)
+    , concurrent_files_(concurrent_files)
+    , free_pipes_(pipe_begin, pipe_end)
   { }
+
+  void paths(PathIterator paths_begin, PathIterator paths_end) {
+    paths_cur_ = paths_begin;
+    paths_end_ = paths_end;
+  }
+
+  void pipes(PathIterator pipe_begin, PathIterator pipe_end) {
+    free_pipes_.assign(pipe_begin, pipe_end);
+  }
+
+#ifdef HAVE_HTSLIB
+  void sams(PathIterator sam_begin, PathIterator sam_end) {
+    sams_cur_ = sam_begin;
+    sams_end_ = sam_end;
+  }
+#endif
 
   stream_type next() {
     locks::pthread::mutex_lock lock(mutex_);
     stream_type res;
     open_next_file(res);
-    if(!res)
-      open_next_pipe(res);
+    if(res.standard) return res;
+    open_next_pipe(res);
+    if(res.standard) return res;
+#ifdef HAVE_HTSLIB
+    open_next_sam(res);
+#endif
     return res;
   }
 
@@ -111,26 +165,42 @@ protected:
     while(paths_cur_ != paths_end_) {
       std::string path = *paths_cur_;
       ++paths_cur_;
-      res.reset(new file_stream(path.c_str(), *this));
-      if(res->good())
+      res.standard.reset(new file_stream(path.c_str(), *this));
+      if(res.standard->good())
         return;
-      res.reset();
+      res.standard.reset();
       throw std::runtime_error(err::msg() << "Can't open file '" << path << "'");
     }
   }
+
+#ifdef HAVE_HTSLIB
+  void open_next_sam(stream_type& res) {
+    if(files_open_ >= concurrent_files_)
+      return;
+    while(sams_cur_ != sams_end_) {
+      std::string path = *sams_cur_;
+      ++sams_cur_;
+      res.sam.reset(new sam_stream(path.c_str(), *this));
+      if(res.sam->good())
+        return;
+      res.sam.reset();
+      throw std::runtime_error(err::msg() << "Can't open SAM file '" << path << '\'');
+    }
+  }
+#endif
 
   void open_next_pipe(stream_type& res) {
     while(!free_pipes_.empty()) {
       const char* path = free_pipes_.front();
       free_pipes_.pop_front();
-      res.reset(new pipe_stream(path, *this));
-      if(res->good()) {
+      res.standard.reset(new pipe_stream(path, *this));
+      if(res.standard->good()) {
         busy_pipes_.insert(path);
         return;
       }
       // The pipe failed to open, so it is not marked as busy. This
       // reset will make us forget about this path.
-      res.reset();
+      res.standard.reset();
     }
   }
 

@@ -10,6 +10,10 @@ option("size", "s") {
 option("threads", "t") {
   description "Number of threads"
   uint32; default "1" }
+option("sam") {
+  description "SAM/BAM/CRAM formatted input file"
+  multiple;
+  c_string; typestr "PATH" }
 option("F", "Files") {
   description "Number files open simultaneously"
   uint32; default "1" }
@@ -49,6 +53,12 @@ option("if") {
 option("Q", "min-qual-char") {
   description "Any base with quality below this character is changed to N"
   string }
+option("quality-start") {
+  description "ASCII for quality values"
+  int32; default 64; conflict "min-qual-char" }
+option("min-quality") {
+  description "Minimum quality. A base with lesser quality becomes an N"
+  int32; conflict "min-qual-char" }
 option("reprobes", "p") {
   description "Maximum number of reprobes"
   uint32; default "126" }
