@@ -31,7 +31,8 @@ uint64_t *jellyfish::RectangularBinaryMatrix::alloc(unsigned int r, unsigned int
   // Make sure the number of words allocated is a multiple of
   // 8. Necessary for loop unrolling of vector multiplication
   size_t alloc_columns = (c / 8 + (c % 8 != 0)) * 8;
-  if(posix_memalign(&mem, sizeof(uint64_t) * 2, alloc_columns * sizeof(uint64_t)))
+  //  if(posix_memalign(&mem, sizeof(uint64_t) * 2, alloc_columns * sizeof(uint64_t)))
+  if(!(mem = aligned_alloc(sizeof(uint64_t) * 2, alloc_columns * sizeof(uint64_t))))
     throw std::bad_alloc();
   memset(mem, '\0', sizeof(uint64_t) * alloc_columns);
   return (uint64_t *)mem;

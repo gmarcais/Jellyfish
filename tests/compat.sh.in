@@ -9,7 +9,7 @@ SRCDIR=@abs_top_srcdir@
 BUILDDIR=@abs_top_builddir@
 
 check () {
-    cut -d\  -f 2 $1 | xargs @MD5@ | sort -k2,2 | diff -w $DIFFFLAGS $1 -
+    cut -d\  -f 2 $1 | xargs @MD5@ | sed 's/ \*/ /' | sort -k2,2 | diff -w $DIFFFLAGS $1 -
 }
 
 ENABLE_RUBY_BINDING="@RUBY_EXT_LIB@"

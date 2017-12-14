@@ -10,18 +10,23 @@ AC_LIB_RPATH
 PKG_PROG_PKG_CONFIG
 
 # Change default compilation flags
-AC_SUBST([ALL_CXXFLAGS], [-std=c++0x])
-CXXFLAGS="-std=c++0x $CXXFLAGS"
 AC_LANG(C++)
 AC_PROG_CXX
 
 # Major version of the library
 AC_SUBST([PACKAGE_LIB], [2.0])
 
+# Check if gnu++11 is necessary
+save_CXXFLAGS=$CXXFLAGS
+AC_CANONICAL_HOST
+case "${host_os}" in
+     cygwin*) CXXFLAGS="-std=gnu++11 $save_CXXFLAGS" ;;
+     *) CXXFLAGS="-std=c++11 $save_CXXFLAGS" ;;
+esac
+
 # Try to find htslib to read SAM/BAM/CRAM files
 AC_ARG_ENABLE([htslib],
               [AS_HELP_STRING([--enable-htslib], [Look for the HTS library (default=yes)])])
-echo "enable_htslib $enable_htslib"
 AS_IF([test "x$enable_htslib" = "xyes" -o "x$enable_htslib" = "x"],
       [PKG_CHECK_MODULES([HTSLIB], [htslib], [AC_DEFINE([HAVE_HTSLIB], [1], [Defined if htslib is available])], [true])]
       [AC_LIB_LINKFLAGS_FROM_LIBS([HTSLIB_RPATH], [$HTSLIB_LIBS], [LIBTOOL])])
@@ -88,8 +93,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <mach-o/dyld.h>]],
                   [AC_DEFINE([HAVE_NSGETEXECUTABLEPATH], [1], [Used to find executable path on MacOS X])],
                   [AC_MSG_RESULT([no])])
 
-# Check the version of strerror_r
-AC_CHECK_HEADERS_ONCE([execinfo.h ext/stdio_filebuf.h])
+AC_CHECK_HEADERS_ONCE([execinfo.h ext/stdio_filebuf.h sys/syscall.h])
 AC_CHECK_MEMBER([siginfo_t.si_int],
                 [AC_DEFINE([HAVE_SI_INT], [1], [Define if siginfo_t.si_int exists])],
                 [], [[#include <signal.h>]])
