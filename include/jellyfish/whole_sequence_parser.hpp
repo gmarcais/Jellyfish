@@ -92,7 +92,7 @@ public:
 protected:
   void open_next_file(stream_status& st) {
     st.stream.reset();
-    st.stream = streams_iterator_.next();
+    st.stream = std::move(streams_iterator_.next());
     if(!st.stream.good()) {
       st.type = DONE_TYPE;
       return;
