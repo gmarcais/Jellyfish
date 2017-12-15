@@ -29,7 +29,7 @@ jf_rpath   = [re.sub(r'^', '-Wl,-rpath,', x) for x in jf_libdir]
 jf_ldflags = os.popen("pkg-config --libs-only-other jellyfish-2.0").read().rstrip().split()
 
 
-jellyfish_module = Extension('_jellyfish',
+jellyfish_module = Extension('_dna_jellyfish',
                              sources = ['jellyfish_wrap.cxx'],
                              include_dirs = jf_include,
                              libraries = jf_libs,
@@ -37,9 +37,9 @@ jellyfish_module = Extension('_jellyfish',
                              extra_compile_args = ["-std=c++0x"] + jf_cflags,
                              extra_link_args = jf_ldflags + jf_rpath,
                              language = "c++")
-setup(name = 'jellyfish',
+setup(name = 'dna_jellyfish',
       version = '0.0.1',
       author = 'Guillaume Marcais',
       description = 'Access to jellyfish k-mer counting',
       ext_modules = [jellyfish_module],
-      py_modules = ["jellyfish"])
+      py_modules = ["dna_jellyfish"])

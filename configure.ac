@@ -138,6 +138,9 @@ AM_CONDITIONAL(PYTHON_BINDING, [test -n "$enable_python_binding" -a x$enable_pyt
 AM_COND_IF([PYTHON_BINDING],
            [AS_IF([test x$enable_python_binding != xyes], [PYTHON_SITE_PKG=$enable_python_binding])]
            [AX_PYTHON_DEVEL([], [$prefix])])
+AC_ARG_ENABLE([python-deprecated],
+              [AC_HELP_STRING([--enable-python-deprecated], [enable the deprecated 'jellyfish' module (in addition to 'dna_jellyfish')])])
+AM_CONDITIONAL([PYTHON_DEPRECATED], [test -z "$enable_python_deprecated" -o x$enable_python_deprecated != xno])
 
 # Ruby binding setup
 AS_IF([test -z "$enable_ruby_binding"], [enable_ruby_binding="$enable_all_binding"])

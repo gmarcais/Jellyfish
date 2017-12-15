@@ -1,12 +1,14 @@
-import jellyfish
 import unittest
 import sys
 import os
 from collections import Counter
 
+import dna_jellyfish as jf
+
+
 class TestMerFile(unittest.TestCase):
     def setUp(self):
-        self.mf = jellyfish.ReadMerFile(os.path.join(data, "swig_python.jf"))
+        self.mf = jf.ReadMerFile(os.path.join(data, "swig_python.jf"))
 
     def test_histo(self):
         histo = Counter()
@@ -46,7 +48,7 @@ class TestMerFile(unittest.TestCase):
 
     def test_query(self):
         good = True
-        qf   = jellyfish.QueryMerFile(os.path.join(data, "swig_python.jf"))
+        qf   = jf.QueryMerFile(os.path.join(data, "swig_python.jf"))
         for mer, count in self.mf:
             good = good and count == qf[mer]
             if not good: break
