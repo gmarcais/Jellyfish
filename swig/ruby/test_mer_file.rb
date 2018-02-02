@@ -1,9 +1,9 @@
-require 'minitest/autorun'
+require 'test/unit'
 require 'jellyfish'
 
 $data = ARGV.shift
 
-class TestMerFile < MiniTest::Unit::TestCase
+class TestMerFile < Test::Unit::TestCase
   def setup
     @mf = Jellyfish::ReadMerFile.new(File.join($data, "swig_ruby.jf"))
   end

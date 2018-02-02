@@ -1,7 +1,7 @@
-require 'minitest/autorun'
+require 'test/unit'
 require 'jellyfish'
 
-class TestStringMers < MiniTest::Unit::TestCase
+class TestStringMers < Test::Unit::TestCase
   def setup
     bases = "ACGTacgt"
     @str = (0..1000).map { bases[rand(bases.size())] }.join("")

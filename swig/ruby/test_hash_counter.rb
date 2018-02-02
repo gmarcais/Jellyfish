@@ -1,7 +1,7 @@
-require 'minitest/autorun'
+require 'test/unit'
 require 'jellyfish'
 
-class TestHashCounter < MiniTest::Unit::TestCase
+class TestHashCounter < Test::Unit::TestCase
   def setup
     Jellyfish::MerDNA::k(100)
     @hash = Jellyfish::HashCounter.new(1024, 5)

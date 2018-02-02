@@ -13,13 +13,16 @@ class TestStringMers(unittest.TestCase):
 
     def test_all_mers(self):
         count = 0
-        good = True
+        good1 = True
+        good2 = True
         mers = jf.string_mers(self.str)
         for m in mers:
             m2 = jf.MerDNA(self.str[count:count+self.k])
-            good = good and m == m2
+            good1 = good1 and m == m2
+            good2 = good2 and self.str[count:count+self.k].upper() == str(m2)
             count += 1
-        self.assertTrue(good)
+        self.assertTrue(good1)
+        self.assertTrue(good2)
         self.assertEqual(len(self.str) - self.k + 1, count)
 
     def test_canonical_mers(self):
