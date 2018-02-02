@@ -146,7 +146,8 @@ AM_SH_LOG_FLAGS =
 TESTS = tests/generate_sequence.sh tests/parallel_hashing.sh	\
         tests/merge.sh tests/bloom_filter.sh tests/big.sh	\
         tests/subset_hashing.sh tests/multi_file.sh		\
-        tests/bloom_counter.sh tests/large_key.sh tests/sam.sh
+        tests/bloom_counter.sh tests/large_key.sh tests/sam.sh	\
+        tests/small_mers.sh
 
 EXTRA_DIST += $(TESTS)
 clean-local: clean-local-check
@@ -164,6 +165,7 @@ tests/min_qual.log: tests/generate_fastq_sequence.log
 tests/large_key.log: tests/generate_sequence.log
 tests/quality_filter.log: tests/generate_sequence.log
 tests/sam.log: tests/generate_sequence.log
+tests/small_mers.log: tests/generate_sequence.log
 
 # SWIG tests
 TESTS += tests/swig_python.sh tests/swig_ruby.sh tests/swig_perl.sh

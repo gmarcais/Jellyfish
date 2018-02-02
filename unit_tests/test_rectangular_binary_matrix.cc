@@ -78,6 +78,10 @@ TEST(RectangularBinaryMatrix, LowIdentity) {
 
       uint64_t res = m.times(v);
       EXPECT_EQ(v.get_bits(0, std::min(r, c)), res);
+
+      RectangularBinaryMatrix m2 = RectangularBinaryMatrix::identity(r);
+      uint64_t res2 = m2.times(v);
+      EXPECT_EQ(v.get_bits(0, r), res2);
     }
   }
 }

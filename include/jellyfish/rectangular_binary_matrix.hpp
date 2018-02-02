@@ -41,19 +41,33 @@
 // bits of each word are set to 0).
 //
 // Multiplication between a matrix and vector of size _c x 1 gives a
-// vector of size _r x 1 stored as one 64 bit word.
+// vector of size _r x 1 stored as one 64 bit word. A matrix with a
+// NULL _columns pointer behaves like the identity.
 
 namespace jellyfish {
   class RectangularBinaryMatrix {
+    explicit RectangularBinaryMatrix(unsigned int c)
+      : _columns(NULL)
+      , _r(c)
+      , _c(c)
+    { }
+
   public:
     RectangularBinaryMatrix(unsigned int r, unsigned c)
       : _columns(alloc(r, c)), _r(r), _c(c) { }
     RectangularBinaryMatrix(const RectangularBinaryMatrix &rhs)
-    : _columns(alloc(rhs._r, rhs._c)), _r(rhs._r), _c(rhs._c) {
-      memcpy(_columns, rhs._columns, sizeof(uint64_t) * _c);
+      : _columns(rhs._columns ? alloc(rhs._r, rhs._c) : NULL)
+      , _r(rhs._r)
+      , _c(rhs._c)
+    {
+      if(_columns)
+        memcpy(_columns, rhs._columns, sizeof(uint64_t) * _c);
     }
-    RectangularBinaryMatrix(RectangularBinaryMatrix&& rhs) :
-    _columns(rhs._columns), _r(rhs._r), _c(rhs._c) {
+    RectangularBinaryMatrix(RectangularBinaryMatrix&& rhs)
+      : _columns(rhs._columns)
+      , _r(rhs._r)
+      , _c(rhs._c)
+    {
       rhs._columns = 0;
     }
     // Initialize from raw data. raw must contain at least c words.
@@ -65,6 +79,16 @@ namespace jellyfish {
     }
     ~RectangularBinaryMatrix() {
       free(_columns);
+    }
+
+    static RectangularBinaryMatrix identity(unsigned c) {
+      return RectangularBinaryMatrix(c);
+    }
+
+    static RectangularBinaryMatrix identity(unsigned r, unsigned c) {
+      RectangularBinaryMatrix res(r, c);
+      res.init_low_identity();
+      return res;
     }
 
     RectangularBinaryMatrix &operator=(const RectangularBinaryMatrix &rhs) {
@@ -90,7 +114,7 @@ namespace jellyfish {
     }
 
     // Get i-th column. No check on range
-    const uint64_t & operator[](unsigned int i) const { return _columns[i]; }
+    uint64_t operator[](unsigned int i) const { return _columns ? _columns[i] : ((uint64_t)1 << i); }
 
     unsigned int r() const { return _r; }
     unsigned int c() const { return _c; }
@@ -112,8 +136,8 @@ namespace jellyfish {
 
     // Make and check that the matrix the lower right corner of the
     // identity.
-    void init_low_identity();
-    bool is_low_identity();
+    void init_low_identity(bool simplify = true);
+    bool is_low_identity() const;
 
     // Left matrix vector multiplication. Type T supports the operator
     // v[i] to return the i-th 64 bit word of v.
@@ -204,6 +228,7 @@ namespace jellyfish {
 
   template<typename T>
   uint64_t RectangularBinaryMatrix::times_loop(const T &v) const {
+    if(!_columns) return v[0] & cmask();
     uint64_t       *p   = _columns + _c - 1;
     uint64_t        res = 0, x = 0, j = 0;
     const uint64_t  one = (uint64_t)1;
@@ -244,6 +269,7 @@ namespace jellyfish {
 #ifdef HAVE_SSE
   template<typename T>
   uint64_t RectangularBinaryMatrix::times_sse(const T &v) const {
+    if(!_columns) return v[0] & cmask();
 #define FFs ((uint64_t)-1)
     static const uint64_t smear[8] asm("smear") __attribute__ ((aligned(16),used)) =
       {0, 0, 0, FFs, FFs, 0, FFs, FFs};
@@ -338,6 +364,7 @@ namespace jellyfish {
 #ifdef HAVE_INT128
   template<typename T>
   uint64_t RectangularBinaryMatrix::times_128(const T &v) const {
+    if(!_columns) return v[0] & cmask();
     typedef unsigned __int128 u128;
     static const u128 smear[4] =
       { (u128)0,

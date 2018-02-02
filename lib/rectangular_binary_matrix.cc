@@ -38,7 +38,13 @@ uint64_t *jellyfish::RectangularBinaryMatrix::alloc(unsigned int r, unsigned int
   return (uint64_t *)mem;
 }
 
-void jellyfish::RectangularBinaryMatrix::init_low_identity() {
+void jellyfish::RectangularBinaryMatrix::init_low_identity(bool simplify) {
+  if(!_columns) return;
+  if(_c == _r && simplify) {
+    free(_columns);
+    _columns = NULL;
+    return;
+  }
   memset(_columns, '\0', sizeof(uint64_t) * _c);
   unsigned int row = std::min(_c, _r);
   unsigned int col = _c - row;
@@ -47,7 +53,8 @@ void jellyfish::RectangularBinaryMatrix::init_low_identity() {
     _columns[i] = _columns[i - 1] >> 1;
 }
 
-bool jellyfish::RectangularBinaryMatrix::is_low_identity() {
+bool jellyfish::RectangularBinaryMatrix::is_low_identity() const {
+  if(!_columns) return true;
   unsigned int row = std::min(_c, _r);
   unsigned int col = _c - row;
 
@@ -65,6 +72,9 @@ bool jellyfish::RectangularBinaryMatrix::is_low_identity() {
 jellyfish::RectangularBinaryMatrix jellyfish::RectangularBinaryMatrix::pseudo_multiplication(const jellyfish::RectangularBinaryMatrix &rhs) const {
   if(_r != rhs._r || _c != rhs._c)
     throw std::domain_error("Matrices of different size");
+  if(!_columns) return rhs;
+  if(!rhs._columns) return *this;
+
   RectangularBinaryMatrix res(_r, _c);
 
   // v is a vector. The lower part is equal to the given column of rhs
@@ -103,6 +113,8 @@ jellyfish::RectangularBinaryMatrix jellyfish::RectangularBinaryMatrix::pseudo_mu
 }
 
 unsigned int jellyfish::RectangularBinaryMatrix::pseudo_rank() const {
+  if(!_columns) return _c;
+
   unsigned int            rank = _c;
   RectangularBinaryMatrix pivot(*this);
 
@@ -137,8 +149,10 @@ unsigned int jellyfish::RectangularBinaryMatrix::pseudo_rank() const {
 }
 
 jellyfish::RectangularBinaryMatrix jellyfish::RectangularBinaryMatrix::pseudo_inverse() const {
+  if(!_columns) return *this;
+
   RectangularBinaryMatrix pivot(*this);
-  RectangularBinaryMatrix res(_r, _c); res.init_low_identity();
+  RectangularBinaryMatrix res(_r, _c); res.init_low_identity(false);
   unsigned int            i, j;
   uint64_t                mask;
 
@@ -187,12 +201,19 @@ jellyfish::RectangularBinaryMatrix jellyfish::RectangularBinaryMatrix::pseudo_in
 }
 
 void jellyfish::RectangularBinaryMatrix::print(std::ostream &os) const {
-  uint64_t mask = (uint64_t)1 << (_r - 1);
-  for( ; mask; mask >>= 1) {
-    for(unsigned int j = 0; j < _c; ++j) {
-      os << (mask & _columns[j] ? "1" : "0");
+  if(!_columns) {
+    for(unsigned int i = 0; i < _c; ++i) {
+      for(unsigned int j = 0; j < _c; ++j)
+        os << (i == j ? '1' : '0');
+      os << '\n';
     }
-    os << "\n";
+  } else {
+      uint64_t mask = (uint64_t)1 << (_r - 1);
+      for( ; mask; mask >>= 1) {
+        for(unsigned int j = 0; j < _c; ++j)
+          os << (mask & _columns[j] ? '1' : '0');
+        os << '\n';
+      }
   }
 }
 

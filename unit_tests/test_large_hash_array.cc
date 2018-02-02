@@ -19,7 +19,7 @@ void PrintTo(jellyfish::mer_dna& m, ::std::ostream* os) {
 }
 
 namespace {
-typedef jellyfish::large_hash::array<jellyfish::mer_dna> large_array;
+typedef jellyfish::large_hash::unbounded_array<jellyfish::mer_dna> large_array;
 typedef std::map<jellyfish::mer_dna, uint64_t> mer_map;
 typedef std::set<jellyfish::mer_dna> mer_set;
 

@@ -64,7 +64,7 @@ public:
 
 TEST(HashCounterCooperative, SizeDouble) {
   static const int    mer_len    = 35;
-  static const int    nb_threads = 5;
+  static const int    nb_threads = 1;
   static const int    nb         = 200;
   static const size_t init_size  = 128;
   mer_dna::k(mer_len);

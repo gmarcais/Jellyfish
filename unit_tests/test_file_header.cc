@@ -40,14 +40,16 @@ TEST(FileHeader, WriteRead) {
   const unsigned int val_len = random_bits(4);
   const unsigned int max_reprobe = random_bits(7);
   const double fpr = (double)random_bits(10) / 1024.0;
-  RectangularBinaryMatrix m(random_bits(6) + 1, random_bits(8) + 1);
-  m.randomize(random_bits);
+  RectangularBinaryMatrix m1(random_bits(6) + 1, random_bits(8) + 1);
+  m1.randomize(random_bits);
+  RectangularBinaryMatrix m2 = RectangularBinaryMatrix::identity(random_bits(6) + 1);
 
   EXPECT_EQ(8, hw.alignment());
   hw.fill_standard();
   hw.size(random_size);
-  hw.matrix(m);
-  hw.key_len(m.r());
+  hw.matrix(m1, 1);
+  hw.matrix(m2, 2);
+  hw.key_len(m1.r());
   hw.val_len(val_len);
   hw.max_reprobe(max_reprobe);
   hw.set_reprobes(jellyfish::quadratic_reprobes);
@@ -70,8 +72,10 @@ TEST(FileHeader, WriteRead) {
   EXPECT_EQ(0, is.tellg() % 8);
   EXPECT_EQ(8, hr.alignment());
   EXPECT_EQ(random_size, hr.size());
-  EXPECT_EQ(m, hr.matrix());
-  EXPECT_EQ(m.r(), hr.key_len());
+  EXPECT_EQ(m1, hr.matrix(1));
+  EXPECT_TRUE(hr.matrix(2).is_low_identity());
+  EXPECT_EQ(m2.r(), hr.matrix(2).r());
+  EXPECT_EQ(m1.r(), hr.key_len());
   EXPECT_EQ(val_len, hr.val_len());
   EXPECT_EQ(fpr, hr.fpr());
 
