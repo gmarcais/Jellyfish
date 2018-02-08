@@ -16,23 +16,27 @@ endif
 
 # Python support
 if PYTHON_BINDING
-PYTHON_BUILT = swig/python/swig_wrap.cpp swig/python/jellyfish.py
+PYTHON_BUILT = swig/python/swig_wrap.cpp swig/python/dna_jellyfish.py
 BUILT_SOURCES += $(PYTHON_BUILT)
 
-pythonextdir = $(PYTHON_SITE_PKG)/jellyfish
+if PYTHON_DEPRECATED
+pythonglobaldir = $(PYTHON_SITE_PKG)
+pythonglobal_SCRIPTS = swig/python/jellyfish.py
+endif
+pythonextdir = $(PYTHON_SITE_PKG)/dna_jellyfish
 pythonext_SCRIPTS = swig/python/__init__.pyc
-pythonext_LTLIBRARIES = swig/python/_jellyfish.la
-swig_python__jellyfish_la_SOURCES = swig/python/swig_wrap.cpp $(SWIG_SRC)
-swig_python__jellyfish_la_CPPFLAGS = $(PYTHON_CPPFLAGS) -I$(srcdir)/include
-swig_python__jellyfish_la_LDFLAGS = -module
-swig_python__jellyfish_la_LIBADD = libjellyfish-2.0.la
+pythonext_LTLIBRARIES = swig/python/_dna_jellyfish.la
+swig_python__dna_jellyfish_la_SOURCES = swig/python/swig_wrap.cpp $(SWIG_SRC)
+swig_python__dna_jellyfish_la_CPPFLAGS = $(PYTHON_CPPFLAGS) -I$(srcdir)/include
+swig_python__dna_jellyfish_la_LDFLAGS = -module
+swig_python__dna_jellyfish_la_LIBADD = libjellyfish-2.0.la
 CLEANFILES += $(PYTHON_BUILT) $(pythonext_SCRIPTS)
 PYTHONC_V_GEN = $(pythonc_v_GEN_$(V))
 pythonc_v_GEN_ = $(pythonc_v_GEN_$(AM_DEFAULT_VERBOSITY))
 pythonc_v_GEN_0 = @echo "  PYTHONC " $@;
-%/__init__.pyc: %/jellyfish.py
+%/__init__.pyc: %/dna_jellyfish.py
 	$(PYTHONC_V_GEN)$(PYTHON) -c 'import py_compile, sys; py_compile.compile(sys.argv[1], sys.argv[2])' $< $@
-swig/python/jellyfish.py: swig/python/swig_wrap.cpp
+swig/python/dna_jellyfish.py: swig/python/swig_wrap.cpp
 EXTRA_DIST += $(PYTHON_BUILT)
 endif
 

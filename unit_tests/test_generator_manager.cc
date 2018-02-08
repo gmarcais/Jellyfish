@@ -58,7 +58,7 @@ TEST(GeneratorManager, OneLiners) {
     ASSERT_TRUE(cmds.good()) << "Failed to open cmd file '" << cmds_file << "'";
     cmds << "echo hello\n"
          << "date\n"
-         << "uptime\n"
+         << "whoami\n"
          << "uname\n";
     ASSERT_TRUE(cmds.good()) << "Failed to write to cmd file";
   }

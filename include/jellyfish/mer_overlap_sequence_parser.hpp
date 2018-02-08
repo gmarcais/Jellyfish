@@ -131,7 +131,7 @@ protected:
     // streams_iterator_ noticed that we closed that stream before
     // requesting a new one.
     st.stream.reset();
-    st.stream = streams_iterator_.next();
+    st.stream = std::move(streams_iterator_.next());
     if(!st.stream.good()) {
       st.type = DONE_TYPE;
       return false;

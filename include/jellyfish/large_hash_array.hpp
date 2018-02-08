@@ -930,23 +930,35 @@ public:
 
 };
 
-template<typename Key, typename word = uint64_t, typename atomic_t = ::atomic::gcc, typename mem_block_t = ::allocators::mmap>
-class array :
+// Large array. Memory managed by the mmap allocator. Do not check the
+// relation between the size of the array and key_len.
+template<typename Key, typename word = uint64_t,
+         typename atomic_t = ::atomic::gcc, typename mem_block_t = ::allocators::mmap>
+class unbounded_array  :
     protected mem_block_t,
-    public array_base<Key, word, atomic_t, array<Key, word, atomic_t, mem_block_t> >
+    public array_base<Key, word, atomic_t, unbounded_array<Key, word, atomic_t, mem_block_t> >
 {
-  typedef array_base<Key, word, atomic_t, array<Key, word, atomic_t, mem_block_t> > super;
-  friend class array_base<Key, word, atomic_t, array<Key, word, atomic_t, mem_block_t> >;
+  typedef array_base<Key, word, atomic_t, unbounded_array<Key, word, atomic_t, mem_block_t> > super;
+  friend class array_base<Key, word, atomic_t, unbounded_array<Key, word, atomic_t, mem_block_t> >;
 
 public:
-  array(size_t size, // Size of hash. To be rounded up to a power of 2
-        uint16_t key_len, // Size of key in bits
-        uint16_t val_len, // Size of val in bits
-        uint16_t reprobe_limit, // Maximum reprobe
-        const size_t* reprobes = quadratic_reprobes) : // Reprobing policy
-    mem_block_t(),
-    super(size, key_len, val_len, reprobe_limit, RectangularBinaryMatrix(ceilLog2(size), key_len).randomize_pseudo_inverse(),
-          reprobes)
+  unbounded_array(size_t size, // Size of hash. To be rounded up to a power of 2
+                  uint16_t key_len, // Size of key in bits
+                  uint16_t val_len, // Size of val in bits
+                  uint16_t reprobe_limit, // Maximum reprobe
+                  const size_t* reprobes = quadratic_reprobes) // Reprobing policy
+    : super(size, key_len, val_len, reprobe_limit,
+            RectangularBinaryMatrix(ceilLog2(size), key_len).randomize_pseudo_inverse(),
+            reprobes)
+  { }
+
+    unbounded_array(size_t size, // Size of hash. To be rounded up to a power of 2
+                    uint16_t key_len, // Size of key in bits
+                    uint16_t val_len, // Size of val in bits
+                    uint16_t reprobe_limit, // Maximum reprobe
+                    RectangularBinaryMatrix&& m, // Hashing matrix
+                    const size_t* reprobes = quadratic_reprobes) // Reprobing policy
+      : super(size, key_len, val_len, reprobe_limit, m, reprobes)
   { }
 
 protected:
@@ -954,6 +966,35 @@ protected:
     mem_block_t::realloc(s);
     return (word*)mem_block_t::get_ptr();
   }
+};
+
+// Large array. Memory managed by the mmap allocator, bound the size
+// of the array if the key_len is small.
+template<typename Key, typename word = uint64_t,
+         typename atomic_t = ::atomic::gcc, typename mem_block_t = ::allocators::mmap>
+class array : public unbounded_array<Key, word, atomic_t, mem_block_t>
+{
+  typedef unbounded_array<Key, word, atomic_t, mem_block_t> super;
+
+  static size_t key_len_size(uint16_t key_len) {
+    return key_len >= std::numeric_limits<size_t>::digits ? std::numeric_limits<size_t>::max() / 2 : (size_t)1 << key_len;
+  }
+
+public:
+  array(size_t size, // Size of hash. To be rounded up to a power of 2
+        uint16_t key_len, // Size of key in bits
+        uint16_t val_len, // Size of val in bits
+        uint16_t reprobe_limit, // Maximum reprobe
+        const size_t* reprobes = quadratic_reprobes) : // Reprobing policy
+    super(std::min(size, key_len_size(key_len)), key_len, val_len, reprobe_limit,
+          (size < key_len_size(key_len))
+          ? RectangularBinaryMatrix(ceilLog2(size), key_len).randomize_pseudo_inverse()
+          : RectangularBinaryMatrix::identity(key_len),
+          reprobes)
+  {
+    //    std::cerr << this->size() << ' ' << this->val_len() << '\n';
+  }
+
 };
 
 struct ptr_info {

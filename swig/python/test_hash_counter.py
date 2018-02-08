@@ -1,20 +1,22 @@
 import unittest
 import sys
 import random
-import jellyfish
+
+
+import dna_jellyfish as jf
 
 class TestHashCounter(unittest.TestCase):
     def setUp(self):
-        jellyfish.MerDNA.k(100)
-        self.hash = jellyfish.HashCounter(1024, 5)
+        jf.MerDNA.k(100)
+        self.hash = jf.HashCounter(1024, 5)
 
     def test_info(self):
-        self.assertEqual(100, jellyfish.MerDNA.k())
+        self.assertEqual(100, jf.MerDNA.k())
         self.assertEqual(1024, self.hash.size())
         self.assertEqual(5, self.hash.val_len())
 
     def test_add(self):
-        mer  = jellyfish.MerDNA()
+        mer  = jf.MerDNA()
         good = True
         for i in range(1000):
             mer.randomize()

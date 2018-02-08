@@ -20,6 +20,9 @@
 
 %{
   class StringMers {
+#ifdef SWIGPYTHON
+    const char* const m_str;
+#endif
     const char*       m_current;
     const char* const m_last;
     const bool        m_canonical;
@@ -28,11 +31,22 @@
 
   public:
     StringMers(const char* str, int len, bool canonical)
+#ifdef SWIGPYTHON
+      : m_str(strndup(str, len)) // In Python, duplicate the string! Can this be improved?
+      , m_current(m_str)
+#else
       : m_current(str)
-      , m_last(str + len)
+#endif
+      , m_last(m_current + len)
       , m_canonical(canonical)
       , m_filled(0)
     { }
+
+#ifdef SWIGPYTHON
+    ~StringMers() {
+      free((void*)m_str);
+    }
+#endif
 
     bool next_mer() {
       if(m_current == m_last)

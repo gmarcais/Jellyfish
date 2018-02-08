@@ -1,6 +1,22 @@
+#ifdef SWIGPYTHON
+// Default Python loading code does not seem to work. Use our own.
+%define MODULEIMPORT
+"
+import os
+if os.path.basename(__file__) == \"__init__.pyc\" or os.path.basename(__file__) == \"__init__.py\":
+  import dna_jellyfish.$module
+else:
+  import $module
+"
+%enddef
+%module(docstring="Jellyfish binding", moduleimport=MODULEIMPORT) dna_jellyfish
+#else
 %module(docstring="Jellyfish binding") jellyfish
+#endif
+
 %naturalvar; // Use const reference instead of pointers
 %include "std_string.i"
+
 %include "exception.i"
 %include "std_except.i"
 %include "typemaps.i"
@@ -8,7 +24,6 @@
 
 %{
 #ifdef SWIGPYTHON
-#define SWIG_FILE_WITH_INIT
 #endif
 
 #ifdef SWIGPERL

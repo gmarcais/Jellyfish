@@ -45,6 +45,9 @@ public:
     name += std::to_string((long long int)i); // Cast to make gcc4.4 happy!
     const unsigned int r = root_[name]["r"].asUInt();
     const unsigned int c = root_[name]["c"].asUInt();
+    if(root_[name]["identity"].asBool())
+      return RectangularBinaryMatrix::identity(r, c);
+
     std::vector<uint64_t> raw(c, (uint64_t)0);
     for(unsigned int i = 0; i < c; ++i)
       raw[i] = root_[name]["columns"][i].asUInt64();
@@ -57,9 +60,14 @@ public:
     root_[name].clear();
     root_[name]["r"] = m.r();
     root_[name]["c"] = m.c();
-    for(unsigned int i = 0; i < m.c(); ++i) {
-      Json::UInt64 x = m[i];
-      root_[name]["columns"].append(x);
+    if(m.is_low_identity()) {
+      root_[name]["identity"] = true;
+    } else {
+      root_[name]["identity"] = false;
+      for(unsigned int i = 0; i < m.c(); ++i) {
+        Json::UInt64 x = m[i];
+        root_[name]["columns"].append(x);
+      }
     }
   }
 

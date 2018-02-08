@@ -104,7 +104,7 @@ public:
 
     while(!ary_->add(k, v, &carry_shift, is_new_ptr, id_ptr)) {
       handle_full_ary();
-      v &= ~(uint64_t)0 << carry_shift;
+      v          &= ~(uint64_t)0 << carry_shift;
       // If carry_shift == 0, failed to allocate the first field for
       // key, hence status of is_new and value for id are not
       // determined yet. On the other hand, if carry_shift > 0, we
@@ -112,8 +112,8 @@ public:
       // of is_new and value of id are known. We do not update them in future
       // calls.
       if(carry_shift) {
-        is_new_ptr = &is_new_void;
-        id_ptr     = &id_void;
+        is_new_ptr  = &is_new_void;
+        id_ptr      = &id_void;
       }
     }
   }
@@ -204,9 +204,16 @@ protected:
   bool double_size(bool serial_thread) {
     if(serial_thread) {// Allocate new array for size doubling
       try {
-        new_ary_   = new array(ary_->size() * 2, ary_->key_len(), ary_->val_len(),
-                               ary_->max_reprobe(), ary_->reprobes());
-       } catch(typename array::ErrorAllocation e) {
+        if(ary_->key_len() >= sizeof(size_t) * 8 || ary_->size() < ((size_t)1 << ary_->key_len())) {
+          // Increase number of keys
+          new_ary_   = new array(ary_->size() * 2, ary_->key_len(), ary_->val_len(),
+                                 ary_->max_reprobe(), ary_->reprobes());
+        } else {
+          // Array is already maximum compared to key len, increase val_len
+          new_ary_ = new  array(ary_->size(), ary_->key_len(), ary_->val_len() + 1,
+                                ary_->max_reprobe(), ary_->reprobes());
+        }
+      } catch(typename array::ErrorAllocation e) {
         new_ary_ = 0;
       }
     }
@@ -219,10 +226,6 @@ protected:
 
     // Copy data from old to new
     uint16_t       id = atomic_t::fetch_add(&size_thid_, (uint16_t)1);
-    // Why doesn't the following work? Seems like a bug to
-    // me. Equivalent call works in test_large_hash_array. Or am I
-    // missing something?
-    // eager_iterator it = ary_->iterator_slice<eager_iterator>(id, nb_threads_);
     eager_iterator it = ary_->eager_slice(id, nb_threads_);
     while(it.next())
       my_ary->add(it.key(), it.val());
