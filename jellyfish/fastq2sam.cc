@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
     //    os << "@PG\tID:fastq2sam\tPN:fastq2sam\n";
 
     std::string name, seq, quals;
-    char c = is.get();
+    int c = is.get();
     while(c == '@') {
       std::getline(is, name);
       std::getline(is, seq);
