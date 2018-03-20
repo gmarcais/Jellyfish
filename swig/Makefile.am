@@ -22,6 +22,7 @@ BUILT_SOURCES += $(PYTHON_BUILT)
 if PYTHON_DEPRECATED
 pythonglobaldir = $(PYTHON_SITE_PKG)
 pythonglobal_SCRIPTS = swig/python/jellyfish.py
+EXTRA_DIST += $(pythonglobal_SCRIPTS)
 endif
 pythonextdir = $(PYTHON_SITE_PKG)/dna_jellyfish
 pythonext_SCRIPTS = swig/python/__init__.pyc
