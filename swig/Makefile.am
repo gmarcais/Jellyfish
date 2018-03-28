@@ -1,6 +1,7 @@
 # SWIG
 SWIG_SRC = swig/jellyfish.i swig/hash_counter.i swig/hash_set.i	\
            swig/mer_dna.i swig/mer_file.i swig/string_mers.i
+SWIG_CXXFLAGS = -Wno-error
 
 if HAVE_SWIG
 SWIG_V_GEN = $(swig_v_GEN_$(V))
@@ -29,6 +30,7 @@ pythonext_SCRIPTS = swig/python/__init__.pyc
 pythonext_LTLIBRARIES = swig/python/_dna_jellyfish.la
 swig_python__dna_jellyfish_la_SOURCES = swig/python/swig_wrap.cpp $(SWIG_SRC)
 swig_python__dna_jellyfish_la_CPPFLAGS = $(PYTHON_CPPFLAGS) -I$(srcdir)/include
+swig_python_jellyfish_la_CXXFLAGS = $(AM_CXXFLAGS) $(SWIG_CXXFLAGS)
 swig_python__dna_jellyfish_la_LDFLAGS = -module
 swig_python__dna_jellyfish_la_LIBADD = libjellyfish-2.0.la
 CLEANFILES += $(PYTHON_BUILT) $(pythonext_SCRIPTS)
@@ -49,6 +51,7 @@ rubyextdir = $(RUBY_EXT_LIB)
 rubyext_LTLIBRARIES = swig/ruby/jellyfish.la
 swig_ruby_jellyfish_la_SOURCES = swig/ruby/swig_wrap.cpp $(SWIG_SRC)
 swig_ruby_jellyfish_la_CPPFLAGS = $(RUBY_EXT_CFLAGS) -I$(srcdir)/include
+swig_ruby_jellyfish_la_CXXFLAGS = $(AM_CXXFLAGS) $(SWIG_CXXFLAGS)
 swig_ruby_jellyfish_la_LDFLAGS = -module
 swig_ruby_jellyfish_la_LIBADD = libjellyfish-2.0.la
 CLEANFILES += $(RUBY_BUILT)
@@ -63,6 +66,7 @@ perlext_SCRIPTS = swig/perl5/jellyfish.pm
 perlext_LTLIBRARIES = swig/perl5/jellyfish.la
 swig_perl5_jellyfish_la_SOURCES = swig/perl5/swig_wrap.cpp $(SWIG_SRC)
 swig_perl5_jellyfish_la_CPPFLAGS = $(PERL_EXT_CPPFLAGS) -I$(PERL_EXT_INC) -I$(srcdir)/include
+swig_perl5_jellyfish_la_CXXFLAGS = $(AM_CXXFLAGS) $(SWIG_CXXFLAGS)
 swig_perl5_jellyfish_la_LDFLAGS = -module
 swig_perl5_jellyfish_la_LIBADD = libjellyfish-2.0.la
 CLEANFILES += $(PERL_BUILT)
