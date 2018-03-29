@@ -156,6 +156,9 @@ AM_COND_IF([PERL_BINDING],
            [AS_IF([test x$enable_perl_binding != xyes], [PERL_EXT_LIB=$enable_perl_binding])]
            [AX_PERL_EXT([$prefix])])
 
+# Check for aligned memory allocation functions
+AC_CHECK_FUNCS([posix_memalign aligned_alloc])
+
 AC_OUTPUT
 
 
