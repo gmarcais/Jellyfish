@@ -4,17 +4,29 @@ use strict;
 use warnings;
 use ExtUtils::MakeMaker;
 
-mkdir('lib');
-system('swig', '-c++', '-perl5', '-o', 'jellyfish_wrap.cxx', '../jellyfish.i');
+sub pkgconfig {
+  my ($cmd) = @_;
+  my $res = `pkg-config $cmd`;
+  if($?) {
+    print(STDERR "\nCan't get compilation information for Jellyfish, check you PKG_CONFIG_PATH\n");
+    exit(1);
+  }
+  chomp $res;
+  return $res;
+}
 
-my $jf_cflags = `pkg-config --cflags jellyfish-2.0`;
-my $jf_libs   = `pkg-config --libs jellyfish-2.0`;
-my $jf_rpath  = `pkg-config --libs-only-L jellyfish-2.0 | sed -e 's/-L/-Wl,-rpath,/g'`;
+my $pkg = "jellyfish-2.0";
+my $jf_cflags = pkgconfig("--cflags $pkg");
+my $jf_libs   = pkgconfig("--libs $pkg");
+my $jf_rpath  = pkgconfig("--libs-only-L $pkg");
+$jf_rpath =~ s/-L/-Wl,-rpath,/g;
+
+print("$jf_cflags\n$jf_libs\n$jf_rpath\n");
 
 WriteMakefile(NAME      => 'jellyfish',
-              CC        => 'g++-4.4',
-              LD        => 'g++-4.4',
+              CC        => 'g++',
+              LD        => 'g++',
               CCFLAGS   => "-std=c++0x $jf_cflags",
               LIBS      => "$jf_libs",
-              OBJECT    => 'jellyfish_wrap.o',
+              OBJECT    => 'swig_wrap.o',
               VERSION   => '0.0.1');
