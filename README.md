@@ -38,6 +38,11 @@ If the software is installed in system directories (hint: you needed to use `sud
 sudo ldconfig
 ```
 
+Usage
+-----
+
+Instruction of use are available in the [doc](https://github.com/gmarcais/Jellyfish/tree/master/doc) directory.
+
 Extra / Examples
 ----------------
 
