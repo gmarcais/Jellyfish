@@ -1,4 +1,4 @@
-AC_INIT([jellyfish], [2.2.9], [gmarcais@umd.edu])
+AC_INIT([jellyfish], [2.2.10], [gmarcais@umd.edu])
 AC_CANONICAL_HOST
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([subdir-objects foreign parallel-tests color-tests])
@@ -155,6 +155,9 @@ AM_CONDITIONAL([PERL_BINDING], [test -n "$enable_perl_binding" -a x$enable_perl_
 AM_COND_IF([PERL_BINDING],
            [AS_IF([test x$enable_perl_binding != xyes], [PERL_EXT_LIB=$enable_perl_binding])]
            [AX_PERL_EXT([$prefix])])
+
+# Check for aligned memory allocation functions
+AC_CHECK_FUNCS([posix_memalign aligned_alloc])
 
 AC_OUTPUT
 
