@@ -40,7 +40,7 @@ pythonc_v_GEN_0 = @echo "  PYTHONC " $@;
 %/__init__.pyc: %/dna_jellyfish.py
 	$(PYTHONC_V_GEN)$(PYTHON) -c 'import py_compile, sys; py_compile.compile(sys.argv[1], sys.argv[2])' $< $@
 swig/python/dna_jellyfish.py: swig/python/swig_wrap.cpp
-EXTRA_DIST += $(PYTHON_BUILT)
+EXTRA_DIST += $(PYTHON_BUILT) swig/python/setup.py
 endif
 
 # Ruby support
@@ -55,6 +55,7 @@ swig_ruby_jellyfish_la_CXXFLAGS = $(AM_CXXFLAGS) $(SWIG_CXXFLAGS)
 swig_ruby_jellyfish_la_LDFLAGS = -module
 swig_ruby_jellyfish_la_LIBADD = libjellyfish-2.0.la
 CLEANFILES += $(RUBY_BUILT)
+EXTRA_DIST += swig/ruby/extconf.rb
 endif
 
 # Perl5 support
@@ -71,5 +72,5 @@ swig_perl5_jellyfish_la_LDFLAGS = -module
 swig_perl5_jellyfish_la_LIBADD = libjellyfish-2.0.la
 CLEANFILES += $(PERL_BUILT)
 swig/perl5/jellyfish.pm: swig/perl5/swig_wrap.cpp
-EXTRA_DIST += $(PERL_BUILT)
+EXTRA_DIST += $(PERL_BUILT) swig/perl5/Makefile.PL
 endif

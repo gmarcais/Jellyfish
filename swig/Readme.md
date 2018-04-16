@@ -7,6 +7,41 @@ output files and use the Jellyfish hash within these scripting
 languages, which is much more convenient than in C++, although
 somewhat slower.
 
+Installation
+============
+
+See the installation instructions on the
+[main page](../../tree/master) on how to install the bindings at the
+same times as Jellyfish.
+
+Additionally, it is possible to install the bindings from the
+distribution tarball. If Jellyfish is already installed (that is
+`pkg-config --exists jellyfish-2.0 && echo OK` prints `OK`), then the
+bindings can be installed as follows. (`$PREFIX` should be set to the
+desired installation location)
+
+Python:
+```Shell
+cd swig/python
+python setup.py build
+python setup.py install --prefix=$PREFIX
+```
+
+Ruby:
+```Shell
+cd swig/ruby
+ruby extconf.rb
+make
+make install prefix=$PREFIX
+```
+
+Perl 5:
+```Shell
+cd swig/perl5
+perl Makefile.PL SITEPREFIX=$PREFIX
+make
+make install
+```
 
 Examples
 ========
