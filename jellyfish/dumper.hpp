@@ -41,8 +41,8 @@ namespace jellyfish {
 
       out.open(file_path.str().c_str());
       if(out.fail())
-        eraise(ErrorWriting) << "'" << file_path.str() << "': "
-                             << "Can't open file for writing" << err::no;
+        throw ErrorWriting(err::msg()  << "'" << file_path.str() << "': "
+                             << "Can't open file for writing" << err::no);
     }
 
   public:

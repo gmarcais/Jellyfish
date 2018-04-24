@@ -30,11 +30,11 @@
 int jellyfish::file_parser::file_peek(const char *path, char *peek) {
   int fd = open(path, O_RDONLY);
   if(fd == -1)
-    eraise(FileParserError) << "Error opening file '" 
-                            << path << "'" << err::no;
+    throw FileParserError(err::msg()  << "Error opening file '" 
+                            << path << "'" << err::no);
       
   if(read(fd, peek, 1) <= 0)
-    eraise(FileParserError) << "Empty input file '" << path << "'" << err::no;
+    throw FileParserError(err::msg()  << "Empty input file '" << path << "'" << err::no);
   
   return fd;
 }
@@ -45,7 +45,7 @@ jellyfish::file_parser::file_parser(int fd, const char *path,
   
   struct stat stat_buf;
   if(fstat(fd, &stat_buf) == -1)
-    eraise(FileParserError) << "Can't fstat '" << path << "'" << err::no;
+    throw FileParserError(err::msg()  << "Can't fstat '" << path << "'" << err::no);
   _size       = stat_buf.st_size;
   if(_do_mmap) {
     _buffer     = (char *)mmap(0, _size , PROT_READ, MAP_PRIVATE, fd, 0);
@@ -60,8 +60,8 @@ jellyfish::file_parser::file_parser(int fd, const char *path,
     close(_fd);
   } else {
     if(_force_mmap)
-      eraise(FileParserError) << "Cannot mmap file '" << path 
-                              << "' as required";
+      throw FileParserError(err::msg()  << "Cannot mmap file '" << path 
+                              << "' as required");
     _buffer     = new char[_buff_size];
     _end_buffer = _buffer + _buff_size;
     _data       = _end_data = _buffer;

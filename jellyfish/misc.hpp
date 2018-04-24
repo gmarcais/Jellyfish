@@ -104,6 +104,7 @@ union Tptr {
 template <typename T>
 T *calloc_align(size_t nmemb, size_t alignment) {
   Tptr<T> ptr;
+  ptr.t = nullptr;
   if(posix_memalign(&ptr.v, alignment, sizeof(T) * nmemb) < 0)
     throw std::bad_alloc();
   return ptr.t;

@@ -114,29 +114,49 @@ namespace err {
     }
   };
 
-  template<typename err_t>
-  class raise_t {
+  // template<typename err_t>
+  // class raise_t {
+  //   int                _errno;
+  //   std::ostringstream oss;
+  // public:
+  //   raise_t() : _errno(errno) {}
+  //   ~raise_t() { throw err_t(oss.str()); }
+
+  //   raise_t & operator<<(const no_t &x) {
+  //     x.write(oss, _errno);
+  //     return *this;
+  //   }
+  //   template<typename T>
+  //   raise_t & operator<<(const T &x) {
+  //     oss << x;
+  //     return *this;
+  //   }
+  // };
+
+  class msg {
     int                _errno;
     std::ostringstream oss;
   public:
-    raise_t() : _errno(errno) {}
-    ~raise_t() { throw err_t(oss.str()); }
+    msg() : _errno(errno) {}
 
-    raise_t & operator<<(const no_t &x) {
+    msg & operator<<(const no_t &x) {
       x.write(oss, _errno);
       return *this;
     }
     template<typename T>
-    raise_t & operator<<(const T &x) {
+    msg & operator<<(const T &x) {
       oss << x;
       return *this;
     }
+
+    operator std::string() const { return oss.str(); }
   };
+
 }
 
 
 #define die if(1) err::die_t()
-#define eraise(e) if(1) err::raise_t<e>()
+// #define eraise(e) if(1) err::raise_t<e>()
 #define define_error_class(name)                                        \
   class name : public std::runtime_error {                              \
   public: explicit name(const std::string &txt) : std::runtime_error(txt) {} \

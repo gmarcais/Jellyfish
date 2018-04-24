@@ -29,8 +29,8 @@ jellyfish::sequence_parser::new_parser(const char *path) {
   case '@': return new jellyfish::fastq_sequence_parser(fd, path, &peek, 1);
       
   default:
-    eraise(FileParserError) << "'" << path << "': "
-                            << "Invalid input file. Expected fasta or fastq" ;
+    throw FileParserError(err::msg()  << "'" << path << "': "
+                            << "Invalid input file. Expected fasta or fastq" );
   }
 
   return 0;

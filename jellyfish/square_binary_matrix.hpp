@@ -40,10 +40,8 @@ private:
   uint64_t mask() const { return (((uint64_t)1) << size) - 1; }
   uint64_t msb() const { return ((uint64_t)1) << (size - 1); }
   uint64_t *first_alloc(size_t size) {
-    uint64_t *res = calloc_align<uint64_t>((size_t)size, (size_t)16);
-    if(!res)
-      eraise(ErrorAllocation) << "Can't allocate matrix of size '" << size << "'";
-    return res;
+    return calloc_align<uint64_t>((size_t)size, (size_t)16);
+    // throw ErrorAllocation(err::msg()  << "Can't allocate matrix of size '" << size << "'");
   }
   void alloc_columns() {
     if(columns) {
@@ -51,7 +49,7 @@ private:
       columns = 0;
     }
     if(size < 0 || size > 64)
-      eraise(MismatchingSize) << "Invalid matrix size '" << size << "'";
+      throw MismatchingSize(err::msg()  << "Invalid matrix size '" << size << "'");
     columns = first_alloc(size);
   }
 
