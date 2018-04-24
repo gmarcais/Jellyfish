@@ -30,15 +30,20 @@
 #include <config.h>
 #endif
 
-#if HAVE_DECL_STRERROR_R == 0
-#ifdef STRERROR_R_CHAR_P
-extern char* strerror_r(int, char*, size_t);
-#else
-extern int strerror_r(int, char*, size_t);
-#endif
-#endif
-
 namespace err {
+  // Select the correct version (GNU or XSI) version of
+  // ::strerror_r. err::strerror_ behaves like the GNU version of strerror_r,
+  // regardless of which version is provided by the system.
+  inline const char* strerror__(char* buf, int res) {
+    return res != -1 ? buf : "error";
+  }
+  inline const char* strerror__(char* buf, char* res) {
+    return res;
+  }
+  inline const char* strerror_r(int err, char* buf, size_t buflen) {
+    return strerror__(buf, ::strerror_r(err, buf, buflen));
+  }
+
   class code {
     int _code;
   public:
@@ -50,22 +55,15 @@ namespace err {
   public:
     no_t() {}
     static void write(std::ostream &os, int e) {
-    char  err_str[1024];
-    char* str;
+      char        err_str[1024];
+      const char* str;
 
-#ifdef STRERROR_R_CHAR_P
-    str = strerror_r(e, err_str, sizeof(err_str));
-    if(!str) { // Should never happen
-      strcpy(err_str, "error");
-    str = err_str;
-    }
-#else
-    int err = strerror_r(e, err_str, sizeof(err_str));
-    if(err)
-      strcpy(err_str, "error");
-      str = err_str;
-#endif
-    os << ": " << str;
+      str = strerror_r(e, err_str, sizeof(err_str));
+      if(!str) { // Should never happen
+        strcpy(err_str, "error");
+        str = err_str;
+      }
+      os << ": " << str;
     }
   };
   static const no_t no;
