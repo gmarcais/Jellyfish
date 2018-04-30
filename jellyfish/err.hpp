@@ -141,6 +141,10 @@ namespace err {
       x.write(oss, _errno);
       return *this;
     }
+    msg & operator<<(const char* a) {
+      oss << a;
+      return *this;
+    }
     template<typename T>
     msg & operator<<(const T &x) {
       oss << x;
