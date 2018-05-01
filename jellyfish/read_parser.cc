@@ -27,8 +27,8 @@ jellyfish::read_parser::new_parser(const char *path) {
   case '>': return new fasta_read_parser(fd, path, &peek, 1);
   case '@': return new fastq_read_parser(fd, path, &peek, 1);
   default:
-    eraise(FileParserError) << "'" << path << "'" 
-                            << "Invalid input file. Expected fasta or fastq format";
+    throw FileParserError(err::msg()  << "'" << path << "'" 
+                            << "Invalid input file. Expected fasta or fastq format");
   }
   return 0;
 }

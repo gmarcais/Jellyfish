@@ -166,34 +166,34 @@ namespace jellyfish {
                              SquareBinaryMatrix& hash_matrix,
                              SquareBinaryMatrix& hash_inverse_matrix) {
         if(_file.length() < sizeof(struct header))
-          eraise(ErrorReading) << "'" << _file.path() << "': "
-                               << "File truncated";
+          throw ErrorReading(err::msg()  << "'" << _file.path() << "': "
+                               << "File truncated");
         char *map = _file.base();
         struct header *header = (struct header *)map;
         map += sizeof(struct header);
         if(strncmp(header->type, file_type, sizeof(header->type)))
-           eraise(ErrorReading) << "'" << _file.path() << "': "
+           throw ErrorReading(err::msg()  << "'" << _file.path() << "': "
                                 << "Invalid file format '" 
                                 << err::substr(header->type, sizeof(header->type))
-                                << "'. Expected '" << file_type << "'.";
+                                << "'. Expected '" << file_type << "'.");
         if(header->size != (1UL << floorLog2(header->size)))
-          eraise(ErrorReading) << "'" << _file.path() << "': "
-                               << "Size '" << header->size << "' is not a power of 2";
+          throw ErrorReading(err::msg()  << "'" << _file.path() << "': "
+                               << "Size '" << header->size << "' is not a power of 2");
         if(header->key_len > 64 || header->key_len == 0)
-          eraise(ErrorReading) << "'" << _file.path() << "': "
-                               << "Invalid key length '" << header->key_len << "'";
+          throw ErrorReading(err::msg()  << "'" << _file.path() << "': "
+                               << "Invalid key length '" << header->key_len << "'");
         // TODO: Should that be in the file instead?
         // reprobes = jellyfish::quadratic_reprobes;
         map += hash_matrix.read(map);
         if((uint_t)hash_matrix.get_size() != header->key_len)
-          eraise(ErrorReading) << "'" << _file.path() << "': "
+          throw ErrorReading(err::msg()  << "'" << _file.path() << "': "
                                << "Size of hash matrix '" << hash_matrix.get_size() 
-                              << "' not equal to key length '" << header->key_len << "'";
+                              << "' not equal to key length '" << header->key_len << "'");
         map += hash_inverse_matrix.read(map);
         if((uint_t)hash_inverse_matrix.get_size() != header->key_len)
-          eraise(ErrorReading) << "'" << _file.path() << "': "
+          throw ErrorReading(err::msg()  << "'" << _file.path() << "': "
                                << "Size of inverse hash matrix '" << hash_inverse_matrix.get_size()
-                               << "' not equal to key length '" << header->key_len << "'";
+                               << "' not equal to key length '" << header->key_len << "'");
         if((size_t)map & 0x7)
           map += 0x8 - ((size_t)map & 0x7); // Make sure aligned for 64bits word. TODO: use alignof?
         return new storage_t(map, header->size, header->key_len, header->val_len,

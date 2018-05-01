@@ -43,8 +43,8 @@ namespace jellyfish {
 
       explicit header(const char *ptr) {
         if(memcmp(ptr, file_type, sizeof(type)))
-          eraise(ErrorReading) << "Bad file type '" << err::substr(ptr, sizeof(type))
-                               << "', expected '" << err::substr(file_type, sizeof(type)) << "'";
+          throw ErrorReading(err::msg()  << "Bad file type '" << err::substr(ptr, sizeof(type))
+                               << "', expected '" << err::substr(file_type, sizeof(type)) << "'");
         memcpy((void *)this, ptr, sizeof(struct header));
       }
     };
@@ -110,9 +110,9 @@ namespace jellyfish {
     template<typename storage_t>
     storage_t * raw_dumper<storage_t>::read(const mapped_file &mf) {
       if(mf.length() < sizeof(struct header))
-        eraise(ErrorReading) << "File '" << mf.path() 
+        throw ErrorReading(err::msg()  << "File '" << mf.path() 
                              << "' too short. Should be at least '" 
-                            << sizeof(struct header) << "' bytes";
+                            << sizeof(struct header) << "' bytes");
 
       struct header header(mf.base());
       size_t off = sizeof(header);

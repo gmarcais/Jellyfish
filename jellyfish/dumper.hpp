@@ -19,6 +19,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <jellyfish/err.hpp>
 #include <jellyfish/time.hpp>
 
@@ -34,28 +35,14 @@ namespace jellyfish {
 
   protected:
     void open_next_file(const char *prefix, int *index, std::ofstream &out) {
-      static const long file_len = pathconf("/", _PC_PATH_MAX);
+      int eindex = atomic::gcc::fetch_add(index, (int)1);
+      std::ostringstream file_path;
+      file_path << prefix << "_" << eindex;
 
-      char file[file_len + 1];
-      file[file_len] = '\0';
-      int off = snprintf(file, file_len, "%s", prefix);
-      if(off < 0)
-        eraise(ErrorWriting) << "Error creating output path" << err::no;
-      if(off > 0 && off < file_len) {
-        int eindex = atomic::gcc::fetch_add(index, (int)1);
-        int _off = snprintf(file + off, file_len - off, "_%d", eindex);
-        if(_off < 0)
-          eraise(ErrorWriting) << "Error creating output path" << err::no;
-        off += _off;
-      }
-      if(off >= file_len)
-        eraise(ErrorWriting) << "Output path is longer than maximum path length (" 
-                            << off << " > " << file_len << ")";
-      
-      out.open(file);
+      out.open(file_path.str().c_str());
       if(out.fail())
-        eraise(ErrorWriting) << "'" << (char*)file << "': "
-                             << "Can't open file for writing" << err::no;
+        throw ErrorWriting(err::msg()  << "'" << file_path.str() << "': "
+                             << "Can't open file for writing" << err::no);
     }
 
   public:

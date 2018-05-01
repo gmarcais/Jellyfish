@@ -43,15 +43,15 @@ protected:
     struct stat stat;
     
     if(fd < 0)
-      eraise(ErrorMMap) << "Can't open file '" << filename << "'" << err::no;
+      throw ErrorMMap(err::msg()  << "Can't open file '" << filename << "'" << err::no);
     
     if(fstat(fd, &stat) < 0)
-      eraise(ErrorMMap) << "Can't stat file '" << filename << "'" << err::no;
+      throw ErrorMMap(err::msg()  << "Can't stat file '" << filename << "'" << err::no);
 
     _length = stat.st_size;
     _base = (char *)mmap(NULL, _length, PROT_READ, MAP_PRIVATE, fd, 0);
     if(_base == MAP_FAILED)
-      eraise(ErrorMMap) << "Can't mmap file '" << filename << "'" << err::no;
+      throw ErrorMMap(err::msg()  << "Can't mmap file '" << filename << "'" << err::no);
     close(fd);
     _end = _base + _length;
   }
@@ -106,7 +106,7 @@ public:
   }
   const mapped_file & lock() const {
     if(mlock(_base, _length) < 0)
-      eraise(ErrorMMap) << "Can't lock map in memory" << err::no;
+      throw ErrorMMap(err::msg()  << "Can't lock map in memory" << err::no);
     return *this;
   }
 

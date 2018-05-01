@@ -28,8 +28,8 @@ jellyfish::seq_qual_parser::new_parser(const char *path) {
   case '@': return new fastq_seq_qual_parser(fd, path, &peek, 1);
       
   default:
-    eraise(FileParserError) << "'" << path << "': "
-                            << "Invalid input file. Expected fastq";
+    throw FileParserError(err::msg()  << "'" << path << "': "
+                            << "Invalid input file. Expected fastq");
   }
 
   return 0;
@@ -44,8 +44,8 @@ bool jellyfish::fastq_seq_qual_parser::parse(char *start, char **end) {
     // Copy the saved sequence, then the quality score for this
     // saved sequence. The stream is left at the first qual value.
     if((*end - start) / 2 < (ptrdiff_t)_read_buf.size())
-      eraise(FastqSeqQualParserError) << "Buffer is too small to "
-        "contain an entire read and its qual values";
+      throw FastqSeqQualParserError(err::msg()  << "Buffer is too small to "
+        "contain an entire read and its qual values");
     qual_start = start + 1;
     for(const char *b = _read_buf.begin(); b < _read_buf.end(); b++, start += 2)
       *start = *b;
@@ -68,8 +68,8 @@ bool jellyfish::fastq_seq_qual_parser::parse(char *start, char **end) {
           break;
         // fall through
       default:
-        eraise(FastqSeqQualParserError) << "Unexpected character '" << base()
-                                        << "'. Expected '@'";
+        throw FastqSeqQualParserError(err::msg()  << "Unexpected character '" << base()
+                                        << "'. Expected '@'");
       }
     }
     // skip seq header
@@ -85,7 +85,7 @@ bool jellyfish::fastq_seq_qual_parser::parse(char *start, char **end) {
     while(start < *end && !found_qual_header) {
       switch(sbumpc()) {
       case EOF:
-        eraise(FastqSeqQualParserError) << "Truncated input file";
+        throw FastqSeqQualParserError(err::msg()  << "Truncated input file");
       case '\n':
         break;
       case '+':
@@ -102,7 +102,7 @@ bool jellyfish::fastq_seq_qual_parser::parse(char *start, char **end) {
       while(!found_qual_header) {
         switch(sbumpc()) {
         case EOF:
-          eraise(FastqSeqQualParserError) << "Truncated input file";
+          throw FastqSeqQualParserError(err::msg()  << "Truncated input file");
         case '\n':
           break;
         case '+':
@@ -128,7 +128,7 @@ void jellyfish::fastq_seq_qual_parser::copy_qual_values(char *&qual_start, const
   while(qual_start < start + 1) {
     switch(sbumpc()) {
     case EOF:
-      eraise(FastqSeqQualParserError) << "Truncated input file";
+      throw FastqSeqQualParserError(err::msg()  << "Truncated input file");
     case '\n':
       break;
     default:

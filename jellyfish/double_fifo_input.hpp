@@ -98,7 +98,7 @@ namespace jellyfish {
       wq.enqueue(&buckets[i]);
 
     if(pthread_create(&input_id, 0, static_input_routine, (void *)this) != 0)
-      eraise(Error) << "Failed creating input thread" << err::no;
+      throw Error(err::msg()  << "Failed creating input thread" << err::no);
   }
 
   template<typename T>
@@ -120,19 +120,15 @@ namespace jellyfish {
 
   template<typename T>
   void double_fifo_input<T>::input_routine() {
-    state_t prev_state;
-
     while(!rq.is_closed()) {
       // The write queue is full or this is the first iteration, sleep
       // until it become less than some threshold
       full_queue.lock();
-      prev_state = atomic::gcc::cas(&state, WORKING, SLEEPING);
-      assert(prev_state == WORKING);
+      atomic::gcc::cas(&state, WORKING, SLEEPING);
       do {
         full_queue.wait();
       } while(state != WAKENING);
-      prev_state = atomic::gcc::cas(&state, WAKENING, WORKING);
-      assert(prev_state == WAKENING);
+      atomic::gcc::cas(&state, WAKENING, WORKING);
       full_queue.unlock();
 
       fill();

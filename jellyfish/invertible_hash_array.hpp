@@ -113,9 +113,9 @@ namespace jellyfish {
         hash_inverse_matrix(hash_matrix.init_random_inverse())
       {
         if(!data)
-          eraise(ErrorAllocation) << "Failed to allocate " 
+          throw ErrorAllocation(err::msg()  << "Failed to allocate " 
                                  << (div_ceil(size, (size_t)offsets.get_block_len()) * offsets.get_block_word_len() * sizeof(word))
-                                 << " bytes of memory";
+                                 << " bytes of memory");
       }
       
       // TODO: This parsing should be done in another class and use
@@ -123,17 +123,17 @@ namespace jellyfish {
       // array(char *map, size_t length) :
       //   hash_matrix(0), hash_inverse_matrix(0) {
       //   if(length < sizeof(struct header))
-      //     eraise(InvalidMap) << "File truncated";
+      //     throw InvalidMap(err::msg()  << "File truncated");
       //   struct header *header = (struct header *)map;
       //   size = header->size;
       //   if(size != (1UL << floorLog2(size)))
-      //     eraise(InvalidMap) << "Size '" << size << "' is not a power of 2";
+      //     throw InvalidMap(err::msg()  << "Size '" << size << "' is not a power of 2");
       //   lsize = ceilLog2(size);
       //   size_mask = size - 1;
       //   reprobe_limit = header->reprobe_limit;
       //   key_len = header->klen;
       //   if(key_len > 64 || key_len == 0)
-      //     eraise(InvalidMap) << "Invalid key length '" << key_len << "'";
+      //     throw InvalidMap(err::msg()  << "Invalid key length '" << key_len << "'");
       //   offsets.init(key_len + bitsize(reprobe_limit + 1) - lsize, header->clen,
       //                reprobe_limit);
       //   key_mask = (((word)1) << (key_len - lsize)) - 1;
@@ -146,12 +146,12 @@ namespace jellyfish {
       //   // map += sizeof(size_t) * (header->reprobe_limit + 1);
       //   map += hash_matrix.read(map);
       //   if((uint_t)hash_matrix.get_size() != key_len)
-      //     eraise(InvalidMatrix) << "Size of hash matrix '" << hash_matrix.get_size() 
-      //                          << "' not equal to key length '" << key_len << "'";
+      //     throw InvalidMatrix(err::msg()  << "Size of hash matrix '" << hash_matrix.get_size() 
+      //                          << "' not equal to key length '" << key_len << "'");
       //   map += hash_inverse_matrix.read(map);
       //   if((uint_t)hash_inverse_matrix.get_size() != key_len)
-      //     eraise(InvalidMatrix) << "Size of inverse hash matrix '" << hash_inverse_matrix.get_size()
-      //                          << "' not equal to key length '" << key_len << "'";
+      //     throw InvalidMatrix(err::msg()  << "Size of inverse hash matrix '" << hash_inverse_matrix.get_size()
+      //                          << "' not equal to key length '" << key_len << "'");
       //   if((size_t)map & 0x7)
       //     map += 0x8 - ((size_t)map & 0x7); // Make sure aligned for 64bits word. TODO: use alignof?
       //   data = (word *)map;
@@ -182,8 +182,8 @@ namespace jellyfish {
 
       void set_matrix(SquareBinaryMatrix &m) {
         if((uint_t)m.get_size() != key_len)
-          eraise(InvalidMatrix) << "Size of matrix '" << m.get_size() 
-                               << "' not equal to key length '" << key_len << "'";
+          throw InvalidMatrix(err::msg()  << "Size of matrix '" << m.get_size() 
+                               << "' not equal to key length '" << key_len << "'");
         hash_matrix = m;
         hash_inverse_matrix = m.inverse();
       }

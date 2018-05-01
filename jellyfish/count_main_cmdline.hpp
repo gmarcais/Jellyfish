@@ -3,9 +3,268 @@
 #ifndef __COUNT_ARGS_HPP__
 #define __COUNT_ARGS_HPP__
 
-#include <jellyfish/yaggo.hpp>
+#include <stdint.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <getopt.h>
+#include <errno.h>
+#include <string.h>
+#include <stdexcept>
+#include <string>
+#include <limits>
+#include <vector>
+#include <iostream>
+#include <sstream>
 
 class count_args {
+ // Boiler plate stuff. Conversion from string to other formats
+  static bool adjust_double_si_suffix(double &res, const char *suffix) {
+    if(*suffix == '\0')
+      return true;
+    if(*(suffix + 1) != '\0')
+      return false;
+
+    switch(*suffix) {
+    case 'a': res *= 1e-18; break;
+    case 'f': res *= 1e-15; break;
+    case 'p': res *= 1e-12; break;
+    case 'n': res *= 1e-9;  break;
+    case 'u': res *= 1e-6;  break;
+    case 'm': res *= 1e-3;  break;
+    case 'k': res *= 1e3;   break;
+    case 'M': res *= 1e6;   break;
+    case 'G': res *= 1e9;   break;
+    case 'T': res *= 1e12;  break;
+    case 'P': res *= 1e15;  break;
+    case 'E': res *= 1e18;  break;
+    default: return false;
+    }
+    return true;
+  }
+
+  static double conv_double(const char *str, ::std::string &err, bool si_suffix) {
+    char *endptr = 0;
+    errno = 0;
+    double res = strtod(str, &endptr);
+    if(errno) {
+      err.assign(strerror(errno));
+      return (double)0.0;
+    }
+    bool invalid =
+      si_suffix ? !adjust_double_si_suffix(res, endptr) : *endptr != '\0';
+    if(invalid) {
+      err.assign("Invalid character");
+      return (double)0.0;
+    }
+    return res;
+  }
+
+  static int conv_enum(const char* str, ::std::string& err, const char* const strs[]) {
+    int res = 0;
+    for(const char* const* cstr = strs; *cstr; ++cstr, ++res)
+      if(!strcmp(*cstr, str))
+        return res;
+    err += "Invalid constant '";
+    err += str;
+    err += "'. Expected one of { ";
+    for(const char* const* cstr = strs; *cstr; ++cstr) {
+      if(cstr != strs)
+        err += ", ";
+      err += *cstr;
+    }
+    err += " }";
+    return -1;
+  }
+
+  template<typename T>
+  static bool adjust_int_si_suffix(T &res, const char *suffix) {
+    if(*suffix == '\0')
+      return true;
+    if(*(suffix + 1) != '\0')
+      return false;
+
+    switch(*suffix) {
+    case 'k': res *= (T)1000; break;
+    case 'M': res *= (T)1000000; break;
+    case 'G': res *= (T)1000000000; break;
+    case 'T': res *= (T)1000000000000; break;
+    case 'P': res *= (T)1000000000000000; break;
+    case 'E': res *= (T)1000000000000000000; break;
+    default: return false;
+    }
+    return true;
+  }
+
+  template<typename T>
+  static T conv_int(const char *str, ::std::string &err, bool si_suffix) {
+    char *endptr = 0;
+    errno = 0;
+    long long int res = strtoll(str, &endptr, 0);
+    if(errno) {
+      err.assign(strerror(errno));
+      return (T)0;
+    }
+    bool invalid =
+      si_suffix ? !adjust_int_si_suffix(res, endptr) : *endptr != '\0';
+    if(invalid) {
+      err.assign("Invalid character");
+      return (T)0;
+    }
+    if(res > ::std::numeric_limits<T>::max() ||
+       res < ::std::numeric_limits<T>::min()) {
+      err.assign("Value out of range");
+      return (T)0;
+    }
+    return (T)res;
+  }
+
+  template<typename T>
+  static T conv_uint(const char *str, ::std::string &err, bool si_suffix) {
+    char *endptr = 0;
+    errno = 0;
+    while(isspace(*str)) { ++str; }
+    if(*str == '-') {
+      err.assign("Negative value");
+      return (T)0;
+    }
+    unsigned long long int res = strtoull(str, &endptr, 0);
+    if(errno) {
+      err.assign(strerror(errno));
+      return (T)0;
+    }
+    bool invalid =
+      si_suffix ? !adjust_int_si_suffix(res, endptr) : *endptr != '\0';
+    if(invalid) {
+      err.assign("Invalid character");
+      return (T)0;
+    }
+    if(res > ::std::numeric_limits<T>::max() ||
+       res < ::std::numeric_limits<T>::min()) {
+      err.assign("Value out of range");
+      return (T)0;
+    }
+    return (T)res;
+  }
+
+  template<typename T>
+  static ::std::string vec_str(const std::vector<T> &vec) {
+    ::std::ostringstream os;
+    for(typename ::std::vector<T>::const_iterator it = vec.begin();
+        it != vec.end(); ++it) {
+      if(it != vec.begin())
+        os << ",";
+      os << *it;
+    }
+    return os.str();
+  }
+
+  class string : public ::std::string {
+  public:
+    string() : ::std::string() {}
+    explicit string(const ::std::string &s) : std::string(s) {}
+    explicit string(const char *s) : ::std::string(s) {}
+    int as_enum(const char* const strs[]) {
+      ::std::string err;
+      int res = conv_enum((const char*)this->c_str(), err, strs);
+      if(!err.empty())
+        throw ::std::runtime_error(err);
+      return res;
+    }
+
+
+    uint32_t as_uint32_suffix() const { return as_uint32(true); }
+    uint32_t as_uint32(bool si_suffix = false) const {
+      ::std::string err;
+      uint32_t res = conv_uint<uint32_t>((const char*)this->c_str(), err, si_suffix);
+      if(!err.empty()) {
+        ::std::string msg("Invalid conversion of '");
+        msg += *this;
+        msg += "' to uint32_t: ";
+        msg += err;
+        throw ::std::runtime_error(msg);
+      }
+      return res;
+    }
+    uint64_t as_uint64_suffix() const { return as_uint64(true); }
+    uint64_t as_uint64(bool si_suffix = false) const {
+      ::std::string err;
+      uint64_t res = conv_uint<uint64_t>((const char*)this->c_str(), err, si_suffix);
+      if(!err.empty()) {
+        ::std::string msg("Invalid conversion of '");
+        msg += *this;
+        msg += "' to uint64_t: ";
+        msg += err;
+        throw ::std::runtime_error(msg);
+      }
+      return res;
+    }
+    int32_t as_int32_suffix() const { return as_int32(true); }
+    int32_t as_int32(bool si_suffix = false) const {
+      ::std::string err;
+      int32_t res = conv_int<int32_t>((const char*)this->c_str(), err, si_suffix);
+      if(!err.empty()) {
+        ::std::string msg("Invalid conversion of '");
+        msg += *this;
+        msg += "' to int32_t: ";
+        msg += err;
+        throw ::std::runtime_error(msg);
+      }
+      return res;
+    }
+    int64_t as_int64_suffix() const { return as_int64(true); }
+    int64_t as_int64(bool si_suffix = false) const {
+      ::std::string err;
+      int64_t res = conv_int<int64_t>((const char*)this->c_str(), err, si_suffix);
+      if(!err.empty()) {
+        ::std::string msg("Invalid conversion of '");
+        msg += *this;
+        msg += "' to int64_t: ";
+        msg += err;
+        throw ::std::runtime_error(msg);
+      }
+      return res;
+    }
+    int as_int_suffix() const { return as_int(true); }
+    int as_int(bool si_suffix = false) const {
+      ::std::string err;
+      int res = conv_int<int>((const char*)this->c_str(), err, si_suffix);
+      if(!err.empty()) {
+        ::std::string msg("Invalid conversion of '");
+        msg += *this;
+        msg += "' to int_t: ";
+        msg += err;
+        throw ::std::runtime_error(msg);
+      }
+      return res;
+    }
+    long as_long_suffix() const { return as_long(true); }
+    long as_long(bool si_suffix = false) const {
+      ::std::string err;
+      long res = conv_int<long>((const char*)this->c_str(), err, si_suffix);
+      if(!err.empty()) {
+        ::std::string msg("Invalid conversion of '");
+        msg += *this;
+        msg += "' to long_t: ";
+        msg += err;
+        throw ::std::runtime_error(msg);
+      }
+      return res;
+    }
+    double as_double_suffix() const { return as_double(true); }
+    double as_double(bool si_suffix = false) const {
+      ::std::string err;
+      double res = conv_double((const char*)this->c_str(), err, si_suffix);
+      if(!err.empty()) {
+        ::std::string msg("Invalid conversion of '");
+        msg += *this;
+        msg += "' to double_t: ";
+        msg += err;
+        throw ::std::runtime_error(msg);
+      }
+      return res;
+    }
+  };
+
 public:
   struct invalid_char {
     enum { warn, ignore, error };
@@ -18,7 +277,7 @@ public:
   bool                           size_given;
   uint32_t                       threads_arg;
   bool                           threads_given;
-  yaggo::string                  output_arg;
+  string                         output_arg;
   bool                           output_given;
   bool                           O_flag;
   uint32_t                       counter_len_arg;
@@ -41,7 +300,7 @@ public:
   bool                           upper_count_given;
   int                            invalid_char_arg;
   bool                           invalid_char_given;
-  yaggo::string                  matrix_arg;
+  string                         matrix_arg;
   bool                           matrix_given;
   const char *                   timing_arg;
   bool                           timing_given;
@@ -57,13 +316,14 @@ public:
   bool                           out_buffer_size_given;
   bool                           lock_flag;
   bool                           stream_flag;
-  std::vector<const char *>      file_arg;
-  typedef std::vector<const char *>::iterator file_arg_it;
-  typedef std::vector<const char *>::const_iterator file_arg_const_it;
+  ::std::vector<const char *>    file_arg;
+  typedef ::std::vector<const char *>::iterator file_arg_it;
+  typedef ::std::vector<const char *>::const_iterator file_arg_const_it;
 
   enum {
-    USAGE_OPT = 1000,
+    START_OPT = 1000,
     FULL_HELP_OPT,
+    USAGE_OPT,
     OUT_COUNTER_LEN_OPT,
     BOTH_OPT,
     QUALITY_START_OPT,
@@ -79,7 +339,7 @@ public:
     STREAM_OPT
   };
 
-  count_args() : 
+  count_args() :
     mer_len_arg(), mer_len_given(false),
     size_arg(), size_given(false),
     threads_arg(1), threads_given(false),
@@ -178,46 +438,46 @@ public:
     };
     static const char *short_options = "hVm:s:t:o:Oc:Cp:rqL:U:wu";
 
-    std::string err;
-#define CHECK_ERR(type,val,which) if(!err.empty()) { std::cerr << "Invalid " #type " '" << val << "' for [" which "]: " << err << "\n"; exit(1); }
-    while(true) { 
+    ::std::string err;
+#define CHECK_ERR(type,val,which) if(!err.empty()) { ::std::cerr << "Invalid " #type " '" << val << "' for [" which "]: " << err << "\n"; exit(1); }
+    while(true) {
       int index = -1;
       int c = getopt_long(argc, argv, short_options, long_options, &index);
       if(c == -1) break;
       switch(c) {
-      case ':': 
-        std::cerr << "Missing required argument for "
-                  << (index == -1 ? std::string(1, (char)optopt) : std::string(long_options[index].name))
-                  << std::endl;
+      case ':':
+        ::std::cerr << "Missing required argument for "
+                  << (index == -1 ? ::std::string(1, (char)optopt) : std::string(long_options[index].name))
+                  << ::std::endl;
         exit(1);
       case 'h':
-        std::cout << usage() << "\n\n" << help() << std::endl;
+        ::std::cout << usage() << "\n\n" << help() << std::endl;
         exit(0);
       case USAGE_OPT:
-        std::cout << usage() << "\nUse --help for more information." << std::endl;
+        ::std::cout << usage() << "\nUse --help for more information." << std::endl;
         exit(0);
       case 'V':
         print_version();
         exit(0);
       case '?':
-        std::cerr << "Use --usage or --help for some help\n";
+        ::std::cerr << "Use --usage or --help for some help\n";
         exit(1);
       case FULL_HELP_OPT:
-        std::cout << usage() << "\n\n" << help() << "\n\n" << hidden() << std::endl;
+        ::std::cout << usage() << "\n\n" << help() << "\n\n" << hidden() << std::endl;
         exit(0);
       case 'm':
         mer_len_given = true;
-        mer_len_arg = yaggo::conv_uint<uint32_t>((const char*)optarg, err, false);
+        mer_len_arg = conv_uint<uint32_t>((const char*)optarg, err, false);
         CHECK_ERR(uint32_t, optarg, "-m, --mer-len=uint32")
         break;
       case 's':
         size_given = true;
-        size_arg = yaggo::conv_uint<uint64_t>((const char*)optarg, err, true);
+        size_arg = conv_uint<uint64_t>((const char*)optarg, err, true);
         CHECK_ERR(uint64_t, optarg, "-s, --size=uint64")
         break;
       case 't':
         threads_given = true;
-        threads_arg = yaggo::conv_uint<uint32_t>((const char*)optarg, err, false);
+        threads_arg = conv_uint<uint32_t>((const char*)optarg, err, false);
         CHECK_ERR(uint32_t, optarg, "-t, --threads=uint32")
         break;
       case 'o':
@@ -229,12 +489,12 @@ public:
         break;
       case 'c':
         counter_len_given = true;
-        counter_len_arg = yaggo::conv_uint<uint32_t>((const char*)optarg, err, false);
+        counter_len_arg = conv_uint<uint32_t>((const char*)optarg, err, false);
         CHECK_ERR(uint32_t, optarg, "-c, --counter-len=Length in bits")
         break;
       case OUT_COUNTER_LEN_OPT:
         out_counter_len_given = true;
-        out_counter_len_arg = yaggo::conv_uint<uint32_t>((const char*)optarg, err, false);
+        out_counter_len_arg = conv_uint<uint32_t>((const char*)optarg, err, false);
         CHECK_ERR(uint32_t, optarg, "    --out-counter-len=Length in bytes")
         break;
       case 'C':
@@ -242,7 +502,7 @@ public:
         break;
       case 'p':
         reprobes_given = true;
-        reprobes_arg = yaggo::conv_uint<uint32_t>((const char*)optarg, err, false);
+        reprobes_arg = conv_uint<uint32_t>((const char*)optarg, err, false);
         CHECK_ERR(uint32_t, optarg, "-p, --reprobes=uint32")
         break;
       case 'r':
@@ -256,27 +516,27 @@ public:
         break;
       case QUALITY_START_OPT:
         quality_start_given = true;
-        quality_start_arg = yaggo::conv_uint<uint32_t>((const char*)optarg, err, false);
+        quality_start_arg = conv_uint<uint32_t>((const char*)optarg, err, false);
         CHECK_ERR(uint32_t, optarg, "    --quality-start=uint32")
         break;
       case MIN_QUALITY_OPT:
         min_quality_given = true;
-        min_quality_arg = yaggo::conv_uint<uint32_t>((const char*)optarg, err, false);
+        min_quality_arg = conv_uint<uint32_t>((const char*)optarg, err, false);
         CHECK_ERR(uint32_t, optarg, "    --min-quality=uint32")
         break;
       case 'L':
         lower_count_given = true;
-        lower_count_arg = yaggo::conv_uint<uint64_t>((const char*)optarg, err, false);
+        lower_count_arg = conv_uint<uint64_t>((const char*)optarg, err, false);
         CHECK_ERR(uint64_t, optarg, "-L, --lower-count=uint64")
         break;
       case 'U':
         upper_count_given = true;
-        upper_count_arg = yaggo::conv_uint<uint64_t>((const char*)optarg, err, false);
+        upper_count_arg = conv_uint<uint64_t>((const char*)optarg, err, false);
         CHECK_ERR(uint64_t, optarg, "-U, --upper-count=uint64")
         break;
       case INVALID_CHAR_OPT:
         invalid_char_given = true;
-        invalid_char_arg = yaggo::conv_enum((const char*)optarg, err, invalid_char::strs);
+        invalid_char_arg = conv_enum((const char*)optarg, err, invalid_char::strs);
         CHECK_ERR(enum, optarg, "    --invalid-char=warn|ignore|error")
         break;
       case MATRIX_OPT:
@@ -299,17 +559,17 @@ public:
         break;
       case BUFFERS_OPT:
         buffers_given = true;
-        buffers_arg = yaggo::conv_uint<uint64_t>((const char*)optarg, err, false);
+        buffers_arg = conv_uint<uint64_t>((const char*)optarg, err, false);
         CHECK_ERR(uint64_t, optarg, "    --buffers=uint64")
         break;
       case BUFFER_SIZE_OPT:
         buffer_size_given = true;
-        buffer_size_arg = yaggo::conv_uint<uint64_t>((const char*)optarg, err, false);
+        buffer_size_arg = conv_uint<uint64_t>((const char*)optarg, err, false);
         CHECK_ERR(uint64_t, optarg, "    --buffer-size=uint64")
         break;
       case OUT_BUFFER_SIZE_OPT:
         out_buffer_size_given = true;
-        out_buffer_size_arg = yaggo::conv_uint<uint64_t>((const char*)optarg, err, false);
+        out_buffer_size_arg = conv_uint<uint64_t>((const char*)optarg, err, false);
         CHECK_ERR(uint64_t, optarg, "    --out-buffer-size=uint64")
         break;
       case LOCK_OPT:
@@ -328,19 +588,20 @@ public:
       error("[-s, --size=uint64] required switch");
 
     // Parse arguments
-    if(argc - optind < 0)
-      error("Requires at least 0 argument.");
+    if(argc - optind < 1)
+      error("Requires at least 1 argument.");
     for( ; optind < argc; ++optind) {
       file_arg.push_back(argv[optind]);
     }
   }
 
 #define count_args_USAGE "Usage: jellyfish count [options] file:path+"
+
   const char * usage() const { return count_args_USAGE; }
-  void error(const char *msg) { 
-    std::cerr << "Error: " << msg << "\n" << usage()
+  void error(const char *msg) {
+    ::std::cerr << "Error: " << msg << "\n" << usage()
               << "\nUse --help for more information"
-              << std::endl;
+              << ::std::endl;
     exit(1);
   }
 
@@ -368,8 +629,8 @@ public:
   " -h, --help                               This message\n" \
   "     --full-help                          Detailed help\n" \
   " -V, --version                            Version"
-
   const char * help() const { return count_args_HELP; }
+
 #define count_args_HIDDEN "Hidden options:\n" \
   " -O                                       Output is the file name (not a prefix) (false)\n" \
   "     --both                               Write list and raw database (false)\n" \
@@ -382,13 +643,13 @@ public:
   "     --stream                             Read from stream, not memory map (false)"
 
   const char * hidden() const { return count_args_HIDDEN; }
-  void print_version(std::ostream &os = std::cout) const {
+  void print_version(::std::ostream &os = std::cout) const {
 #ifndef PACKAGE_VERSION
 #define PACKAGE_VERSION "0.0.0"
 #endif
     os << PACKAGE_VERSION << "\n";
   }
-  void dump(std::ostream &os = std::cout) {
+  void dump(::std::ostream &os = std::cout) {
     os << "mer_len_given:" << mer_len_given << " mer_len_arg:" << mer_len_arg << "\n";
     os << "size_given:" << size_given << " size_arg:" << size_arg << "\n";
     os << "threads_given:" << threads_given << " threads_arg:" << threads_arg << "\n";
@@ -416,9 +677,8 @@ public:
     os << "out_buffer_size_given:" << out_buffer_size_given << " out_buffer_size_arg:" << out_buffer_size_arg << "\n";
     os << "lock_flag:" << lock_flag << "\n";
     os << "stream_flag:" << stream_flag << "\n";
-    os << "file_arg:" << yaggo::vec_str(file_arg) << "\n";
+    os << "file_arg:" << vec_str(file_arg) << "\n";
   }
-private:
 };
 const char* const count_args::invalid_char::strs[4] = { "warn", "ignore", "error", (const char*)0 };
 #endif // __COUNT_ARGS_HPP__"

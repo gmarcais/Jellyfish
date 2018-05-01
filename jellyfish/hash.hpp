@@ -148,7 +148,7 @@ namespace jellyfish {
       if(dumper)
         dumper->dump();
       else
-        eraise(TableFull) << "No dumper defined";
+        throw TableFull(err::msg()  << "No dumper defined");
     }
 
   private:

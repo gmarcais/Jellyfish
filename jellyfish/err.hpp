@@ -26,7 +26,24 @@
 #include <string.h>
 #include <errno.h>
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 namespace err {
+  // Select the correct version (GNU or XSI) version of
+  // ::strerror_r. err::strerror_ behaves like the GNU version of strerror_r,
+  // regardless of which version is provided by the system.
+  inline const char* strerror__(char* buf, int res) {
+    return res != -1 ? buf : "error";
+  }
+  inline const char* strerror__(char* buf, char* res) {
+    return res;
+  }
+  inline const char* strerror_r(int err, char* buf, size_t buflen) {
+    return strerror__(buf, ::strerror_r(err, buf, buflen));
+  }
+
   class code {
     int _code;
   public:
@@ -38,9 +55,15 @@ namespace err {
   public:
     no_t() {}
     static void write(std::ostream &os, int e) {
-      char err_str[4096];
-      strerror_r(e, err_str, sizeof(err_str));
-      os << ": " << err_str;
+      char        err_str[1024];
+      const char* str;
+
+      str = strerror_r(e, err_str, sizeof(err_str));
+      if(!str) { // Should never happen
+        strcpy(err_str, "error");
+        str = err_str;
+      }
+      os << ": " << str;
     }
   };
   static const no_t no;
@@ -89,29 +112,53 @@ namespace err {
     }
   };
 
-  template<typename err_t>
-  class raise_t {
+  // template<typename err_t>
+  // class raise_t {
+  //   int                _errno;
+  //   std::ostringstream oss;
+  // public:
+  //   raise_t() : _errno(errno) {}
+  //   ~raise_t() { throw err_t(oss.str()); }
+
+  //   raise_t & operator<<(const no_t &x) {
+  //     x.write(oss, _errno);
+  //     return *this;
+  //   }
+  //   template<typename T>
+  //   raise_t & operator<<(const T &x) {
+  //     oss << x;
+  //     return *this;
+  //   }
+  // };
+
+  class msg {
     int                _errno;
     std::ostringstream oss;
   public:
-    raise_t() : _errno(errno) {}
-    ~raise_t() { throw err_t(oss.str()); }
+    msg() : _errno(errno) {}
 
-    raise_t & operator<<(const no_t &x) {
+    msg & operator<<(const no_t &x) {
       x.write(oss, _errno);
       return *this;
     }
+    msg & operator<<(const char* a) {
+      oss << a;
+      return *this;
+    }
     template<typename T>
-    raise_t & operator<<(const T &x) {
+    msg & operator<<(const T &x) {
       oss << x;
       return *this;
     }
+
+    operator std::string() const { return oss.str(); }
   };
+
 }
 
 
 #define die if(1) err::die_t()
-#define eraise(e) if(1) err::raise_t<e>()
+// #define eraise(e) if(1) err::raise_t<e>()
 #define define_error_class(name)                                        \
   class name : public std::runtime_error {                              \
   public: explicit name(const std::string &txt) : std::runtime_error(txt) {} \

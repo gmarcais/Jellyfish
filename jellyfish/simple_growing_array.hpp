@@ -52,7 +52,7 @@ namespace jellyfish {
         free(ndata);
         _data = 0;
         _capacity = _capacity / 2;
-        eraise(SimpleGrowingArrayError) << "Out of memory" << err::no;
+        throw SimpleGrowingArrayError(err::msg()  << "Out of memory" << err::no);
       }
       _data = (T*)ndata;
     }
