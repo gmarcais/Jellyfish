@@ -146,6 +146,42 @@ reads data set twice and the memory usage of the Bloom counter is
 greater than that of the Bloom filter (slightly less than twice as
 much).
 
+## Counting a subset of k-mers
+
+It is possible to count the number of occurrences of only a subset of predefined k-mers, using the `--if` switch.
+Suppose one wants to count the number of occurrences of the 20-mers of chromosome 20 in chromosome 1 of human.
+Use the following command:
+
+```Shell
+jellyfish count -m 20 -s 100M -C -t 10 -o 20and1.jf --if chr20.fa chr1.fa
+```
+
+This reads all the canonical 20-mers from the file `chr20.fa` (but don't count them) and loads them in memory.
+Then it reads `chr1.fa` and counts the number of occurrences of the 20-mers only of the k-mers already loaded in memory.
+
+Now, the histogram will also report k-mers with a 0 count (the 20-mers of chr20 which do not exists in chr1):
+
+```Shell
+$ jellyfish histo 20and1.jf | head 
+0 49401674
+1 1116213
+2 425471
+3 250702
+4 170160
+5 124391
+6 102038
+7 74168
+8 57631
+9 47173
+```
+
+Note that the file given to `--if` is a fasta file.
+If a list of k-mers is available instead (say one per line in a text file), it can be transformed into a fasta file with one k-mer per line using the following one liner Perl command:
+
+```Shell
+perl -ne 'print(">\n$_")'
+```
+
 # FAQ
 
 ## How to read compressed files (or other format)?
