@@ -23,7 +23,7 @@ make -j 4
 make install
 ```
 
-To compile from the git tree, you will also need autoconf/automake, and [yaggo](https://github.com/gmarcais/yaggo/releases "Yaggo release on github"). Then to compile and install (in `/usr/local` in that example) with:
+To compile from the git tree, you will also need autoconf, automake, libool, gettext, pkg-config and [yaggo](https://github.com/gmarcais/yaggo/releases "Yaggo release on github"). Then to compile and install (in `/usr/local` in that example) with:
 
 ```Shell
 autoreconf -i
