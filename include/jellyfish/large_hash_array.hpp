@@ -950,7 +950,7 @@ public:
                     uint16_t reprobe_limit, // Maximum reprobe
                     RectangularBinaryMatrix&& m, // Hashing matrix
                     const size_t* reprobes = quadratic_reprobes) // Reprobing policy
-      : super(size, key_len, val_len, reprobe_limit, m, reprobes)
+      : super(size, key_len, val_len, reprobe_limit, std::move(m), reprobes)
   { }
 
 protected:

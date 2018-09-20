@@ -24,7 +24,7 @@ public:
   bool produce(uint32_t i, int& e) {
     assert(i < producers_);
     int& cur = cur_[i];
-    if(cur < max_) {
+    if(cur < (int)max_) {
       e = i * max_ + cur++;
       __sync_add_and_fetch(&check_[e], 1);
       return false;

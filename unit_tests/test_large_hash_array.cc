@@ -156,7 +156,7 @@ arrays_ptr fill_array(size_t nb_elts, size_t size, int key_len, int val_len, int
   mer_map&     map = arrays->map;
 
   mer_dna mer;
-  for(int i = 0; i < nb_elts; ++i) {
+  for(size_t i = 0; i < nb_elts; ++i) {
     SCOPED_TRACE(::testing::Message() << "i:" << i);
     mer.randomize();
     map[mer] += i;
@@ -243,7 +243,7 @@ TEST_P(HashArray, LargeValue) {
   ASSERT_EQ(numeric_limits<uint64_t>::max(), val);
 }
 
-INSTANTIATE_TEST_CASE_P(HashArrayTest, HashArray, ::testing::Combine(::testing::Range(8, 4 * 64, 2), // Key lengths
+INSTANTIATE_TEST_CASE_P(HashArrayTest, HashArray, ::testing::Combine(::testing::Range(4, 4 * 64, 2), // Key lengths
                                                                      ::testing::Range(1, 10),    // Val lengths
                                                                      ::testing::Range(6, 8)      // Reprobe lengths
                                                                      ));

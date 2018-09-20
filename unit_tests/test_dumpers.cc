@@ -28,7 +28,7 @@ TEST(Dumper, IO) {
   static const int   mer_len          = 50;
   static const int   hash_size        = 5000;
   static const int   nb               = hash_size;
-  static const int   hash_val_len     = 5;
+  //  static const int   hash_val_len     = 5;
   static const int   dump_counter_len = 1;
   static const char* file_binary      = "./binary_dumper";
   static const char* file_text        = "./text_dumper";

@@ -54,8 +54,8 @@ TYPED_TEST(MerDnaBloomTest, FalsePositive) {
   std::set<mer_dna> mer_set;
   typename TypeParam::bloom_type bc(error_rate, nb_inserts);
 
-  size_t collisions2 = 0;
-  size_t collisions3 = 0;
+  //  size_t collisions2 = 0;
+  //  size_t collisions3 = 0;
 
   // Insert once nb_inserts. Insert twice the first half
   {

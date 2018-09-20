@@ -94,7 +94,10 @@ public:
     bool         is_new_void  = false;
     size_t       id_void      = false;
 
-    while(!ary_->add(k, v, &carry_shift, is_new_ptr, id_ptr)) {
+    //    while(!ary_->add(k, v, &carry_shift, is_new_ptr, id_ptr)) {
+    while(true) {
+      std::cerr << k << std::endl;
+      if(ary_->add(k, v, &carry_shift, is_new_ptr, id_ptr)) break;
       handle_full_ary();
       v          &= ~(uint64_t)0 << carry_shift;
       // If carry_shift == 0, failed to allocate the first field for
@@ -201,6 +204,10 @@ protected:
           new_ary_   = new array(ary_->size() * 2, ary_->key_len(), ary_->val_len(),
                                  ary_->max_reprobe(), ary_->reprobes());
         } else {
+          std::cout << "Ary_ before";
+          for(auto it = ary_->begin(); it != ary_->end(); ++it)
+            std::cout << it.key() << ' ' << it.val() << ' ';
+          std::cout << std::endl;
           // Array is already maximum compared to key len, increase val_len
           new_ary_ = new  array(ary_->size(), ary_->key_len(), ary_->val_len() + 1,
                                 ary_->max_reprobe(), ary_->reprobes());
@@ -225,8 +232,16 @@ protected:
     size_barrier_.wait();
 
     if(serial_thread) { // Set new ary to be current and free old
+      std::cout << "Ary_ after";
+      for(auto it = ary_->begin(); it != ary_->end(); ++it)
+        std::cout << ' ' << it.key() << ' ' << it.val();
+      std::cout << std::endl;
       delete ary_;
       ary_ = new_ary_;
+      std::cout << "New_ary_";
+      for(auto it = ary_->begin(); it != ary_->end(); ++it)
+        std::cout << ' ' << it.key() << ' ' << it.val();
+      std::cout << std::endl;
     }
 
     // Done. Last sync point
