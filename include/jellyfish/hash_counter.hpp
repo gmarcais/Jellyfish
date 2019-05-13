@@ -213,7 +213,7 @@ protected:
           new_ary_ = new  array(ary_->size(), ary_->key_len(), ary_->val_len() + 1,
                                 ary_->max_reprobe(), ary_->reprobes());
         }
-      } catch(typename array::ErrorAllocation e) {
+      } catch(typename array::ErrorAllocation &e) {
         new_ary_ = 0;
       }
     }
