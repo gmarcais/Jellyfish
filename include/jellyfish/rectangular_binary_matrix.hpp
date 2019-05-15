@@ -99,6 +99,8 @@ namespace jellyfish {
     bool operator==(const RectangularBinaryMatrix &rhs) const {
       if(_r != rhs._r || _c != rhs._c)
         return false;
+      if(!_columns || !rhs._columns)
+        return _columns == rhs._columns;
       return !memcmp(_columns, rhs._columns, sizeof(uint64_t) * _c);
     }
     bool operator!=(const RectangularBinaryMatrix &rhs) const {

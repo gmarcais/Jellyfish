@@ -96,8 +96,8 @@ void do_merge(cpp_array<file_info>& files, std::ostream& out, writer_type& write
   }
 
   if(op == JACCARD) {
-    std::cout << "Jaccard  " << (double)inter / (double)union_ << '\n'
-              << "wJaccard " << (double)winter / (double)wunion << '\n';
+    out << "Jaccard  " << (double)inter / (double)union_ << '\n'
+        << "wJaccard " << (double)winter / (double)wunion << '\n';
   }
 }
 
@@ -153,12 +153,11 @@ void merge_files(std::vector<const char*> input_files,
   mer_dna::k(key_len / 2);
 
   std::ofstream out;
-  if(op != JACCARD) {
-    out.open(out_file);
-    if(!out.good())
-      throw MergeError(err::msg() << "Can't open out file '" << out_file << "'");
-  }
-  out_header.format(format);
+  out.open(out_file);
+  if(!out.good())
+    throw MergeError(err::msg() << "Can't open out file '" << out_file << "'");
+  if(op != JACCARD)
+    out_header.format(format);
 
   if(!format.compare(binary_dumper::format)) {
     out_header.counter_len(out_counter_len);
@@ -174,6 +173,4 @@ void merge_files(std::vector<const char*> input_files,
   } else {
     throw MergeError(err::msg() << "Unknown format '" << format << "'");
   }
-  if(op != JACCARD)
-    out.close();
 }
