@@ -16,6 +16,7 @@ c30cba4fe2886cea4abb27f5c30ea35e ${pref}_text.stats
 94625cd2d59e278f08421a673eb0926a ${pref}_m15_s2M_L2_U3.histo
 94625cd2d59e278f08421a673eb0926a ${pref}_m15_s2M_L2_U3_automerge.histo
 45fb383344e0fb0b7540718339be4c03 ${pref}_query_one_count
+864c0b0826854bdc72a85d170549b64b ${pref}_m15_DOS.histo
 EOF
 
 # Count with in memory hash doubling
@@ -76,7 +77,13 @@ $JF query ${pref}_binary.jf -s seq1m_0.fa    | grep ' 1$' | wc -l | sed -e 's/ /
 # $JF dump -c ${pref}_0 > ${pref}_all.dump
 # $JF dump -c ${pref}_S > ${pref}_S_all.dump
 
-check ${pref}.md5sum
+# Check DOS line ending
+if [ -n "$UNIX2DOS" ]; then
+    $JF count -t $nCPUs -o ${pref}_m15_DOS.jf -s 2M -C -m 15 seq10mDOS.fa
+    $JF histo ${pref}_m15_DOS.jf > ${pref}_m15_DOS.histo
+else
+    cp ${pref}_m15_s2M.histo ${pref}_m15_DOS.histo
+fi
 
-# cat ${pref}.timing
+check ${pref}.md5sum
 

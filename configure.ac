@@ -34,6 +34,10 @@ AS_IF([test "x$enable_htslib" = "xyes" -o "x$enable_htslib" = "x"],
 AC_ARG_VAR([SAMTOOLS], [Path to samtools program])
 AS_IF([test "x$SAMTOOLS" = "x"],
       [AC_PATH_PROG([SAMTOOLS], [samtools])])
+# Look for unix2dos
+AC_ARG_VAR([UNIX2DOS], [Path to unix2dos program])
+AS_IF([test "x$UNIX2DOS" = "x"],
+      [AC_PATH_PROG([UNIX2DOS], [unix2dos])])
 
 # Check for md5 or md5sum
 AC_ARG_VAR([MD5], [Path to md5 hashing program])

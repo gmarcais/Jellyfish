@@ -195,11 +195,12 @@ protected:
     // Here, the st.stream is assumed to always point to some
     // sequence (or EOF). Never at header.
     while(stream.good() && read < buf_size_ - mer_len_ - 1) {
-      size_t nread  = read_sequence(stream, read, buff.start, '+');
+      char le;
+      size_t nread  = read_sequence(stream, read, buff.start, '+', le);
       read         += nread;
       st.seq_len   += nread;
       if(stream.peek() == '+') {
-        skip_quals(stream, st.seq_len);
+        skip_quals(stream, st.seq_len, le);
         if(stream.good()) {
           *(buff.start + read++) = 'N'; // Add N between reads
           ignore_line(stream); // Skip sequence header
@@ -251,13 +252,23 @@ protected:
   }
 #endif
 
-  size_t read_sequence(std::istream& is, const size_t read, char* const start, const char stop) {
+  inline size_t read_sequence(std::istream& is, const size_t read, char* const start, const char stop) {
+    char le;
+    return read_sequence(is, read, start, stop, le);
+  }
+
+  size_t read_sequence(std::istream& is, const size_t read, char* const start, const char stop, char& le) {
     size_t nread = read;
+    le = '\n';
 
     skip_newlines(is); // Skip new lines -> get below doesn't like them
     while(is && nread < buf_size_ - 1 && is.peek() != stop) {
       is.get(start + nread, buf_size_ - nread);
       nread += is.gcount();
+      while(nread > 0 && *(start + nread - 1) == '\r') {
+        le = '\r';
+        nread--;
+      }
       skip_newlines(is);
     }
     return nread - read;
@@ -268,18 +279,18 @@ protected:
   }
 
   inline void skip_newlines(std::istream& is) {
-    while(is.peek() == '\n')
+    while(is.peek() == '\n' || is.peek() == '\r')
       is.get();
   }
 
   // Skip quals header and qual values (read_len) of them.
-  void skip_quals(std::istream& is, size_t read_len) {
+  void skip_quals(std::istream& is, size_t read_len, char le) {
     ignore_line(is);
     size_t quals = 0;
 
     skip_newlines(is);
     while(is.good() && quals < read_len) {
-      is.ignore(read_len - quals + 1, '\n');
+      is.ignore(read_len - quals + 1, le);
       quals += is.gcount();
       if(is)
         ++read_len;
