@@ -81,8 +81,8 @@ public:
 protected:
   uint16_t                 lsize_; // log of size
   size_t                   size_, size_mask_;
-  reprobe_limit_t          reprobe_limit_;
   uint16_t                 key_len_; // Length of key in bits
+  reprobe_limit_t          reprobe_limit_;
   uint16_t                 raw_key_len_; // Length of key stored raw (i.e. complement of implied length)
   Offsets<word>            offsets_; // key len reduced by size of hash array
   size_t                   size_bytes_;
@@ -156,8 +156,8 @@ public:
     lsize_(ceilLog2(size)),
     size_((size_t)1 << lsize_),
     size_mask_(size_ - 1),
-    reprobe_limit_(reprobe_limit, reprobes, size_),
     key_len_(key_len),
+    reprobe_limit_(key_len_ > lsize_ ? reprobe_limit : 0, reprobes, size_),
     raw_key_len_(key_len_ > lsize_ ? key_len_ - lsize_ : 0),
     offsets_(raw_key_len_ + bitsize(reprobe_limit_.val() + 1), val_len, reprobe_limit_.val() + 1),
     size_bytes_(div_ceil(size_, (size_t)offsets_.block_len()) * offsets_.block_word_len() * sizeof(word)),
@@ -279,28 +279,29 @@ public:
    * (the matrix has a partial identity on the first rows).
    *
    * In case of failure (false is returned), carry_shift contains the
-   * number of bits of the value that were successfully stored in the
-   * hash (low significant bits). If carry_shift == 0, then nothing
-   * was stored and the key is not in the hash at all. In that case,
-   * the value of *is_new and *id are not valid. If carry_shift > 0,
-   * then the key is present but the value stored is not correct
-   * (missing the high significant bits of value), but *is_new and *id
-   * contain the proper information.
+   * carry to add to finish the operation. If carry_shift == val, then
+   * nothing was stored and the key is not in the hash at all. In that
+   * case, the value of *is_new and *id are not valid. If carry_shift
+   * < val, then the key is present but the value stored is not
+   * correct (missing the high significant bits of value), but *is_new
+   * and *id contain the proper information. After a failure and
+   * proper size doubling is perform, one need to call add again with
+   * val set to carry_shift.
    */
-  inline bool add(const key_type& key, mapped_type val, unsigned int* carry_shift, bool* is_new, size_t* id) {
+  inline bool add(const key_type& key, mapped_type val, word* carry_shift, bool* is_new, size_t* id) {
     uint64_t hash = hash_matrix_.times(key);
     *carry_shift  = 0;
     return add_rec(hash & size_mask_, key, val, false, is_new, id, carry_shift);
   }
 
-  inline bool add(const key_type& key, mapped_type val, unsigned int* carry_shift) {
+  inline bool add(const key_type& key, mapped_type val, word* carry_shift) {
     bool   is_new = false;
     size_t id     = 0;
     return add(key, val, carry_shift, &is_new, &id);
   }
 
   inline bool add(const key_type& key, mapped_type val) {
-    unsigned int carry_shift = 0;
+    word carry_shift = 0;
     return add(key, val, &carry_shift);
   }
 
@@ -324,21 +325,24 @@ public:
    * hash. Returns true if the update was done, false otherwise.
    */
   inline bool update_add(const key_type& key, mapped_type val) {
-    key_type     tmp_key;
-    unsigned int carry_shift;
+    key_type tmp_key;
+    word     carry_shift;
     return update_add(key, val, &carry_shift, tmp_key);
   }
 
 
   // Optimization. Use tmp_key as buffer. Avoids allocation if update_add is called repeatedly.
-  bool update_add(const key_type& key, mapped_type val, unsigned int* carry_shift, key_type& tmp_key) {
+  bool update_add(const key_type& key, mapped_type val, word* carry_shift, key_type& tmp_key) {
     size_t          id;
     word*           w;
     const offset_t* o;
-    *carry_shift = 0;
 
-    if(get_key_id(key, &id, tmp_key, (const word**)&w, &o))
+    if(get_key_id(key, &id, tmp_key, (const word**)&w, &o)) {
+      *carry_shift = 0;
       return add_rec_at(id, key, val, o, w, carry_shift);
+    } else {
+      *carry_shift = val;
+    }
     return false;
   }
 
@@ -638,11 +642,19 @@ public:
     return true;
   }
 
-  // Add val to key. id is the starting place (result of hash
-  // computation). eid is set to the effective place in the
-  // array. large is set to true is setting a large key (upon
-  // recurrence if there is a carry).
-  bool add_rec(size_t id, const key_type& key, word val, bool large, bool* is_new, size_t* eid, unsigned int* carry_shift) {
+  // Add val to key. add_rec and add_rec_at call each other recursively.
+  //
+  // id is the starting place (result of hash computation). eid is set
+  // to the effective place in the array. large is set to true is
+  // setting a large key (upon recurrence if there is a carry). val is
+  // the value to add, which may be a carry.
+  //
+  // carry_shift store the number of bits that were stored so far of
+  // the original value. Upon return (not a recursive call),
+  // carry_shift is properly set to the value of the carry shifted by
+  // the right number of bits so a further call to add with
+  // carry_shift as val finishes the operation.
+  bool add_rec(size_t id, const key_type& key, word val, bool large, bool* is_new, size_t* eid, word* carry_shift) {
     const offset_t *ao = 0;
     word	   *w  = 0;
 
@@ -651,13 +663,15 @@ public:
       claimed = claim_large_key(&id, &ao, &w);
     else
       claimed = claim_key(key, is_new, &id, &ao, &w);
-    if(!claimed)
+    if(!claimed) {
+      *carry_shift = val << (*carry_shift);
       return false;
+    }
     *eid = id;
     return add_rec_at(id, key, val, ao, w, carry_shift);
   }
 
-  bool add_rec_at(size_t id, const key_type& key, word val, const offset_t* ao, word* w, unsigned int* carry_shift) {
+  bool add_rec_at(size_t id, const key_type& key, word val, const offset_t* ao, word* w, word* carry_shift) {
     // Increment value
     word *vw       = w + ao->val.woff;
     word  cary     = add_val(vw, val, ao->val.boff, ao->val.mask1);
@@ -668,8 +682,10 @@ public:
       cary         >>= ao->val.cshift;
       *carry_shift  += ao->val.cshift;
     }
-    if(!cary)
+    if(!cary) {
+      *carry_shift = 0;
       return true;
+    }
 
     id = (id + reprobes_[0]) & size_mask_;
     size_t ignore_eid;

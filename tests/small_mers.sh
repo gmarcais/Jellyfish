@@ -3,9 +3,8 @@
 cd tests
 . ./compat.sh
 
-sort -k2,2 > ${pref}.md5sum <<EOF
-
-EOF
-
-$JF count -t $nCPUs -o ${pref}_m10_10M.jf -s 1M -m 7 -C seq10m.fa
-$JF histo ${pref}_m10_10M.jf > ${pref}_m10_10M.histo
+for i in $(seq 2 10); do
+    $JF count -t $nCPUs -o ${pref}_m${i}_10M_25.jf -s 10M -c 25 -m $i -C seq10m.fa
+    $JF count -t $nCPUs -o ${pref}_m${i}_10M_5.jf -s 1k -c 5 -m $i -C seq10m.fa
+    diff -q <($JF histo ${pref}_m${i}_10M_25.jf) <($JF histo ${pref}_m${i}_10M_5.jf)
+done

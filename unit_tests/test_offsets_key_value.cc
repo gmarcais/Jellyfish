@@ -36,8 +36,9 @@ void test_key_offsets(const Offsets<uint64_t>::offset_t* it, unsigned int k_len,
       ": Key not between words, should not have mask2";
     EXPECT_EQ(val_boff + (val_boff > 0), it->val.boff) <<
       ": Invalid value offset";
-    if(it->val.boff == 0)
+    if(it->val.boff == 0) {
       EXPECT_EQ((uint64_t)0, it->key.sb_mask2);
+    }
   } else {
     if(bsizeof(uint64_t) >= it->key.boff + k_len) {
       EXPECT_EQ((it->key.boff + k_len) % bsizeof(uint64_t), it->val.boff) <<

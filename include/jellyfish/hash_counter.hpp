@@ -72,8 +72,9 @@ public:
   size_t size() const { return ary_->size(); }
   uint16_t key_len() const { return ary_->key_len(); }
   uint16_t val_len() const { return ary_->val_len(); }
-  uint16_t nb_threads() const { return nb_threads; }
+  uint16_t nb_threads() const { return nb_threads_; }
   uint16_t reprobe_limit() const { return ary_->max_reprobe(); }
+  void reset_done() { done_threads_ = 0; }
 
 
   /// Whether we attempt to double the size of the hash when full.
@@ -88,27 +89,27 @@ public:
   /// entry `k` did not exist in the hash. In `id` is returned the
   /// final position of `k` in the hash array.
   void add(const Key& k, uint64_t v, bool* is_new, size_t* id) {
-    unsigned int carry_shift  = 0;
-    bool*        is_new_ptr   = is_new;
-    size_t*      id_ptr       = id;
-    bool         is_new_void  = false;
-    size_t       id_void      = false;
+    uint64_t carry_shift = 0;
+    bool*    is_new_ptr  = is_new;
+    size_t*  id_ptr      = id;
+    bool     is_new_void = false;
+    size_t   id_void     = false;
 
     //    while(!ary_->add(k, v, &carry_shift, is_new_ptr, id_ptr)) {
     while(true) {
-      std::cerr << k << std::endl;
       if(ary_->add(k, v, &carry_shift, is_new_ptr, id_ptr)) break;
       handle_full_ary();
-      v          &= ~(uint64_t)0 << carry_shift;
-      // If carry_shift == 0, failed to allocate the first field for
+
+      // If carry_shift == v, failed to allocate the first field for
       // key, hence status of is_new and value for id are not
-      // determined yet. On the other hand, if carry_shift > 0, we
+      // determined yet. On the other hand, if carry_shift < v, we
       // failed while adding extra field for large key, so the status
       // of is_new and value of id are known. We do not update them in future
       // calls.
-      if(carry_shift) {
-        is_new_ptr  = &is_new_void;
-        id_ptr      = &id_void;
+      if(carry_shift != v) {
+        is_new_ptr = &is_new_void;
+        id_ptr     = &id_void;
+        v          = carry_shift;
       }
     }
   }
@@ -152,15 +153,15 @@ public:
   }
 
   bool update_add(const Key& k, uint64_t v, Key& tmp_key) {
-    unsigned int carry_shift = 0;
+    uint64_t carry_shift = 0;
 
     while(true) {
       if(ary_->update_add(k, v, &carry_shift, tmp_key))
         return true;
-      if(carry_shift == 0)
+      if(carry_shift == v)
         return false;
       handle_full_ary();
-      v &= ~(uint64_t)0 << carry_shift;
+      v = carry_shift;
     }
   }
 
@@ -204,11 +205,6 @@ protected:
           new_ary_   = new array(ary_->size() * 2, ary_->key_len(), ary_->val_len(),
                                  ary_->max_reprobe(), ary_->reprobes());
         } else {
-          std::cout << "Ary_ before";
-          for(auto it = ary_->begin(); it != ary_->end(); ++it)
-            std::cout << it.key() << ' ' << it.val() << ' ';
-          std::cout << std::endl;
-          // Array is already maximum compared to key len, increase val_len
           new_ary_ = new  array(ary_->size(), ary_->key_len(), ary_->val_len() + 1,
                                 ary_->max_reprobe(), ary_->reprobes());
         }
@@ -232,16 +228,8 @@ protected:
     size_barrier_.wait();
 
     if(serial_thread) { // Set new ary to be current and free old
-      std::cout << "Ary_ after";
-      for(auto it = ary_->begin(); it != ary_->end(); ++it)
-        std::cout << ' ' << it.key() << ' ' << it.val();
-      std::cout << std::endl;
       delete ary_;
       ary_ = new_ary_;
-      std::cout << "New_ary_";
-      for(auto it = ary_->begin(); it != ary_->end(); ++it)
-        std::cout << ' ' << it.key() << ' ' << it.val();
-      std::cout << std::endl;
     }
 
     // Done. Last sync point

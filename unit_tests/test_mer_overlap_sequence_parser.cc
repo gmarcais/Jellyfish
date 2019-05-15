@@ -42,7 +42,7 @@ TEST(MerOverlapSequenceParser, OneSmallSequence) {
 
   parser_type::job j(parser);
   ASSERT_FALSE(j.is_empty());
-  EXPECT_EQ(strlen(seq), j->end - j->start);
+  EXPECT_EQ(strlen(seq), (size_t)(j->end - j->start));
   EXPECT_STREQ(seq, j->start);
   j.release();
 

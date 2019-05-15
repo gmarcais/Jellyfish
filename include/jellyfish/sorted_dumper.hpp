@@ -56,7 +56,7 @@ public:
 
   virtual void _dump(storage_t* ary) {
     ary_ = ary;
-    block_info = ary_->blocks_for_records(5 * ary_->max_reprobe_offset());
+    block_info = ary_->blocks_for_records(5 * std::max((size_t)1, ary_->max_reprobe_offset()));
 
     this->open_next_file(file_prefix_, out_);
     if(header_)

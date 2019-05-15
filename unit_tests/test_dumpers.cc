@@ -74,7 +74,7 @@ TEST(Dumper, IO) {
     std::ifstream bis(file_binary);
     bh.read(bis);
     EXPECT_STREQ(binary::dumper::format, bh.format().c_str());
-    EXPECT_EQ(dump_counter_len, bh.counter_len());
+    EXPECT_EQ(dump_counter_len, (int)bh.counter_len());
     binary::reader br(bis, &bh);
 
     jellyfish::mapped_file binary_map(file_binary);

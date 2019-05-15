@@ -119,11 +119,13 @@ public:
     return (((uint64_t)1) << (large ? lval_len_ : val_len_)) - 1;
   }
 
-  /// Number of blocks that fit in a given amount of memory. Given an
-  /// amount of memory mem, it returns the number of blocks that fit
-  /// into mem and the actual memory this many block use.
+  /// Number of blocks to fit at least a given number of records.  It
+  /// returns the number of blocks needed and the actual memory this
+  /// many block use.
   std::pair<size_t, size_t> blocks_for_records(size_t nb_records) const {
-    size_t blocks = nb_records / bld;
+    uint64_t     q, r;
+    bld.division(nb_records, q, r);
+    const size_t blocks = q + (r != 0);
     return std::make_pair(blocks, blocks * block.len);
   }
 
