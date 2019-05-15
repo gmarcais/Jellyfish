@@ -1,7 +1,7 @@
 #! /bin/sh
 
 cd tests
-. ./compat.sh
+. ../compat.sh
 [ -z "$ENABLE_PYTHON_BINDING" ] && exit 77
 
 export PYTHONPATH="$BUILDDIR/swig/python/.libs:$BUILDDIR/swig/python${PYTHONPATH+:$PYTHONPATH}"

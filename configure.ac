@@ -53,7 +53,7 @@ dnl define([concat], $1$2$3)dnl
 define([PC_FILE], jellyfish-2.0.pc)
 AC_CONFIG_FILES([
     Makefile
-    tests/compat.sh
+    compat.sh
 ]
     PC_FILE
 )
@@ -164,5 +164,3 @@ AM_COND_IF([PERL_BINDING],
 AC_CHECK_FUNCS([posix_memalign aligned_alloc])
 
 AC_OUTPUT
-
-

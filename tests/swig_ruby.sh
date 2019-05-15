@@ -1,7 +1,7 @@
 #! /bin/sh
 
 cd tests
-. ./compat.sh
+. ../compat.sh
 [ -z "$ENABLE_RUBY_BINDING" ] && exit 77
 
 LOADPATH="$BUILDDIR/swig/ruby/.libs"

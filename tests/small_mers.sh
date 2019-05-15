@@ -1,7 +1,7 @@
 #! /bin/sh
 
 cd tests
-. ./compat.sh
+. ../compat.sh
 
 for i in $(seq 2 10); do
     $JF count -t $nCPUs -o ${pref}_m${i}_10M_25.jf -s 10M -c 25 -m $i -C seq10m.fa

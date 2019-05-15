@@ -1,7 +1,7 @@
 #! /bin/sh
 
 cd tests
-. ./compat.sh
+. ../compat.sh
 
 sort -k2,2 > ${pref}.md5sum <<EOF 
 864c0b0826854bdc72a85d170549b64b ${pref}_m15_s2M.histo

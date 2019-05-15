@@ -1,7 +1,7 @@
 #! /bin/sh
 
 cd tests
-. ./compat.sh
+. ../compat.sh
 
 if [ -z "$BIG" ]; then
     echo "Skip big test"
