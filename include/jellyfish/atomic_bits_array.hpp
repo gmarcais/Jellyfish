@@ -26,7 +26,6 @@ class atomic_bits_array_base {
   const jflib::divisor64 d_;
   size_t                 size_bytes_;
   T*                     data_;
-  static atomic::gcc     atomic_;
 
   friend class iterator;
   class iterator : public std::iterator<std::input_iterator_tag, Value> {
@@ -87,7 +86,7 @@ class atomic_bits_array_base {
       do {
         pval = cval;
         const T new_word    = (prev_word_ & ~mask_) | ((static_cast<T>(nval) << off_) & mask_);
-        const T actual_word = atomic_.cas(word_, prev_word_, new_word);
+        const T actual_word = atomic::gcc::cas(word_, prev_word_, new_word);
         if(__builtin_expect(actual_word == prev_word_, 1))
           return true;
         prev_word_ = actual_word;

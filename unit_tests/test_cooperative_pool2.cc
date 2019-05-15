@@ -9,7 +9,9 @@ class sequence : public jellyfish::cooperative_pool2<sequence, int> {
 
   const uint32_t   max_;
   std::vector<int> cur_;
+#ifndef NDEBUG
   const uint32_t   producers_;
+#endif
 
 public:
   std::vector<int> check_;
@@ -17,7 +19,9 @@ public:
     super(producers, 3 * threads),
     max_(max),
     cur_(producers, 0),
+#ifndef NDEBUG
     producers_(producers),
+#endif
     check_(max * producers, 0)
   { }
 
