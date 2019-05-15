@@ -17,3 +17,7 @@ if [ -n "$SAMTOOLS" ]; then
     $SAMTOOLS view -b -o seq10m.bam seq10m.sam
     $SAMTOOLS view -C -o seq10m.cram seq10m.sam
 fi
+
+if [ -n "$UNIX2DOS" ]; then
+    $UNIX2DOS -n seq10m.fa seq10mDOS.fa
+fi
