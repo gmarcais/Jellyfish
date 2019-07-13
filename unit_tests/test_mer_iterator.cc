@@ -76,7 +76,7 @@ TEST(MerIterator, Sequence) {
     mer_iterator_type mit(parser);
     for(string_vector::const_iterator it = sequences.begin(); it != sequences.end(); ++it) {
       if(it->size() >= mer_dna::k()) {
-        for(int i = 0; i < it->size() - (mer_dna::k() - 1); ++i, ++mit) {
+        for(size_t i = 0; i < it->size() - (mer_dna::k() - 1); ++i, ++mit) {
           ASSERT_NE(mer_iterator_type(), mit);
           EXPECT_EQ(it->substr(i, mer_dna::k()), mit->to_str());
         }
@@ -109,7 +109,7 @@ TEST(MerIterator, SequenceCanonical) {
     mer_iterator_type mit(parser, true);
     for(string_vector::const_iterator it = sequences.begin(); it != sequences.end(); ++it) {
       if(it->size() >= mer_dna::k()) {
-        for(int i = 0; i < it->size() - (mer_dna::k() - 1); ++i, ++mit) {
+        for(size_t i = 0; i < it->size() - (mer_dna::k() - 1); ++i, ++mit) {
           ASSERT_NE(mer_iterator_type(), mit);
           ASSERT_EQ(*mit, mit->get_canonical());
           EXPECT_TRUE((it->substr(i, mer_dna::k()) == mit->to_str()) ||
@@ -157,7 +157,7 @@ TEST(MerQualIterator, Sequence) {
 
     for(string_vector::const_iterator it = sequences.begin(), qit = quals.begin(); it != sequences.end(); ++it, ++qit) {
       if(it->size() >= mer_dna::k()) {
-        for(int i = 0; i < it->size() - (mer_dna::k() - 1); ++i) {
+        for(size_t i = 0; i < it->size() - (mer_dna::k() - 1); ++i) {
           const size_t next_N = qit->find_first_of("!\"", i);
           SCOPED_TRACE(::testing::Message() << "i:" << i << " next_N:" << next_N);
           if(next_N != std::string::npos && next_N >= i && next_N < i + mer_dna::k())

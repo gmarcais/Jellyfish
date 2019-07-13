@@ -1,19 +1,10 @@
-/* Quorum
- * Copyright (C) 2012  Genome group at University of Maryland.
- *
- * This program is free software: you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+/*  This file is part of Jellyfish.
+
+    This work is dual-licensed under 3-Clause BSD License or GPL 3.0.
+    You can choose between one of them if you use this work.
+
+`SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
+*/
 
 #ifndef __JELLYFISH_ATOMIC_BITS_ARRAY_HPP__
 #define __JELLYFISH_ATOMIC_BITS_ARRAY_HPP__
@@ -35,7 +26,6 @@ class atomic_bits_array_base {
   const jflib::divisor64 d_;
   size_t                 size_bytes_;
   T*                     data_;
-  static atomic::gcc     atomic_;
 
   friend class iterator;
   class iterator : public std::iterator<std::input_iterator_tag, Value> {
@@ -96,7 +86,7 @@ class atomic_bits_array_base {
       do {
         pval = cval;
         const T new_word    = (prev_word_ & ~mask_) | ((static_cast<T>(nval) << off_) & mask_);
-        const T actual_word = atomic_.cas(word_, prev_word_, new_word);
+        const T actual_word = atomic::gcc::cas(word_, prev_word_, new_word);
         if(__builtin_expect(actual_word == prev_word_, 1))
           return true;
         prev_word_ = actual_word;

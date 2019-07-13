@@ -80,7 +80,7 @@ TEST(HashCounterCooperative, SizeDouble) {
 
     lazy_iterator it = hash.ary()->iterator_all<lazy_iterator>();
     while(it.next())
-      EXPECT_EQ(adder.val(it.key()), it.val());
+      EXPECT_EQ(adder.val(it.key()), it.val()) << "key:" << it.key();
     EXPECT_LT((size_t)(nb_threads * nb), hash.size());
   }
 
@@ -96,7 +96,7 @@ TEST(HashCounterCooperative, SizeDouble) {
     lazy_iterator it = hash.ary()->iterator_all<lazy_iterator>();
     while(it.next()) {
       SCOPED_TRACE(::testing::Message() << "mer:" << it.key());
-      EXPECT_EQ(0, it.val());
+      EXPECT_EQ(0, (int)it.val());
     }
     EXPECT_LT((size_t)(nb_threads * nb), hash.size());
   }

@@ -1,17 +1,9 @@
 /*  This file is part of Jellyfish.
 
-    Jellyfish is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+    This work is dual-licensed under 3-Clause BSD License or GPL 3.0.
+    You can choose between one of them if you use this work.
 
-    Jellyfish is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
+`SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
 #include <jellyfish/merge_files.hpp>
@@ -51,10 +43,11 @@ typedef std::unique_ptr<RectangularBinaryMatrix> matrix_ptr;
 
 template<typename reader_type, typename writer_type>
 void do_merge(cpp_array<file_info>& files, std::ostream& out, writer_type& writer,
-              uint64_t min, uint64_t max) {
+              uint64_t min, uint64_t max, merge_op op) {
   cpp_array<reader_type> readers(files.size());
   typedef jellyfish::mer_heap::heap<mer_dna, reader_type> heap_type;
   typedef typename heap_type::const_item_t heap_item;
+  const uint64_t nb_files = files.size();
   heap_type heap(files.size());
 
   for(size_t i = 0; i < files.size(); ++i) {
@@ -63,20 +56,48 @@ void do_merge(cpp_array<file_info>& files, std::ostream& out, writer_type& write
       heap.push(readers[i]);
   }
 
+  uint64_t inter = 0, winter = 0, union_ = 0, wunion = 0;
   heap_item head = heap.head();
   mer_dna   key;
   while(heap.is_not_empty()) {
     key = head->key_;
     uint64_t sum = 0;
+    uint64_t maxc = 0;
+    uint64_t minc = std::numeric_limits<uint64_t>::max();
+    uint64_t files_present = 0;
     do {
+      ++files_present;
       sum += head->val_;
+      minc  = std::min(minc, head->val_);
+      maxc  = std::max(maxc, head->val_);
       heap.pop();
       if(head->it_->next())
         heap.push(*head->it_);
       head = heap.head();
     } while(head->key_ == key && heap.is_not_empty());
-    if(sum >= min && sum <= max)
-      writer.write(out, key, sum);
+    if(files_present < nb_files) // Not present in some file -> count assumed 0
+      minc = 0;
+    if(op != JACCARD) {
+      uint64_t val = 0;
+      switch(op) {
+      case SUM: val = sum; break;
+      case MIN: val = minc; break;
+      case MAX: val = maxc; break;
+      default: break;
+      }
+      if(val >= min && val <= max)
+        writer.write(out, key, val);
+    } else {
+      inter  += minc > 0;
+      winter += minc;
+      union_ += 1;
+      wunion += maxc;
+    }
+  }
+
+  if(op == JACCARD) {
+    out << "Jaccard  " << (double)inter / (double)union_ << '\n'
+        << "wJaccard " << (double)winter / (double)wunion << '\n';
   }
 }
 
@@ -84,7 +105,8 @@ void do_merge(cpp_array<file_info>& files, std::ostream& out, writer_type& write
 void merge_files(std::vector<const char*> input_files,
                  const char* out_file,
                  file_header& out_header,
-                 uint64_t min, uint64_t max) {
+                 uint64_t min, uint64_t max,
+                 merge_op op) {
   unsigned int key_len            = 0;
   size_t       max_reprobe_offset = 0;
   size_t       size               = 0;
@@ -130,22 +152,25 @@ void merge_files(std::vector<const char*> input_files,
   }
   mer_dna::k(key_len / 2);
 
-  std::ofstream out(out_file);
+  std::ofstream out;
+  out.open(out_file);
   if(!out.good())
     throw MergeError(err::msg() << "Can't open out file '" << out_file << "'");
-  out_header.format(format);
+  if(op != JACCARD)
+    out_header.format(format);
 
   if(!format.compare(binary_dumper::format)) {
     out_header.counter_len(out_counter_len);
-    out_header.write(out);
+    if(op != JACCARD)
+      out_header.write(out);
     binary_writer writer(out_counter_len, key_len);
-    do_merge<binary_reader, binary_writer>(files, out, writer, min, max);
+    do_merge<binary_reader, binary_writer>(files, out, writer, min, max, op);
   } else if(!format.compare(text_dumper::format)) {
-    out_header.write(out);
+    if(op != JACCARD)
+      out_header.write(out);
     text_writer writer;
-    do_merge<text_reader, text_writer>(files, out, writer, min, max);
+    do_merge<text_reader, text_writer>(files, out, writer, min, max, op);
   } else {
     throw MergeError(err::msg() << "Unknown format '" << format << "'");
   }
-  out.close();
 }

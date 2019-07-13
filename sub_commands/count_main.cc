@@ -133,7 +133,6 @@ struct filter_bf : public filter {
 enum OPERATION { COUNT, PRIME, UPDATE };
 template<typename MerIteratorType, typename ParserType>
 class mer_counter_base : public jellyfish::thread_exec {
-  int                  nb_threads_;
   mer_hash&            ary_;
   ParserType           parser_;
   filter*              filter_;
@@ -146,7 +145,9 @@ public:
     , parser_(mer_dna::k(), streams.nb_streams(), 3 * nb_threads, 4096, streams)
     , filter_(filter)
     , op_(op)
-  { }
+  {
+    ary_.reset_done();
+  }
 
   virtual void start(int thid) {
     size_t count = 0;
@@ -360,7 +361,7 @@ int count_main(int argc, char *argv[])
         uint64_t max = args.upper_count_given ? args.upper_count_arg : std::numeric_limits<uint64_t>::max();
         try {
           merge_files(files, args.output_arg, header, min, max);
-        } catch(MergeError e) {
+        } catch(MergeError &e) {
           err::die(err::msg() << e.what());
         }
         if(!args.no_unlink_flag) {

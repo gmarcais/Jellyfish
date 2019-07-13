@@ -210,8 +210,8 @@ bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_stdio_filebuf.cc
 bin_test_all_SOURCES += jellyfish/backtrace.cc
 
-bin_test_all_CPPFLAGS = -DJSON_IS_AMALGAMATION=1
-bin_test_all_CXXFLAGS = $(AM_CXXFLAGS) -I$(srcdir)/unit_tests/gtest/include -I$(srcdir)/unit_tests -I$(srcdir)/include
+bin_test_all_CPPFLAGS = $(AM_CPPFLAGS) -DJSON_IS_AMALGAMATION=1
+bin_test_all_CXXFLAGS = $(AM_CXXFLAGS) -I$(srcdir)/unit_tests/gtest/include -I$(srcdir)/unit_tests -I$(srcdir)/include -Wno-unused-variable
 bin_test_all_LDADD = libgtest.la $(LDADD)
 YAGGO_SOURCES += unit_tests/test_main_cmdline.hpp
 noinst_HEADERS += unit_tests/test_main.hpp

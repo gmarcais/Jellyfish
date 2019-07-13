@@ -4,6 +4,15 @@ package "jellyfish merge"
 option("output", "o") {
   description "Output file"
   c_string; default "mer_counts_merged.jf" }
+option("min", "m") {
+  description "Compute min count instead of sum"
+  off; }
+option("max", "M") {
+  description "Compute max count instead of sum"
+  off; conflict "min" }
+option("jaccard", "j") {
+  description "Compute the jaccard and weighted jaccard similarities"
+  off }
 option("lower-count", "L") {
   description "Don't output k-mer with count < lower-count"
   uint64 }

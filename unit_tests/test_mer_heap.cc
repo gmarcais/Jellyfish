@@ -41,7 +41,7 @@ large_array* MerHeapTest::shared_ary = 0;
 
 TEST_P(MerHeapTest, Order) {
   uint64_t           hash  = 0;
-  int                count = 0;
+  size_t             count = 0;
   const large_array& ary   = *shared_ary;
   mer_dna            m;
   m.polyA();
@@ -55,8 +55,9 @@ TEST_P(MerHeapTest, Order) {
     while(!heap.is_empty()) {
       uint64_t nhash = ary.matrix().times(heap.head()->key_);
       EXPECT_LE(hash, nhash);
-      if(nhash == hash)
+      if(nhash == hash) {
         EXPECT_LT(m, heap.head()->key_);
+      }
       hash = nhash;
       m    = heap.head()->key_;
 

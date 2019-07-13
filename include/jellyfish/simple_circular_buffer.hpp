@@ -1,19 +1,10 @@
-/* Jellyfish
- * Copyright (C) 2012  Genome group at University of Maryland.
- *
- * This program is free software: you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+/*  This file is part of Jellyfish.
+
+    This work is dual-licensed under 3-Clause BSD License or GPL 3.0.
+    You can choose between one of them if you use this work.
+
+`SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
+*/
 
 #ifndef __SIMPLE_CIRCULAR_BUFFER_H__
 #define __SIMPLE_CIRCULAR_BUFFER_H__

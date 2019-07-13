@@ -1,7 +1,7 @@
 #! /bin/sh
 
 cd tests
-. ./compat.sh
+. ../compat.sh
 
 if ! grep -q '#define HAVE_HTSLIB' ../config.h; then
     echo "Skip SAM/BAM/CRAM file format test"

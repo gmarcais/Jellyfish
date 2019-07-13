@@ -16,7 +16,7 @@ TEST(TmpPipes, CreateDestroy) {
 
   {
     jellyfish::tmp_pipes pipes(nb_pipes);
-    EXPECT_EQ(nb_pipes, pipes.size());
+    EXPECT_EQ(nb_pipes, (int)pipes.size());
     for(int i = 0; i < nb_pipes; ++i) {
       struct stat buf;
       ASSERT_EQ(0, stat(pipes[i], &buf));

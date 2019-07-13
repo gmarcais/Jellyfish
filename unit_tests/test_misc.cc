@@ -59,7 +59,6 @@ TEST(Random, Bits) {
     not_zero += random_bits() > 0;
     bits     += generic_popcount(m);
   }
-  std::cout << bits << "\n";
   EXPECT_LT((uint64_t)1 << 49, m); // Should be false with very low probability
   EXPECT_LT((uint64_t)1 << 49, m2); // Should be false with very low probability
   EXPECT_LT((int)(20.5 * 1024) / 2, bits);

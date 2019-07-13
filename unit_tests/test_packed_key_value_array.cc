@@ -209,5 +209,5 @@ packed_counting_param pc_params[] = {
   { 32, 16, 1024, 20, 3, 15},
   { 64, 40, 2048, 22, 3, 7}
 };
-INSTANTIATE_TEST_CASE_P(SingleThreadTest, PackedCountingTest,
+INSTANTIATE_TEST_SUITE_P(SingleThreadTest, PackedCountingTest,
                         ::testing::ValuesIn(pc_params));

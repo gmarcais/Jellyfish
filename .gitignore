@@ -13,3 +13,4 @@ config.sub
 ltmain.sh
 *_cmdline.hpp
 test-driver
+build-*

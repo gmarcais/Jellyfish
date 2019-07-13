@@ -54,8 +54,8 @@ TYPED_TEST(MerDnaBloomTest, FalsePositive) {
   std::set<mer_dna> mer_set;
   typename TypeParam::bloom_type bc(error_rate, nb_inserts);
 
-  size_t collisions2 = 0;
-  size_t collisions3 = 0;
+  //  size_t collisions2 = 0;
+  //  size_t collisions3 = 0;
 
   // Insert once nb_inserts. Insert twice the first half
   {
@@ -96,11 +96,11 @@ TYPED_TEST(MerDnaBloomTest, FalsePositive) {
     std::ofstream out(f.path.c_str());
     bc.write_bits(out);
     EXPECT_TRUE(out.good());
-    EXPECT_EQ(bc.nb_bytes(), out.tellp());
+    EXPECT_EQ(bc.nb_bytes(), (size_t)out.tellp());
   }
   std::ifstream in(f.path.c_str());
   typename TypeParam::bloom_type bc_read(bc.m(), bc.k(), in, bc.hash_functions());
-  EXPECT_EQ(bc.nb_bytes(), in.tellg());
+  EXPECT_EQ(bc.nb_bytes(), (size_t)in.tellg());
   in.close();
   typename TypeParam::file_type bc_map(bc.m(), bc.k(), f.path.c_str(), bc.hash_functions());
   EXPECT_EQ(bc.m(), bc_read.m());

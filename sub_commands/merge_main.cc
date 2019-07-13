@@ -28,12 +28,17 @@ int merge_main(int argc, char *argv[])
   out_header.set_cmdline(argc, argv);
 
   merge_main_cmdline args(argc, argv);
-  uint64_t min = args.lower_count_given ? args.lower_count_arg : 0;
+  uint64_t min = args.lower_count_given ? args.lower_count_arg : (args.min_flag ? 1 : 0);
   uint64_t max = args.upper_count_given ? args.upper_count_arg : std::numeric_limits<uint64_t>::max();
 
+  merge_op op = SUM;
+  if(args.min_flag) op = MIN;
+  if(args.max_flag) op = MAX;
+  if(args.jaccard_flag) op = JACCARD;
+
   try {
-    merge_files(args.input_arg, args.output_arg, out_header, min, max);
-  } catch(MergeError e) {
+    merge_files(args.input_arg, args.output_arg, out_header, min, max, op);
+  } catch(MergeError &e) {
     err::die(err::msg() << e.what());
   }
 

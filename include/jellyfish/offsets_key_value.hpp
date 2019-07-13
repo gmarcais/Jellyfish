@@ -1,17 +1,9 @@
 /*  This file is part of Jellyfish.
 
-    Jellyfish is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+    This work is dual-licensed under 3-Clause BSD License or GPL 3.0.
+    You can choose between one of them if you use this work.
 
-    Jellyfish is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
+`SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
 #ifndef __JELLYFISH_OFFSETS_KEY_VALUE_HPP__
@@ -127,11 +119,13 @@ public:
     return (((uint64_t)1) << (large ? lval_len_ : val_len_)) - 1;
   }
 
-  /// Number of blocks that fit in a given amount of memory. Given an
-  /// amount of memory mem, it returns the number of blocks that fit
-  /// into mem and the actual memory this many block use.
+  /// Number of blocks to fit at least a given number of records.  It
+  /// returns the number of blocks needed and the actual memory this
+  /// many block use.
   std::pair<size_t, size_t> blocks_for_records(size_t nb_records) const {
-    size_t blocks = nb_records / bld;
+    uint64_t     q, r;
+    bld.division(nb_records, q, r);
+    const size_t blocks = q + (r != 0);
     return std::make_pair(blocks, blocks * block.len);
   }
 

@@ -28,7 +28,7 @@ TEST(Dumper, IO) {
   static const int   mer_len          = 50;
   static const int   hash_size        = 5000;
   static const int   nb               = hash_size;
-  static const int   hash_val_len     = 5;
+  //  static const int   hash_val_len     = 5;
   static const int   dump_counter_len = 1;
   static const char* file_binary      = "./binary_dumper";
   static const char* file_text        = "./text_dumper";
@@ -74,7 +74,7 @@ TEST(Dumper, IO) {
     std::ifstream bis(file_binary);
     bh.read(bis);
     EXPECT_STREQ(binary::dumper::format, bh.format().c_str());
-    EXPECT_EQ(dump_counter_len, bh.counter_len());
+    EXPECT_EQ(dump_counter_len, (int)bh.counter_len());
     binary::reader br(bis, &bh);
 
     jellyfish::mapped_file binary_map(file_binary);

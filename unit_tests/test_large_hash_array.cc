@@ -77,11 +77,12 @@ TEST_P(HashArray, OneElement) {
 
     // Add this one element to the hash
     ary.clear();
-    bool         is_new      = false;
-    size_t       id          = (size_t)-1;
-    unsigned int carry_shift = 0;
+    bool     is_new      = false;
+    size_t   id          = (size_t)-1;
+    uint64_t carry_shift = 0;
     EXPECT_TRUE(ary.add(m, i, &carry_shift, &is_new, &id));
     EXPECT_TRUE(is_new);
+    EXPECT_EQ((uint64_t)0, carry_shift);
     // Only expected to agree on the length of the key. Applies only
     // if key_len < lsize. The bits above key_len are pseudo-random
     EXPECT_EQ((size_t)i & mask, id & mask);
@@ -95,7 +96,7 @@ TEST_P(HashArray, OneElement) {
       ASSERT_EQ(jd == id, ary.get_key_val_at_id(jd, get_mer, val) == large_array::FILLED);
       if(jd == id) {
         ASSERT_EQ(m2, get_mer);
-        ASSERT_EQ((uint64_t)jd, val);
+        ASSERT_EQ((uint64_t)i, val);
       }
     }
   }
@@ -156,18 +157,19 @@ arrays_ptr fill_array(size_t nb_elts, size_t size, int key_len, int val_len, int
   mer_map&     map = arrays->map;
 
   mer_dna mer;
-  for(int i = 0; i < nb_elts; ++i) {
+  for(size_t i = 0; i < nb_elts; ++i) {
     SCOPED_TRACE(::testing::Message() << "i:" << i);
     mer.randomize();
     map[mer] += i;
     // If get false, hash array filled up: double size
     bool res = ary.add(mer, i);
     if(!res) {
-      // std::cerr << "Double size (" << size << " -> " << (2 * size) << ") nb_elts:" << nb_elts
-      //           << " key_len:" << key_len << " val_len:" << val_len
-      //           << " mer:" << mer << std::endl;
-      // return std::make_pair(std::move(ary), std::move(map));
-      return fill_array(nb_elts, 2 * size, key_len, val_len, reprobe_limit);
+      const bool no_reprobe = ary.max_reprobe() == 0;
+      arrays.reset();
+      if(no_reprobe)
+        return fill_array(nb_elts, size, key_len, val_len + 1, reprobe_limit);
+      else
+        return fill_array(nb_elts, 2 * size, key_len, val_len, reprobe_limit);
     }
   }
   return arrays;
@@ -243,7 +245,7 @@ TEST_P(HashArray, LargeValue) {
   ASSERT_EQ(numeric_limits<uint64_t>::max(), val);
 }
 
-INSTANTIATE_TEST_CASE_P(HashArrayTest, HashArray, ::testing::Combine(::testing::Range(8, 4 * 64, 2), // Key lengths
+INSTANTIATE_TEST_CASE_P(HashArrayTest, HashArray, ::testing::Combine(::testing::Range(4, 4 * 64, 2), // Key lengths
                                                                      ::testing::Range(1, 10),    // Val lengths
                                                                      ::testing::Range(6, 8)      // Reprobe lengths
                                                                      ));

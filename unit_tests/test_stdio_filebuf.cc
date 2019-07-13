@@ -41,11 +41,11 @@ TEST(StdioFileBuf, Read) {
     const size_t expect_read = std::min(buffer.size() - have_read, to_read);
 
     fd_stream.read(read_buffer, to_read);
-    EXPECT_EQ(expect_read, fd_stream.gcount());
+    EXPECT_EQ(expect_read, (size_t)fd_stream.gcount());
     EXPECT_EQ(0, std::strncmp(&buffer[have_read], read_buffer, expect_read));
 
     file_stream.read(read_buffer, to_read);
-    EXPECT_EQ(expect_read, fd_stream.gcount());
+    EXPECT_EQ(expect_read, (size_t)fd_stream.gcount());
     EXPECT_EQ(0, std::strncmp(&buffer[have_read], read_buffer, expect_read));
 
     have_read += expect_read;

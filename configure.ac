@@ -1,4 +1,4 @@
-AC_INIT([jellyfish], [2.2.10], [gmarcais@umd.edu])
+AC_INIT([jellyfish], [2.3.0], [gmarcais@umd.edu])
 AC_CANONICAL_HOST
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([subdir-objects foreign parallel-tests color-tests])
@@ -34,6 +34,10 @@ AS_IF([test "x$enable_htslib" = "xyes" -o "x$enable_htslib" = "x"],
 AC_ARG_VAR([SAMTOOLS], [Path to samtools program])
 AS_IF([test "x$SAMTOOLS" = "x"],
       [AC_PATH_PROG([SAMTOOLS], [samtools])])
+# Look for unix2dos
+AC_ARG_VAR([UNIX2DOS], [Path to unix2dos program])
+AS_IF([test "x$UNIX2DOS" = "x"],
+      [AC_PATH_PROG([UNIX2DOS], [unix2dos])])
 
 # Check for md5 or md5sum
 AC_ARG_VAR([MD5], [Path to md5 hashing program])
@@ -49,7 +53,7 @@ dnl define([concat], $1$2$3)dnl
 define([PC_FILE], jellyfish-2.0.pc)
 AC_CONFIG_FILES([
     Makefile
-    tests/compat.sh
+    compat.sh
 ]
     PC_FILE
 )
@@ -160,5 +164,3 @@ AM_COND_IF([PERL_BINDING],
 AC_CHECK_FUNCS([posix_memalign aligned_alloc])
 
 AC_OUTPUT
-
-

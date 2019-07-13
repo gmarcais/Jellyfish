@@ -1,17 +1,9 @@
 /*  This file is part of Jellyfish.
 
-    Jellyfish is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+    This work is dual-licensed under 3-Clause BSD License or GPL 3.0.
+    You can choose between one of them if you use this work.
 
-    Jellyfish is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
+`SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
 #ifndef __JELLYFISH_MER_OVELAP_SEQUENCE_PARSER_H_
@@ -203,11 +195,12 @@ protected:
     // Here, the st.stream is assumed to always point to some
     // sequence (or EOF). Never at header.
     while(stream.good() && read < buf_size_ - mer_len_ - 1) {
-      size_t nread  = read_sequence(stream, read, buff.start, '+');
+      char le;
+      size_t nread  = read_sequence(stream, read, buff.start, '+', le);
       read         += nread;
       st.seq_len   += nread;
       if(stream.peek() == '+') {
-        skip_quals(stream, st.seq_len);
+        skip_quals(stream, st.seq_len, le);
         if(stream.good()) {
           *(buff.start + read++) = 'N'; // Add N between reads
           ignore_line(stream); // Skip sequence header
@@ -259,14 +252,23 @@ protected:
   }
 #endif
 
-  size_t read_sequence(std::istream& is, const size_t read, char* const start, const char stop) {
-    size_t nread = read;
+  inline size_t read_sequence(std::istream& is, const size_t read, char* const start, const char stop) {
+    char le;
+    return read_sequence(is, read, start, stop, le);
+  }
 
+  size_t read_sequence(std::istream& is, const size_t read, char* const start, const char stop, char& le) {
+    size_t nread = read;
+    le = '\n';
     skip_newlines(is); // Skip new lines -> get below doesn't like them
     while(is && nread < buf_size_ - 1 && is.peek() != stop) {
       is.get(start + nread, buf_size_ - nread);
       nread += is.gcount();
-      skip_newlines(is);
+      while(nread > 0 && *(start + nread - 1) == '\r') {
+        le = '\r';
+        nread--;
+      }
+      if(skip_newlines(is)) le = '\r';
     }
     return nread - read;
   }
@@ -275,19 +277,23 @@ protected:
     is.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
   }
 
-  inline void skip_newlines(std::istream& is) {
-    while(is.peek() == '\n')
+  inline bool skip_newlines(std::istream& is) {
+    bool dos_line = false;
+    while(is.peek() == '\n' || is.peek() == '\r') {
+      dos_line = dos_line || (is.peek() == '\r');
       is.get();
+    }
+    return dos_line;
   }
 
   // Skip quals header and qual values (read_len) of them.
-  void skip_quals(std::istream& is, size_t read_len) {
+  void skip_quals(std::istream& is, size_t read_len, char le) {
     ignore_line(is);
     size_t quals = 0;
 
     skip_newlines(is);
     while(is.good() && quals < read_len) {
-      is.ignore(read_len - quals + 1, '\n');
+      is.ignore(read_len - quals + 1, le);
       quals += is.gcount();
       if(is)
         ++read_len;
