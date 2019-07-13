@@ -260,7 +260,6 @@ protected:
   size_t read_sequence(std::istream& is, const size_t read, char* const start, const char stop, char& le) {
     size_t nread = read;
     le = '\n';
-
     skip_newlines(is); // Skip new lines -> get below doesn't like them
     while(is && nread < buf_size_ - 1 && is.peek() != stop) {
       is.get(start + nread, buf_size_ - nread);
@@ -269,7 +268,7 @@ protected:
         le = '\r';
         nread--;
       }
-      skip_newlines(is);
+      if(skip_newlines(is)) le = '\r';
     }
     return nread - read;
   }
@@ -278,9 +277,13 @@ protected:
     is.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
   }
 
-  inline void skip_newlines(std::istream& is) {
-    while(is.peek() == '\n' || is.peek() == '\r')
+  inline bool skip_newlines(std::istream& is) {
+    bool dos_line = false;
+    while(is.peek() == '\n' || is.peek() == '\r') {
+      dos_line = dos_line || (is.peek() == '\r');
       is.get();
+    }
+    return dos_line;
   }
 
   // Skip quals header and qual values (read_len) of them.
