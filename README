@@ -16,14 +16,12 @@ Then make sure the following environment variables contain the correct
 paths:
 
 PATH            -> /my/dir/bin
-LD_LIBRARY_PATH -> /my/dir/lib
 MANPATH         -> /my/dir/share/man
 PKG_CONFIG_PATH -> /my/dir/lib/pkgconfig
 
 Only the PATH environment variables is necessary to run
-jellyfish. MANPATH is used by the man command. PKG_CONFIG_PATH and
-LD_LIBRARY_PATH are used to compile software against the jellyfish
-shared library.
+jellyfish. MANPATH is used by the man command. PKG_CONFIG_PATH is used
+to compile software against the jellyfish shared library.
 
 GCC requirement
 ===============
@@ -84,15 +82,4 @@ License
   Magic and is distributed under the license described in the
   HalfLICENSE file.
 
-*   This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+* This software is dual licenced. See LICENSE file.
