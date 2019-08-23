@@ -1,6 +1,6 @@
 #! /bin/sh
 
-cd tests
+mkdir -p tests-data; cd tests-data
 . ../compat.sh
 
 if ! grep -q '#define HAVE_HTSLIB' ../config.h; then

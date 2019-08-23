@@ -1,4 +1,5 @@
 ACLOCAL_AMFLAGS = -I m4
+DISTCHECK_CONFIGURE_FLAGS=--enable-swig --enable-all-binding
 
 EXTRA_DIST = doc/jellyfish.pdf doc/jellyfish.man README LICENSE # jellyfish.spec
 man1_MANS = doc/jellyfish.man
@@ -153,7 +154,7 @@ EXTRA_DIST += $(TESTS)
 clean-local: clean-local-check
 .PHONY: clean-local-check
 clean-local-check:
-	-cd tests; rm -f *
+	-cd tests-data && rm -f *
 
 tests/parallel_hashing.log: tests/generate_sequence.log
 tests/subset_hashing.log: tests/generate_sequence.log

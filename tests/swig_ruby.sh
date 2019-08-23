@@ -1,6 +1,6 @@
 #! /bin/sh
 
-cd tests
+mkdir -p tests-data; cd tests-data
 . ../compat.sh
 [ -z "$ENABLE_RUBY_BINDING" ] && exit 77
 

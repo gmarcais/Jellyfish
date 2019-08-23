@@ -1,6 +1,6 @@
 #! /bin/sh
 
-cd tests/
+mkdir -p tests-data; cd tests-data/
 . ../compat.sh
 
 sort -k2,2 > ${pref}.md5sum <<EOF

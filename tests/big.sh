@@ -1,6 +1,6 @@
 #! /bin/sh
 
-cd tests
+mkdir -p tests-data; cd tests-data
 . ../compat.sh
 
 if [ -z "$BIG" ]; then
