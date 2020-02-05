@@ -1,7 +1,7 @@
 ACLOCAL_AMFLAGS = -I m4
 DISTCHECK_CONFIGURE_FLAGS=--enable-swig --enable-all-binding
 
-EXTRA_DIST = doc/jellyfish.pdf doc/jellyfish.man README LICENSE # jellyfish.spec
+EXTRA_DIST = doc/jellyfish.pdf doc/jellyfish.man README LICENSE-BSD-3-Clause LICENSE-GPL-3.0 # jellyfish.spec
 man1_MANS = doc/jellyfish.man
 
 pkgconfigdir = $(libdir)/pkgconfig
