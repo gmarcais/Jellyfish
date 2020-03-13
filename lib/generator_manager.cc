@@ -9,6 +9,7 @@
 #include <config.h>
 
 #include <unistd.h>
+#include <sys/prctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -119,6 +120,7 @@ void generator_manager_base::start()  {
 
 
   // In child
+  prctl(PR_SET_PDEATHSIG, SIGHUP);
   if(setup_signal_handlers() == -1)
     exit(EXIT_FAILURE);
   start_commands(); // child start commands
@@ -190,6 +192,7 @@ void generator_manager_base::start_one_command(const std::string& command, int p
   }
 
   // In child
+  prctl(PR_SET_PDEATHSIG, SIGHUP);
   int dev_null = open_cloexec("/dev/null", O_RDONLY);
   if(dev_null != -1)
     dup2(dev_null, 0);
