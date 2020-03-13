@@ -97,7 +97,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <mach-o/dyld.h>]],
                   [AC_DEFINE([HAVE_NSGETEXECUTABLEPATH], [1], [Used to find executable path on MacOS X])],
                   [AC_MSG_RESULT([no])])
 
-AC_CHECK_HEADERS_ONCE([execinfo.h ext/stdio_filebuf.h sys/syscall.h])
+AC_CHECK_HEADERS_ONCE([execinfo.h ext/stdio_filebuf.h sys/syscall.h sys/prctl.h])
 AC_CHECK_MEMBER([siginfo_t.si_int],
                 [AC_DEFINE([HAVE_SI_INT], [1], [Define if siginfo_t.si_int exists])],
                 [], [[#include <signal.h>]])
