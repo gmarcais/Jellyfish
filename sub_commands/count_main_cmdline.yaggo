@@ -40,7 +40,7 @@ option("C", "canonical") {
   flag; off }
 option("bc") {
   description "Bloom counter to filter out singleton mers"
-  c_string; typestr "peath";  }
+  c_string; typestr "path";  }
 option("bf-size") {
   description "Use bloom filter to count high-frequency mers"
   uint64; suffix; conflict "bc" }

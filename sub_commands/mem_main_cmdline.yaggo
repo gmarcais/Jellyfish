@@ -58,7 +58,7 @@ option("C", "canonical") {
   flag; off; hidden }
 option("bc") {
   description "Ignored switch"
-  c_string; typestr "peath";  }
+  c_string; typestr "path";  }
 option("bf-size") {
   description "Ignored switch"
   uint64; suffix; conflict "bc"; hidden }
