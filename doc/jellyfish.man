@@ -12,11 +12,8 @@
 ..
 .TH "JELLYFISH" "1" "2010/10/1" "k\-mer counter " "k\-mer counter "
 .SH NAME
+jellyfish - software to count k\-mers in DNA sequences
 
-.PP
-Jellyfish
-is a software to count k\-mers in DNA sequences. 
-.PP
 .SH SYNOPSIS
 
 jellyfish count
@@ -157,7 +154,7 @@ occurring many times will used multiple entries in the hash.
 Important: the size of the couting field does NOT change the result, 
 it only impacts the amount of memory used. In particular, there is no 
 maximum value in the hash. Even if the counting field uses 5 bits, a 
-k\-mer occuring 2 million times will have a value reported of 2 
+k\-mer occurring 2 million times will have a value reported of 2 
 million (i.e., it is not capped at 2^5). 
 .PP
 The \fB\-c\fP
@@ -459,7 +456,7 @@ Options (default value in (), *required):
 .SS QHISTO
 Usage: jellyfish qhisto [options] db:string 
 .PP
-Create an histogram of k\-mer occurences 
+Create an histogram of k\-mer occurrences 
 .PP
 Options (default value in (), *required): 
 .TP
