@@ -172,6 +172,8 @@ public:
 
 protected:
   std::string get_hostname() const {
+    if(std::getenv("SOURCE_DATE_EPOCH"))
+      return "hostname";
     struct utsname buf;
     if(uname(&buf) == -1)
       return "";
@@ -179,6 +181,8 @@ protected:
   }
 
   std::string get_pwd() const {
+    if(std::getenv("SOURCE_DATE_EPOCH"))
+      return ".";
 #ifdef PATH_MAX
     size_t len = PATH_MAX;
 #else
@@ -194,6 +198,16 @@ protected:
   std::string get_localtime() const {
     time_t t = time(0);
     std::string res(ctime(&t));
+    char *source_date_epoch = std::getenv("SOURCE_DATE_EPOCH");
+    if(source_date_epoch) {
+      std::istringstream iss(source_date_epoch);
+      iss >> t;
+      if(iss.fail() || !iss.eof()) {
+        std::cerr << "Error: Cannot parse SOURCE_DATE_EPOCH as integer\n";
+        exit(27);
+      }
+      res = asctime(gmtime(&t));
+    }
     chomp(res);
     return res;
   }
