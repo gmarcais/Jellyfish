@@ -1,3 +1,4 @@
+SHELL = /bin/bash
 ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST = doc/jellyfish.pdf doc/jellyfish.man README LICENSE # jellyfish.spec
