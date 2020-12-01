@@ -19,7 +19,7 @@ my $pkg = "jellyfish-2.0";
 my $jf_cflags = pkgconfig("--cflags $pkg");
 my $jf_libs   = pkgconfig("--libs $pkg");
 my $jf_rpath  = pkgconfig("--libs-only-L $pkg");
-$jf_rpath =~ s/-L/-Wl,-rpath,/g;
+$jf_rpath =~ s/ -L/ -Wl,-rpath,/g;
 
 print("$jf_cflags\n$jf_libs\n$jf_rpath\n");
 
