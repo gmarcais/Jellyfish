@@ -466,7 +466,7 @@ TYPED_TEST(MerDNA, GetBits) {
 
     // Get bits by right-shifting
     typename TypeParam::Type cm(m);
-    for(unsigned int j = 1; j < start; j += 2)
+    for(unsigned long int j = 1; start>=0 && j < static_cast<unsigned int>(start); j += 2)
       cm.shift_right(0); // Shift by 2 bits
     typename TypeParam::Type::base_type y = cm.word(0);
     if(start & 0x1)

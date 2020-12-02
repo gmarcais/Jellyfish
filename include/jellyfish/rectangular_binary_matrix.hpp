@@ -118,7 +118,7 @@ namespace jellyfish {
       uint64_t *p = _columns;
       while(*p == 0 && p < _columns + _c)
         ++p;
-      return (p - _columns) == _c;
+      return static_cast<unsigned int>(p - _columns) == _c;
     }
 
     // Randomize the content of the matrix

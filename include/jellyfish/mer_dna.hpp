@@ -693,7 +693,7 @@ inline std::istream& operator>>(std::istream& is, mer_base<derived>& mer) {
 
   char buffer[mer.k() + 1];
   is.read(buffer, mer.k());
-  if(is.gcount() != mer.k())
+  if(static_cast<unsigned int>(is.gcount()) != mer.k())
     goto error;
   buffer[mer.k()] = '\0';
   if(!mer.from_chars(buffer))
