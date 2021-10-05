@@ -23,7 +23,7 @@ def pkgconfig(s):
 jf_libs    = [re.sub(r'-l', '', x) for x in pkgconfig("--libs-only-l jellyfish-2.0")]
 jf_include = [re.sub(r'-I', '', x) for x in pkgconfig("--cflags-only-I jellyfish-2.0")]
 jf_cflags  = pkgconfig("--cflags-only-other jellyfish-2.0")
-jf_libdir  = [re.sub(r'-L', '', x) for x in pkgconfig("--libs-only-L jellyfish-2.0")]
+jf_libdir  = [re.sub(r' -L', ' ', x) for x in pkgconfig("--libs-only-L jellyfish-2.0")]
 jf_rpath   = [re.sub(r'^', '-Wl,-rpath,', x) for x in jf_libdir]
 jf_ldflags = pkgconfig("--libs-only-other jellyfish-2.0")
 

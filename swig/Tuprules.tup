@@ -86,7 +86,7 @@ endif
 ifdef JELLYFISH_RPATH
   JELLYFISH_RPATH = @(JELLYFISH_RPATH)
 else
-  JELLYFISH_RPATH = `pkg-config --libs-only-L jellyfish-2.0 | sed -e 's/-L/-Wl,-rpath,/g'`
+  JELLYFISH_RPATH = `pkg-config --libs-only-L jellyfish-2.0 | sed -e 's/ -L/ -Wl,-rpath,/g'`
 endif
 
 ifdef RUBY_CFLAGS

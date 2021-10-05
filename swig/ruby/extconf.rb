@@ -19,7 +19,7 @@ end
 
 $defs << pkgconfig("--cflags jellyfish-2.0") << '-std=c++0x'
 libs = [pkgconfig("--libs jellyfish-2.0"),
-        pkgconfig("--libs-only-L jellyfish-2.0").gsub(/-L/, "-Wl,-rpath,")]
+        pkgconfig("--libs-only-L jellyfish-2.0").gsub(/ -L/, " -Wl,-rpath,")]
 
 if Array === $libs
   $libs += libs
