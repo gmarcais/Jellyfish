@@ -1,3 +1,5 @@
+![CI workflow](https://github.com/gmarcais/Jellyfish/actions/workflows/c-cpp.yml/badge.svg)
+
 # Jellyfish
 
 ## Overview
