@@ -89,13 +89,13 @@ TEST(RectangularBinaryMatrix, LowIdentity) {
 /******************************
  * Matrix Vector product
  ******************************/
-class MatrixVectorProd : public ::testing::TestWithParam< ::std::tr1::tuple<int, int> > {
+class MatrixVectorProd : public ::testing::TestWithParam< ::std::tuple<int, int> > {
 public:
   unsigned int row, col;
   RectangularBinaryMatrix m;
   MatrixVectorProd() :
-    row(::std::tr1::get<0>(GetParam())),
-    col(::std::tr1::get<1>(GetParam())),
+    row(::std::get<0>(GetParam())),
+    col(::std::get<1>(GetParam())),
     m(row, col)
   {
     m.randomize(random_bits);

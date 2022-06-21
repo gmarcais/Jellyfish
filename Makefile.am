@@ -228,3 +228,6 @@ include gtest.mk
 # Print the value of a variable
 print-%:
 	@echo -n $($*)
+
+# Only compile the the check, don't run
+check-programs: $(BUILT_SOURCES) $(check_PROGRAMS) $(check_LTLIBRARIES)
