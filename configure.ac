@@ -116,7 +116,7 @@ AS_IF([test x$enable_all_static = xyes],
 maybe_swig=
 # --enable-python-binding
 AC_ARG_ENABLE([python-binding],
-              [AS_HELP_STRING([--enable-python-binding@<:@=PATH@:>@],[create SWIG python module and install in PATH])])
+              [AS_HELP_STRING([--enable-python-binding@<:@=PATH@:>@],[create SWIG python module and install in PATH (user or system site-packages if PATH=user|sys)])])
 # --enable-ruby-binding
 AC_ARG_ENABLE([ruby-binding],
               [AS_HELP_STRING([--enable-ruby-binding@<:@=PATH@:>@],[create SWIG ruby module and install in PATH])])
