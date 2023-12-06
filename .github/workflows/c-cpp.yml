@@ -14,7 +14,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: dependencies
-      run: sudo DEBIAN_FRONTEND=noninteractive apt-get install -y yaggo gettext swig3.0 python3-dev ruby-dev libperl-dev
+      run: sudo DEBIAN_FRONTEND=noninteractive apt-get install -y yaggo gettext swig python3-dev ruby-dev libperl-dev
     - name: autotools
       run: autoreconf -fi
     - name: configure

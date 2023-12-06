@@ -14,3 +14,5 @@ ltmain.sh
 *_cmdline.hpp
 test-driver
 build-*
+*~
+compile_commands.json
