@@ -15,13 +15,13 @@ namespace {
 using namespace jellyfish;
 
 // Tuple is {key_len, val_len, reprobe_len}. Actual reprobe value is computed from the reprobe_len.
-class ComputeOffsetsTest : public ::testing::TestWithParam< ::std::tr1::tuple<int,int, int> >
+class ComputeOffsetsTest : public ::testing::TestWithParam< ::std::tuple<int,int, int> >
 {
 public:
   Offsets<uint64_t> offsets;
 
   ComputeOffsetsTest() :
-    offsets(::std::tr1::get<0>(GetParam()), ::std::tr1::get<1>(GetParam()), (1 << ::std::tr1::get<2>(GetParam())) - 2)
+    offsets(::std::get<0>(GetParam()), ::std::get<1>(GetParam()), (1 << ::std::get<2>(GetParam())) - 2)
   { }
 
   ~ComputeOffsetsTest() { }
@@ -108,10 +108,10 @@ void test_val_offsets(const Offsets<uint64_t>::offset_t* it, unsigned int v_len,
 TEST_P(ComputeOffsetsTest, CheckCoherency) {
   const Offsets<uint64_t>::offset_t *it     = NULL, *pit = NULL;
   const Offsets<uint64_t>::offset_t *lit    = NULL, *lpit = NULL;
-  unsigned int                             k_len  = ::std::tr1::get<0>(GetParam());
-  unsigned int                             v_len  = ::std::tr1::get<1>(GetParam());
+  unsigned int                             k_len  = ::std::get<0>(GetParam());
+  unsigned int                             v_len  = ::std::get<1>(GetParam());
   unsigned int                             kv_len = k_len + v_len;
-  unsigned int                             lk_len = ::std::tr1::get<2>(GetParam());
+  unsigned int                             lk_len = ::std::get<2>(GetParam());
   unsigned int                             lv_len = std::min(kv_len - lk_len, (unsigned int)bsizeof(uint64_t));
   unsigned int                             i      = 0;
 

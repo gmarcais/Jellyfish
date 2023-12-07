@@ -73,7 +73,6 @@ public:
     std::ostringstream           buffer;
     heap_type                    heap(ary_->max_reprobe_offset());
     token_type&                  token = ring_[i];
-    size_t                       count = 0;
     typename storage_t::key_type key;
 
     for(size_t id = i; id * block_info.second < ary_->size(); id += nb_threads_) {
@@ -85,7 +84,6 @@ public:
         heap_item item = heap.head();
         if(item->val_ >= this->min() && item->val_ <= this->max())
           static_cast<D*>(this)->write_key_value_pair(buffer, item);
-        ++count;
         heap.pop();
         if(it.next())
           heap.push(it);

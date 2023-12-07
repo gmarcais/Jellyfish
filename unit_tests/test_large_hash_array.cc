@@ -33,7 +33,7 @@ typedef large_array::lazy_iterator lazy_iterator;
 typedef large_array::region_iterator region_iterator;
 
 // Tuple is {key_len, val_len, reprobe_len}.
-class HashArray : public ::testing::TestWithParam< ::std::tr1::tuple<int,int, int> >
+class HashArray : public ::testing::TestWithParam< ::std::tuple<int,int, int> >
 {
 public:
   static const size_t ary_lsize = 10;
@@ -43,9 +43,9 @@ public:
   large_array         ary;
 
   HashArray() :
-    key_len(::std::tr1::get<0>(GetParam())),
-    val_len(::std::tr1::get<1>(GetParam())),
-    reprobe_len(::std::tr1::get<2>(GetParam())),
+    key_len(::std::get<0>(GetParam())),
+    val_len(::std::get<1>(GetParam())),
+    reprobe_len(::std::get<2>(GetParam())),
     reprobe_limit((1 << reprobe_len) - 2),
     ary(ary_size, key_len, val_len, reprobe_limit)
   { }

@@ -1,11 +1,11 @@
-AC_INIT([jellyfish], [2.3.0], [gmarcais@umd.edu])
+AC_INIT([jellyfish],[2.3.1],[gmarcais@cs.cmu.edu])
 AC_CANONICAL_HOST
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([subdir-objects foreign parallel-tests color-tests])
 AM_SILENT_RULES([yes])
 AC_CONFIG_SRCDIR([jellyfish])
 AC_CONFIG_HEADERS([config.h])
-AC_PROG_LIBTOOL
+LT_INIT
 AC_LIB_RPATH
 PKG_PROG_PKG_CONFIG
 
@@ -41,9 +41,9 @@ AS_IF([test "x$UNIX2DOS" = "x"],
 
 # Check for md5 or md5sum
 AC_ARG_VAR([MD5], [Path to md5 hashing program])
-AS_IF([test "x$MD5" = "x"], AC_CHECK_PROG([MD5], [md5sum], [md5sum]), [])
-AS_IF([test "x$MD5" = "x"], AC_CHECK_PROG([MD5], [md5], [md5 -r]), [])
-AS_IF([test "x$MD5" = "x"], AC_MSG_ERROR([Could not find md5 hashing program in your path]), [])
+AS_IF([test "x$MD5" = "x"], [AC_CHECK_PROG([MD5], [md5sum], [md5sum])], [])
+AS_IF([test "x$MD5" = "x"], [AC_CHECK_PROG([MD5], [md5], [md5 -r])], [])
+AS_IF([test "x$MD5" = "x"], [AC_MSG_ERROR([Could not find md5 hashing program in your path])], [])
 
 # Check for yaggo
 AC_ARG_VAR([YAGGO], [Yaggo switch parser generator])
@@ -97,7 +97,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <mach-o/dyld.h>]],
                   [AC_DEFINE([HAVE_NSGETEXECUTABLEPATH], [1], [Used to find executable path on MacOS X])],
                   [AC_MSG_RESULT([no])])
 
-AC_CHECK_HEADERS_ONCE([execinfo.h ext/stdio_filebuf.h sys/syscall.h])
+AC_CHECK_HEADERS_ONCE([execinfo.h ext/stdio_filebuf.h sys/syscall.h sys/prctl.h])
 AC_CHECK_MEMBER([siginfo_t.si_int],
                 [AC_DEFINE([HAVE_SI_INT], [1], [Define if siginfo_t.si_int exists])],
                 [], [[#include <signal.h>]])
@@ -105,7 +105,7 @@ AC_CHECK_MEMBER([siginfo_t.si_int],
 # --enable-all-static
 # Do not use libtool if building all static
 AC_ARG_ENABLE([all-static],
-              [AC_HELP_STRING([--enable-all-static], [create statically linked executable])])
+              [AS_HELP_STRING([--enable-all-static],[create statically linked executable])])
 STATIC_FLAGS=
 AS_IF([test x$enable_all_static = xyes],
       [AC_SUBST([STATIC_FLAGS], [-all-static])])
@@ -116,24 +116,24 @@ AS_IF([test x$enable_all_static = xyes],
 maybe_swig=
 # --enable-python-binding
 AC_ARG_ENABLE([python-binding],
-              [AC_HELP_STRING([--enable-python-binding@<:@=PATH@:>@], [create SWIG python module and install in PATH])])
+              [AS_HELP_STRING([--enable-python-binding@<:@=PATH@:>@],[create SWIG python module and install in PATH (user or system site-packages if PATH=user|sys)])])
 # --enable-ruby-binding
 AC_ARG_ENABLE([ruby-binding],
-              [AC_HELP_STRING([--enable-ruby-binding@<:@=PATH@:>@], [create SWIG ruby module and install in PATH])])
+              [AS_HELP_STRING([--enable-ruby-binding@<:@=PATH@:>@],[create SWIG ruby module and install in PATH])])
 # --enable-perl-binding
 AC_ARG_ENABLE([perl-binding],
-              [AC_HELP_STRING([--enable-perl-binding@<:@=PATH@:>@], [create SWIG perl module and install in PATH])])
+              [AS_HELP_STRING([--enable-perl-binding@<:@=PATH@:>@],[create SWIG perl module and install in PATH])])
 # --enable-all-binding
 AC_ARG_ENABLE([all-binding],
-              [AC_HELP_STRING([--enable-all-binding@<:@=PATH@:>@], [create SWIG module for all languages and install in PATH])])
+              [AS_HELP_STRING([--enable-all-binding@<:@=PATH@:>@],[create SWIG module for all languages and install in PATH])])
 
 # --enable-swig
 AC_ARG_ENABLE([swig],
-              [AC_HELP_STRING([--enable-swig], [enable development of swig binding])])
+              [AS_HELP_STRING([--enable-swig],[enable development of swig binding])])
 AS_IF([test x$enable_swig = xyes],
       [AX_PKG_SWIG([3.0.0], [], [AC_MSG_ERROR([SWIG version 3 is required])])])
 AS_IF([test -n "$SWIG"],
-      [SWIG_ENABLE_CXX])
+      [AX_SWIG_ENABLE_CXX])
 AM_CONDITIONAL([HAVE_SWIG], [test -n "$SWIG"])
 
 # Python binding setup
@@ -143,7 +143,7 @@ AM_COND_IF([PYTHON_BINDING],
            [AS_IF([test x$enable_python_binding != xyes], [PYTHON_SITE_PKG=$enable_python_binding])]
            [AX_PYTHON_DEVEL([], [$prefix])])
 AC_ARG_ENABLE([python-deprecated],
-              [AC_HELP_STRING([--enable-python-deprecated], [enable the deprecated 'jellyfish' module (in addition to 'dna_jellyfish')])])
+              [AS_HELP_STRING([--enable-python-deprecated],[enable the deprecated 'jellyfish' module (in addition to 'dna_jellyfish')])])
 AM_CONDITIONAL([PYTHON_DEPRECATED], [test -z "$enable_python_deprecated" -o x$enable_python_deprecated != xno])
 
 # Ruby binding setup

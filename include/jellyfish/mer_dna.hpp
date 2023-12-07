@@ -81,7 +81,7 @@ struct cmask<U, len, 0> {
 
 // Fast reverse complement of one word through bit tweedling.
 inline uint32_t word_reverse_complement(uint32_t w) {
-  typedef uint64_t U;
+  typedef uint32_t U;
   w = ((w >> 2)  & cmask<U, 2 >::v) | ((w & cmask<U, 2 >::v) << 2);
   w = ((w >> 4)  & cmask<U, 4 >::v) | ((w & cmask<U, 4 >::v) << 4);
   w = ((w >> 8)  & cmask<U, 8 >::v) | ((w & cmask<U, 8 >::v) << 8);

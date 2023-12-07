@@ -10,9 +10,9 @@ somewhat slower.
 Installation
 ============
 
-See the installation instructions on the
-[main page](../../tree/master) on how to install the bindings at the
-same times as Jellyfish.
+See the installation instructions on the [main page](../../tree/master) on how
+to install the bindings at the same times as Jellyfish. This is the suggested
+way to install the binding.
 
 Additionally, it is possible to install the bindings from the
 distribution tarball. If Jellyfish is already installed (that is
