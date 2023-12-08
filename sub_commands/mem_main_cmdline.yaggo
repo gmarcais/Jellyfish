@@ -19,7 +19,7 @@ option("mer-len", "m") {
   description "Length of mer"
   uint32; required }
 option("size", "s") {
-  description "Initial hash size"
+  description "Initial hash size in bytes"
   uint64; suffix }
 option("counter-len", "c") {
   description "Length bits of counting field"
