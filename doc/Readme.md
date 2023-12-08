@@ -244,7 +244,7 @@ k-mers with count greater or equal to 255 will be reported of having
 a count of 255.
 
 Also, low frequency and high frequency k-mers can be skipped using the
-`--L and `--U` switches respectively. Although it might be more
+`--L` and `--U` switches respectively. Although it might be more
 appropriate to filter out the low frequency $k$-mers using Bloom
 filters, as shown in
 section [Counting-high-frequency-k-mers](#Counting-high-frequency-k-mers).
