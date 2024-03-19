@@ -173,9 +173,9 @@ TESTS += tests/swig_python.sh tests/swig_ruby.sh tests/swig_perl.sh
 tests/swig_python.log: tests/generate_sequence.log
 tests/swig_ruby.log: tests/generate_sequence.log
 tests/swig_perl.log: tests/generate_sequence.log
-EXTRA_DIST += swig/python/test_mer_file.py swig/python/test_hash_counter.py swig/python/test_string_mers.py
-EXTRA_DIST += swig/ruby/test_mer_file.rb swig/ruby/test_hash_counter.rb swig/ruby/test_string_mers.rb
-EXTRA_DIST += swig/perl5/t/test_mer_file.t swig/perl5/t/test_hash_counter.t swig/perl5/t/test_string_mers.t
+EXTRA_DIST += swig/python/test_jellyfish.py swig/python/test_mer_file.py swig/python/test_hash_counter.py swig/python/test_string_mers.py
+EXTRA_DIST += swig/ruby/test_jellyfish.rb swig/ruby/test_mer_file.rb swig/ruby/test_hash_counter.rb swig/ruby/test_string_mers.rb
+EXTRA_DIST += swig/perl5/t/test_jellyfish.t swig/perl5/t/test_mer_file.t swig/perl5/t/test_hash_counter.t swig/perl5/t/test_string_mers.t
 
 
 ##############
