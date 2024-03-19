@@ -50,6 +50,29 @@ sudo apt update
 sudo apt install jellyfish
 ```
 
+### Apptainer container
+
+From the git repository, create a container image (`jellyfish.sif` file) with:
+
+``` Shell
+apptainer build jellyfish.sif jellyfish.def
+```
+
+By default it builds the code from the `HEAD` branch of the git repository.
+This can be change using the `treeish` build argument.
+For example, to build version 2.3.1:
+``` Shell
+apptainer build --build-arg treeish=v2.3.1 jellyfish.sif jellyfish.def
+```
+
+The default command is the `jellyfish` command.
+Use like this:
+``` Shell
+apptainer run jellyfish.sif count -m 21 -C -s 10M -o output.jf input.fa
+```
+
+Get some help with `apptainer run-help jellyfish.sif`
+
 ### From source
 
 To get an easier to compiled packaged tar ball of the source code, download a release from the [github release][3]. You need make and g++ version 4.4 or higher. To install in your home directory, do:
