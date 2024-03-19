@@ -50,6 +50,16 @@ else:
 #undef die
 %}
 
+#ifdef SWIGPYTHON
+%constant const char* __version__ = PACKAGE_VERSION;
+#else
+%constant const char* VERSION = PACKAGE_VERSION;
+#endif
+
+#ifdef SWIGRUBY
+#endif
+
+
 %include "mer_dna.i"
 %include "mer_file.i"
 %include "hash_counter.i"

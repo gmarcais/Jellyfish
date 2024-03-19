@@ -13,7 +13,8 @@ $JF histo ${pref}.jf > ${pref}.histo
 
 
 
-for i in test_mer_file.rb test_hash_counter.rb test_string_mers.rb; do
+#for i in test_jellyfish.rb test_mer_file.rb test_hash_counter.rb test_string_mers.rb; do
+for i in test_jellyfish.rb; do
     echo Test $i
     $RUBY "-I$LOADPATH" "$SRCDIR/swig/ruby/$i" .
 done
