@@ -9,7 +9,7 @@
 import os
 import sys
 import re
-from distutils.core import setup, Extension
+from setuptools import setup, Extension
 
 def pkgconfig(s):
     pipe = os.popen("pkg-config {}".format(s))
