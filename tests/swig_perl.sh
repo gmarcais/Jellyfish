@@ -7,6 +7,9 @@ mkdir -p tests-data; cd tests-data
 LOADPATH="$BUILDDIR/swig/perl5"
 K=$($PERL -e 'print(int(rand(16)) + 6)')
 I=$($PERL -e 'print(int(rand(5)))')
+
+echo "K $K I $I"
+
 $JF count -m $K -s 10M -t $nCPUs -C -o ${pref}.jf seq1m_$I.fa
 $JF dump -c ${pref}.jf > ${pref}.dump
 $JF histo ${pref}.jf > ${pref}.histo

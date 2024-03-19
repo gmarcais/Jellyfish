@@ -7,6 +7,9 @@ mkdir -p tests-data; cd tests-data
 export PYTHONPATH="$BUILDDIR/swig/python/.libs:$BUILDDIR/swig/python${PYTHONPATH+:$PYTHONPATH}"
 K=$($PYTHON -c 'import random; print(random.randint(6, 20))')
 I=$($PYTHON -c 'import random; print(random.randint(0, 4))')
+
+echo "K $K I $I"
+
 $JF count -m $K -s 10M -t $nCPUs -C -o ${pref}.jf seq1m_$I.fa
 $JF dump -c ${pref}.jf > ${pref}.dump
 $JF histo ${pref}.jf > ${pref}.histo
