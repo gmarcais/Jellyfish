@@ -296,13 +296,20 @@ namespace jellyfish {
 // #pragma GCC diagnostic pop
 
     // i is the lower 2 bits of x, and an index into the smear array. Compute res ^= smear[i] & p[j].
+#ifdef __x86_64__
 #define AND_XOR(off)                                                    \
     asm("movdqa (%[s],%[i]), %[load]\n\t"                               \
-        "pand " off "(%[p]),%[load]\n\t"                                \
+        "pand " #off "(%[p]),%[load]\n\t"                               \
         "pxor %[load],%[acc]\n\t"                                       \
         : [acc]"=&x"(acc)                                               \
         : "[acc]"(acc),  [i]"r"(i), [p]"r"(p), [s]"r"(smear), [load]"x"(load))
-
+#else
+#define AND_XOR(off) do {                                               \
+        xmm_t a = { smear[i / 8], smear[i / 8 + 1] };                   \
+        xmm_t b = { p[(off) / 8], p[(off) / 8 + 1] };                   \
+        acc ^= a & b;                                                   \
+    } while (0)
+#endif
 
     uint64_t i, j = 0, x = 0;
     for(unsigned int w = 0; w < nb_words(); ++w) {
@@ -314,16 +321,16 @@ namespace jellyfish {
       }
       for( ; j > 7; j -= 8, p -= 8) {
         i = (x & (uint64_t)0x3) << 4;
-        AND_XOR("0x30");
+        AND_XOR(0x30);
         x >>= 2;
         i = (x & (uint64_t)0x3) << 4;
-        AND_XOR("0x20");
+        AND_XOR(0x20);
         x >>= 2;
         i = (x & (uint64_t)0x3) << 4;
-        AND_XOR("0x10");
+        AND_XOR(0x10);
         x >>= 2;
         i = (x & (uint64_t)0x3) << 4;
-        AND_XOR("");
+        AND_XOR(0);
         x >>= 2;
       }
     }
@@ -333,18 +340,19 @@ namespace jellyfish {
     switch(j) {
     case 6:
       i = (x & (uint64_t)0x3) << 4;
-      AND_XOR("0x20");
+      AND_XOR(0x20);
       x >>= 2;
     case 4:
       i = (x & (uint64_t)0x3) << 4;
-      AND_XOR("0x10");
+      AND_XOR(0x10);
       x >>= 2;
     case 2:
       i = (x & (uint64_t)0x3) << 4;
-      AND_XOR("");
+      AND_XOR(0);
     }
 
     // Get result out
+#ifdef __x86_64__
     uint64_t res1, res2;
     asm("movd %[acc], %[res1]\n\t"
         "psrldq $8, %[acc]\n\t"
@@ -352,6 +360,10 @@ namespace jellyfish {
         : [res1]"=r"(res1), [res2]"=r"(res2)
         : [acc]"x"(acc));
     return res1 ^ res2;
+#else
+    return acc[0] ^ acc[1];
+#endif
+
   }
 #endif // HAVE_SSE
 
