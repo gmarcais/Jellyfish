@@ -97,16 +97,17 @@ public:
 
     //    while(!ary_->add(k, v, &carry_shift, is_new_ptr, id_ptr)) {
     while(true) {
-      if(ary_->add(k, v, &carry_shift, is_new_ptr, id_ptr)) break;
+      bool key_claimed = false;
+      if(ary_->add(k, v, &carry_shift, is_new_ptr, id_ptr, &key_claimed)) break;
       handle_full_ary();
 
-      // If carry_shift == v, failed to allocate the first field for
+      // If !key_claimed, failed to allocate the first field for
       // key, hence status of is_new and value for id are not
-      // determined yet. On the other hand, if carry_shift < v, we
+      // determined yet. On the other hand, if key_claimed is true, we
       // failed while adding extra field for large key, so the status
       // of is_new and value of id are known. We do not update them in future
       // calls.
-      if(carry_shift != v) {
+      if(key_claimed) {
         is_new_ptr = &is_new_void;
         id_ptr     = &id_void;
         v          = carry_shift;
@@ -156,9 +157,10 @@ public:
     uint64_t carry_shift = 0;
 
     while(true) {
-      if(ary_->update_add(k, v, &carry_shift, tmp_key))
+      bool key_found = false;
+      if(ary_->update_add(k, v, &carry_shift, tmp_key, &key_found))
         return true;
-      if(carry_shift == v)
+      if(!key_found)
         return false;
       handle_full_ary();
       v = carry_shift;
