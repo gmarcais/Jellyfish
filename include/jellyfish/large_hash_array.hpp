@@ -288,10 +288,11 @@ public:
    * proper size doubling is perform, one need to call add again with
    * val set to carry_shift.
    */
-  inline bool add(const key_type& key, mapped_type val, word* carry_shift, bool* is_new, size_t* id) {
+  inline bool add(const key_type& key, mapped_type val, word* carry_shift, bool* is_new, size_t* id, bool* key_claimed = 0) {
     uint64_t hash = hash_matrix_.times(key);
     *carry_shift  = 0;
-    return add_rec(hash & size_mask_, key, val, false, is_new, id, carry_shift);
+    if(key_claimed) *key_claimed = false;
+    return add_rec(hash & size_mask_, key, val, false, is_new, id, carry_shift, key_claimed);
   }
 
   inline bool add(const key_type& key, mapped_type val, word* carry_shift) {
@@ -332,12 +333,14 @@ public:
 
 
   // Optimization. Use tmp_key as buffer. Avoids allocation if update_add is called repeatedly.
-  bool update_add(const key_type& key, mapped_type val, word* carry_shift, key_type& tmp_key) {
+  bool update_add(const key_type& key, mapped_type val, word* carry_shift, key_type& tmp_key, bool* key_found = 0) {
     size_t          id;
     word*           w;
     const offset_t* o;
 
+    if(key_found) *key_found = false;
     if(get_key_id(key, &id, tmp_key, (const word**)&w, &o)) {
+      if(key_found) *key_found = true;
       *carry_shift = 0;
       return add_rec_at(id, key, val, o, w, carry_shift);
     } else {
@@ -654,24 +657,27 @@ public:
   // carry_shift is properly set to the value of the carry shifted by
   // the right number of bits so a further call to add with
   // carry_shift as val finishes the operation.
-  bool add_rec(size_t id, const key_type& key, word val, bool large, bool* is_new, size_t* eid, word* carry_shift) {
+  bool add_rec(size_t id, const key_type& key, word val, bool large, bool* is_new, size_t* eid, word* carry_shift, bool* key_claimed = 0) {
     const offset_t *ao = 0;
     word	   *w  = 0;
 
     bool claimed = false;
     if(large)
       claimed = claim_large_key(&id, &ao, &w);
-    else
+    else {
       claimed = claim_key(key, is_new, &id, &ao, &w);
+      if(claimed && key_claimed)
+        *key_claimed = true;
+    }
     if(!claimed) {
       *carry_shift = val << (*carry_shift);
       return false;
     }
     *eid = id;
-    return add_rec_at(id, key, val, ao, w, carry_shift);
+    return add_rec_at(id, key, val, ao, w, carry_shift, key_claimed);
   }
 
-  bool add_rec_at(size_t id, const key_type& key, word val, const offset_t* ao, word* w, word* carry_shift) {
+  bool add_rec_at(size_t id, const key_type& key, word val, const offset_t* ao, word* w, word* carry_shift, bool* key_claimed = 0) {
     // Increment value
     word *vw       = w + ao->val.woff;
     word  cary     = add_val(vw, val, ao->val.boff, ao->val.mask1);
@@ -690,7 +696,7 @@ public:
     id = (id + reprobes_[0]) & size_mask_;
     size_t ignore_eid;
     bool   ignore_is_new;
-    return add_rec(id, key, cary, true, &ignore_is_new, &ignore_eid, carry_shift);
+    return add_rec(id, key, cary, true, &ignore_is_new, &ignore_eid, carry_shift, key_claimed);
 
       // // Adding failed, table is full. Need to back-track and
       // // substract val.
