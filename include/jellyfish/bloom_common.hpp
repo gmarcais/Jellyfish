@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __JELLYFISH_BLOOM_COMMON_HPP__
-#define __JELLYFISH_BLOOM_COMMON_HPP__
+#pragma once
 
 #include <math.h>
 #include <jellyfish/divisor.hpp>
@@ -117,5 +116,3 @@ template<typename Key, typename Derived, typename HashPair>
 const double bloom_base<Key, Derived, HashPair>::LOG2_SQ = 0.4804530139182014;
 
 }
-
-#endif /* __JELLYFISH_BLOOM_COMMON_HPP__ */

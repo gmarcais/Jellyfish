@@ -7,8 +7,7 @@
 */
 
 
-#ifndef __BLOOM_COUNTER2_HPP__
-#define __BLOOM_COUNTER2_HPP__
+#pragma once
 
 #include <assert.h>
 #include <math.h>
@@ -209,5 +208,3 @@ public:
 };
 
 } // namespace jellyfish {
-
-#endif // __BLOOM_COUNTER2_HPP__

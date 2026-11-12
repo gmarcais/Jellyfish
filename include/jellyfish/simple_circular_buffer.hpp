@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __SIMPLE_CIRCULAR_BUFFER_H__
-#define __SIMPLE_CIRCULAR_BUFFER_H__
+#pragma once
 
 #include <memory>
 
@@ -123,4 +122,3 @@ namespace jellyfish {
     // };
   }
 }
-#endif /* __SIMPLE_CIRCULAR_BUFFER_H__ */

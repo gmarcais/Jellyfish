@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __JELLYFISH_MER_OVELAP_SEQUENCE_PARSER_H_
-#define __JELLYFISH_MER_OVELAP_SEQUENCE_PARSER_H_
+#pragma once
 
 #include <stdint.h>
 
@@ -309,5 +308,3 @@ protected:
   char peek(std::istream& is) { return is.peek(); }
 };
 }
-
-#endif /* __JELLYFISH_MER_OVELAP_SEQUENCE_PARSER_H_ */

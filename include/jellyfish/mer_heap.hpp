@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __JELLYFISH_HEAP_HPP__
-#define __JELLYFISH_HEAP_HPP__
+#pragma once
 
 #include <stdint.h>
 #include <algorithm>
@@ -103,5 +102,3 @@ public:
 };
 
 } } // namespace jellyfish { namespace mer_heap {
-
-#endif // __HEAP_HPP__

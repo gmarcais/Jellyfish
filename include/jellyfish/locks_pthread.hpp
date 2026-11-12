@@ -7,8 +7,7 @@
 */
 
 
-#ifndef __JELLYFISH_LOCKS_PTHREAD_HPP__
-#define __JELLYFISH_LOCKS_PTHREAD_HPP__
+#pragma once
 
 #include <time.h>
 #include <sys/time.h>
@@ -199,5 +198,3 @@ typedef pthread::cond cond;
 typedef pthread::mutex mutex;
 typedef pthread::barrier barrier;
 } } // namespace jellyfish { namespace { locks
-
-#endif /* __JELLYFISH_LOCKS_PTHREAD_HPP__ */

@@ -6,5 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
+#pragma once
+
 void print_backtrace();
 void show_backtrace();

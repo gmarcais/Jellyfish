@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __JELLYFISH_TOKEN_RING_HPP__
-#define __JELLYFISH_TOKEN_RING_HPP__
+#pragma once
 
 #include <vector>
 #include <jellyfish/locks_pthread.hpp>
@@ -76,4 +75,3 @@ public:
   }
 };
 } // namespace jellyfish {
-#endif

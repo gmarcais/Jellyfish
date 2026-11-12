@@ -7,8 +7,7 @@
 */
 
 
-#ifndef __STREAM_ITERATOR_HPP__
-#define __STREAM_ITERATOR_HPP__
+#pragma once
 
 #include <assert.h>
 
@@ -78,5 +77,3 @@ protected:
 };
 
 }
-
-#endif /* __STREAM_ITERATOR_HPP__ */

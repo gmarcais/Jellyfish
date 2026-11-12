@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __JELLYFISH_GENERATOR_MANAGER_H__
-#define __JELLYFISH_GENERATOR_MANAGER_H__
+#pragma once
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -161,6 +160,3 @@ public:
   std::string get_cmd();
 };
 }
-
-#endif /* __JELLYFISH_GENERATOR_MANAGER_H__ */
-

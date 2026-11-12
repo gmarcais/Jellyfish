@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __JELLYFISH_MER_DNA_HPP__
-#define __JELLYFISH_MER_DNA_HPP__
+#pragma once
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -717,5 +716,3 @@ typedef mer_dna_ns::mer_base_static<unsigned __int128, 0> mer_dna128;
 typedef mer_dna64 mer_dna;
 
 } // namespace jellyfish
-
-#endif

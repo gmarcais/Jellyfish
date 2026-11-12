@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __JELLYFISH_STORAGE_HPP__
-#define __JELLYFISH_STORAGE_HPP__
+#pragma once
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -25,5 +24,3 @@ namespace jellyfish {
   extern const size_t *quadratic_reprobes;
 
 }
-
-#endif // __STORAGE_HPP__

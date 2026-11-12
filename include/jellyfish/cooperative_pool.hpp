@@ -7,8 +7,7 @@
 */
 
 
-#ifndef __JELLYFISH_COOPERATIVE_POOL_HPP__
-#define __JELLYFISH_COOPERATIVE_POOL_HPP__
+#pragma once
 
 #include <assert.h>
 #include <unistd.h>
@@ -247,4 +246,3 @@ private:
 };
 
 } // namespace jellyfish {
-#endif /* __JELLYFISH_COOPERATIVE_POOL_HPP__ */

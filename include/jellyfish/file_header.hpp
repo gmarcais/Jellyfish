@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __JELLYFISH_FILE_HEADER_HPP__
-#define __JELLYFISH_FILE_HEADER_HPP__
+#pragma once
 
 #include <string>
 #include <jellyfish/generic_file_header.hpp>
@@ -108,5 +107,3 @@ public:
   void format(const std::string& s) { root_["format"] = s; }
 };
 } // namespace jellyfish
-
-#endif /* __JELLYFISH_FILE_HEADER_HPP__ */

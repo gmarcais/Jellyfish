@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __JELLYFISH_CPP_ARRAY_HPP_
-#define __JELLYFISH_CPP_ARRAY_HPP_
+#pragma once
 
 #include <cstddef>
 #include <memory>
@@ -144,5 +143,3 @@ public:
   }
 };
 } // namespace jellyfish
-
-#endif /* __JELLYFISH_CPP_ARRAY_HPP_ */

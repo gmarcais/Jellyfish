@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __JELLYFISH_ERR_HPP__
-#define __JELLYFISH_ERR_HPP__
+#pragma once
 
 #include <iostream>
 #include <iomanip>
@@ -87,5 +86,3 @@ inline void die(std::string msg) { die(1, msg); }
   class name : public std::runtime_error {                              \
   public: explicit name(const std::string &txt) : std::runtime_error(txt) {} \
   }
-
-#endif // __JELLYFISH_ERR_HPP__

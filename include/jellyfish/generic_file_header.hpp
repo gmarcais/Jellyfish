@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __JELLYFISH_GENERIC_FILE_HEADER_HPP__
-#define __JELLYFISH_GENERIC_FILE_HEADER_HPP__
+#pragma once
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -257,5 +256,3 @@ inline std::ostream& operator<<(std::ostream& os, const generic_file_header& h) 
 }
 
 } // namespace jellyfish
-
-#endif /* __JELLYFISH_GENERIC_FILE_HEADER_HPP__ */

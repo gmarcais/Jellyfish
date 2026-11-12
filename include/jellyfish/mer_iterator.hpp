@@ -7,8 +7,7 @@
 */
 
 
-#ifndef __MER_ITERATOR_HPP__
-#define __MER_ITERATOR_HPP__
+#pragma once
 
 #include <iterator>
 #include <jellyfish/mer_dna.hpp>
@@ -88,5 +87,3 @@ public:
 };
 
 } // namespace jellyfish {
-
-#endif /* __MER_ITERATOR_HPP__ */

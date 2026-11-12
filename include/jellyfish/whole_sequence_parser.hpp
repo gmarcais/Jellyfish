@@ -1,4 +1,4 @@
-#ifndef __JELLYFISH_WHOLE_SEQUENCE_PARSER_HPP__
+#pragma once
 /*  This file is part of Jellyfish.
 
     This work is dual-licensed under 3-Clause BSD License or GPL 3.0.
@@ -6,7 +6,6 @@
 
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
-#define __JELLYFISH_WHOLE_SEQUENCE_PARSER_HPP__
 
 #include <string>
 #include <memory>
@@ -211,5 +210,3 @@ protected:
 #endif
 };
 } // namespace jellyfish
-
-#endif /* __JELLYFISH_WHOLE_SEQUENCE_PARSER_HPP__ */

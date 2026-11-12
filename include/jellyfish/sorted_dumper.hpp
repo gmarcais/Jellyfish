@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __JELLYFISH_SORTED_DUMPER_HPP__
-#define __JELLYFISH_SORTED_DUMPER_HPP__
+#pragma once
 
 #include <iostream>
 #include <sstream>
@@ -101,5 +100,3 @@ public:
   }
 };
 } // namespace jellyfish {
-
-#endif /* __JELLYFISH_SORTED_DUMPER_HPP__ */

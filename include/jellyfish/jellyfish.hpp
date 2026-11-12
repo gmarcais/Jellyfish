@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __JELLYFISH_JELLYFISH_HPP__
-#define __JELLYFISH_JELLYFISH_HPP__
+#pragma once
 
 #include <stdint.h>
 #include <jellyfish/mer_dna.hpp>
@@ -24,6 +23,3 @@ typedef jellyfish::binary_reader<jellyfish::mer_dna, uint64_t> binary_reader;
 typedef jellyfish::binary_query_base<jellyfish::mer_dna, uint64_t> binary_query;
 typedef jellyfish::binary_writer<jellyfish::mer_dna, uint64_t> binary_writer;
 typedef jellyfish::text_writer<jellyfish::mer_dna, uint64_t> text_writer;
-
-
-#endif /* __JELLYFISH_JELLYFISH_HPP__ */

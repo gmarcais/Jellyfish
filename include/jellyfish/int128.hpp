@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef _INT128_H_
-#define _INT128_H_
+#pragma once
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -191,5 +190,3 @@ public:
 };
 } // namespace std
 #endif /* HAVE_NUMERIC_LIMITS128 */
-
-#endif /* _INT128_H_ */

@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __JELLYFISH_ALLOCATORS_MMAP_HPP__
-#define __JELLYFISH_ALLOCATORS_MMAP_HPP__
+#pragma once
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -66,5 +65,3 @@ private:
 };
 inline void swap(mmap& a, mmap& b) { a.swap(b); }
 }
-
-#endif

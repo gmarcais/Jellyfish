@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __JELLYFISH_STDIO_FILEBUF_HPP__
-#define __JELLYFISH_STDIO_FILEBUF_HPP__
+#pragma once
 
 #include <cstdio>
 #include <cstdlib>
@@ -159,4 +158,3 @@ private:
 
 };
 } // namespace jellyfish {
-#endif // __JELLYFISH_STDIO_FILEBUF_HPP__

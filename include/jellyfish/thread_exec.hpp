@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __JELLYFISH_THREAD_EXEC_HPP__
-#define __JELLYFISH_THREAD_EXEC_HPP__
+#pragma once
 
 #include <pthread.h>
 #include <vector>
@@ -41,5 +40,3 @@ public:
   }
 };
 } // namespace jellyfish {
-
-#endif // __THREAD_EXEC_HPP__

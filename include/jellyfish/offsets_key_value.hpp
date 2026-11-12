@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __JELLYFISH_OFFSETS_KEY_VALUE_HPP__
-#define __JELLYFISH_OFFSETS_KEY_VALUE_HPP__
+#pragma once
 
 #include <signal.h>
 #include <iostream>
@@ -267,5 +266,3 @@ typename Offsets<word>::block_info Offsets<word>::compute_offsets()
   return res;
 }
 } // namespace jellyfish
-
-#endif // __OFFSETS_KEY_VALUE_HPP__

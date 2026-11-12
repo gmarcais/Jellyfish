@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __JELLYFISH_ATOMIC_BITS_ARRAY_HPP__
-#define __JELLYFISH_ATOMIC_BITS_ARRAY_HPP__
+#pragma once
 
 #include <stdexcept>
 #include <iterator>
@@ -188,5 +187,3 @@ protected:
 };
 
 } // namespace jellyfish
-
-#endif /* __JELLYFISH_ATOMIC_BITS_ARRAY_HPP__ */

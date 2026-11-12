@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __JELLYFISH_PARSER_COMMON_H__
-#define __JELLYFISH_PARSER_COMMON_H__
+#pragma once
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -49,5 +48,3 @@ struct stream_type {
 };
 
 }
-
-#endif // __JELLYFISH_PARSER_COMMON_H__

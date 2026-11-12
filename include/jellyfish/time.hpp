@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __JELLYFISH_TIME_HPP__
-#define __JELLYFISH_TIME_HPP__
+#pragma once
 
 #include <sys/time.h>
 #include <iostream>
@@ -80,5 +79,3 @@ class Time {
     return res.str();
   }
 };
-
-#endif // __TIME_HPP__

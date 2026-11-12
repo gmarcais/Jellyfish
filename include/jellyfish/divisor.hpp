@@ -8,8 +8,7 @@
 
 
 
-#ifndef __JELLYFISH_DIVISOR_HPP__
-#define __JELLYFISH_DIVISOR_HPP__
+#pragma once
 
 #include <stdint.h>
 #ifdef HAVE_CONFIG_H
@@ -137,6 +136,3 @@ inline std::ostream& operator<<(std::ostream& os, const divisor64& d) {
 }
 
 } // namespace jflib
-
-#endif /* __JELLYFISH_DIVISOR_HPP__ */
-

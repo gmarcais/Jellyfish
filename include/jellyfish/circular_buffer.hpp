@@ -7,8 +7,7 @@
 */
 
 
-#ifndef __JELLYFISH_CIRCULAR_BUFFER_HPP__
-#define __JELLYFISH_CIRCULAR_BUFFER_HPP__
+#pragma once
 
 #include <limits>
 
@@ -189,4 +188,3 @@ T jflib::basic_circular_buffer<T,n,guard>::dequeue() {
 
   return res.split.val;
 }
-#endif /* __JELLYFISH_CIRCULAR_BUFFER_HPP__ */

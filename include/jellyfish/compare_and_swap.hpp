@@ -7,8 +7,7 @@
 */
 
 
-#ifndef _JFLIB_COMPARE_AND_SWAP_H_
-#define _JFLIB_COMPARE_AND_SWAP_H_
+#pragma once
 
 #include <sys/types.h>
 #include <stdint.h>
@@ -67,6 +66,3 @@ namespace jflib {
     return cas(ptr, ov, nv, &cv);
   }
 }
-
-
-#endif /* _JFLIB_COMPARE_AND_SWAP_H_ */

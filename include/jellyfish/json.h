@@ -72,8 +72,7 @@ license you like.
 
 
 
-#ifndef JSON_AMALGATED_H_INCLUDED
-# define JSON_AMALGATED_H_INCLUDED
+#pragma once
 /// If defined, indicates that the source file is amalgated
 /// to prevent private header inclusion.
 #define JSON_IS_AMALGATED
@@ -1847,9 +1846,3 @@ namespace Json {
 // //////////////////////////////////////////////////////////////////////
 // End of content of file: include/json/writer.h
 // //////////////////////////////////////////////////////////////////////
-
-
-
-
-
-#endif //ifndef JSON_AMALGATED_H_INCLUDED

@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __JELLYFISH_RECTANGULAR_BINARY_MATRIX_HPP__
-#define __JELLYFISH_RECTANGULAR_BINARY_MATRIX_HPP__
+#pragma once
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -397,5 +396,3 @@ namespace jellyfish {
 #endif // HAVE_INT128
 
 }
-
-#endif

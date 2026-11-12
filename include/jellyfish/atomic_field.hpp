@@ -7,8 +7,7 @@
 */
 
 
-#ifndef __JELLYFISH_ATOMIC_FIELD_HPP__
-#define __JELLYFISH_ATOMIC_FIELD_HPP__
+#pragma once
 
 #include <jellyfish/compare_and_swap.hpp>
 
@@ -144,6 +143,3 @@ namespace jflib {
   AR_COMPOUND_ASSIGN(|);
   AR_COMPOUND_ASSIGN(^);
 }
-
-
-#endif /* __JELLYFISH_ATOMIC_FIELD_HPP__ */

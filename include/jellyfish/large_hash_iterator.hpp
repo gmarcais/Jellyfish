@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __LARGE_HASH_ITERATOR_HPP__
-#define __LARGE_HASH_ITERATOR_HPP__
+#pragma once
 
 #include <iterator>
 #include <utility>
@@ -249,4 +248,3 @@ public:
   }
 };
 } } // namespace jellyfish { namespace large_hash {
-#endif /* __LARGE_HASH_ITERATOR_HPP__ */

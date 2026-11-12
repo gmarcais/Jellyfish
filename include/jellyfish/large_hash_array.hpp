@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __JELLYFISH_LARGE_HASH_ARRAY_HPP__
-#define __JELLYFISH_LARGE_HASH_ARRAY_HPP__
+#pragma once
 
 #include <jellyfish/storage.hpp>
 #include <jellyfish/atomic_gcc.hpp>
@@ -1039,5 +1038,3 @@ protected:
 };
 
 } } // namespace jellyfish { namespace large_hash_array
-
-#endif /* __JELLYFISH_LARGE_HASH_ARRAY_HPP__ */

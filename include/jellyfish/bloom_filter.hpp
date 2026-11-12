@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __JELLYFISH_BLOOM_FILTER_HPP__
-#define __JELLYFISH_BLOOM_FILTER_HPP__
+#pragma once
 
 #include <jellyfish/allocators_mmap.hpp>
 #include <jellyfish/atomic_gcc.hpp>
@@ -153,5 +152,3 @@ public:
 };
 
 }
-
-#endif /* __JELLYFISH_BLOOM_FILTER_HPP__ */

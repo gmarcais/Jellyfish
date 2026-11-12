@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __JELYFISH_SAM_FORMAT_H__
-#define __JELYFISH_SAM_FORMAT_H__
+#pragma once
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -94,4 +93,3 @@ public:
 
 }  // jellyfish
 #endif // HAVE_HTSLIB
-#endif // __JELYFISH_SAM_FORMAT_H__

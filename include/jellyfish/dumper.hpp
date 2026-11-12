@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __JELLYFISH_DUMPER_HPP__
-#define __JELLYFISH_DUMPER_HPP__
+#pragma once
 
 #include <iostream>
 #include <sstream>
@@ -92,4 +91,3 @@ public:
   virtual ~dumper_t() {};
 };
 }
-#endif // __DUMPER_HPP__

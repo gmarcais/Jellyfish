@@ -6,8 +6,7 @@
 `SPDX-License-Identifier: BSD-3-Clause OR  GPL-3.0`
 */
 
-#ifndef __JELLYFISH_MISC_HPP__
-#define __JELLYFISH_MISC_HPP__
+#pragma once
 
 #include <stdio.h>
 #include <string.h>
@@ -235,5 +234,3 @@ pointer_integer<T> operator+(T x, pointer_integer<T>& p) { return pointer_intege
 template<typename T>
 pointer_integer<T> operator-(T x, pointer_integer<T>& p) { return pointer_integer<T>(x - *p); }
 } // namespace jellyfish
-
-#endif // __MISC_HPP__
