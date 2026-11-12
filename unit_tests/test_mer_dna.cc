@@ -20,6 +20,7 @@
 #include <iostream>
 #include <map>
 #include <sstream>
+#include <vector>
 #include <gtest/gtest.h>
 #include <jellyfish/mer_dna.hpp>
 #include <unit_tests/test_main.hpp>
@@ -121,6 +122,14 @@ TEST(MerDNASimple, Codes) {
       break;
     }
   }
+}
+
+TEST(MerDNASimple, RandomizeAdvances) {
+  typedef mer_dna_ns::mer_base_dynamic<uint64_t> Mer;
+  Mer first(64), second(64);
+  first.randomize();
+  second.randomize();
+  EXPECT_NE(first, second);
 }
 
 TEST(MerDNASimple, SetBits) {
@@ -333,29 +342,133 @@ public:
     return *test_mers[VT::test_id];
   }
 };
-typedef ::testing::Types<VTC<mer_dna_ns::mer_base_dynamic<uint64_t>, 0>,
-                         VTC<mer_dna_ns::mer_base_dynamic<uint64_t>, 1>,
-                         VTC<mer_dna_ns::mer_base_dynamic<uint64_t>, 2>,
-                         VTC<mer_dna_ns::mer_base_dynamic<uint64_t>, 3>,
+template<typename T>
+struct StackMers {
+  typedef mer_dna_ns::mer_base_stack<T, 32> storage;
+  typedef mer_dna_ns::mer_base_dynamic<T, storage> dynamic;
+  typedef mer_dna_ns::mer_base_static<T, 0, storage> shared;
+};
+
+#define MER_DNA_CASES(Type) VTC<Type, 0>, VTC<Type, 1>, VTC<Type, 2>, VTC<Type, 3>
+typedef ::testing::Types<
+    MER_DNA_CASES(mer_dna_ns::mer_base_dynamic<uint32_t>),
+    MER_DNA_CASES(mer_dna_ns::mer_base_dynamic<uint64_t>),
+    MER_DNA_CASES(mer_dna_ns::mer_base_static<uint32_t>),
+    MER_DNA_CASES(mer_dna_ns::mer_base_static<uint64_t>),
+    MER_DNA_CASES(StackMers<uint32_t>::dynamic),
+    MER_DNA_CASES(StackMers<uint64_t>::dynamic),
+    MER_DNA_CASES(StackMers<uint32_t>::shared),
+    MER_DNA_CASES(StackMers<uint64_t>::shared)
 #ifdef HAVE_INT128
-                         VTC<mer_dna_ns::mer_base_dynamic<unsigned __int128>, 0>,
-                         VTC<mer_dna_ns::mer_base_dynamic<unsigned __int128>, 1>,
-                         VTC<mer_dna_ns::mer_base_dynamic<unsigned __int128>, 2>,
-                         VTC<mer_dna_ns::mer_base_dynamic<unsigned __int128>, 3>,
+    , MER_DNA_CASES(mer_dna_ns::mer_base_dynamic<unsigned __int128>),
+    MER_DNA_CASES(mer_dna_ns::mer_base_static<unsigned __int128>),
+    MER_DNA_CASES(StackMers<unsigned __int128>::dynamic),
+    MER_DNA_CASES(StackMers<unsigned __int128>::shared)
 #endif
-                         VTC<mer_dna_ns::mer_base_static<uint64_t>, 0>,
-                         VTC<mer_dna_ns::mer_base_static<uint64_t>, 1>,
-                         VTC<mer_dna_ns::mer_base_static<uint64_t>, 2>,
-                         VTC<mer_dna_ns::mer_base_static<uint64_t>, 3>,
-#ifdef HAVE_INT128
-                         VTC<mer_dna_ns::mer_base_static<unsigned __int128>, 0>,
-                         VTC<mer_dna_ns::mer_base_static<unsigned __int128>, 1>,
-                         VTC<mer_dna_ns::mer_base_static<unsigned __int128>, 2>,
-                         VTC<mer_dna_ns::mer_base_static<unsigned __int128>, 3>,
-#endif
-                         VTC<mer_dna_ns::mer_base_static<uint32_t>, 3>
-                         > MerDNATypes;
+    > MerDNATypes;
+#undef MER_DNA_CASES
 TYPED_TEST_CASE(MerDNA, MerDNATypes);
+
+TYPED_TEST(MerDNA, ZeroInitialization) {
+  typename TypeParam::Type m(this->GetParam().size());
+  EXPECT_EQ(std::string(m.k(), 'A'), m.to_str());
+  for(unsigned int i = 0; i < m.nb_words(); ++i)
+    EXPECT_EQ(0U, m.word(i));
+}
+
+TYPED_TEST(MerDNA, InitFromWords) {
+  typedef typename TypeParam::Type Mer;
+  typedef typename Mer::base_type Word;
+  std::vector<Word> words(Mer::nb_words(this->GetParam().size()),
+                          std::numeric_limits<Word>::max());
+  Mer m(this->GetParam().size(), words);
+  EXPECT_EQ(std::string(m.k(), 'T'), m.to_str());
+  EXPECT_EQ(m.msw(), m.word(m.nb_words() - 1));
+}
+
+TYPED_TEST(MerDNA, BoundedFromChars) {
+  typedef typename TypeParam::Type Mer;
+  const std::string& sequence = this->GetParam();
+  Mer copy(sequence.size());
+  EXPECT_TRUE(copy.from_chars(sequence.begin(), sequence.end()));
+  EXPECT_EQ(sequence, copy.to_str());
+  EXPECT_TRUE(copy.from_chars(sequence.data(), sequence.data() + sequence.size()));
+  EXPECT_EQ(sequence, copy.to_str());
+  EXPECT_FALSE(copy.from_chars(sequence.begin(), sequence.end() - 1));
+  EXPECT_FALSE(copy.from_chars(sequence.data(), sequence.data() + sequence.size() - 1));
+}
+
+TYPED_TEST(MerDNA, StreamRoundTrip) {
+  typedef typename TypeParam::Type Mer;
+  Mer original(this->GetParam());
+  Mer copy(original.k());
+  std::stringstream stream;
+  stream << original;
+  stream >> copy;
+  EXPECT_EQ(original, copy);
+  EXPECT_FALSE(stream.fail());
+}
+
+TYPED_TEST(MerDNA, StreamLeavesFollowingFields) {
+  typedef typename TypeParam::Type Mer;
+  Mer original(this->GetParam());
+  Mer copy(original.k());
+  std::stringstream stream;
+  stream << " \t" << original << " 37\n" << original << " 81";
+  unsigned int count = 0;
+  stream >> copy >> count;
+  EXPECT_FALSE(stream.fail());
+  EXPECT_EQ(original, copy);
+  EXPECT_EQ(37U, count);
+  stream >> copy >> count;
+  EXPECT_FALSE(stream.fail());
+  EXPECT_EQ(original, copy);
+  EXPECT_EQ(81U, count);
+}
+
+TYPED_TEST(MerDNA, StreamRejectsIncompleteOrInvalidInput) {
+  typedef typename TypeParam::Type Mer;
+  Mer copy(this->GetParam().size());
+  std::stringstream truncated(this->GetParam().substr(0, copy.k() - 1));
+  truncated >> copy;
+  EXPECT_TRUE(truncated.fail());
+  EXPECT_TRUE(truncated.eof());
+
+  std::string sequence(this->GetParam());
+  sequence[copy.k() / 2] = 'N';
+  std::stringstream invalid(sequence);
+  invalid >> copy;
+  EXPECT_TRUE(invalid.fail());
+
+  sequence[copy.k() / 2] = ' ';
+  std::stringstream internal_space(sequence);
+  internal_space >> copy;
+  EXPECT_TRUE(internal_space.fail());
+
+  std::stringstream leading_space(" " + this->GetParam());
+  leading_space >> std::noskipws >> copy;
+  EXPECT_TRUE(leading_space.fail());
+}
+
+TYPED_TEST(MerDNA, BitFieldBoundaries) {
+  typedef typename TypeParam::Type Mer;
+  typedef typename Mer::base_type Word;
+  Mer m(this->GetParam().size());
+  const unsigned int bits = 8 * sizeof(Word);
+  if(m.nb_words() > 1) {
+    m.set_bits(bits - 1, 2, 3);
+    EXPECT_EQ(static_cast<Word>(3), m.get_bits(bits - 1, 2));
+    EXPECT_EQ(static_cast<Word>(1) << (bits - 1), m.word(0));
+    EXPECT_EQ(static_cast<Word>(1), m.word(1));
+  }
+  std::string expected(m.k(), 'A');
+  m.polyA();
+  for(unsigned int i = 0; i < m.k(); ++i) {
+    m.set_bits(2 * i, 2, i % 4);
+    expected[m.k() - 1 - i] = "ACGT"[i % 4];
+  }
+  EXPECT_EQ(expected, m.to_str());
+}
 
 TYPED_TEST(MerDNA, InitFromStr) {
   typename TypeParam::Type m(this->GetParam());
@@ -439,7 +552,10 @@ TYPED_TEST(MerDNA, Copy) {
   typename TypeParam::Type m2(m1);
   typename TypeParam::Type m3(this->GetParam().size());
   m3 = m1;
+  m2 = m2;
 
+  EXPECT_NE(m1.data(), m2.data());
+  EXPECT_NE(m1.data(), m3.data());
   EXPECT_TRUE(m1 == m2);
   EXPECT_TRUE(m2 == m3);
   EXPECT_TRUE(m3 == m1);
@@ -524,6 +640,152 @@ TYPED_TEST(MerDNA, Canonical) {
   EXPECT_TRUE(canonical == m || canonical == m.get_reverse_complement());
   m.canonicalize();
   EXPECT_EQ(canonical, m.get_canonical());
+}
+
+template<typename T>
+class MerStorage : public ::testing::Test { };
+typedef ::testing::Types<uint32_t, uint64_t
+#ifdef HAVE_INT128
+                         , unsigned __int128
+#endif
+                         > MerStorageWords;
+TYPED_TEST_CASE(MerStorage, MerStorageWords);
+
+TYPED_TEST(MerStorage, InlineOwnership) {
+  typedef mer_dna_ns::mer_base_stack<TypeParam, 2> Storage;
+  typedef mer_dna_ns::mer_base_static<TypeParam, 100, Storage> Mer;
+  static_assert(std::is_empty<mer_dna_ns::mer_base<Mer>>::value,
+                "mer_base must not store a data pointer");
+  static_assert(sizeof(Mer) == 2 * sizeof(TypeParam),
+                "Static stack mers must contain only inline words");
+  Mer::k(4 * sizeof(TypeParam) + 1);
+  Mer m;
+  const uintptr_t object = reinterpret_cast<uintptr_t>(&m);
+  const uintptr_t data = reinterpret_cast<uintptr_t>(m.data());
+  EXPECT_GE(data, object);
+  EXPECT_LE(data + m.nb_bytes(), object + sizeof(m));
+  EXPECT_EQ(m.data(), m.data__());
+}
+
+TYPED_TEST(MerStorage, DynamicCapacity) {
+  typedef mer_dna_ns::mer_base_stack<TypeParam, 2> Storage;
+  typedef mer_dna_ns::mer_base_dynamic<TypeParam, Storage> Mer;
+  const unsigned int capacity = 8 * sizeof(TypeParam);
+  Mer m(capacity);
+  EXPECT_EQ(2U, m.nb_words());
+  EXPECT_EQ(std::string(capacity, 'A'), m.to_str());
+  m.polyT();
+  EXPECT_EQ(std::string(capacity, 'T'), m.to_str());
+  Mer shorter(capacity - 1);
+  EXPECT_EQ(std::string(capacity - 1, 'A'), shorter.to_str());
+  EXPECT_THROW((Mer(0U)), std::length_error);
+  EXPECT_THROW((Mer(capacity + 1)), std::length_error);
+  EXPECT_THROW((Mer(std::string(capacity + 1, 'A'))), std::length_error);
+  const std::string oversized(capacity + 1, 'A');
+  EXPECT_THROW((Mer(oversized.c_str())), std::length_error);
+  EXPECT_THROW(Mer::k(capacity + 1), std::length_error);
+}
+
+TYPED_TEST(MerStorage, StaticCapacityAndIndependentLengths) {
+  typedef mer_dna_ns::mer_base_stack<TypeParam, 2> Storage;
+  typedef mer_dna_ns::mer_base_static<TypeParam, 101, Storage> Stack;
+  typedef mer_dna_ns::mer_base_static<TypeParam, 101> Heap;
+  typedef mer_dna_ns::mer_base_static<TypeParam, 102, Storage> Other;
+  const unsigned int capacity = 8 * sizeof(TypeParam);
+  EXPECT_EQ(22U, Stack::k());
+  Heap::k(capacity + 1);
+  Other::k(1);
+  EXPECT_EQ(22U, Stack::k(capacity));
+  EXPECT_THROW(Stack::k(0), std::length_error);
+  EXPECT_THROW(Stack::k(capacity + 1), std::length_error);
+  EXPECT_EQ(capacity, Stack::k());
+  EXPECT_EQ(capacity + 1, Heap::k());
+  EXPECT_EQ(1U, Other::k());
+  Stack m;
+  m.polyT();
+  EXPECT_EQ(std::string(capacity, 'T'), m.to_str());
+  EXPECT_THROW((Stack(capacity - 1)), mer_dna_ns::different_k_error);
+}
+
+template<typename Mer>
+void check_small_inline_operations(unsigned int capacity) {
+  for(unsigned int k = 1; k <= capacity; ++k) {
+    SCOPED_TRACE(::testing::Message() << "k:" << k);
+    Mer::k(k);
+    std::string sequence(k, 'A');
+    for(unsigned int i = 0; i < k; ++i)
+      sequence[i] = "ACGT"[i % 4];
+    Mer m(k, sequence.c_str());
+    const Mer& constant = m;
+    EXPECT_EQ(sequence.front(), static_cast<char>(constant.base(k - 1)));
+    EXPECT_EQ(sequence, m.to_str());
+    EXPECT_EQ(sequence.front(), m.shift_left('T'));
+    sequence = sequence.substr(1) + 'T';
+    EXPECT_EQ(sequence, m.to_str());
+    EXPECT_EQ(sequence.back(), m.shift_right('C'));
+    sequence = 'C' + sequence.substr(0, k - 1);
+    EXPECT_EQ(sequence, m.to_str());
+    EXPECT_EQ(sequence.find_first_not_of(sequence[0]) == std::string::npos,
+              m.is_homopolymer());
+    std::string reverse(sequence.rbegin(), sequence.rend());
+    for(char& base : reverse)
+      base = rc_base(base);
+    EXPECT_EQ(reverse, m.get_reverse_complement().to_str());
+    EXPECT_EQ(std::min(sequence, reverse), m.get_canonical().to_str());
+    m.canonicalize();
+    EXPECT_EQ(std::min(sequence, reverse), m.to_str());
+    Mer copy(m);
+    EXPECT_EQ(m, copy);
+    EXPECT_FALSE(m < copy);
+    copy.polyT();
+    EXPECT_TRUE(copy.is_homopolymer());
+    EXPECT_TRUE(m <= copy);
+  }
+}
+
+TYPED_TEST(MerStorage, SmallInlineOperations) {
+  typedef mer_dna_ns::mer_base_stack<TypeParam, 1> One;
+  typedef mer_dna_ns::mer_base_stack<TypeParam, 2> Two;
+  check_small_inline_operations<mer_dna_ns::mer_base_dynamic<TypeParam, One>>(
+      4 * sizeof(TypeParam));
+  check_small_inline_operations<mer_dna_ns::mer_base_static<TypeParam, 104, One>>(
+      4 * sizeof(TypeParam));
+  check_small_inline_operations<mer_dna_ns::mer_base_dynamic<TypeParam, Two>>(
+      8 * sizeof(TypeParam));
+  check_small_inline_operations<mer_dna_ns::mer_base_static<TypeParam, 105, Two>>(
+      8 * sizeof(TypeParam));
+}
+
+TEST(MerStorageDefaults, InsufficientDefaultCapacity) {
+  typedef mer_dna_ns::mer_base_static<uint32_t, 103,
+                                    mer_dna_ns::mer_base_stack<uint32_t, 1>> Mer;
+  EXPECT_EQ(22U, Mer::k());
+  EXPECT_THROW((Mer()), std::length_error);
+  EXPECT_EQ(22U, Mer::k(16));
+  Mer m;
+  EXPECT_EQ(std::string(16, 'A'), m.to_str());
+}
+
+template<typename Storage>
+void check_dynamic_assignment() {
+  typedef mer_dna_ns::mer_base_dynamic<uint64_t, Storage> Mer;
+  Mer source("ACGTACGT");
+  Mer destination("TTTTTTTT");
+  destination = source;
+  EXPECT_NE(destination.data(), source.data());
+  EXPECT_EQ(source, destination);
+  source.polyG();
+  EXPECT_EQ("ACGTACGT", destination.to_str());
+  destination = destination;
+  EXPECT_EQ("ACGTACGT", destination.to_str());
+  Mer different_length("ACGT");
+  EXPECT_THROW(destination = different_length, mer_dna_ns::different_k_error);
+  EXPECT_EQ("ACGTACGT", destination.to_str());
+}
+
+TEST(MerStorageDefaults, DynamicAssignment) {
+  check_dynamic_assignment<mer_dna_ns::mer_base_heap<uint64_t>>();
+  check_dynamic_assignment<mer_dna_ns::mer_base_stack<uint64_t, 1>>();
 }
 
 } // namespace {

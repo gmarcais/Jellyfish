@@ -14,6 +14,8 @@
 #include <vector>
 #include <limits>
 
+#include <unit_tests/test_main.hpp>
+
 namespace {
 using jellyfish::thread_exec;
 using jellyfish::mer_dna;
@@ -43,7 +45,7 @@ public:
     map&    my_map = check_[id];
 
     for(int i = 0; i < nb_; ++i) {
-      m.randomize();
+      m.randomize(prg);
       switch(op_) {
       case ADD:
         hash_.add(m, std::numeric_limits<uint64_t>::max());

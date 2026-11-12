@@ -21,6 +21,8 @@
 #include <limits>
 #include <iterator>
 #include <random>
+#include <type_traits>
+#include <utility>
 
 #ifdef HAVE_INT128
 #include <jellyfish/int128.hpp>
@@ -153,30 +155,6 @@ public:
   enum { CODE_A, CODE_C, CODE_G, CODE_T,
          CODE_RESET = -1, CODE_IGNORE = -2, CODE_COMMENT = -3 };
 
-  explicit mer_base(unsigned int k) :
-  _data(new base_type[derived::nb_words(k)])
-  {
-    memset(_data, '\0', nb_words(k) * sizeof(base_type));
-  }
-
-  mer_base(const mer_base &m) :
-  _data(new base_type[nb_words(static_cast<const derived*>(&m)->k())])
-  {
-    memcpy(_data, m._data, nb_words(static_cast<const derived*>(&m)->k()) * sizeof(base_type));
-  }
-
-  template<typename U>
-  mer_base(const unsigned int k, const U& rhs) :
-    _data(new base_type[nb_words(k)])
-  {
-    for(unsigned int i = 0; i < k; ++i)
-      _data[i] = rhs[i];
-    clean_msw();
-  }
-
-  ~mer_base() {
-    delete [] _data;
-  }
   int get_code(unsigned int i) const {
     if (i >= this->k())
       throw std::out_of_range("Index out of range");
@@ -184,7 +162,7 @@ public:
     unsigned int bit_idx = 2 * (this->k() - 1 - i) % (wbits);
     unsigned int word_idx = (this->k() - 1 - i) / (wbases);
 
-    int code = ((_data[word_idx] >> bit_idx) & c3);
+    int code = ((data()[word_idx] >> bit_idx) & c3);
 
     return code;
   }
@@ -205,72 +183,76 @@ public:
 
   /// Direct access to data. No bound or consistency check. Use with
   /// caution!
-  //  base_type operator[](unsigned int i) { return _data[i]; }
-  base_type word(unsigned int i) const { return _data[i]; }
-  base_type operator[](unsigned int i) const { return _data[i]; }
+  //  base_type operator[](unsigned int i) { return data()[i]; }
+  base_type word(unsigned int i) const { return data()[i]; }
+  base_type operator[](unsigned int i) const { return data()[i]; }
   /// Direct access to the data array.
-  const base_type* data() const { return _data; }
+  const base_type* data() const { return static_cast<const derived*>(this)->data(); }
 
   /// Same as above, but can modify directly content. Use at your own
   /// risk!
-  base_type& word__(unsigned int i) { return _data[i]; }
-  base_type* data__() { return _data; }
+  base_type& word__(unsigned int i) { return data__()[i]; }
+  base_type* data__() { return static_cast<derived*>(this)->data__(); }
 
   template<unsigned int alignment>
   void read(std::istream& is) {
     const unsigned int k = static_cast<const derived*>(this)->k();
     const unsigned int l = k / (4 * alignment) + (k % (4 * alignment) != 0);
-    is.read((char*)_data, l);
+    is.read((char*)data__(), l);
   }
 
   bool operator==(const mer_base& rhs) const {
+    auto* const _data = data();
+    auto* const rhs_data = rhs.data();
     unsigned int i = nb_words() - 1;
-    bool res = (_data[i] & msw()) == (rhs._data[i] & msw());
+    bool res = (_data[i] & msw()) == (rhs_data[i] & msw());
     while(res && i > 7) {
       i -= 8;
-      res = res && (_data[i+7] == rhs._data[i+7]);
-      res = res && (_data[i+6] == rhs._data[i+6]);
-      res = res && (_data[i+5] == rhs._data[i+5]);
-      res = res && (_data[i+4] == rhs._data[i+4]);
-      res = res && (_data[i+3] == rhs._data[i+3]);
-      res = res && (_data[i+2] == rhs._data[i+2]);
-      res = res && (_data[i+1] == rhs._data[i+1]);
-      res = res && (_data[i]   == rhs._data[i]  );
+      res = res && (_data[i+7] == rhs_data[i+7]);
+      res = res && (_data[i+6] == rhs_data[i+6]);
+      res = res && (_data[i+5] == rhs_data[i+5]);
+      res = res && (_data[i+4] == rhs_data[i+4]);
+      res = res && (_data[i+3] == rhs_data[i+3]);
+      res = res && (_data[i+2] == rhs_data[i+2]);
+      res = res && (_data[i+1] == rhs_data[i+1]);
+      res = res && (_data[i]   == rhs_data[i]  );
     }
     switch(i) {
-    case 7: res = res && (_data[6] == rhs._data[6]); [[fallthrough]];
-    case 6: res = res && (_data[5] == rhs._data[5]); [[fallthrough]];
-    case 5: res = res && (_data[4] == rhs._data[4]); [[fallthrough]];
-    case 4: res = res && (_data[3] == rhs._data[3]); [[fallthrough]];
-    case 3: res = res && (_data[2] == rhs._data[2]); [[fallthrough]];
-    case 2: res = res && (_data[1] == rhs._data[1]); [[fallthrough]];
-    case 1: res = res && (_data[0] == rhs._data[0]);
+    case 7: res = res && (_data[6] == rhs_data[6]); [[fallthrough]];
+    case 6: res = res && (_data[5] == rhs_data[5]); [[fallthrough]];
+    case 5: res = res && (_data[4] == rhs_data[4]); [[fallthrough]];
+    case 4: res = res && (_data[3] == rhs_data[3]); [[fallthrough]];
+    case 3: res = res && (_data[2] == rhs_data[2]); [[fallthrough]];
+    case 2: res = res && (_data[1] == rhs_data[1]); [[fallthrough]];
+    case 1: res = res && (_data[0] == rhs_data[0]);
     }
     return res;
   }
 
   bool operator!=(const mer_base& rhs) const { return !this->operator==(rhs); }
   bool operator<(const mer_base& rhs) const {
+    auto* const _data = data();
+    auto* const rhs_data = rhs.data();
     unsigned int i = nb_words();
     while(i >= 8) {
       i -= 8;
-      if(_data[i+7] != rhs._data[i+7]) return _data[i+7] < rhs._data[i+7];
-      if(_data[i+6] != rhs._data[i+6]) return _data[i+6] < rhs._data[i+6];
-      if(_data[i+5] != rhs._data[i+5]) return _data[i+5] < rhs._data[i+5];
-      if(_data[i+4] != rhs._data[i+4]) return _data[i+4] < rhs._data[i+4];
-      if(_data[i+3] != rhs._data[i+3]) return _data[i+3] < rhs._data[i+3];
-      if(_data[i+2] != rhs._data[i+2]) return _data[i+2] < rhs._data[i+2];
-      if(_data[i+1] != rhs._data[i+1]) return _data[i+1] < rhs._data[i+1];
-      if(_data[i]   != rhs._data[i])   return _data[i]   < rhs._data[i];
+      if(_data[i+7] != rhs_data[i+7]) return _data[i+7] < rhs_data[i+7];
+      if(_data[i+6] != rhs_data[i+6]) return _data[i+6] < rhs_data[i+6];
+      if(_data[i+5] != rhs_data[i+5]) return _data[i+5] < rhs_data[i+5];
+      if(_data[i+4] != rhs_data[i+4]) return _data[i+4] < rhs_data[i+4];
+      if(_data[i+3] != rhs_data[i+3]) return _data[i+3] < rhs_data[i+3];
+      if(_data[i+2] != rhs_data[i+2]) return _data[i+2] < rhs_data[i+2];
+      if(_data[i+1] != rhs_data[i+1]) return _data[i+1] < rhs_data[i+1];
+      if(_data[i]   != rhs_data[i])   return _data[i]   < rhs_data[i];
     }
     switch(i) {
-    case 7: if(_data[6] != rhs._data[6]) return _data[6] < rhs._data[6]; [[fallthrough]];
-    case 6: if(_data[5] != rhs._data[5]) return _data[5] < rhs._data[5]; [[fallthrough]];
-    case 5: if(_data[4] != rhs._data[4]) return _data[4] < rhs._data[4]; [[fallthrough]];
-    case 4: if(_data[3] != rhs._data[3]) return _data[3] < rhs._data[3]; [[fallthrough]];
-    case 3: if(_data[2] != rhs._data[2]) return _data[2] < rhs._data[2]; [[fallthrough]];
-    case 2: if(_data[1] != rhs._data[1]) return _data[1] < rhs._data[1]; [[fallthrough]];
-    case 1: if(_data[0] != rhs._data[0]) return _data[0] < rhs._data[0];
+    case 7: if(_data[6] != rhs_data[6]) return _data[6] < rhs_data[6]; [[fallthrough]];
+    case 6: if(_data[5] != rhs_data[5]) return _data[5] < rhs_data[5]; [[fallthrough]];
+    case 5: if(_data[4] != rhs_data[4]) return _data[4] < rhs_data[4]; [[fallthrough]];
+    case 4: if(_data[3] != rhs_data[3]) return _data[3] < rhs_data[3]; [[fallthrough]];
+    case 3: if(_data[2] != rhs_data[2]) return _data[2] < rhs_data[2]; [[fallthrough]];
+    case 2: if(_data[1] != rhs_data[1]) return _data[1] < rhs_data[1]; [[fallthrough]];
+    case 1: if(_data[0] != rhs_data[0]) return _data[0] < rhs_data[0];
     }
     return false;
   }
@@ -284,16 +266,17 @@ public:
     return !(*this < rhs);
   }
 
-  base_proxy<base_type> base(unsigned int i) { return base_proxy<base_type>(_data + i / wbases, 2 * (i % wbases)); }
-  const base_proxy<base_type> base(unsigned int i) const { return base_proxy<base_type>(_data + i / wbases, 2 * (i % wbases)); }
+  base_proxy<base_type> base(unsigned int i) { return base_proxy<base_type>(data__() + i / wbases, 2 * (i % wbases)); }
+  const base_proxy<base_type> base(unsigned int i) const { return base_proxy<base_type>(const_cast<base_type*>(data()) + i / wbases, 2 * (i % wbases)); }
 
   // Make current k-mer all As.
-  void polyA() { memset(_data, 0x00, sizeof(base_type) * nb_words()); clean_msw(); }
-  void polyC() { memset(_data, 0x55, sizeof(base_type) * nb_words()); clean_msw(); }
-  void polyG() { memset(_data, 0xaa, sizeof(base_type) * nb_words()); clean_msw(); }
-  void polyT() { memset(_data, 0xff, sizeof(base_type) * nb_words()); clean_msw(); }
+  void polyA() { memset(data__(), 0x00, sizeof(base_type) * nb_words()); clean_msw(); }
+  void polyC() { memset(data__(), 0x55, sizeof(base_type) * nb_words()); clean_msw(); }
+  void polyG() { memset(data__(), 0xaa, sizeof(base_type) * nb_words()); clean_msw(); }
+  void polyT() { memset(data__(), 0xff, sizeof(base_type) * nb_words()); clean_msw(); }
   template<typename EngineT>
   void randomize(EngineT& prg) {
+    auto* const _data = data__();
     std::uniform_int_distribution<base_type> bits;
     for(unsigned int i = 0; i < nb_words(); ++i)
       _data[i] = bits(prg);
@@ -301,11 +284,12 @@ public:
   }
 
   inline void randomize() {
-    auto eng = std::default_random_engine();
+    static thread_local std::default_random_engine eng;
     return randomize(eng);
   }
 
   bool is_homopolymer() const {
+    auto* const _data = data();
     const base_type    base    = _data[0] & c3;
     const unsigned int barrier = nb_words();
     unsigned int       i       = 0;
@@ -329,7 +313,8 @@ public:
   }
 
   derived& operator=(const mer_base& rhs) {
-    memcpy(_data, rhs._data, nb_words() * sizeof(base_type));
+    if(this != &rhs)
+      memcpy(data__(), rhs.data(), nb_words() * sizeof(base_type));
     return *static_cast<derived*>(this);
   }
 
@@ -353,6 +338,7 @@ public:
   // 4). The return value is the base that was pushed off the side
   // ('N' if the input character is not a valid base).
   base_type shift_left(int c) {
+    auto* const _data = data__();
     const base_type    r       = (_data[nb_words()-1] >> lshift()) & c3;
     const unsigned int barrier = nb_words() & (~c3);
     base_type          c2;    // c2 and c1: carries
@@ -378,6 +364,7 @@ public:
   }
 
   base_type shift_right(int c) {
+    auto* const _data = data__();
     const base_type r = _data[0] & c3;
     if(nb_words() > 1){
       const unsigned int barrier = (nb_words() - 1) & (~c3);
@@ -432,6 +419,7 @@ public:
   }
 
   void reverse_complement() {
+    auto* const _data = data__();
     base_type *low  = _data;
     base_type *high = _data + nb_words() - 1;
     for( ; low < high; ++low, --high) {
@@ -483,6 +471,7 @@ public:
   // after the last base is returned.
   template<typename OutputIterator>
   OutputIterator to_chars(OutputIterator it) const {
+    auto* const _data = data();
     int shift  = lshift(); // Number of bits to shift to get base
 
     for(int j = nb_words() - 1; j >= 0; --j) {
@@ -498,6 +487,7 @@ public:
   // sizeof(base_type) and start+len < 2k. No checks
   // performed. start and len are in bits, not bases.
   base_type get_bits(unsigned int start, unsigned int len) const {
+    auto* const _data = data();
     unsigned int q = start / wbits;
     unsigned int r = start % wbits;
 
@@ -513,6 +503,7 @@ public:
   // are set to 1.
   template<bool zero_msw = true>
   void set_bits(unsigned int start, unsigned int len, base_type v) {
+    auto* const _data = data__();
     unsigned int q    = start / wbits;
     unsigned int r    = start % wbits;
     unsigned int left = wbits - r;
@@ -534,9 +525,12 @@ public:
 
   // Internal stuff
 
-  // Number of words in _data
+  // Number of words in the data array
   inline static unsigned int nb_words(unsigned int k) { return (k / wbases) + (k % wbases != 0); }
-  inline unsigned int nb_words() const { return nb_words(static_cast<const derived*>(this)->k()); }
+  inline unsigned int nb_words() const {
+    // Return a validated count so inline-array bounds are visible to the compiler.
+    return derived::check_size(nb_words(static_cast<const derived*>(this)->k()));
+  }
   inline size_t nb_bytes() const { return nb_words() * sizeof(base_type); }
 
   // Mask of highest word
@@ -550,14 +544,32 @@ public:
     base_type nb = (static_cast<const derived*>(this)->k() % wbases) * 2;
     return nb ? nb : wbits;
   }
-  // How much to shift last base in last word of _data
+  // How much to shift last base in the last data word
   inline unsigned int lshift() const { return nb_msb() - 2; }
 
   // Make sure the highest bits are all zero
-  inline void clean_msw() { _data[nb_words() - 1] &= msw(); }
+  inline void clean_msw() { data__()[nb_words() - 1] &= msw(); }
 
+  // Without an end iterator, the caller must provide at least k characters.
   template<typename InputIterator>
   bool from_chars(InputIterator it) {
+    return from_chars_impl<false>(it, it);
+  }
+
+  template<typename InputIterator>
+  bool from_chars(InputIterator it, InputIterator end) {
+    return from_chars_impl<true>(it, end);
+  }
+
+protected:
+  static const base_type c3     = (base_type)0x3;
+  static const int       wshift = sizeof(base_type) * 8 - 2; // left shift in 1 word
+  static const int       wbases = 4 * sizeof(base_type); // bases in a word
+  static const int       wbits  = 8 * sizeof(base_type); // bits in a word
+
+  template<bool Bounded, typename InputIterator>
+  bool from_chars_impl(InputIterator it, InputIterator end) {
+    auto* const _data = data__();
     int shift = lshift();
     clean_msw();
 
@@ -565,6 +577,8 @@ public:
       base_type& w = _data[j];
       w = 0;
       for( ; shift >= 0; shift -= 2, ++it) {
+        if(Bounded && it == end)
+          return false;
         int c = code(*it);
         if(not_dna(c))
           return false;
@@ -575,15 +589,17 @@ public:
     return true;
   }
 
-protected:
-  static const base_type c3     = (base_type)0x3;
-  static const int       wshift = sizeof(base_type) * 8 - 2; // left shift in 1 word
-  static const int       wbases = 4 * sizeof(base_type); // bases in a word
-  static const int       wbits  = 8 * sizeof(base_type); // bits in a word
-  base_type *            _data;
+  template<typename U>
+  void assign_words(const U& rhs) {
+    auto* const _data = data__();
+    for(unsigned int i = 0; i < nb_words(); ++i)
+      _data[i] = rhs[i];
+    clean_msw();
+  }
 
   // Shift to the right by rs bits (Note bits, not bases)
   void large_shift_right(unsigned int rs) {
+    auto* const _data = data__();
     if(nb_words() > 1) {
       const unsigned int barrier = (nb_words() - 1) & (~c3);
       const unsigned int ls = wbits - rs;
@@ -606,30 +622,78 @@ protected:
   }
 };
 
-// Mer type where the length is kept in each mer object: allows to
-// manipulate mers of different size within the same application.
+// Storage policies receive a word count, independent of the k-mer length.
+// The length wrappers handle value copying after their storage is initialized.
+// check_size returns the validated count, preserving its bounds for algorithms.
 template<typename T = uint64_t>
-class mer_base_dynamic : public mer_base<mer_base_dynamic<T> > {
+class mer_base_heap {
 public:
   typedef T base_type;
-  typedef mer_base<mer_base_dynamic<T> > super;
 
-  explicit mer_base_dynamic(unsigned int k) : super(k), k_(k) { }
-  mer_base_dynamic(const mer_base_dynamic& rhs) : super(rhs), k_(rhs.k()) { }
-  mer_base_dynamic(unsigned int k, const char* s) : super(k), k_(k) {
+  explicit mer_base_heap(unsigned int words) : data_(new base_type[words]()) { }
+  ~mer_base_heap() { delete[] data_; }
+
+  mer_base_heap(const mer_base_heap&) = delete;
+  mer_base_heap& operator=(const mer_base_heap&) = delete;
+
+  static unsigned int check_size(unsigned int words) { return words; }
+  const base_type* data() const { return data_; }
+  base_type* data__() { return data_; }
+
+private:
+  base_type* data_;
+};
+
+template<typename T, unsigned int W>
+class mer_base_stack {
+  static_assert(W > 0, "Stack storage must contain at least one word");
+
+public:
+  typedef T base_type;
+
+  explicit mer_base_stack(unsigned int words) : data_{} { check_size(words); }
+
+  static unsigned int check_size(unsigned int words) {
+    if(words == 0 || words > W)
+      throw std::length_error("K-mer length is outside stack storage capacity");
+    return words;
+  }
+  const base_type* data() const { return data_; }
+  base_type* data__() { return data_; }
+
+private:
+  base_type data_[W];
+};
+
+// Mer type where the length is kept in each mer object: allows to
+// manipulate mers of different size within the same application.
+template<typename T = uint64_t, typename Storage = mer_base_heap<T>>
+class mer_base_dynamic : public Storage, public mer_base<mer_base_dynamic<T, Storage>> {
+  static_assert(std::is_same<T, typename Storage::base_type>::value,
+                "Storage word type must match the k-mer word type");
+
+public:
+  typedef T base_type;
+  typedef mer_base<mer_base_dynamic<T, Storage>> super;
+
+  explicit mer_base_dynamic(unsigned int k) : Storage(super::nb_words(k)), k_(k) { }
+  mer_base_dynamic(const mer_base_dynamic& rhs) : mer_base_dynamic(rhs.k()) {
+    super::operator=(rhs);
+  }
+  mer_base_dynamic(unsigned int k, const char* s) : mer_base_dynamic(k) {
     super::from_chars(s);
   }
-  explicit mer_base_dynamic(const char* s) : super(strlen(s)), k_(strlen(s)) {
+  explicit mer_base_dynamic(const char* s) : mer_base_dynamic(strlen(s)) {
     super::from_chars(s);
   }
-  explicit mer_base_dynamic(const std::string& s) : super(s.size()), k_(s.size()) {
+  explicit mer_base_dynamic(const std::string& s) : mer_base_dynamic(s.size()) {
     super::from_chars(s.begin());
   }
 
   template<typename U>
-  explicit mer_base_dynamic(unsigned int k, const U& rhs) : super(k, rhs), k_(k) { }
-
-  ~mer_base_dynamic() { }
+  explicit mer_base_dynamic(unsigned int k, const U& rhs) : mer_base_dynamic(k) {
+    super::assign_words(rhs);
+  }
 
   mer_base_dynamic& operator=(const mer_base_dynamic& rhs) {
     if(k_ != rhs.k_)
@@ -638,15 +702,21 @@ public:
     return *this;
   }
 
+  const base_type* data() const { return Storage::data(); }
+  base_type* data__() { return Storage::data__(); }
+
   unsigned int k() const { return k_; }
-  static unsigned int k(unsigned int k) { return k; }
+  static unsigned int k(unsigned int k) {
+    Storage::check_size(super::nb_words(k));
+    return k;
+  }
 
 private:
   const unsigned int k_;
 };
 
-template<typename T>
-struct mer_dna_traits<mer_base_dynamic<T> > {
+template<typename T, typename Storage>
+struct mer_dna_traits<mer_base_dynamic<T, Storage>> {
   typedef T base_type;
 };
 
@@ -654,38 +724,40 @@ struct mer_dna_traits<mer_base_dynamic<T> > {
 // fixed for all k-mers in the application.
 //
 // The CI (Class Index) template parameter allows to have more than one such
-// class with different length in the same application. Each class has
-// its own static variable associated with it.
-template<typename T = uint64_t, int CI = 0>
-class mer_base_static : public mer_base<mer_base_static<T, CI> > {
+// class with different length in the same application. Each complete template
+// specialization, including its storage policy, has its own static length.
+template<typename T = uint64_t, int CI = 0, typename Storage = mer_base_heap<T>>
+class mer_base_static : public Storage, public mer_base<mer_base_static<T, CI, Storage>> {
+  static_assert(std::is_same<T, typename Storage::base_type>::value,
+                "Storage word type must match the k-mer word type");
+
 public:
   typedef T base_type;
-  typedef mer_base<mer_base_static<T, CI> > super;
+  typedef mer_base<mer_base_static<T, CI, Storage>> super;
   static const int class_index = CI;
 
-  mer_base_static() : super(k_) { }
-  explicit mer_base_static(unsigned int k) : super(k_) {
+  mer_base_static() : Storage(super::nb_words(k_)) { }
+  explicit mer_base_static(unsigned int k) : mer_base_static() {
     if(k != k_)
       throw different_k_error();
   }
-  mer_base_static(const mer_base_static& rhs) : super(rhs) { }
+  mer_base_static(const mer_base_static& rhs) : mer_base_static() {
+    super::operator=(rhs);
+  }
 
-  mer_base_static(unsigned int k, const char* s) : super(k_) {
-    if(k != k_)
-      throw different_k_error();
+  mer_base_static(unsigned int k, const char* s) : mer_base_static(k) {
     super::from_chars(s);
   }
-  explicit mer_base_static(const char* s) : super(k_) {
+  explicit mer_base_static(const char* s) : mer_base_static() {
     super::from_chars(s);
   }
-  explicit mer_base_static(const std::string& s) : super(k_) {
+  explicit mer_base_static(const std::string& s) : mer_base_static() {
     super::from_chars(s.begin());
   }
 
   template<typename U>
-  mer_base_static(unsigned int k, const U& rhs) : super(k_, rhs) {
-    if(k != k_)
-      throw different_k_error();
+  mer_base_static(unsigned int k, const U& rhs) : mer_base_static(k) {
+    super::assign_words(rhs);
   }
 
   mer_base_static& operator=(const char* s) { return super::operator=(s); }
@@ -697,23 +769,28 @@ public:
     return *this;
   }
 
-  ~mer_base_static() { }
+  const base_type* data() const { return Storage::data(); }
+  base_type* data__() { return Storage::data__(); }
 
-  static unsigned int k(); // { return k_; }
-  static unsigned int k(unsigned int k) { std::swap(k, k_); return k; }
+  static unsigned int k();
+  static unsigned int k(unsigned int k) {
+    Storage::check_size(super::nb_words(k));
+    std::swap(k, k_);
+    return k;
+  }
 
 private:
   static unsigned int k_;
 };
-template<typename T, int CI>
-unsigned int mer_base_static<T, CI>::k_ = 22;
-template<typename T, int CI>
-unsigned int mer_base_static<T, CI>::k() { return k_; }
-template<typename T, int CI>
-const int mer_base_static<T, CI>::class_index;
+template<typename T, int CI, typename Storage>
+unsigned int mer_base_static<T, CI, Storage>::k_ = 22;
+template<typename T, int CI, typename Storage>
+unsigned int mer_base_static<T, CI, Storage>::k() { return k_; }
+template<typename T, int CI, typename Storage>
+const int mer_base_static<T, CI, Storage>::class_index;
 
-template<typename T, int CI>
-struct mer_dna_traits<mer_base_static<T, CI> > {
+template<typename T, int CI, typename Storage>
+struct mer_dna_traits<mer_base_static<T, CI, Storage>> {
   typedef T base_type;
 };
 
@@ -728,13 +805,18 @@ inline std::ostream& operator<<(std::ostream& os, const mer_base<derived>& mer) 
 typedef std::istream_iterator<char> istream_char_iterator;
 template<typename derived>
 inline std::istream& operator>>(std::istream& is, mer_base<derived>& mer) {
-  if(is.flags() & std::ios::skipws) {
-    while(isspace(is.peek())) { is.ignore(1); }
-  }
+  std::istream::sentry sentry(is);
+  if(!sentry)
+    return is;
 
-  std::istream_iterator<char> iis(is);
-  if(!mer.from_chars(iis))
-  is.setstate(std::ios::failbit);
+  // Buffer iterators consume exactly k bases, leaving the next field untouched.
+  std::istreambuf_iterator<char> current(is), end;
+  if(!mer.from_chars(current, end)) {
+    std::ios::iostate state = std::ios::failbit;
+    if(current == end)
+      state |= std::ios::eofbit;
+    is.setstate(state);
+  }
   return is;
 }
 

@@ -41,7 +41,7 @@ public:
     map&    my_map = check_[id];
 
     for(int i = 0; i < nb_; ++i) {
-      m.randomize();
+      m.randomize(prg);
       hash_.add(m, 1);
       ++my_map[m];
     }

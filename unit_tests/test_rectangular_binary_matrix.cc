@@ -7,6 +7,7 @@
 */
 
 #include <gtest/gtest.h>
+#include <random>
 #include <unit_tests/test_main.hpp>
 #include <stdexcept>
 #include <stdlib.h>
@@ -78,7 +79,7 @@ TEST(RectangularBinaryMatrix, LowIdentity) {
       RectangularBinaryMatrix m(r, c); // Matrix should be zeroed out
       mer_dna::k(c);
       mer_dna v;
-      v.randomize();
+      v.randomize(prg);
 
       EXPECT_FALSE(m.is_low_identity());
       m.init_low_identity();
@@ -234,8 +235,8 @@ TEST(PseudoProduct, Parity) {
 TEST(PseudoProduct, Inverse) {
   int full_rank = 0, singular = 0;
   for(unsigned int i = 0; i < 500; ++i) {
-    unsigned int r = random() % 63 + 1;
-    unsigned int c = 2 * ((random() % 100) + 1);
+    unsigned int r = std::uniform_int_distribution<unsigned int>(1, 63)(prg); // random() % 63 + 1;
+    unsigned int c = 2 * std::uniform_int_distribution<unsigned int>(1, 100)(prg); // ((random() % 100) + 1);
     SCOPED_TRACE(::testing::Message() << "Dimension " << r << "x" << c);
     RectangularBinaryMatrix m(r, c);
     m.randomize(random_bits);
@@ -290,7 +291,7 @@ TEST(PseudoProduct, VectorInverseMultiplication) {
 
   for(int i = 0; i < 100; ++i) {
     SCOPED_TRACE(::testing::Message() << "i=" << i);
-    v.randomize();
+    v.randomize(prg);
     uint64_t hash = m.times(v);
     iv = v; iv.set_bits(0, 50, hash);
 

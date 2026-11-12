@@ -49,7 +49,7 @@ TEST(Dumper, IO) {
 
   mer_dna m;
   for(int i = 0; i < nb; i++) {
-    m.randomize();
+    m.randomize(prg);
     const uint64_t rval = random_bits(9);
     hash.add(m, rval);
     uint64_t val;

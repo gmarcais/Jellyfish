@@ -78,7 +78,7 @@ TEST_P(HashArray, OneElement) {
   for(uint64_t i = start_pos; i < start_pos + bsizeof(uint64_t); ++i) {
     SCOPED_TRACE(::testing::Message() << "i:" << i);
     // Create mer m so that it will hash to position i
-    m.randomize();
+    m.randomize(prg);
     m2 = m;
     m2.set_bits(0, ary.matrix().r(), (uint64_t)i);
     m.set_bits(0, ary.matrix().r(), ary.inverse_matrix().times(m2));
@@ -167,7 +167,7 @@ arrays_ptr fill_array(size_t nb_elts, size_t size, int key_len, int val_len, int
   mer_dna mer;
   for(size_t i = 0; i < nb_elts; ++i) {
     SCOPED_TRACE(::testing::Message() << "i:" << i);
-    mer.randomize();
+    mer.randomize(prg);
     map[mer] += i;
     // If get false, hash array filled up: double size
     bool res = ary.add(mer, i);
@@ -245,7 +245,7 @@ TEST_P(HashArray, Iterator) {
 
 TEST_P(HashArray, LargeValue) {
   mer_dna mer;
-  mer.randomize();
+  mer.randomize(prg);
   ary.add(mer, numeric_limits<uint64_t>::max());
 
   uint64_t val = 0;
@@ -269,7 +269,7 @@ TEST(Hash, Set) {
   mer_dna     mer;
 
   for(int i = 0; i < nb_elts; ++i) {
-    mer.randomize();
+    mer.randomize(prg);
     bool   is_new;
     size_t id;
     ASSERT_TRUE(ary.set(mer, &is_new, &id));
@@ -284,7 +284,7 @@ TEST(Hash, Set) {
   }
 
   for(int i = 0; i < nb_elts; ++i) {
-    mer.randomize();
+    mer.randomize(prg);
     size_t id;
     EXPECT_EQ(set.find(mer) != set.end(), ary.get_key_id(mer, &id));
   }
@@ -301,7 +301,7 @@ TEST(Hash, Update) {
   mer_dna     mer;
 
   for(int i = 0; i < nb_elts; ++i) {
-    mer.randomize();
+    mer.randomize(prg);
     bool is_new;
     size_t id;
     ASSERT_TRUE(ary.set(mer, &is_new, &id));
@@ -316,7 +316,7 @@ TEST(Hash, Update) {
   }
 
   for(int i = 0; i < nb_elts; ++i) {
-    mer.randomize();
+    mer.randomize(prg);
     uint64_t val = random_bits(4);
     auto it = in_ary.find(mer);
     if(it == in_ary.end()) {
