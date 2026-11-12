@@ -75,7 +75,7 @@ sudo ldconfig
 Usage
 -----
 
-Instruction of use are available in the [doc](https://github.com/gmarcais/Jellyfish/tree/master/doc) directory.
+Instruction of use are available in the [doc](doc/) directory.
 
 Extra / Examples
 ----------------
@@ -114,7 +114,7 @@ Then, for Python, Ruby or Perl to find the binding, an environment variable may 
 export PYTHONPATH=$HOME/lib/python2.7/site-packages
 ```
 
-See the [swig directory](../../tree/master/swig) for examples on how to use the bindings.
+See the [swig directory](swig/) for examples on how to use the bindings.
 
 [1]: http://www.genome.umd.edu/jellyfish.html "Genome group at University of Maryland"
 [2]: http://www.swig.org/

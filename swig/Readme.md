@@ -10,7 +10,7 @@ somewhat slower.
 Installation
 ============
 
-See the installation instructions on the [main page](../../tree/master) on how
+See the installation instructions on the [main page](../README.md) on how
 to install the bindings at the same times as Jellyfish. This is the suggested
 way to install the binding.
 

@@ -1,0 +1,26 @@
+name: Sync master with main
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Serialize updates so an older run cannot overwrite a newer one.
+concurrency:
+  group: sync-master
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+      - name: Update master
+        # master is a compatibility mirror, including when main is rewritten.
+        run: git push --force origin HEAD:refs/heads/master
