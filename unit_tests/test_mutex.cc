@@ -9,6 +9,7 @@
 #include <gtest/gtest.h>
 #include <jellyfish/locks_pthread.hpp>
 
+namespace {
 using testing::Types;
 
 #define NB_THREADS 3
@@ -31,6 +32,7 @@ public:
     
     for(int i = 0; i < NB_THREADS; i++)
       pthread_join(threads[i], NULL);
+    pthread_attr_destroy(&attr);
   }
 
   static void *thread_fun(void *t) {
@@ -52,10 +54,11 @@ public:
   int get_count() { return count; }
 };
 
-typedef Types<locks::pthread::mutex> Implementations;
+typedef Types<jellyfish::locks::pthread::mutex> Implementations;
 
 TYPED_TEST_CASE(MutexTest, Implementations);
 
 TYPED_TEST(MutexTest, SuccessfullLocking) {
   EXPECT_EQ(NB_THREADS * COUNT, this->get_count());
 }
+} // namespace
