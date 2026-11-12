@@ -299,6 +299,14 @@ TEST(PseudoProduct, VectorInverseMultiplication) {
   }
 }
 
+// TODO: need better way to report speed
+// static const int speed_loop = 100000000;
+// TEST(MatrixProductSpeed, Loop) {
+//   RectangularBinaryMatrix m(50, 100);
+//   const unsigned int nb_words = m.c() / 64 + (m.c() % 64 != 0);
+//   uint64_t v[nb_words];
+//   for(unsigned int j = 0; j < nb_words; ++j)
+//     v[j] = random_bits();
 
 // static const int speed_loop = 100000000;
 // TEST(MatrixProductSpeed, Loop) {

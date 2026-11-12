@@ -20,8 +20,8 @@
 #include <stdexcept>
 #include <limits>
 #include <iterator>
+#include <random>
 
-#include <jellyfish/misc.hpp>
 #ifdef HAVE_INT128
 #include <jellyfish/int128.hpp>
 #endif
@@ -61,9 +61,15 @@ static const int codes[256] = {
 #undef T
 static const char rev_codes[4] = { 'A', 'C', 'G', 'T' };
 
+class different_k_error : public std::length_error {
+public:
+  different_k_error() : std::length_error("Different k-mer length") {};
+};
 
-extern const char* const error_different_k;
-extern const char* const error_short_string;
+class error_short_string : public std::length_error {
+public:
+  error_short_string() : std::length_error("Input string is too short") {};
+};
 
 
 // Checkered mask. cmask<uint16_t, 1> is every other bit on
@@ -171,6 +177,27 @@ public:
   ~mer_base() {
     delete [] _data;
   }
+  int get_code(unsigned int i) const {
+    if (i >= this->k())
+      throw std::out_of_range("Index out of range");
+
+    unsigned int bit_idx = 2 * (this->k() - 1 - i) % (wbits);
+    unsigned int word_idx = (this->k() - 1 - i) / (wbases);
+
+    int code = ((_data[word_idx] >> bit_idx) & c3);
+
+    return code;
+  }
+
+  char get_nucleotide(unsigned int code) const {
+    switch (code) {
+      case CODE_A: return 'A';
+      case CODE_C: return 'C';
+      case CODE_G: return 'G';
+      case CODE_T: return 'T';
+      default:     return 'N'; 
+    }
+}
 
   operator derived() { return *static_cast<derived*>(this); }
   operator const derived() const { return *static_cast<const derived*>(this); }
@@ -211,12 +238,12 @@ public:
       res = res && (_data[i]   == rhs._data[i]  );
     }
     switch(i) {
-    case 7: res = res && (_data[6] == rhs._data[6]);
-    case 6: res = res && (_data[5] == rhs._data[5]);
-    case 5: res = res && (_data[4] == rhs._data[4]);
-    case 4: res = res && (_data[3] == rhs._data[3]);
-    case 3: res = res && (_data[2] == rhs._data[2]);
-    case 2: res = res && (_data[1] == rhs._data[1]);
+    case 7: res = res && (_data[6] == rhs._data[6]); [[fallthrough]];
+    case 6: res = res && (_data[5] == rhs._data[5]); [[fallthrough]];
+    case 5: res = res && (_data[4] == rhs._data[4]); [[fallthrough]];
+    case 4: res = res && (_data[3] == rhs._data[3]); [[fallthrough]];
+    case 3: res = res && (_data[2] == rhs._data[2]); [[fallthrough]];
+    case 2: res = res && (_data[1] == rhs._data[1]); [[fallthrough]];
     case 1: res = res && (_data[0] == rhs._data[0]);
     }
     return res;
@@ -237,12 +264,12 @@ public:
       if(_data[i]   != rhs._data[i])   return _data[i]   < rhs._data[i];
     }
     switch(i) {
-    case 7: if(_data[6] != rhs._data[6]) return _data[6] < rhs._data[6];
-    case 6: if(_data[5] != rhs._data[5]) return _data[5] < rhs._data[5];
-    case 5: if(_data[4] != rhs._data[4]) return _data[4] < rhs._data[4];
-    case 4: if(_data[3] != rhs._data[3]) return _data[3] < rhs._data[3];
-    case 3: if(_data[2] != rhs._data[2]) return _data[2] < rhs._data[2];
-    case 2: if(_data[1] != rhs._data[1]) return _data[1] < rhs._data[1];
+    case 7: if(_data[6] != rhs._data[6]) return _data[6] < rhs._data[6]; [[fallthrough]];
+    case 6: if(_data[5] != rhs._data[5]) return _data[5] < rhs._data[5]; [[fallthrough]];
+    case 5: if(_data[4] != rhs._data[4]) return _data[4] < rhs._data[4]; [[fallthrough]];
+    case 4: if(_data[3] != rhs._data[3]) return _data[3] < rhs._data[3]; [[fallthrough]];
+    case 3: if(_data[2] != rhs._data[2]) return _data[2] < rhs._data[2]; [[fallthrough]];
+    case 2: if(_data[1] != rhs._data[1]) return _data[1] < rhs._data[1]; [[fallthrough]];
     case 1: if(_data[0] != rhs._data[0]) return _data[0] < rhs._data[0];
     }
     return false;
@@ -265,10 +292,17 @@ public:
   void polyC() { memset(_data, 0x55, sizeof(base_type) * nb_words()); clean_msw(); }
   void polyG() { memset(_data, 0xaa, sizeof(base_type) * nb_words()); clean_msw(); }
   void polyT() { memset(_data, 0xff, sizeof(base_type) * nb_words()); clean_msw(); }
-  void randomize() {
+  template<typename EngineT>
+  void randomize(EngineT& prg) {
+    std::uniform_int_distribution<base_type> bits;
     for(unsigned int i = 0; i < nb_words(); ++i)
-      _data[i] = random_bits(wbits);
+      _data[i] = bits(prg);
     clean_msw();
+  }
+
+  inline void randomize() {
+    auto eng = std::default_random_engine();
+    return randomize(eng);
   }
 
   bool is_homopolymer() const {
@@ -284,10 +318,10 @@ public:
     }
 
     switch(nb_words() - i) {
-    case 5: if(_data[i] !=  ((_data[i] << 2) | base)         ) return false; ++i;
-    case 4: if(_data[i] !=  ((_data[i] << 2) | base)         ) return false; ++i;
-    case 3: if(_data[i] !=  ((_data[i] << 2) | base)         ) return false; ++i;
-    case 2: if(_data[i] !=  ((_data[i] << 2) | base)         ) return false; ++i;
+    case 5: if(_data[i] !=  ((_data[i] << 2) | base)         ) return false; ++i; [[fallthrough]];
+    case 4: if(_data[i] !=  ((_data[i] << 2) | base)         ) return false; ++i; [[fallthrough]];
+    case 3: if(_data[i] !=  ((_data[i] << 2) | base)         ) return false; ++i; [[fallthrough]];
+    case 2: if(_data[i] !=  ((_data[i] << 2) | base)         ) return false; ++i; [[fallthrough]];
     case 1: if(_data[i] != (((_data[i] << 2) | base) & msw())) return false;
     }
 
@@ -301,14 +335,14 @@ public:
 
   derived& operator=(const char* s) {
     if(strlen(s) < static_cast<derived*>(this)->k())
-      throw std::length_error(error_short_string);
+      throw error_short_string();
     from_chars(s);
     return *static_cast<derived*>(this);
   }
 
   derived& operator=(const std::string& s) {
     if(s.size() < static_cast<derived*>(this)->k())
-      throw std::length_error(error_short_string);
+      throw error_short_string();
     from_chars(s.c_str());
     return *static_cast<derived*>(this);
   }
@@ -334,8 +368,8 @@ public:
     c2 = c1;
 
     switch(nb_words() - i) {
-    case 3: c2 = _data[i] >> wshift;   _data[i] = (_data[i] << 2) | c1;   ++i;
-    case 2: c1 = _data[i] >> wshift;   _data[i] = (_data[i] << 2) | c2;   ++i;
+    case 3: c2 = _data[i] >> wshift;   _data[i] = (_data[i] << 2) | c1;   ++i; [[fallthrough]];
+    case 2: c1 = _data[i] >> wshift;   _data[i] = (_data[i] << 2) | c2;   ++i; [[fallthrough]];
     case 1:                            _data[i] = (_data[i] << 2) | c1;
     }
     clean_msw();
@@ -356,8 +390,8 @@ public:
         _data[i+3] = (_data[i+3] >> 2) | (_data[i+4] << wshift);
       }
       switch(nb_words() - 1 - i) {
-      case 3: _data[i] = (_data[i] >> 2) | (_data[i+1] << wshift);  ++i;
-      case 2: _data[i] = (_data[i] >> 2) | (_data[i+1] << wshift);  ++i;
+      case 3: _data[i] = (_data[i] >> 2) | (_data[i+1] << wshift);  ++i; [[fallthrough]];
+      case 2: _data[i] = (_data[i] >> 2) | (_data[i+1] << wshift);  ++i; [[fallthrough]];
       case 1: _data[i] = (_data[i] >> 2) | (_data[i+1] << wshift);
       }
     }
@@ -503,6 +537,7 @@ public:
   // Number of words in _data
   inline static unsigned int nb_words(unsigned int k) { return (k / wbases) + (k % wbases != 0); }
   inline unsigned int nb_words() const { return nb_words(static_cast<const derived*>(this)->k()); }
+  inline size_t nb_bytes() const { return nb_words() * sizeof(base_type); }
 
   // Mask of highest word
   inline base_type msw() const {
@@ -561,8 +596,8 @@ protected:
         _data[i+3] = (_data[i+3] >> rs) | (_data[i+4] << ls);
       }
       switch(nb_words() - 1 - i) {
-      case 3: _data[i] = (_data[i] >> rs) | (_data[i+1] << ls); ++i;
-      case 2: _data[i] = (_data[i] >> rs) | (_data[i+1] << ls); ++i;
+      case 3: _data[i] = (_data[i] >> rs) | (_data[i+1] << ls); ++i; [[fallthrough]];
+      case 2: _data[i] = (_data[i] >> rs) | (_data[i+1] << ls); ++i; [[fallthrough]];
       case 1: _data[i] = (_data[i] >> rs) | (_data[i+1] << ls);
       }
     }
@@ -596,9 +631,9 @@ public:
 
   ~mer_base_dynamic() { }
 
-  mer_base_dynamic& operator=(const mer_base_dynamic rhs) {
+  mer_base_dynamic& operator=(const mer_base_dynamic& rhs) {
     if(k_ != rhs.k_)
-      throw std::length_error(error_different_k);
+      throw different_k_error();
     super::operator=(rhs);
     return *this;
   }
@@ -631,11 +666,13 @@ public:
   mer_base_static() : super(k_) { }
   explicit mer_base_static(unsigned int k) : super(k_) {
     if(k != k_)
-      throw std::length_error(error_different_k);
+      throw different_k_error();
   }
   mer_base_static(const mer_base_static& rhs) : super(rhs) { }
 
   mer_base_static(unsigned int k, const char* s) : super(k_) {
+    if(k != k_)
+      throw different_k_error();
     super::from_chars(s);
   }
   explicit mer_base_static(const char* s) : super(k_) {
@@ -648,11 +685,17 @@ public:
   template<typename U>
   mer_base_static(unsigned int k, const U& rhs) : super(k_, rhs) {
     if(k != k_)
-      throw std::length_error(error_different_k);
+      throw different_k_error();
   }
 
   mer_base_static& operator=(const char* s) { return super::operator=(s); }
   mer_base_static& operator=(const std::string& s) { return super::operator=(s); }
+  mer_base_static& operator=(const mer_base_static& rhs) {
+    if(k_ != rhs.k_)
+      throw different_k_error();
+    super::operator=(rhs);
+    return *this;
+  }
 
   ~mer_base_static() { }
 
@@ -677,10 +720,9 @@ struct mer_dna_traits<mer_base_static<T, CI> > {
 typedef std::ostream_iterator<char> ostream_char_iterator;
 template<typename derived>
 inline std::ostream& operator<<(std::ostream& os, const mer_base<derived>& mer) {
-  //  char s[static_cast<const derived>(mer).k() + 1];
-  char s[mer.k() + 1];
-  mer.to_str(s);
-  return os << s;
+  std::ostream_iterator<char> oos(os);
+  mer.to_chars(oos);
+  return os;
 }
 
 typedef std::istream_iterator<char> istream_char_iterator;
@@ -690,16 +732,8 @@ inline std::istream& operator>>(std::istream& is, mer_base<derived>& mer) {
     while(isspace(is.peek())) { is.ignore(1); }
   }
 
-  char buffer[mer.k() + 1];
-  is.read(buffer, mer.k());
-  if(is.gcount() != mer.k())
-    goto error;
-  buffer[mer.k()] = '\0';
-  if(!mer.from_chars(buffer))
-    goto error;
-  return is;
-
- error:
+  std::istream_iterator<char> iis(is);
+  if(!mer.from_chars(iis))
   is.setstate(std::ios::failbit);
   return is;
 }

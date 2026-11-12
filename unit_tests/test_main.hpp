@@ -14,6 +14,10 @@
 #include <unistd.h>
 
 #include <string>
+#include <random>
+
+// Global random engine
+extern std::mt19937_64 prg;
 
 uint64_t random_bits(int length);
 inline uint64_t random_bits() { return random_bits(64); }

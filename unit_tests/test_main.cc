@@ -14,13 +14,14 @@
     along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <random>
 #include <stdlib.h>
-#include <iostream>
-#include <fstream>
 #include <gtest/gtest.h>
 #include <unit_tests/test_main_cmdline.hpp>
 #include <unit_tests/test_main.hpp>
 #include <jellyfish/backtrace.hpp>
+
+#include "random_seed.hpp"
 
 template<long int n>
 struct floorLog2 {
@@ -39,6 +40,7 @@ uint64_t random_bits(int length) {
   return res & ((uint64_t)-1 >> (64 - length));
 }
 
+std::mt19937_64 prg = seeded_prg<std::mt19937_64>("unit_tests_seed");
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

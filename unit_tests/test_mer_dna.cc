@@ -17,8 +17,8 @@
 
 
 #include <stdio.h>
-#include <map>
 #include <iostream>
+#include <map>
 #include <sstream>
 #include <gtest/gtest.h>
 #include <jellyfish/mer_dna.hpp>
@@ -160,7 +160,7 @@ TEST(MerDNASimple, Shifts) {
     mer_dna::k(i);
     mer_dna m;
 
-    m.randomize();
+    m.randomize(prg);
     const int c = ::random_bits(2);
     mer_dna rm(m);
     rm.shift_right(c);
@@ -190,7 +190,7 @@ TEST(MerDNASimple, Homopolymer) {
     mer_dna m;
 
     for(int j = 0; j < 10; ++j) {
-      m.randomize();
+      m.randomize(prg);
       EXPECT_EQ(simple_homolymer_test(m), m.is_homopolymer());
     }
 
@@ -251,8 +251,8 @@ TEST(MerDNASimple, Comparators) {
 
   mer_dna m1, m2;
   for(int i = 0; i < 1000; ++i) {
-    m1.randomize();
-    m2.randomize();
+    m1.randomize(prg);
+    m2.randomize(prg);
     SCOPED_TRACE(::testing::Message() << "m1:" << m1 << " m2:" << m2);
     ASSERT_FALSE(m1 == m2); // Very small probability to fail (k == 151)
 
@@ -290,7 +290,7 @@ TEST(MerDNASimple, IO) {
     SCOPED_TRACE(::testing::Message() << "i:" << i);
     mer_dna::k(::random_bits(9) + 1);
     mer_dna m1, m2;
-    m1.randomize();
+    m1.randomize(prg);
     buffer << m1;
     buffer >> m2;
     EXPECT_EQ(m1, m2);
