@@ -186,6 +186,8 @@ check_PROGRAMS += bin/test_all
 
 bin_test_all_SOURCES = unit_tests/test_main.cc				\
 	               unit_tests/test_misc.cc				\
+	               unit_tests/test_mutex.cc				\
+	               unit_tests/test_cond.cc				\
 	               unit_tests/test_offsets_key_value.cc		\
 	               unit_tests/test_simple_circular_buffer.cc	\
 	               unit_tests/test_rectangular_binary_matrix.cc	\

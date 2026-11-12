@@ -9,6 +9,7 @@
 #include <gtest/gtest.h>
 #include <jellyfish/locks_pthread.hpp>
 
+namespace {
 using testing::Types;
 
 #define NB_THREADS 3
@@ -35,6 +36,7 @@ public:
     
     for(int i = 0; i <= NB_THREADS; i++)
       pthread_join(threads[i], NULL);
+    pthread_attr_destroy(&attr);
   }
 
   static void *master_fun(void *t) {
@@ -45,9 +47,9 @@ public:
   }
   void master_wait() {
     count_cond.lock();
-    count_cond.wait();
+    while(count < COUNT / 10)
+      count_cond.wait();
     count_at_signal = count;
-    sleep(1);
     count *= 10;
     count_cond.unlock();
   }
@@ -62,9 +64,9 @@ public:
   void inc() {
     for(int i = 0; i < COUNT; i++) {
       count_cond.lock();
-      if(count < 1000000) {
+      if(count < COUNT) {
 	count++;
-	if(count > 100000)
+	if(count == COUNT / 10)
 	  count_cond.signal();
 	count_cond.unlock();
       } else {
@@ -79,10 +81,11 @@ public:
   int get_count_at_signal() { return count_at_signal; }
 };
 
-typedef Types<locks::pthread::cond> Implementations;
+typedef Types<jellyfish::locks::pthread::cond> Implementations;
 
 TYPED_TEST_CASE(CondTest, Implementations);
 
 TYPED_TEST(CondTest, SuccessfullLocking) {
   EXPECT_EQ(10 *this->get_count_at_signal(), this->get_count());
 }
+} // namespace
