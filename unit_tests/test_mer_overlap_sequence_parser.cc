@@ -66,15 +66,18 @@ TEST(MerOverlapSequenceParser, OneSmallSequence) {
 
 string generate_sequences(std::ostream& os, int a, int b, int nb, const char* le, bool fastq = false) {
   static const char bases[4] = {'A', 'C', 'G', 'T' };
+  std::uniform_int_distribution<int> sequence_length(a, a + b - 1);
+  std::uniform_int_distribution<unsigned int> base_index(0, 3);
+  std::uniform_int_distribution<unsigned int> line_break(0, 15);
   string res;
   for(int i = 0; i < nb; ++i) {
-    int len = a + random() % b;
+    int len = sequence_length(prg);
     os << (fastq ? "@" : ">") << "r" << i << " " << len << le;
     for(int j = 0; j < len; ++j) {
-      char b = bases[random() & 0x3];
+      char b = bases[base_index(prg)];
       os << b;
       res += b;
-      if(random() % 16 == 0)
+      if(line_break(prg) == 0)
         os << le;
     }
     if(i != nb - 1)
@@ -83,7 +86,7 @@ string generate_sequences(std::ostream& os, int a, int b, int nb, const char* le
     if(fastq) {
       os << '+' << le;
       for(int j = 0; j < len; ++j) {
-        if(random() % 16 == 0)
+        if(line_break(prg) == 0)
           os << le;
         os << "#";
       }

@@ -73,7 +73,7 @@ TEST_P(HashArray, OneElement) {
   EXPECT_EQ((unsigned int)ary_lsize, ary.matrix().r());
   EXPECT_EQ((unsigned int)key_len, ary.matrix().c());
 
-  size_t start_pos = random() % (ary_size - bsizeof(uint64_t));
+  size_t start_pos = std::uniform_int_distribution<size_t>(0, ary_size - bsizeof(uint64_t) - 1)(prg);
   size_t mask = (size_t)key_len >= bsizeof(size_t) ? (size_t)-1 : ((size_t)1 << key_len) - 1;
   for(uint64_t i = start_pos; i < start_pos + bsizeof(uint64_t); ++i) {
     SCOPED_TRACE(::testing::Message() << "i:" << i);
@@ -124,7 +124,7 @@ TEST_P(HashArray, Collisions) {
   mers[2].polyG(); mers2[2].polyG();
   mers[3].polyT(); mers2[3].polyT();
 
-  size_t start_pos = random() % (ary_size - bsizeof(uint64_t));
+  size_t start_pos = std::uniform_int_distribution<size_t>(0, ary_size - bsizeof(uint64_t) - 1)(prg);
   for(uint64_t i = start_pos; i < start_pos + bsizeof(uint64_t); ++i) {
     SCOPED_TRACE(::testing::Message() << "i:" << i);
     ary.clear();
@@ -338,10 +338,12 @@ TEST(Hash, Update) {
 }
 
 TEST(Hash, Info) {
+  std::uniform_int_distribution<uint16_t> key_length(1, 128);
+  std::uniform_int_distribution<uint16_t> value_length(1, 16);
   for(int iteration = 0; iteration < 100; ++iteration) {
     size_t                  mem     = random_bits(48);
-    uint16_t                key_len = random_bits(7) + 1;
-    uint16_t                val_len = random_bits(4) + 1;
+    uint16_t                key_len = key_length(prg);
+    uint16_t                val_len = value_length(prg);
     large_array::usage_info info(key_len, val_len, 126);
 
     SCOPED_TRACE(::testing::Message() << "iteration:" << iteration << " mem:" << mem

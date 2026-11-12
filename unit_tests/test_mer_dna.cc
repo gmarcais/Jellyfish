@@ -193,6 +193,7 @@ bool simple_homolymer_test(const mer_dna& m) {
 }
 
 TEST(MerDNASimple, Homopolymer) {
+  std::uniform_int_distribution<unsigned int> base_index;
   for(int i = 1; i < 256; ++i) {
     SCOPED_TRACE(::testing::Message() << "i:" << i);
     mer_dna::k(i);
@@ -207,7 +208,8 @@ TEST(MerDNASimple, Homopolymer) {
     EXPECT_TRUE(simple_homolymer_test(m));
     EXPECT_TRUE(m.is_homopolymer());
     if(i > 1) { // i == 1 all mers are homopolymers by definition
-      m.base(::random_bits(5) % i) = 'T';
+      const auto base_range = decltype(base_index)::param_type(0, i - 1);
+      m.base(base_index(prg, base_range)) = 'T';
       if(simple_homolymer_test(m) || m.is_homopolymer())
         std::cerr << m << "\n";
       EXPECT_FALSE(simple_homolymer_test(m));
@@ -293,11 +295,12 @@ TEST(MerDNASimple, Comparators) {
 
 TEST(MerDNASimple, IO) {
   std::stringstream buffer;
+  std::uniform_int_distribution<unsigned int> mer_length(1, 512);
 
   for(int i = 0; i < 10000; ++i) {
     buffer.clear();
     SCOPED_TRACE(::testing::Message() << "i:" << i);
-    mer_dna::k(::random_bits(9) + 1);
+    mer_dna::k(mer_length(prg));
     mer_dna m1, m2;
     m1.randomize(prg);
     buffer << m1;
@@ -573,12 +576,15 @@ TYPED_TEST(MerDNA, OperatorShift) {
 
 TYPED_TEST(MerDNA, GetBits) {
   typename TypeParam::Type m(this->GetParam());
+  std::uniform_int_distribution<long int> start_position(0, this->GetParam().size() - 2);
+  std::uniform_int_distribution<long int> bit_length;
   for(unsigned int i = 0; i < 20; ++i) {
-    long int start   = random() % (this->GetParam().size() - 1);
+    long int start   = start_position(prg);
     long int max_len =
       std::min((long int)(this->GetParam().size() - start),
                (long int)(8 * sizeof(typename TypeParam::Type::base_type)));
-    long int len     = (random() % (max_len - 1)) + 1;
+    const auto length_range = decltype(bit_length)::param_type(1, max_len - 1);
+    long int len = bit_length(prg, length_range);
 
     // Get bits by right-shifting
     typename TypeParam::Type cm(m);

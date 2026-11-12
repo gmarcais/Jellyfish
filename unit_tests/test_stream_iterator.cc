@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include <gtest/gtest.h>
+#include <unit_tests/test_main.hpp>
 
 #include <vector>
 #include <iostream>
@@ -39,7 +40,8 @@ protected:
     if(!mkdtemp(tmpdir))
       throw std::runtime_error(err::msg() << "Failed to create tmp directory: " << err::no);
 
-    int nb_files = jellyfish::random_bits(5);
+    int nb_files = std::uniform_int_distribution<int>(0, 31)(prg);
+    std::uniform_int_distribution<int> line_count(0, 63);
     for(int i = 0; i < nb_files; ++i) {
       std::ostringstream path;
       path << tmpdir << "/" << i;
@@ -47,7 +49,7 @@ protected:
       std::ofstream tmp_file(path.str().c_str());
       if(tmp_file.fail())
         throw std::runtime_error(err::msg() << "Failed to open file '" << path.str() << "' for writing");
-      int nb_lines = jellyfish::random_bits(6);
+      int nb_lines = line_count(prg);
       total_lines += nb_lines;
       for(int j = 0; j < nb_lines; ++j)
         tmp_file << "line " << j << "\n";

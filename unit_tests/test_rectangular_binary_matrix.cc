@@ -165,9 +165,6 @@ TEST_P(MatrixVectorProd, Optimizations) {
   uint64_t v[nb_words];
 
   for(int i = 0; i < nb_tests; ++i) {
-    // unsigned int r = 2 * (random() % 31 + 1);
-    // unsigned int c = 2 * (random() % 100) + r;
-
     // RectangularBinaryMatrix m(r, c);
     // m.randomize(random_bits);
 
@@ -233,10 +230,12 @@ TEST(PseudoProduct, Parity) {
 }
 
 TEST(PseudoProduct, Inverse) {
+  std::uniform_int_distribution<unsigned int> row_count(1, 63);
+  std::uniform_int_distribution<unsigned int> column_pairs(1, 100);
   int full_rank = 0, singular = 0;
   for(unsigned int i = 0; i < 500; ++i) {
-    unsigned int r = std::uniform_int_distribution<unsigned int>(1, 63)(prg); // random() % 63 + 1;
-    unsigned int c = 2 * std::uniform_int_distribution<unsigned int>(1, 100)(prg); // ((random() % 100) + 1);
+    unsigned int r = row_count(prg);
+    unsigned int c = 2 * column_pairs(prg);
     SCOPED_TRACE(::testing::Message() << "Dimension " << r << "x" << c);
     RectangularBinaryMatrix m(r, c);
     m.randomize(random_bits);

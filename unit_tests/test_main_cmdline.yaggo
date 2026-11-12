@@ -10,8 +10,8 @@ purpose "Unit tests"
 name "cmdline_parse"
 
 option("s", "seed") {
-  description "Random seed"
-  uint32 }
+  description "Random seed file path"
+  c_string }
 option("b", "backtrace") {
   description "Do not catch errors and show backtrace"
   flag }
