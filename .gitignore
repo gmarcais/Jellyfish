@@ -16,3 +16,5 @@ test-driver
 build-*
 *~
 compile_commands.json
+/ABOUT-NLS
+/po/
