@@ -76,8 +76,8 @@ struct inc_on_destructor {
 };
 
 TEST(TextDumper, Random) {
-  static int iteration_count_ = 0;
-  ++iteration_count_;
+  // static int iteration_count_ = 0;
+  // ++iteration_count_;
 
   static const int    mer_len    = 35;
   static const int    nb_threads = 5;

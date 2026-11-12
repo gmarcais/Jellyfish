@@ -150,7 +150,7 @@ public:
   }
 
   virtual void start(int thid) {
-    size_t count = 0;
+    // size_t count = 0;
     MerIteratorType mers(parser_, args.canonical_flag);
 
     switch(op_) {
@@ -158,7 +158,7 @@ public:
       for( ; mers; ++mers) {
         if((*filter_)(*mers))
           ary_.add(*mers, 1);
-        ++count;
+        // ++count;
       }
       break;
 
@@ -166,7 +166,7 @@ public:
       for( ; mers; ++mers) {
         if((*filter_)(*mers))
           ary_.set(*mers);
-        ++count;
+        // ++count;
       }
       break;
 
@@ -175,7 +175,7 @@ public:
       for( ; mers; ++mers) {
         if((*filter_)(*mers))
           ary_.update_add(*mers, 1, tmp);
-        ++count;
+        // ++count;
       }
       break;
     }

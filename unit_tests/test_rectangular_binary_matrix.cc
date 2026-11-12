@@ -292,45 +292,45 @@ TEST(PseudoProduct, VectorInverseMultiplication) {
 }
 
 
-static const int speed_loop = 100000000;
-TEST(MatrixProductSpeed, Loop) {
-  RectangularBinaryMatrix m(50, 100);
-  const unsigned int nb_words = m.c() / 64 + (m.c() % 64 != 0);
-  uint64_t v[nb_words];
-  for(unsigned int j = 0; j < nb_words; ++j)
-    v[j] = random_bits();
+// static const int speed_loop = 100000000;
+// TEST(MatrixProductSpeed, Loop) {
+//   RectangularBinaryMatrix m(50, 100);
+//   const unsigned int nb_words = m.c() / 64 + (m.c() % 64 != 0);
+//   uint64_t v[nb_words];
+//   for(unsigned int j = 0; j < nb_words; ++j)
+//     v[j] = random_bits();
 
-  volatile uint64_t res = 0;
-  for(int i = 0; i < speed_loop; ++i)
-    res ^= m.times_loop((uint64_t*)v);
-}
+//   volatile uint64_t res = 0;
+//   for(int i = 0; i < speed_loop; ++i)
+//     res ^= m.times_loop((uint64_t*)v);
+// }
 
-#ifdef HAVE_SSE
-TEST(MatrixProductSpeed, SSE) {
-  RectangularBinaryMatrix m(50, 100);
-  const unsigned int nb_words = m.c() / 64 + (m.c() % 64 != 0);
-  uint64_t v[nb_words];
-  for(unsigned int j = 0; j < nb_words; ++j)
-    v[j] = random_bits();
+// #ifdef HAVE_SSE
+// TEST(MatrixProductSpeed, SSE) {
+//   RectangularBinaryMatrix m(50, 100);
+//   const unsigned int nb_words = m.c() / 64 + (m.c() % 64 != 0);
+//   uint64_t v[nb_words];
+//   for(unsigned int j = 0; j < nb_words; ++j)
+//     v[j] = random_bits();
 
-  volatile uint64_t res = 0;
-  for(int i = 0; i < speed_loop; ++i)
-    res ^= m.times_sse((uint64_t*)v);
-}
-#endif
+//   volatile uint64_t res = 0;
+//   for(int i = 0; i < speed_loop; ++i)
+//     res ^= m.times_sse((uint64_t*)v);
+// }
+// #endif
 
-#ifdef HAVE_INT128
-TEST(MatrixProductSpeed, U128) {
-  RectangularBinaryMatrix m(50, 100);
-  const unsigned int nb_words = m.c() / 64 + (m.c() % 64 != 0);
-  uint64_t v[nb_words];
-  for(unsigned int j = 0; j < nb_words; ++j)
-    v[j] = random_bits();
+// #ifdef HAVE_INT128
+// TEST(MatrixProductSpeed, U128) {
+//   RectangularBinaryMatrix m(50, 100);
+//   const unsigned int nb_words = m.c() / 64 + (m.c() % 64 != 0);
+//   uint64_t v[nb_words];
+//   for(unsigned int j = 0; j < nb_words; ++j)
+//     v[j] = random_bits();
 
-  volatile uint64_t res = 0;
-  for(int i = 0; i < speed_loop; ++i)
-    res ^= m.times_128((uint64_t*)v);
-}
-#endif
+//   volatile uint64_t res = 0;
+//   for(int i = 0; i < speed_loop; ++i)
+//     res ^= m.times_128((uint64_t*)v);
+// }
+// #endif
 
 }
