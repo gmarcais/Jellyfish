@@ -152,6 +152,11 @@ class mer_base {
 public:
   typedef typename mer_dna_traits<derived>::base_type base_type;
 
+  mer_base() = default;
+  mer_base(const mer_base&) = default;
+  mer_base(mer_base&&) = default;
+  ~mer_base() = default;
+
   enum { CODE_A, CODE_C, CODE_G, CODE_T,
          CODE_RESET = -1, CODE_IGNORE = -2, CODE_COMMENT = -3 };
 
@@ -178,7 +183,7 @@ public:
 }
 
   operator derived() { return *static_cast<derived*>(this); }
-  operator const derived() const { return *static_cast<const derived*>(this); }
+  operator derived() const { return *static_cast<const derived*>(this); }
   unsigned int k() const { return static_cast<const derived*>(this)->k(); }
 
   /// Direct access to data. No bound or consistency check. Use with
@@ -312,12 +317,6 @@ public:
     return true;
   }
 
-  derived& operator=(const mer_base& rhs) {
-    if(this != &rhs)
-      memcpy(data__(), rhs.data(), nb_words() * sizeof(base_type));
-    return *static_cast<derived*>(this);
-  }
-
   derived& operator=(const char* s) {
     if(strlen(s) < static_cast<derived*>(this)->k())
       throw error_short_string();
@@ -437,18 +436,20 @@ public:
   void canonicalize() {
     derived rc = this->get_reverse_complement();
     if(rc < *this)
-      *this = rc;
+      *static_cast<derived*>(this) = rc;
   }
 
   derived get_reverse_complement() const {
-    derived res(*this);
+    derived res(*static_cast<const derived*>(this));
     res.reverse_complement();
     return res;
   }
 
   derived get_canonical() const {
     derived rc = this->get_reverse_complement();
-    return rc < *this ? rc : *this;
+    if(rc < *this)
+      return rc;
+    return *static_cast<const derived*>(this);
   }
 
   // Transfomr the k-mer into a C++ string.
@@ -562,6 +563,9 @@ public:
   }
 
 protected:
+  mer_base& operator=(const mer_base&) = default;
+  mer_base& operator=(mer_base&&) = default;
+
   static const base_type c3     = (base_type)0x3;
   static const int       wshift = sizeof(base_type) * 8 - 2; // left shift in 1 word
   static const int       wbases = 4 * sizeof(base_type); // bases in a word
@@ -625,6 +629,7 @@ protected:
 // Storage policies receive a word count, independent of the k-mer length.
 // The length wrappers handle value copying after their storage is initialized.
 // check_size returns the validated count, preserving its bounds for algorithms.
+// Heap move construction empties the source; word access requires active storage.
 template<typename T = uint64_t>
 class mer_base_heap {
 public:
@@ -635,6 +640,18 @@ public:
 
   mer_base_heap(const mer_base_heap&) = delete;
   mer_base_heap& operator=(const mer_base_heap&) = delete;
+
+  mer_base_heap(mer_base_heap&& rhs) noexcept : data_(rhs.data_) {
+    rhs.data_ = nullptr;
+  }
+  mer_base_heap& operator=(mer_base_heap&& rhs) noexcept {
+    if(this != &rhs) {
+      delete[] data_;
+      data_ = rhs.data_;
+      rhs.data_ = nullptr;
+    }
+    return *this;
+  }
 
   static unsigned int check_size(unsigned int words) { return words; }
   const base_type* data() const { return data_; }
@@ -653,6 +670,11 @@ public:
 
   explicit mer_base_stack(unsigned int words) : data_{} { check_size(words); }
 
+  mer_base_stack(const mer_base_stack&) = default;
+  mer_base_stack& operator=(const mer_base_stack&) = default;
+  mer_base_stack(mer_base_stack&&) = default;
+  mer_base_stack& operator=(mer_base_stack&&) = default;
+
   static unsigned int check_size(unsigned int words) {
     if(words == 0 || words > W)
       throw std::length_error("K-mer length is outside stack storage capacity");
@@ -665,21 +687,77 @@ private:
   base_type data_[W];
 };
 
+namespace detail {
+// Keep inline storage's copy/move operations trivial. Owning storage needs
+// word counts from the complete source object, without storing another size.
+template<typename Derived, typename Storage,
+         bool Trivial = std::is_trivially_copyable<Storage>::value>
+class mer_storage_base : public Storage {
+protected:
+  explicit mer_storage_base(unsigned int words) : Storage(words) { }
+  mer_storage_base(const mer_storage_base&) = default;
+  mer_storage_base(mer_storage_base&&) = default;
+  mer_storage_base& operator=(const mer_storage_base&) = default;
+  mer_storage_base& operator=(mer_storage_base&&) = default;
+};
+
+template<typename Derived, typename Storage>
+class mer_storage_base<Derived, Storage, false> : public Storage {
+protected:
+  explicit mer_storage_base(unsigned int words) : Storage(words) { }
+  mer_storage_base(const mer_storage_base& rhs) : Storage(word_count(rhs)) {
+    copy_words(rhs, word_count(rhs));
+  }
+  mer_storage_base(mer_storage_base&& rhs)
+    noexcept(std::is_nothrow_move_constructible<Storage>::value) :
+    Storage(std::move(static_cast<Storage&>(rhs))) { }
+
+  mer_storage_base& operator=(const mer_storage_base& rhs) {
+    if(this == &rhs)
+      return *this;
+    const unsigned int words = word_count(rhs);
+    if(!Storage::data() || words != word_count(*this)) {
+      mer_storage_base replacement(rhs);
+      *this = std::move(replacement);
+    } else {
+      copy_words(rhs, words);
+    }
+    return *this;
+  }
+  mer_storage_base& operator=(mer_storage_base&& rhs)
+    noexcept(std::is_nothrow_move_assignable<Storage>::value) {
+    Storage::operator=(std::move(static_cast<Storage&>(rhs)));
+    return *this;
+  }
+
+private:
+  static unsigned int word_count(const mer_storage_base& value) {
+    return mer_base<Derived>::nb_words(static_cast<const Derived&>(value).k());
+  }
+  void copy_words(const mer_storage_base& rhs, unsigned int words) {
+    memcpy(Storage::data__(), rhs.data(), words * sizeof(typename Storage::base_type));
+  }
+};
+} // namespace detail
+
 // Mer type where the length is kept in each mer object: allows to
 // manipulate mers of different size within the same application.
 template<typename T = uint64_t, typename Storage = mer_base_heap<T>>
-class mer_base_dynamic : public Storage, public mer_base<mer_base_dynamic<T, Storage>> {
+class mer_base_dynamic :
+  public detail::mer_storage_base<mer_base_dynamic<T, Storage>, Storage>,
+  public mer_base<mer_base_dynamic<T, Storage>> {
   static_assert(std::is_same<T, typename Storage::base_type>::value,
                 "Storage word type must match the k-mer word type");
 
 public:
   typedef T base_type;
   typedef mer_base<mer_base_dynamic<T, Storage>> super;
+  typedef detail::mer_storage_base<mer_base_dynamic<T, Storage>, Storage> storage_base;
 
-  explicit mer_base_dynamic(unsigned int k) : Storage(super::nb_words(k)), k_(k) { }
-  mer_base_dynamic(const mer_base_dynamic& rhs) : mer_base_dynamic(rhs.k()) {
-    super::operator=(rhs);
-  }
+  explicit mer_base_dynamic(unsigned int k) : storage_base(super::nb_words(k)), k_(k) { }
+  mer_base_dynamic(const mer_base_dynamic&) = default;
+  mer_base_dynamic(mer_base_dynamic&&) = default;
+
   mer_base_dynamic(unsigned int k, const char* s) : mer_base_dynamic(k) {
     super::from_chars(s);
   }
@@ -695,12 +773,8 @@ public:
     super::assign_words(rhs);
   }
 
-  mer_base_dynamic& operator=(const mer_base_dynamic& rhs) {
-    if(k_ != rhs.k_)
-      throw different_k_error();
-    super::operator=(rhs);
-    return *this;
-  }
+  mer_base_dynamic& operator=(const mer_base_dynamic&) = default;
+  mer_base_dynamic& operator=(mer_base_dynamic&&) = default;
 
   const base_type* data() const { return Storage::data(); }
   base_type* data__() { return Storage::data__(); }
@@ -712,7 +786,7 @@ public:
   }
 
 private:
-  const unsigned int k_;
+  unsigned int k_;
 };
 
 template<typename T, typename Storage>
@@ -727,23 +801,25 @@ struct mer_dna_traits<mer_base_dynamic<T, Storage>> {
 // class with different length in the same application. Each complete template
 // specialization, including its storage policy, has its own static length.
 template<typename T = uint64_t, int CI = 0, typename Storage = mer_base_heap<T>>
-class mer_base_static : public Storage, public mer_base<mer_base_static<T, CI, Storage>> {
+class mer_base_static :
+  public detail::mer_storage_base<mer_base_static<T, CI, Storage>, Storage>,
+  public mer_base<mer_base_static<T, CI, Storage>> {
   static_assert(std::is_same<T, typename Storage::base_type>::value,
                 "Storage word type must match the k-mer word type");
 
 public:
   typedef T base_type;
   typedef mer_base<mer_base_static<T, CI, Storage>> super;
+  typedef detail::mer_storage_base<mer_base_static<T, CI, Storage>, Storage> storage_base;
   static const int class_index = CI;
 
-  mer_base_static() : Storage(super::nb_words(k_)) { }
+  mer_base_static() : storage_base(super::nb_words(k_)) { }
   explicit mer_base_static(unsigned int k) : mer_base_static() {
     if(k != k_)
       throw different_k_error();
   }
-  mer_base_static(const mer_base_static& rhs) : mer_base_static() {
-    super::operator=(rhs);
-  }
+  mer_base_static(const mer_base_static&) = default;
+  mer_base_static(mer_base_static&&) = default;
 
   mer_base_static(unsigned int k, const char* s) : mer_base_static(k) {
     super::from_chars(s);
@@ -762,12 +838,8 @@ public:
 
   mer_base_static& operator=(const char* s) { return super::operator=(s); }
   mer_base_static& operator=(const std::string& s) { return super::operator=(s); }
-  mer_base_static& operator=(const mer_base_static& rhs) {
-    if(k_ != rhs.k_)
-      throw different_k_error();
-    super::operator=(rhs);
-    return *this;
-  }
+  mer_base_static& operator=(const mer_base_static&) = default;
+  mer_base_static& operator=(mer_base_static&&) = default;
 
   const base_type* data() const { return Storage::data(); }
   base_type* data__() { return Storage::data__(); }

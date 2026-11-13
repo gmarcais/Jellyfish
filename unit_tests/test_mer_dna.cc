@@ -554,6 +554,10 @@ TYPED_TEST(MerDNA, Copy) {
   typename TypeParam::Type m1(this->GetParam());
   typename TypeParam::Type m2(m1);
   typename TypeParam::Type m3(this->GetParam().size());
+  typedef typename TypeParam::Type Mer;
+  Mer from_base(static_cast<const mer_dna_ns::mer_base<Mer>&>(m1));
+  EXPECT_EQ(m1, from_base);
+  EXPECT_NE(m1.data(), from_base.data());
   m3 = m1;
   m2 = m2;
 
@@ -565,6 +569,77 @@ TYPED_TEST(MerDNA, Copy) {
   m1.shift_left('A');
   EXPECT_TRUE(!(m1 == m2));
   EXPECT_TRUE(!(m1 == m3));
+}
+
+TYPED_TEST(MerDNA, MoveConstruction) {
+  typedef typename TypeParam::Type Mer;
+  typedef typename Mer::base_type Word;
+  static_assert(std::is_nothrow_move_constructible<Mer>::value,
+                "Built-in storage must allow non-throwing mer moves");
+  Mer source(this->GetParam());
+  const Word* buffer = source.data();
+  Mer moved(std::move(source));
+  EXPECT_EQ(this->GetParam(), moved.to_str());
+  EXPECT_EQ(this->GetParam().size(), moved.k());
+  if(std::is_base_of<mer_dna_ns::mer_base_heap<Word>, Mer>::value) {
+    EXPECT_EQ(buffer, moved.data());
+    EXPECT_EQ(nullptr, source.data());
+  } else {
+    EXPECT_NE(buffer, moved.data());
+    EXPECT_EQ(this->GetParam(), source.to_str());
+  }
+  source = moved;
+  EXPECT_EQ(moved, source);
+  EXPECT_NE(moved.data(), source.data());
+}
+
+TYPED_TEST(MerDNA, MoveAssignment) {
+  typedef typename TypeParam::Type Mer;
+  typedef typename Mer::base_type Word;
+  Mer source(this->GetParam());
+  Mer destination(source.k());
+  const Word* buffer = source.data();
+  destination = std::move(source);
+  EXPECT_EQ(this->GetParam(), destination.to_str());
+  if(std::is_base_of<mer_dna_ns::mer_base_heap<Word>, Mer>::value) {
+    EXPECT_EQ(buffer, destination.data());
+  } else {
+    EXPECT_NE(buffer, destination.data());
+    EXPECT_EQ(this->GetParam(), source.to_str());
+  }
+  Mer& same = destination;
+  destination = std::move(same);
+  EXPECT_EQ(this->GetParam(), destination.to_str());
+  source = std::move(destination);
+  EXPECT_EQ(this->GetParam(), source.to_str());
+}
+
+TYPED_TEST(MerDNA, VectorRelocation) {
+  typedef typename TypeParam::Type Mer;
+  typedef typename Mer::base_type Word;
+  std::vector<Mer> mers;
+  mers.reserve(1);
+  mers.emplace_back(this->GetParam());
+  const Word* buffer = mers[0].data();
+  mers.reserve(2);
+  EXPECT_EQ(this->GetParam(), mers[0].to_str());
+  if(std::is_base_of<mer_dna_ns::mer_base_heap<Word>, Mer>::value) {
+    EXPECT_EQ(buffer, mers[0].data());
+  }
+}
+
+TYPED_TEST(MerDNA, VectorCopyInsertion) {
+  typedef typename TypeParam::Type Mer;
+  std::vector<Mer> mers;
+  mers.reserve(3);
+  mers.emplace_back(this->GetParam());
+  mers.push_back(mers.front());
+  Mer inserted(this->GetParam());
+  inserted.polyT();
+  mers.insert(mers.begin() + 1, inserted);
+  EXPECT_EQ(this->GetParam(), mers[0].to_str());
+  EXPECT_EQ(inserted, mers[1]);
+  EXPECT_EQ(this->GetParam(), mers[2].to_str());
 }
 
 TYPED_TEST(MerDNA, OperatorShift) {
@@ -772,9 +847,50 @@ TEST(MerStorageDefaults, InsufficientDefaultCapacity) {
   EXPECT_EQ(std::string(16, 'A'), m.to_str());
 }
 
+template<typename Mer>
+void check_trivial_value_type() {
+  static_assert(std::is_trivially_copyable<Mer>::value, "Mer must be trivially copyable");
+  static_assert(std::is_trivially_copy_constructible<Mer>::value, "Copy construction must be trivial");
+  static_assert(std::is_trivially_copy_assignable<Mer>::value, "Copy assignment must be trivial");
+  static_assert(std::is_trivially_move_constructible<Mer>::value, "Move construction must be trivial");
+  static_assert(std::is_trivially_move_assignable<Mer>::value, "Move assignment must be trivial");
+  static_assert(std::is_trivially_destructible<Mer>::value, "Destruction must be trivial");
+  static_assert(std::is_nothrow_copy_constructible<Mer>::value, "Copy construction must not throw");
+  static_assert(std::is_nothrow_move_constructible<Mer>::value, "Move construction must not throw");
+  static_assert(std::is_nothrow_copy_assignable<Mer>::value, "Copy assignment must not throw");
+  static_assert(std::is_nothrow_move_assignable<Mer>::value, "Move assignment must not throw");
+  static_assert(std::is_nothrow_destructible<Mer>::value, "Destruction must not throw");
+}
+
+TYPED_TEST(MerStorage, TrivialInlineValues) {
+  typedef mer_dna_ns::mer_base_stack<TypeParam, 1> One;
+  typedef mer_dna_ns::mer_base_stack<TypeParam, 2> Two;
+  typedef mer_dna_ns::mer_base_static<TypeParam, 106, One> StaticOne;
+  typedef mer_dna_ns::mer_base_static<TypeParam, 106, Two> StaticTwo;
+  check_trivial_value_type<StaticOne>();
+  check_trivial_value_type<StaticTwo>();
+  check_trivial_value_type<mer_dna_ns::mer_base_dynamic<TypeParam, One>>();
+  check_trivial_value_type<mer_dna_ns::mer_base_dynamic<TypeParam, Two>>();
+  static_assert(sizeof(StaticOne) == sizeof(TypeParam), "One-word mer must have no size overhead");
+  static_assert(sizeof(StaticTwo) == 2 * sizeof(TypeParam), "Inline mer must have no size overhead");
+  static_assert(alignof(StaticOne) == alignof(TypeParam), "One-word mer must keep word alignment");
+  static_assert(alignof(StaticTwo) == alignof(TypeParam), "Inline mer must keep word alignment");
+  static_assert(std::is_standard_layout<StaticOne>::value, "Static inline mer must have standard layout");
+}
+
+TYPED_TEST(MerStorage, NothrowHeapMoves) {
+  typedef mer_dna_ns::mer_base_static<TypeParam> Static;
+  typedef mer_dna_ns::mer_base_dynamic<TypeParam> Dynamic;
+  static_assert(std::is_nothrow_move_constructible<Static>::value, "Static heap moves must not throw");
+  static_assert(std::is_nothrow_move_assignable<Static>::value, "Static heap move assignment must not throw");
+  static_assert(std::is_nothrow_move_constructible<Dynamic>::value, "Dynamic heap moves must not throw");
+  static_assert(std::is_nothrow_move_assignable<Dynamic>::value, "Dynamic heap move assignment must not throw");
+}
+
 template<typename Storage>
 void check_dynamic_assignment() {
-  typedef mer_dna_ns::mer_base_dynamic<uint64_t, Storage> Mer;
+  typedef typename Storage::base_type Word;
+  typedef mer_dna_ns::mer_base_dynamic<Word, Storage> Mer;
   Mer source("ACGTACGT");
   Mer destination("TTTTTTTT");
   destination = source;
@@ -785,13 +901,28 @@ void check_dynamic_assignment() {
   destination = destination;
   EXPECT_EQ("ACGTACGT", destination.to_str());
   Mer different_length("ACGT");
-  EXPECT_THROW(destination = different_length, mer_dna_ns::different_k_error);
-  EXPECT_EQ("ACGTACGT", destination.to_str());
+  destination = different_length;
+  EXPECT_EQ(4U, destination.k());
+  EXPECT_EQ("ACGT", destination.to_str());
+  EXPECT_EQ("ACGT", different_length.to_str());
+  const unsigned int long_length = 8 * sizeof(Word) + 1;
+  Mer longer(std::string(long_length, 'G'));
+  destination = longer;
+  EXPECT_EQ(long_length, destination.k());
+  EXPECT_EQ(longer, destination);
+  EXPECT_NE(longer.data(), destination.data());
+  destination = std::move(different_length);
+  EXPECT_EQ(4U, destination.k());
+  EXPECT_EQ("ACGT", destination.to_str());
+  const unsigned int middle_length = 4 * sizeof(Word) + 1;
+  destination = Mer(std::string(middle_length, 'C'));
+  EXPECT_EQ(middle_length, destination.k());
+  EXPECT_EQ(std::string(middle_length, 'C'), destination.to_str());
 }
 
-TEST(MerStorageDefaults, DynamicAssignment) {
-  check_dynamic_assignment<mer_dna_ns::mer_base_heap<uint64_t>>();
-  check_dynamic_assignment<mer_dna_ns::mer_base_stack<uint64_t, 1>>();
+TYPED_TEST(MerStorage, DynamicAssignment) {
+  check_dynamic_assignment<mer_dna_ns::mer_base_heap<TypeParam>>();
+  check_dynamic_assignment<mer_dna_ns::mer_base_stack<TypeParam, 3>>();
 }
 
 } // namespace {
