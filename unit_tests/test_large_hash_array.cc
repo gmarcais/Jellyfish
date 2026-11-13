@@ -73,12 +73,12 @@ TEST_P(HashArray, OneElement) {
   EXPECT_EQ((unsigned int)ary_lsize, ary.matrix().r());
   EXPECT_EQ((unsigned int)key_len, ary.matrix().c());
 
-  size_t start_pos = random() % (ary_size - bsizeof(uint64_t));
+  size_t start_pos = std::uniform_int_distribution<size_t>(0, ary_size - bsizeof(uint64_t) - 1)(prg);
   size_t mask = (size_t)key_len >= bsizeof(size_t) ? (size_t)-1 : ((size_t)1 << key_len) - 1;
   for(uint64_t i = start_pos; i < start_pos + bsizeof(uint64_t); ++i) {
     SCOPED_TRACE(::testing::Message() << "i:" << i);
     // Create mer m so that it will hash to position i
-    m.randomize();
+    m.randomize(prg);
     m2 = m;
     m2.set_bits(0, ary.matrix().r(), (uint64_t)i);
     m.set_bits(0, ary.matrix().r(), ary.inverse_matrix().times(m2));
@@ -124,7 +124,7 @@ TEST_P(HashArray, Collisions) {
   mers[2].polyG(); mers2[2].polyG();
   mers[3].polyT(); mers2[3].polyT();
 
-  size_t start_pos = random() % (ary_size - bsizeof(uint64_t));
+  size_t start_pos = std::uniform_int_distribution<size_t>(0, ary_size - bsizeof(uint64_t) - 1)(prg);
   for(uint64_t i = start_pos; i < start_pos + bsizeof(uint64_t); ++i) {
     SCOPED_TRACE(::testing::Message() << "i:" << i);
     ary.clear();
@@ -167,7 +167,7 @@ arrays_ptr fill_array(size_t nb_elts, size_t size, int key_len, int val_len, int
   mer_dna mer;
   for(size_t i = 0; i < nb_elts; ++i) {
     SCOPED_TRACE(::testing::Message() << "i:" << i);
-    mer.randomize();
+    mer.randomize(prg);
     map[mer] += i;
     // If get false, hash array filled up: double size
     bool res = ary.add(mer, i);
@@ -245,7 +245,7 @@ TEST_P(HashArray, Iterator) {
 
 TEST_P(HashArray, LargeValue) {
   mer_dna mer;
-  mer.randomize();
+  mer.randomize(prg);
   ary.add(mer, numeric_limits<uint64_t>::max());
 
   uint64_t val = 0;
@@ -269,7 +269,7 @@ TEST(Hash, Set) {
   mer_dna     mer;
 
   for(int i = 0; i < nb_elts; ++i) {
-    mer.randomize();
+    mer.randomize(prg);
     bool   is_new;
     size_t id;
     ASSERT_TRUE(ary.set(mer, &is_new, &id));
@@ -284,7 +284,7 @@ TEST(Hash, Set) {
   }
 
   for(int i = 0; i < nb_elts; ++i) {
-    mer.randomize();
+    mer.randomize(prg);
     size_t id;
     EXPECT_EQ(set.find(mer) != set.end(), ary.get_key_id(mer, &id));
   }
@@ -301,7 +301,7 @@ TEST(Hash, Update) {
   mer_dna     mer;
 
   for(int i = 0; i < nb_elts; ++i) {
-    mer.randomize();
+    mer.randomize(prg);
     bool is_new;
     size_t id;
     ASSERT_TRUE(ary.set(mer, &is_new, &id));
@@ -316,7 +316,7 @@ TEST(Hash, Update) {
   }
 
   for(int i = 0; i < nb_elts; ++i) {
-    mer.randomize();
+    mer.randomize(prg);
     uint64_t val = random_bits(4);
     auto it = in_ary.find(mer);
     if(it == in_ary.end()) {
@@ -338,10 +338,12 @@ TEST(Hash, Update) {
 }
 
 TEST(Hash, Info) {
+  std::uniform_int_distribution<uint16_t> key_length(1, 128);
+  std::uniform_int_distribution<uint16_t> value_length(1, 16);
   for(int iteration = 0; iteration < 100; ++iteration) {
     size_t                  mem     = random_bits(48);
-    uint16_t                key_len = random_bits(7) + 1;
-    uint16_t                val_len = random_bits(4) + 1;
+    uint16_t                key_len = key_length(prg);
+    uint16_t                val_len = value_length(prg);
     large_array::usage_info info(key_len, val_len, 126);
 
     SCOPED_TRACE(::testing::Message() << "iteration:" << iteration << " mem:" << mem

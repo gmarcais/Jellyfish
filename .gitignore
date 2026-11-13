@@ -18,3 +18,4 @@ build-*
 compile_commands.json
 /ABOUT-NLS
 /po/
+unit_tests_seed

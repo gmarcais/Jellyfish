@@ -14,54 +14,36 @@
     along with Jellyfish.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <random>
+#include <limits>
 #include <stdlib.h>
-#include <iostream>
-#include <fstream>
 #include <gtest/gtest.h>
 #include <unit_tests/test_main_cmdline.hpp>
 #include <unit_tests/test_main.hpp>
 #include <jellyfish/backtrace.hpp>
 
-template<long int n>
-struct floorLog2 {
-  static const int val = floorLog2<n / 2>::val + 1;
-};
-template<>
-struct floorLog2<1> {
-  static const int val = 0;
-};
+#include "random_seed.hpp"
 
 // Return length random bits. 1 <= length <= 64
 uint64_t random_bits(int length) {
-  uint64_t res = 0;
-  for(int i = 0; i < length; i += floorLog2<RAND_MAX>::val)
-    res ^= (uint64_t)random() << i;
-  return res & ((uint64_t)-1 >> (64 - length));
+  const uint64_t max = std::numeric_limits<uint64_t>::max() >> (64 - length);
+  return std::uniform_int_distribution<uint64_t>(0, max)(prg);
 }
 
+std::mt19937_64 prg;
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
   cmdline_parse args(argc, argv);
 
-  unsigned int seed;
-  if(args.seed_given) {
-    seed = args.seed_arg;
-  } else {
-    std::ifstream urandom("/dev/urandom");
-    urandom.read((char*)&seed, sizeof(seed));
-    if(!urandom.good()) {
-      std::cerr << "Failed to read random seed" << std::endl;
-      return 1;
-    }
-  }
+  prg = seeded_prg<std::mt19937_64>("unit_tests_seed", args.seed_given ? args.seed_arg : nullptr);
+
+  std::cout << "Using random seed saved in '" << (args.seed_given ? args.seed_arg : "unit_tests_seed") << '\'' << std::endl;
+
   if(args.backtrace_flag) {
     show_backtrace();
     setenv("GTEST_CATCH_EXCEPTIONS", "0", 1);
   }
-
-  std::cout << "Using random seed " << seed << std::endl;
-  srandom(seed);
 
   return RUN_ALL_TESTS();
 }

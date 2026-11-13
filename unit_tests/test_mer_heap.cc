@@ -12,6 +12,8 @@
 #include <jellyfish/large_hash_array.hpp>
 #include <jellyfish/mer_heap.hpp>
 
+#include <unit_tests/test_main.hpp>
+
 namespace {
 using jellyfish::mer_dna;
 
@@ -31,7 +33,7 @@ public:
     mer_dna m;
 
     for(size_t i = 0; i < nb_mers; ++i) {
-      m.randomize();
+      m.randomize(prg);
       bool   is_new;
       size_t id;
       shared_ary->set(m, &is_new, &id);

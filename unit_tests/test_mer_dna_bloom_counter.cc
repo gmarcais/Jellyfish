@@ -63,7 +63,7 @@ TYPED_TEST(MerDnaBloomTest, FalsePositive) {
     size_t nb_collisions   = 0;
     mer_dna m;
     for(size_t i = 0; i < nb_inserts; ++i) {
-      m.randomize();
+      m.randomize(prg);
       mer_set.insert(m);
       nb_collisions += bc.insert(m) > 0;
     }
@@ -136,7 +136,7 @@ TYPED_TEST(MerDnaBloomTest, FalsePositive) {
     size_t nb_collisions = 0;
     mer_dna m;
     for(size_t i = 0; i < nb_inserts; ++i) {
-      m.randomize();
+      m.randomize(prg);
       unsigned int check = bc.check(m);
       EXPECT_EQ(check, bc_read.check(m));
       EXPECT_EQ(check, bc_map.check(m));

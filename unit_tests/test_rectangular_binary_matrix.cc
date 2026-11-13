@@ -7,6 +7,7 @@
 */
 
 #include <gtest/gtest.h>
+#include <random>
 #include <unit_tests/test_main.hpp>
 #include <stdexcept>
 #include <stdlib.h>
@@ -78,7 +79,7 @@ TEST(RectangularBinaryMatrix, LowIdentity) {
       RectangularBinaryMatrix m(r, c); // Matrix should be zeroed out
       mer_dna::k(c);
       mer_dna v;
-      v.randomize();
+      v.randomize(prg);
 
       EXPECT_FALSE(m.is_low_identity());
       m.init_low_identity();
@@ -164,9 +165,6 @@ TEST_P(MatrixVectorProd, Optimizations) {
   uint64_t v[nb_words];
 
   for(int i = 0; i < nb_tests; ++i) {
-    // unsigned int r = 2 * (random() % 31 + 1);
-    // unsigned int c = 2 * (random() % 100) + r;
-
     // RectangularBinaryMatrix m(r, c);
     // m.randomize(random_bits);
 
@@ -232,10 +230,12 @@ TEST(PseudoProduct, Parity) {
 }
 
 TEST(PseudoProduct, Inverse) {
+  std::uniform_int_distribution<unsigned int> row_count(1, 63);
+  std::uniform_int_distribution<unsigned int> column_pairs(1, 100);
   int full_rank = 0, singular = 0;
   for(unsigned int i = 0; i < 500; ++i) {
-    unsigned int r = random() % 63 + 1;
-    unsigned int c = 2 * ((random() % 100) + 1);
+    unsigned int r = row_count(prg);
+    unsigned int c = 2 * column_pairs(prg);
     SCOPED_TRACE(::testing::Message() << "Dimension " << r << "x" << c);
     RectangularBinaryMatrix m(r, c);
     m.randomize(random_bits);
@@ -290,7 +290,7 @@ TEST(PseudoProduct, VectorInverseMultiplication) {
 
   for(int i = 0; i < 100; ++i) {
     SCOPED_TRACE(::testing::Message() << "i=" << i);
-    v.randomize();
+    v.randomize(prg);
     uint64_t hash = m.times(v);
     iv = v; iv.set_bits(0, 50, hash);
 
@@ -299,6 +299,14 @@ TEST(PseudoProduct, VectorInverseMultiplication) {
   }
 }
 
+// TODO: need better way to report speed
+// static const int speed_loop = 100000000;
+// TEST(MatrixProductSpeed, Loop) {
+//   RectangularBinaryMatrix m(50, 100);
+//   const unsigned int nb_words = m.c() / 64 + (m.c() % 64 != 0);
+//   uint64_t v[nb_words];
+//   for(unsigned int j = 0; j < nb_words; ++j)
+//     v[j] = random_bits();
 
 // static const int speed_loop = 100000000;
 // TEST(MatrixProductSpeed, Loop) {

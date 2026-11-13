@@ -44,9 +44,10 @@ static string generate_sequence(int len) {
   static const char bases[4] = { 'A', 'C', 'G', 'T' };
   string res;
   res.reserve(len);
+  std::uniform_int_distribution<unsigned int> base_index(0, 3);
 
   for(int i = 0; i < len; ++i)
-    res += bases[random() & 0x3];
+    res += bases[base_index(prg)];
 
   return res;
 }
@@ -54,9 +55,10 @@ static string generate_sequence(int len) {
 static string generate_quals(int len) {
   string res;
   res.reserve(len);
+  std::uniform_int_distribution<int> quality_score('!', '~');
 
   for(int i = 0; i < len; ++i)
-    res += static_cast<char>('!' + (random() % 94));
+    res += static_cast<char>(quality_score(prg));
 
   return res;
 }
@@ -67,11 +69,12 @@ TEST(MerIterator, Sequence) {
   file_unlink fu(file_name);
   string_vector sequences;
   mer_dna::k(35);
+  std::uniform_int_distribution<int> sequence_length(20, 219);
 
   {
     std::ofstream input_fasta(file_name);
     for(int i = 0; i < nb_sequences; ++i) {
-      sequences.push_back(generate_sequence(20 + random() % 200));
+      sequences.push_back(generate_sequence(sequence_length(prg)));
       input_fasta << ">" << i << "\n" << sequences.back() << "\n";
     }
   }
@@ -101,11 +104,12 @@ TEST(MerIterator, SequenceCanonical) {
   string_vector sequences;
   static const int nb_sequences = 100;
   mer_dna::k(35);
+  std::uniform_int_distribution<int> sequence_length(20, 219);
 
   {
     std::ofstream input_fasta(file_name);
     for(int i = 0; i < nb_sequences; ++i) {
-      sequences.push_back(generate_sequence(20 + random() % 200));
+      sequences.push_back(generate_sequence(sequence_length(prg)));
       input_fasta << ">" << i << "\n" << sequences.back() << "\n";
     }
   }
@@ -136,9 +140,10 @@ TEST(MerQualIterator, Sequence) {
   string_vector quals;
   static const int nb_sequences = 100;
   mer_dna::k(35);
+  std::uniform_int_distribution<int> sequence_length(20, 219);
 
   for(int i = 0; i < nb_sequences; ++i) {
-    const int len = 20 + (random() % 200);
+    const int len = sequence_length(prg);
     sequences.push_back(generate_sequence(len));
     quals.push_back(generate_quals(len));
   }
