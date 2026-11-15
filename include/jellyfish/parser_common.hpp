@@ -13,6 +13,8 @@
 #endif
 
 #include <memory>
+#include <istream>
+#include <limits>
 
 #include <jellyfish/sam_format.hpp>
 
@@ -24,6 +26,15 @@ enum file_type { DONE_TYPE
                  , SAM_TYPE
 #endif
 };
+
+inline void skip_leading_comments(std::istream& is) {
+  for(int c = is.peek(); c == ';' || c == '\n' || c == '\r'; c = is.peek()) {
+    if(c == ';')
+      is.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    else
+      is.get();
+  }
+}
 
 struct stream_type {
   std::unique_ptr<std::istream> standard;

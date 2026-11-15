@@ -130,6 +130,7 @@ protected:
 
     ++files_read_;
     if(st.stream.standard) {
+      skip_leading_comments(*st.stream.standard);
       switch(st.stream.standard->peek()) {
       case EOF: return open_next_file(st);
       case '>':
