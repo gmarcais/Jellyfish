@@ -101,4 +101,31 @@ TEST(HashCounterCooperative, SizeDouble) {
     EXPECT_LT((size_t)(nb_threads * nb), hash.size());
   }
 }
+
+TEST(HashCounterCooperative, MultipleOfValLenSizeDouble) {
+  static const int mer_len = 35;
+  static const size_t init_size = 16;
+  mer_dna::k(mer_len);
+
+  const uint16_t val_len = 5;
+  hash_counter hash(init_size, mer_len * 2, val_len, 1);
+  const uint64_t val = (uint64_t)1 << val_len;
+
+  for(int i = 0; i < 100; ++i) {
+    mer_dna m;
+    m.randomize();
+    bool is_new = false;
+    size_t id = 0;
+    hash.add(m, val, &is_new, &id);
+    EXPECT_TRUE(is_new) << "Iteration " << i << ": is_new was false for newly added mer";
+
+    uint64_t got = 0;
+    EXPECT_TRUE(hash.ary()->get_val_for_key(m, &got));
+    EXPECT_EQ(val, got);
+
+    EXPECT_TRUE(hash.update_add(m, val));
+    EXPECT_TRUE(hash.ary()->get_val_for_key(m, &got));
+    EXPECT_EQ(val * 2, got);
+  }
+}
 } // namespace {
