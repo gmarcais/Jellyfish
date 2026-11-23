@@ -208,4 +208,36 @@ TEST(MerOverlapSequenceParser, Fastq) {
     EXPECT_EQ((size_t)nb_reads, parser.nb_reads());
   }
 }
+
+TEST(MerOverlapSequenceParser, LeadingCommentAndBlankLines) {
+  static const char* seq = "ATTACCTTGTACCTTCAGAGC";
+  static const char* contents[4] = {
+    ">header\n%s\n",
+    ";comment\n;~another\n>header\n%s\n",
+    "\n\r\n>header\n%s\n",
+    ";only a comment\n\n"
+  };
+  const char* names[4] = { "Lead0.fa", "Lead1.fa", "Lead2.fa", "Lead3.fa" };
+  file_unlink fu0(names[0]), fu1(names[1]), fu2(names[2]), fu3(names[3]);
+  std::ifstream* files[4];
+  for(int i = 0; i < 4; ++i) {
+    char buf[200];
+    snprintf(buf, sizeof(buf), contents[i], seq);
+    { std::ofstream out(names[i]); out << buf; }
+    files[i] = new std::ifstream(names[i]);
+  }
+  opened_streams<std::ifstream**> streams(files, files + 4);
+  parser_type parser(10, 1, 10, 100, streams);
+
+  string got;
+  while(true) {
+    parser_type::job j(parser);
+    if(j.is_empty())
+      break;
+    got.append(j->start, j->end - j->start);
+  }
+  EXPECT_EQ(string(seq) + seq + seq, got);
+  EXPECT_EQ((size_t)4, parser.nb_files());
+  EXPECT_EQ((size_t)3, parser.nb_reads());
+}
 } // namespace {

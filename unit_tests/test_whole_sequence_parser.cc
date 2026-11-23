@@ -173,4 +173,40 @@ TEST(SequenceParser, FastaMany) {
   EXPECT_EQ((size_t)nb_sequences, parser.nb_reads());
 }
 
+TEST(SequenceParser, LeadingCommentAndBlankLines) {
+  static const char* seq = "ATTACCTTGTACCTTCAGAGC";
+  static const char* contents[4] = {
+    ">header\n%s\n",
+    ";comment\n;~another\n>header\n%s\n",
+    "\n\r\n>header\n%s\n",
+    ";only a comment\n\n"
+  };
+  const char* names[4] = { "Lead0.fa", "Lead1.fa", "Lead2.fa", "Lead3.fa" };
+  file_unlink fu0(names[0]), fu1(names[1]), fu2(names[2]), fu3(names[3]);
+  std::ifstream* files[4];
+  for(int i = 0; i < 4; ++i) {
+    char buf[200];
+    snprintf(buf, sizeof(buf), contents[i], seq);
+    { std::ofstream out(names[i]); out << buf; }
+    files[i] = new std::ifstream(names[i]);
+  }
+  opened_streams<std::ifstream**> streams(files, files + 4);
+  parser_type parser(10, 1, 1, streams);
+
+  size_t got = 0;
+  while(true) {
+    parser_type::job j(parser);
+    if(j.is_empty())
+      break;
+    for(size_t i = 0; i < j->nb_filled; ++i) {
+      EXPECT_STREQ("header", j->data[i].header.c_str());
+      EXPECT_STREQ(seq, j->data[i].seq.c_str());
+      ++got;
+    }
+  }
+  EXPECT_EQ((size_t)3, got);
+  EXPECT_EQ((size_t)4, parser.nb_files());
+  EXPECT_EQ((size_t)3, parser.nb_reads());
+}
+
 }

@@ -108,6 +108,7 @@ protected:
     // Update the type of the current file and move past first header
     // to beginning of sequence.
     if(st.stream.standard) {
+      skip_leading_comments(*st.stream.standard);
       switch(st.stream.standard->peek()) {
       case EOF: return open_next_file(st);
       case '>':
